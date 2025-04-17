@@ -1,12 +1,11 @@
 // storage-adapter-import-placeholder
 import { postgresAdapter } from '@payloadcms/db-postgres'
-import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
-
+import { resendAdapter } from '@payloadcms/email-resend'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 
@@ -19,7 +18,15 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    dateFormat: 'dd/MM/yyyy',
   },
+  cors: ['http://localhost:3000', 'https://www.vinakademin.se'],
+  csrf: ['http://localhost:3000', 'https://www.vinakademin.se'],
+  email: resendAdapter({
+    defaultFromAddress: 'noreply@dineonline.se',
+    defaultFromName: 'Vinakademin',
+    apiKey: process.env.RESEND_API_KEY || '',
+  }),
   collections: [Users, Media],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
@@ -33,7 +40,6 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    payloadCloudPlugin(),
     // storage-adapter-placeholder
   ],
 })
