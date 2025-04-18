@@ -2,26 +2,18 @@
 
 import * as React from 'react'
 import {
-  ArrowUpCircleIcon,
-  BarChartIcon,
   CameraIcon,
   ClipboardListIcon,
   DatabaseIcon,
   FileCodeIcon,
   FileIcon,
   FileTextIcon,
-  FolderIcon,
   HelpCircleIcon,
-  LayoutDashboardIcon,
-  ListIcon,
   MonitorPlay,
   SearchIcon,
   SettingsIcon,
-  UsersIcon,
   LogInIcon,
-  Rat,
   Sparkles,
-  SparklesIcon,
   CalendarIcon,
   Bot,
   Mail,
@@ -33,7 +25,6 @@ import {
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 
 import { NavDocuments } from '@/components/nav-documents'
 import { NavMain } from '@/components/nav-main'

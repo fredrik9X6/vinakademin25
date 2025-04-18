@@ -6,14 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useRouter } from 'next/navigation'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -43,10 +36,7 @@ const ResetSchema = z
 type ResetFormValues = z.infer<typeof ResetSchema>
 
 // Simulate API call function (Swedish messages)
-async function resetPassword(
-  token: string,
-  newPassword: string,
-): Promise<{ success: boolean; message: string }> {
+async function resetPassword(token: string): Promise<{ success: boolean; message: string }> {
   console.log('Återställer lösenord med token:', token)
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
@@ -82,7 +72,7 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
     setError(null)
     setSuccessMessage(null)
     try {
-      const result = await resetPassword(token, values.password)
+      const result = await resetPassword(token)
       if (result.success) {
         setSuccessMessage(result.message)
         form.reset()

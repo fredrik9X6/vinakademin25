@@ -1,6 +1,7 @@
 import React, { ComponentType } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 // Loading component for when authentication state is being determined
 const LoadingAuth: React.FC = () => (
@@ -33,13 +34,13 @@ const Unauthorized: React.FC = () => (
   <div className="flex items-center justify-center h-screen">
     <div className="text-center max-w-md mx-auto p-6 bg-yellow-50 rounded-lg">
       <h2 className="text-xl font-semibold text-yellow-700 mb-2">Access Denied</h2>
-      <p className="text-yellow-600 mb-4">You don't have permission to access this page.</p>
-      <a
+      <p className="text-yellow-600 mb-4">You don&apos;t have permission to access this page.</p>
+      <Link
         href="/"
         className="inline-block px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition"
       >
         Back to Home
-      </a>
+      </Link>
     </div>
   </div>
 )

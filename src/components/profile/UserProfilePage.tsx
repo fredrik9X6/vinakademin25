@@ -48,22 +48,20 @@ export function UserProfilePage(/* { userData } */) {
   return (
     <Card className="w-full max-w-3xl mx-auto mt-6 mb-6">
       <CardHeader>
-        <CardTitle className="text-2xl">Din Profil</CardTitle> // Swedish
+        <CardTitle className="text-2xl">Din Profil</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="details" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="details">Profiluppgifter</TabsTrigger> // Swedish
-            <TabsTrigger value="avatar">Profilbild</TabsTrigger> // Swedish
-            <TabsTrigger value="settings">Kontoinställningar</TabsTrigger> // Swedish
+            <TabsTrigger value="details">Profiluppgifter</TabsTrigger>
+            <TabsTrigger value="avatar">Profilbild</TabsTrigger>
+            <TabsTrigger value="settings">Kontoinställningar</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="mt-0">
-            {' '}
-            {/* Use mt-0 if space-y on Tabs adds too much space */}
             <Card>
               <CardHeader>
-                <CardTitle>Personlig Information</CardTitle> // Swedish
+                <CardTitle>Personlig Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <ProfileDetailsForm user={user} />
@@ -74,7 +72,7 @@ export function UserProfilePage(/* { userData } */) {
           <TabsContent value="avatar" className="mt-0">
             <Card>
               <CardHeader>
-                <CardTitle>Profilbild</CardTitle> // Swedish
+                <CardTitle>Profilbild</CardTitle>
               </CardHeader>
               <CardContent>
                 <ProfileAvatarUpload
@@ -90,7 +88,7 @@ export function UserProfilePage(/* { userData } */) {
           <TabsContent value="settings" className="mt-0">
             <Card>
               <CardHeader>
-                <CardTitle>Kontohantering</CardTitle> // Swedish
+                <CardTitle>Kontohantering</CardTitle>
               </CardHeader>
               <CardContent>
                 <AccountSettingsForm user={user} />

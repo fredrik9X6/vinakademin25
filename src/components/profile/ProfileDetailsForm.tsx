@@ -71,13 +71,12 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
       const result = await updateProfileDetails(user.id, values)
       if (result.success) {
         toast({
-          title: 'Klart', // Swedish
+          title: 'Klart',
           description: result.message,
-          // Removed variant: success
         })
       } else {
         toast({
-          title: 'Fel', // Swedish
+          title: 'Fel',
           description: result.message,
           variant: 'destructive',
         })
@@ -85,8 +84,8 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
     } catch (err) {
       console.error('Update profile error:', err)
       toast({
-        title: 'Fel', // Swedish
-        description: 'Ett oväntat fel inträffade när profilen skulle uppdateras.', // Swedish
+        title: 'Fel',
+        description: 'Ett oväntat fel inträffade när profilen skulle uppdateras.',
         variant: 'destructive',
       })
     } finally {
@@ -103,7 +102,7 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Förnamn</FormLabel> // Swedish
+                <FormLabel>Förnamn</FormLabel>
                 <FormControl>
                   <Input {...field} disabled={isLoading} />
                 </FormControl>
@@ -116,7 +115,7 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Efternamn</FormLabel> // Swedish
+                <FormLabel>Efternamn</FormLabel>
                 <FormControl>
                   <Input {...field} disabled={isLoading} />
                 </FormControl>
@@ -131,10 +130,10 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
           name="bio"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Biografi</FormLabel> // Swedish
+              <FormLabel>Biografi</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Berätta lite om dig själv" // Swedish
+                  placeholder="Berätta lite om dig själv"
                   className="resize-none"
                   {...field}
                   value={field.value ?? ''}
@@ -148,7 +147,7 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
         <div className="flex justify-end">
           <Button type="submit" disabled={isLoading || !form.formState.isDirty}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isLoading ? 'Sparar...' : 'Spara ändringar'} // Swedish
+            {isLoading ? 'Sparar...' : 'Spara ändringar'}
           </Button>
         </div>
       </form>

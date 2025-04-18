@@ -1,67 +1,101 @@
-# Payload Blank Template
+# Vinakademin - Wine Academy Platform
 
-This template comes configured with the bare minimum to get started on anything you need.
+This is the repository for Vinakademin, a web platform built with Next.js, Payload CMS, and Shadcn UI.
 
-## Quick start
+## Project Overview
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+Vinakademin aims to be a comprehensive guide to the world of wine, offering courses, articles, a curated wine list, and potentially other features. It uses Payload CMS for flexible content management and a modern Next.js frontend built with Shadcn UI components and Tailwind CSS for styling.
 
-## Quick Start - local setup
+## Key Technologies
 
-To spin up this template locally, follow these steps:
+- **Framework:** [Next.js](https://nextjs.org/) (App Router)
+- **CMS:** [Payload CMS](https://payloadcms.com/)
+- **UI Components:** [Shadcn UI](https://ui.shadcn.com/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Database:** (Likely MongoDB or PostgreSQL - check your `.env` configuration)
+- **Package Manager:** [pnpm](https://pnpm.io/)
 
-### Clone
+## Features
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+- **Payload CMS Backend:** For managing users, media, and potentially custom collections for courses, articles, wines, etc. Located at `/admin`.
+- **Next.js Frontend:** SSR/SSG application providing the user interface.
+- **Authentication:** User login/registration handled by Payload.
+- **Responsive Sidebar Navigation:** Collapsible sidebar for navigating the application.
+- **Theme Switching:** Light and Dark mode support.
+- **Shadcn UI Components:** Leverages a variety of pre-built, customizable UI components.
 
-### Development
+## Getting Started - Local Development
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URI` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+To set up and run this project locally, follow these steps:
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+1.  **Clone the repository:**
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+    ```bash
+    git clone https://github.com/fredrik9X6/vinakademin.git # Replace with your repo URL
+    cd vinakademin
+    ```
 
-#### Docker (Optional)
+2.  **Set up Environment Variables:**
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+    - Copy the example environment file:
+      ```bash
+      cp .env.example .env
+      ```
+    - Edit the `.env` file and provide the necessary values, especially:
+      - `PAYLOAD_SECRET`: A strong secret key for Payload authentication.
+      - `MONGODB_URI` or `POSTGRES_URI`: Your database connection string. (Choose one based on your Payload DB adapter).
+      - Potentially other keys depending on email adapters, cloud storage, etc.
 
-To do so, follow these steps:
+3.  **Install Dependencies:**
 
-- Modify the `MONGODB_URI` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URI` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+    ```bash
+    pnpm install
+    ```
 
-## How it works
+4.  **Generate Payload Types:**
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+    ```bash
+    pnpm payload generate:types
+    ```
 
-### Collections
+    (Run this again if you modify Payload collections).
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+5.  **Run the Development Server:**
 
-- #### Users (Authentication)
+    ```bash
+    pnpm dev
+    ```
 
-  Users are auth-enabled collections that have access to the admin panel.
+    This command starts both the Next.js frontend and the Payload CMS backend concurrently.
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+6.  **Access the App:**
 
-- #### Media
+    - Frontend: Open [`http://localhost:3000`](http://localhost:3000)
+    - Payload Admin: Open [`http://localhost:3000/admin`](http://localhost:3000/admin)
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+7.  **Create First Admin User:** Navigate to the `/admin` panel and follow the on-screen instructions to create your first Payload admin user.
 
-### Docker
+## Available Scripts
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+- `pnpm dev`: Starts the development server for both Next.js and Payload.
+- `pnpm build`: Builds the Next.js application for production.
+- `pnpm start`: Starts the production server (requires a build first).
+- `pnpm lint`: Lints the codebase using Next.js ESLint configuration.
+- `pnpm payload <command>`: Run Payload-specific CLI commands (e.g., `pnpm payload migrate`).
+- `pnpm generate:types`: Regenerates TypeScript types based on your Payload config.
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+## Docker (Optional)
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+If you prefer using Docker for local development:
+
+1.  Ensure Docker and Docker Compose are installed.
+2.  Follow steps 1 and 2 from the [Local Development](#getting-started---local-development) section.
+3.  Modify the `MONGODB_URI` in `.env` to point to the Docker container (e.g., `mongodb://127.0.0.1/vinakademin`).
+4.  Ensure the `docker-compose.yml` file is configured correctly for your database service.
+5.  Run `docker-compose up -d` (the `-d` runs it in the background).
+6.  Continue with steps 4-7 from the [Local Development](#getting-started---local-development) section.
 
 ## Questions
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+If you have any issues or questions specific to Payload CMS, reach out via their [Discord](https://discord.com/invite/payload) or [GitHub discussions](https://github.com/payloadcms/payload/discussions). For project-specific questions, please use this repository's issue tracker.

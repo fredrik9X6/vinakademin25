@@ -1,5 +1,4 @@
 import React from 'react'
-import { fileURLToPath } from 'url'
 import { ChartAreaInteractive } from '@/components/chart-area-interactive'
 import { DataTable } from '@/components/data-table'
 import { SectionCards } from '@/components/section-cards'
@@ -7,7 +6,7 @@ import { SectionCards } from '@/components/section-cards'
 import data from './data.json'
 
 export default async function HomePage() {
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  // const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}` // Removed unused variable
 
   return (
     <div className="flex flex-1 flex-col">

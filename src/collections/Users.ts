@@ -1,11 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import {
-  adminFieldLevel,
-  adminOnly,
-  adminOrInstructorFieldLevel,
-  adminOrSelf,
-  anyLoggedIn,
-} from '../lib/access'
+import { adminFieldLevel, adminOnly, adminOrInstructorFieldLevel, adminOrSelf } from '../lib/access'
 
 type User = {
   id: string
