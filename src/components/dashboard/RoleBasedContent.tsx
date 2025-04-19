@@ -61,10 +61,10 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
         </div>
       )}
 
-      {role === 'teacher' && (
+      {role === 'instructor' && (
         <div className="bg-green-50 p-4 rounded-lg">
-          <h3 className="text-xl font-medium text-green-800">Dina kurser</h3>
-          <p className="text-green-600 mt-2">Du har inga kurser att undervisa.</p>
+          <h3 className="text-xl font-medium text-green-800">Instruktörsverktyg</h3>
+          <p className="text-green-600 mt-2">Hantera dina kurser och studenter här.</p>
           <div className="mt-4">
             <Link
               href="/admin/kurser"
