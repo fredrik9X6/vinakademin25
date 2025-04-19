@@ -27,7 +27,7 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
         </div>
       )}
 
-      {role === 'student' && (
+      {role === 'user' && (
         <div className="space-y-4">
           <div className="bg-purple-50 p-4 rounded-lg">
             <h3 className="text-xl font-medium text-purple-800">Dina kurser</h3>
@@ -38,6 +38,23 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
                 className="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
               >
                 Utforska kurser
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {role === 'subscriber' && (
+        <div className="space-y-4">
+          <div className="bg-teal-50 p-4 rounded-lg">
+            <h3 className="text-xl font-medium text-teal-800">Dina kurser (Prenumerant)</h3>
+            <p className="text-teal-600 mt-2">Lista dina prenumerantkurser här.</p>
+            <div className="mt-4">
+              <Link
+                href="/mina-sidor/kurser"
+                className="inline-block px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition"
+              >
+                Mina Kursregistreringar
               </Link>
             </div>
           </div>
