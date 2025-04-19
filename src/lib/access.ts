@@ -1,29 +1,36 @@
-import type { Access, AccessArgs } from 'payload/config'
 import type { User } from '../payload-types'
 
-// Define common role-based predicates
-export const isAdmin = ({ req }: AccessArgs): boolean => {
-  const user = req.user as User | null
+// Define a simple local type for the access arguments we use
+type SimpleAccessArgs = {
+  req: {
+    user?: User | null // Define the user property we need
+  }
+  id?: string | number // Add id for field-level access
+}
+
+// Define common role-based predicates using the local type
+export const isAdmin = ({ req }: SimpleAccessArgs): boolean => {
+  const user = req.user // No need for `as User | null` anymore
   return Boolean(user?.role === 'admin')
 }
 
-export const isInstructor = ({ req }: AccessArgs): boolean => {
-  const user = req.user as User | null
+export const isInstructor = ({ req }: SimpleAccessArgs): boolean => {
+  const user = req.user
   return Boolean(user?.role === 'instructor')
 }
 
-export const isSubscriber = ({ req }: AccessArgs): boolean => {
-  const user = req.user as User | null
+export const isSubscriber = ({ req }: SimpleAccessArgs): boolean => {
+  const user = req.user
   return Boolean(user?.role === 'subscriber')
 }
 
-export const isActiveUser = ({ req }: AccessArgs): boolean => {
-  const user = req.user as User | null
+export const isActiveUser = ({ req }: SimpleAccessArgs): boolean => {
+  const user = req.user
   return Boolean(user && user.accountStatus === 'active')
 }
 
-export const hasActiveSubscription = ({ req }: AccessArgs): boolean => {
-  const user = req.user as User | null
+export const hasActiveSubscription = ({ req }: SimpleAccessArgs): boolean => {
+  const user = req.user
   return Boolean(
     user &&
       user.subscriptionStatus === 'active' &&
@@ -32,27 +39,26 @@ export const hasActiveSubscription = ({ req }: AccessArgs): boolean => {
   )
 }
 
-export const isAdminOrInstructor = ({ req }: AccessArgs): boolean => {
-  const user = req.user as User | null
+export const isAdminOrInstructor = ({ req }: SimpleAccessArgs): boolean => {
+  const user = req.user
   return Boolean(user && (user.role === 'admin' || user.role === 'instructor'))
 }
 
-// Common access patterns
-export const adminOnly: Access = ({ req }: AccessArgs<any, User>) => {
+// Common access patterns using the local type
+export const adminOnly = ({ req }: SimpleAccessArgs) => {
   return isAdmin({ req })
 }
 
-export const adminOrInstructorOnly: Access = ({ req }: AccessArgs<any, User>) => {
+export const adminOrInstructorOnly = ({ req }: SimpleAccessArgs) => {
   return isAdminOrInstructor({ req })
 }
 
-export const adminOrSelf: Access = ({ req }: AccessArgs<any, User>) => {
+export const adminOrSelf = ({ req }: SimpleAccessArgs) => {
   const user = req.user
 
-  // Admin can access any user
   if (isAdmin({ req })) return true
 
-  // Users can access only themselves
+  // Return query constraint or boolean
   return user
     ? {
         id: {
@@ -62,10 +68,9 @@ export const adminOrSelf: Access = ({ req }: AccessArgs<any, User>) => {
     : false
 }
 
-export const subscribersAndAbove: Access = ({ req }: AccessArgs<any, User>) => {
+export const subscribersAndAbove = ({ req }: SimpleAccessArgs) => {
   const user = req.user
 
-  // Admin, instructor, and subscribers have access
   if (user?.role === 'admin' || user?.role === 'instructor' || user?.role === 'subscriber') {
     return true
   }
@@ -73,20 +78,18 @@ export const subscribersAndAbove: Access = ({ req }: AccessArgs<any, User>) => {
   return false
 }
 
-export const anyLoggedIn: Access = ({ req }: AccessArgs<any, User>) => {
+export const anyLoggedIn = ({ req }: SimpleAccessArgs) => {
   const user = req.user
   return Boolean(user)
 }
 
-export const activeSubscribersAndAbove: Access = ({ req }: AccessArgs<any, User>) => {
+export const activeSubscribersAndAbove = ({ req }: SimpleAccessArgs) => {
   const user = req.user
 
-  // Admin and instructors always have access
   if (user?.role === 'admin' || user?.role === 'instructor') {
     return true
   }
 
-  // Subscribers need an active subscription
   if (user?.role === 'subscriber') {
     return Boolean(
       user.subscriptionStatus === 'active' &&
@@ -98,20 +101,21 @@ export const activeSubscribersAndAbove: Access = ({ req }: AccessArgs<any, User>
   return false
 }
 
-// Field-level access control
-export const adminOrInstructorFieldLevel = ({ req }: AccessArgs<any, User>) => {
+// Field-level access control using the local type
+export const adminOrInstructorFieldLevel = ({ req }: SimpleAccessArgs) => {
   return isAdminOrInstructor({ req })
 }
 
-export const adminFieldLevel = ({ req }: AccessArgs<any, User>) => {
+export const adminFieldLevel = ({ req }: SimpleAccessArgs) => {
   return isAdmin({ req })
 }
 
-export const selfFieldLevel = ({ req, id }: AccessArgs<any, User> & { id?: string }) => {
+export const selfFieldLevel = ({ req, id }: SimpleAccessArgs) => {
   const user = req.user
-  return Boolean(user && id && user.id === id)
+  // Ensure id is treated as a string/number compatible with user.id
+  return Boolean(user && id && String(user.id) === String(id))
 }
 
-export const adminOrSelfFieldLevel = ({ req, id }: AccessArgs<any, User> & { id?: string }) => {
+export const adminOrSelfFieldLevel = ({ req, id }: SimpleAccessArgs) => {
   return isAdmin({ req }) || selfFieldLevel({ req, id })
 }
