@@ -28,6 +28,7 @@ export type RegisterUserData = Omit<
   | 'resetPasswordExpiration'
   | '_verified'
   | '_verificationToken'
+  | 'role'
 > & {
   password?: string // Make password explicitly optional or required based on Payload config
   // Add any other fields required for user creation that are not in PayloadUser base type
