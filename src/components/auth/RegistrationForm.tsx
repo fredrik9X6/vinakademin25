@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth, RegisterUserData } from '@/context/AuthContext'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -54,7 +54,7 @@ export function RegistrationForm({ className, ...props }: React.ComponentPropsWi
   })
 
   async function onSubmit(values: RegistrationFormValues) {
-    const apiData = {
+    const apiData: RegisterUserData = {
       firstName: values.firstName,
       lastName: values.lastName,
       email: values.email,

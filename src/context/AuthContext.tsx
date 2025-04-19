@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation'
 // import { RegistrationFormValues } from '@/components/auth/RegistrationForm'
 
 // Define the type for the actual registration API call data
-type RegisterUserData = Omit<
+export type RegisterUserData = Omit<
   PayloadUser,
   | 'id'
   | 'updatedAt'
