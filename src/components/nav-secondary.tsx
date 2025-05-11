@@ -28,15 +28,6 @@ export function NavSecondary({
     <SidebarGroup {...props}>
       <SidebarGroupContent>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="hover:bg-accent [&:hover_svg]:text-secondary"
-              onClick={toggleSidebar}
-            >
-              <PanelLeftIcon className="h-4 w-4" />
-              <span className={state === 'collapsed' ? 'hidden' : undefined}>Minimera</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild className="hover:bg-accent [&:hover_svg]:text-secondary">
