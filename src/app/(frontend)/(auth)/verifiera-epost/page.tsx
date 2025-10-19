@@ -13,7 +13,7 @@ function VerifyEmailClient() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 
-  return <EmailVerificationHandler token={token} />
+  return <EmailVerificationHandler token={token ?? ''} />
 }
 
 export default function VerifyEmailPage() {
