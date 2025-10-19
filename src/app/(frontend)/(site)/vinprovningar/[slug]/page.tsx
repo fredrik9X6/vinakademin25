@@ -11,15 +11,15 @@ import { getUser } from '@/lib/get-user'
 import { markFreeLessons } from '@/lib/course-utils'
 
 interface CoursePageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
-  searchParams: {
+  }>
+  searchParams: Promise<{
     lesson?: string
     quiz?: string
     session?: string
     completed?: string
-  }
+  }>
 }
 
 export default async function CoursePage({ params, searchParams }: CoursePageProps) {

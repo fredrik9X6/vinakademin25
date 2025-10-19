@@ -4,10 +4,10 @@ import Link from 'next/link'
 import { RegistrationForm } from '@/components/auth/RegistrationForm'
 
 interface RegistrationPageProps {
-  searchParams: {
+  searchParams: Promise<{
     from?: string
     redirect?: string
-  }
+  }>
 }
 
 export default async function RegistrationPage({ searchParams }: RegistrationPageProps) {

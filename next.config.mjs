@@ -3,7 +3,7 @@ import { withPayload } from '@payloadcms/next/withPayload'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Your Next.js config here
-  turbopack: true,
+  turbopack: {},
   async redirects() {
     return [
       {
