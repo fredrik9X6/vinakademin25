@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import type { User } from '@/payload-types'
 
 // DELETE user account
 export async function DELETE(
@@ -25,20 +26,41 @@ export async function DELETE(
 
     // For security reasons, we'll anonymize the user data instead of completely deleting
     // This maintains referential integrity while protecting user privacy
-    const anonymizedData = {
+    const anonymizedData: Partial<User> = {
       firstName: 'Deleted',
       lastName: 'User',
       email: `deleted-${Date.now()}@deleted.local`,
       bio: '',
       avatar: null,
       accountStatus: 'deactivated',
+      subscriptionStatus: 'none',
+      subscriptionPlan: 'none',
+      subscriptionExpiry: null,
+      isVerified: false,
       // Anonymize wine preferences
       winePreferences: {
-        favoriteGrapes: [],
-        favoriteRegions: [],
-        preferredStyles: [],
+        favoriteGrapes: [] as number[],
+        favoriteRegions: [] as number[],
+        preferredStyles: [] as (
+          | 'light_red'
+          | 'medium_red'
+          | 'full_red'
+          | 'light_white'
+          | 'full_white'
+          | 'sparkling'
+          | 'rose'
+          | 'sweet'
+          | 'fortified'
+        )[],
         tastingExperience: null,
-        discoveryPreferences: [],
+        discoveryPreferences: [] as (
+          | 'new_grapes'
+          | 'new_regions'
+          | 'price_ranges'
+          | 'wine_culture'
+          | 'recommendations'
+          | 'virtual_tastings'
+        )[],
         priceRange: null,
         tastingNotes: '',
       },
@@ -65,9 +87,6 @@ export async function DELETE(
           featureUpdates: false,
         },
       },
-      // Add deletion metadata
-      deletedAt: new Date().toISOString(),
-      deletionReason: 'User requested account deletion',
     }
 
     // Update user with anonymized data
@@ -93,7 +112,6 @@ export async function DELETE(
         data: {
           status: 'canceled',
           canceledAt: new Date().toISOString(),
-          cancelReason: 'Account deletion',
         },
       })
     }

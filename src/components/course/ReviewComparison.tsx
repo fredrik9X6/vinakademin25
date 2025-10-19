@@ -259,176 +259,189 @@ export default function ReviewComparison({
         ).toFixed(1)
       : '—'
 
-  const renderReviewCard = (review: WineReview) => (
-    <Card
-      key={review.id}
-      className={review.isVerified ? 'border-[#FDBA75] dark:border-[#FB914C] border-2' : ''}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">{review.participantName}</CardTitle>
-        </div>
-        {review.rating && <CardDescription>Betyg: {review.rating}/5 ⭐</CardDescription>}
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y">
-          {/* Appearance */}
-          {(review.clarity || review.brightness || review.color) && (
-            <div className="p-3">
-              <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                Utseende
-              </h4>
-              <div className="space-y-1">
-                {review.clarity && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Klarhet</span>
-                    <span className="col-span-2">{review.clarity}</span>
-                  </div>
-                )}
-                {review.brightness && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Ljusstyrka</span>
-                    <span className="col-span-2">{review.brightness}</span>
-                  </div>
-                )}
-                {review.color && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Färg</span>
-                    <span className="col-span-2">{review.color}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+  const renderReviewCard = (review: WineReview) => {
+    const hasNoseDetails =
+      !!review.noseIntensity ||
+      !!review.noseDevelopment ||
+      (Array.isArray(review.aromas) && review.aromas.length > 0)
+    const hasPalateDetails =
+      !!review.sweetness ||
+      !!review.acidity ||
+      !!review.tannin ||
+      !!review.alcohol ||
+      !!review.body ||
+      (Array.isArray(review.flavors) && review.flavors.length > 0) ||
+      !!review.finish
+    const hasConclusionDetails =
+      !!review.quality ||
+      !!review.readiness ||
+      (review.notes !== undefined && review.notes !== null)
 
-          {/* Nose */}
-          {(review.noseIntensity || review.noseDevelopment || review.aromas) && (
-            <div className="p-3">
-              <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                Doft
-              </h4>
-              <div className="space-y-1">
-                {review.noseIntensity && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Intensitet</span>
-                    <span className="col-span-2">{review.noseIntensity}</span>
-                  </div>
-                )}
-                {review.noseDevelopment && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Utveckling</span>
-                    <span className="col-span-2">{review.noseDevelopment}</span>
-                  </div>
-                )}
-                {review.aromas && review.aromas.length > 0 && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Aromer</span>
-                    <span className="col-span-2 break-words">{review.aromas.join(', ')}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Palate */}
-          {(review.sweetness ||
-            review.acidity ||
-            review.tannin ||
-            review.alcohol ||
-            review.body ||
-            review.flavors ||
-            review.finish) && (
-            <div className="p-3">
-              <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                Smak
-              </h4>
-              <div className="space-y-1">
-                {review.sweetness && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Sötma</span>
-                    <span className="col-span-2">{review.sweetness}</span>
-                  </div>
-                )}
-                {review.acidity && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Syra</span>
-                    <span className="col-span-2">{review.acidity}</span>
-                  </div>
-                )}
-                {review.tannin && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Tannin</span>
-                    <span className="col-span-2">{review.tannin}</span>
-                  </div>
-                )}
-                {review.alcohol && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Alkohol</span>
-                    <span className="col-span-2">{review.alcohol}</span>
-                  </div>
-                )}
-                {review.body && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Fyllighet</span>
-                    <span className="col-span-2">{review.body}</span>
-                  </div>
-                )}
-                {review.flavors && review.flavors.length > 0 && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Smaker</span>
-                    <span className="col-span-2 break-words">{review.flavors.join(', ')}</span>
-                  </div>
-                )}
-                {review.finish && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Eftersmak</span>
-                    <span className="col-span-2">{review.finish}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Conclusion */}
-          {(review.quality || review.readiness || review.notes) && (
-            <div className="p-3">
-              <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                Slutsats
-              </h4>
-              <div className="space-y-1">
-                {review.quality && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Kvalitet</span>
-                    <span className="col-span-2">{review.quality}</span>
-                  </div>
-                )}
-                {review.readiness && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Mognad</span>
-                    <span className="col-span-2">{review.readiness}</span>
-                  </div>
-                )}
-                {review.notes && (
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <span className="text-muted-foreground">Noteringar</span>
-                    <div className="col-span-2 text-muted-foreground italic">
-                      {typeof review.notes === 'object' &&
-                      review.notes !== null &&
-                      'root' in review.notes ? (
-                        <RichTextRenderer content={review.notes} />
-                      ) : (
-                        <span>{String(review.notes)}</span>
-                      )}
+    return (
+      <Card
+        key={review.id}
+        className={review.isVerified ? 'border-[#FDBA75] dark:border-[#FB914C] border-2' : ''}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">{review.participantName}</CardTitle>
+          </div>
+          {review.rating && <CardDescription>Betyg: {review.rating}/5 ⭐</CardDescription>}
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y">
+            {/* Appearance */}
+            {(review.clarity || review.brightness || review.color) && (
+              <div className="p-3">
+                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                  Utseende
+                </h4>
+                <div className="space-y-1">
+                  {review.clarity && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Klarhet</span>
+                      <span className="col-span-2">{review.clarity}</span>
                     </div>
-                  </div>
-                )}
+                  )}
+                  {review.brightness && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Ljusstyrka</span>
+                      <span className="col-span-2">{review.brightness}</span>
+                    </div>
+                  )}
+                  {review.color && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Färg</span>
+                      <span className="col-span-2">{review.color}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
+            )}
+
+            {/* Nose */}
+            {hasNoseDetails && (
+              <div className="p-3">
+                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                  Doft
+                </h4>
+                <div className="space-y-1">
+                  {review.noseIntensity && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Intensitet</span>
+                      <span className="col-span-2">{review.noseIntensity}</span>
+                    </div>
+                  )}
+                  {review.noseDevelopment && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Utveckling</span>
+                      <span className="col-span-2">{review.noseDevelopment}</span>
+                    </div>
+                  )}
+                  {Array.isArray(review.aromas) && review.aromas.length > 0 && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Aromer</span>
+                      <span className="col-span-2 break-words">{review.aromas.join(', ')}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Palate */}
+            {hasPalateDetails && (
+              <div className="p-3">
+                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                  Smak
+                </h4>
+                <div className="space-y-1">
+                  {review.sweetness && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Sötma</span>
+                      <span className="col-span-2">{review.sweetness}</span>
+                    </div>
+                  )}
+                  {review.acidity && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Syra</span>
+                      <span className="col-span-2">{review.acidity}</span>
+                    </div>
+                  )}
+                  {review.tannin && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Tannin</span>
+                      <span className="col-span-2">{review.tannin}</span>
+                    </div>
+                  )}
+                  {review.alcohol && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Alkohol</span>
+                      <span className="col-span-2">{review.alcohol}</span>
+                    </div>
+                  )}
+                  {review.body && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Fyllighet</span>
+                      <span className="col-span-2">{review.body}</span>
+                    </div>
+                  )}
+                  {Array.isArray(review.flavors) && review.flavors.length > 0 && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Smaker</span>
+                      <span className="col-span-2 break-words">{review.flavors.join(', ')}</span>
+                    </div>
+                  )}
+                  {review.finish && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Eftersmak</span>
+                      <span className="col-span-2">{review.finish}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Conclusion */}
+            {hasConclusionDetails && (
+              <div className="p-3">
+                <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                  Slutsats
+                </h4>
+                <div className="space-y-1">
+                  {review.quality && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Kvalitet</span>
+                      <span className="col-span-2">{review.quality}</span>
+                    </div>
+                  )}
+                  {review.readiness && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Mognad</span>
+                      <span className="col-span-2">{review.readiness}</span>
+                    </div>
+                  )}
+                  {review.notes !== undefined && review.notes !== null && (
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <span className="text-muted-foreground">Noteringar</span>
+                      <div className="col-span-2 text-muted-foreground italic">
+                        {typeof review.notes === 'object' &&
+                        review.notes !== null &&
+                        'root' in (review.notes as Record<string, unknown>) ? (
+                          <RichTextRenderer content={review.notes as any} />
+                        ) : (
+                          <span>{String(review.notes)}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-6">

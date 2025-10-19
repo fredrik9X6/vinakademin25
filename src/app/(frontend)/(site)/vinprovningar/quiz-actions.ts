@@ -4,6 +4,11 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 
+const resolveRelationId = (relation: any): string | number | null => {
+  if (!relation) return null
+  return typeof relation === 'object' ? relation.id : relation
+}
+
 export async function startQuizAttempt(quizId: number | string) {
   const payload = await getPayload({ config })
   const user = await getUser()
@@ -15,8 +20,6 @@ export async function startQuizAttempt(quizId: number | string) {
   const courseId = typeof quiz.course === 'object' ? quiz.course.id : quiz.course
   const course = await payload.findByID({ collection: 'courses', id: String(courseId) })
 
-  // Get module to find quiz position
-  const moduleId = typeof quiz.module === 'object' ? quiz.module.id : quiz.module
   const allModules = await payload.find({
     collection: 'modules',
     where: { course: { equals: String(courseId) } },
@@ -44,13 +47,13 @@ export async function startQuizAttempt(quizId: number | string) {
   for (const module of allModules.docs.sort((a, b) => (a.order || 0) - (b.order || 0))) {
     const moduleLessons = allLessons.docs
       .filter((l) => {
-        const lModId = typeof l.module === 'object' ? l.module.id : l.module
+        const lModId = resolveRelationId(l.module)
         return lModId === module.id
       })
       .sort((a, b) => (a.order || 0) - (b.order || 0))
 
     const moduleQuizzes = allQuizzes.docs.filter((q) => {
-      const qModId = typeof q.module === 'object' ? q.module.id : q.module
+      const qModId = resolveRelationId(q.module)
       return qModId === module.id
     })
 
@@ -132,7 +135,7 @@ export async function startQuizAttempt(quizId: number | string) {
       quiz: Number(quizId),
       attemptNumber,
       status: 'in-progress',
-      startedAt: new Date(),
+      startedAt: new Date().toISOString(),
       answers: seededAnswers,
     },
   })
@@ -176,13 +179,13 @@ export async function getQuizStartInfo(quizId: number | string) {
   for (const module of allModules.docs.sort((a, b) => (a.order || 0) - (b.order || 0))) {
     const moduleLessons = allLessons.docs
       .filter((l) => {
-        const lModId = typeof l.module === 'object' ? l.module.id : l.module
+        const lModId = resolveRelationId(l.module)
         return lModId === module.id
       })
       .sort((a, b) => (a.order || 0) - (b.order || 0))
 
     const moduleQuizzes = allQuizzes.docs.filter((q) => {
-      const qModId = typeof q.module === 'object' ? q.module.id : q.module
+      const qModId = resolveRelationId(q.module)
       return qModId === module.id
     })
 
@@ -409,7 +412,7 @@ export async function submitQuizAttempt(
     id: String(attemptId),
     data: {
       status: 'completed',
-      completedAt: new Date(),
+      completedAt: new Date().toISOString(),
       timeSpent: timeSpentSeconds,
       answers: evaluated.map((a) => ({
         question: Number(a.question),
@@ -492,7 +495,7 @@ export async function submitQuizAttempt(
           user: Number(user.id),
           course: courseId,
           status: 'in-progress',
-          lastAccessedAt: new Date(),
+          lastAccessedAt: new Date().toISOString(),
         },
       })
       progressId = createdProgress.id
@@ -545,7 +548,7 @@ export async function submitQuizAttempt(
           lesson: lessonId,
           score,
           attempts: attemptsForThis,
-          completedAt: new Date(),
+          completedAt: new Date().toISOString(),
         }
         if (idx >= 0) nextScores[idx] = entry
         else nextScores.push(entry)
@@ -564,7 +567,7 @@ export async function submitQuizAttempt(
         score,
         attempts: attemptsForThis,
         passed,
-        completedAt: new Date(),
+        completedAt: new Date().toISOString(),
       }
       if (qIdx >= 0) nextQuizScores[qIdx] = qEntry
       else nextQuizScores.push(qEntry)
@@ -574,7 +577,7 @@ export async function submitQuizAttempt(
         id: String(upsertTarget),
         data: {
           status: 'in-progress',
-          lastAccessedAt: new Date(),
+          lastAccessedAt: new Date().toISOString(),
           ...(lessonId ? { scores: nextScores } : {}),
           quizScores: nextQuizScores,
         },

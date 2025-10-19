@@ -30,12 +30,12 @@
         "./src/payload.config.ts"
       ]
     },
-    "target": "ES2022",
+    "target": "ES2022"
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "next-env.d.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": [

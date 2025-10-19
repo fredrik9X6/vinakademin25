@@ -148,8 +148,12 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
       } else if (event.key === 'Backspace' && !event.currentTarget.value) {
         const newSelectedValues = [...selectedValues]
         newSelectedValues.pop()
-        setSelectedValues(newSelectedValues)
-        onValueChange(newSelectedValues)
+        if (isControlled) {
+          onValueChange(newSelectedValues)
+        } else {
+          setUncontrolledValues(newSelectedValues)
+          onValueChange(newSelectedValues)
+        }
       }
     }
 

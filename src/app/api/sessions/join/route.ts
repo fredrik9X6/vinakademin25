@@ -80,7 +80,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if session is full
-    if (session.participantCount >= session.maxParticipants) {
+    const currentParticipants = Number(session.participantCount ?? 0)
+    const maxAllowed = session.maxParticipants != null ? Number(session.maxParticipants) : null
+    if (maxAllowed !== null && currentParticipants >= maxAllowed) {
       return NextResponse.json({ error: 'Session is full' }, { status: 400 })
     }
 

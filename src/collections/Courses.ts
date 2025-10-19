@@ -34,9 +34,6 @@ export const Courses: CollectionConfig = {
     create: adminOrInstructorOnly,
     update: adminOrInstructorOnly,
     delete: adminOnly,
-    readDrafts: adminOrInstructorOnly,
-    createDrafts: adminOrInstructorOnly,
-    updateDrafts: adminOrInstructorOnly,
     readVersions: adminOrInstructorOnly,
   },
   hooks: {

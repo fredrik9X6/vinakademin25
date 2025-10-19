@@ -109,8 +109,9 @@ export async function GET(request: NextRequest) {
             participantName = 'Guest'
           }
         } else if (review.user) {
-          const user = typeof review.user === 'object' ? review.user : null
-          participantName = user?.name || 'User'
+          const user = typeof review.user === 'object' ? (review.user as any) : null
+          const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ')
+          participantName = fullName || user?.email || 'User'
         }
 
         return {

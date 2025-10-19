@@ -63,6 +63,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 })
     }
 
+    const hostNameParts = [user.firstName, user.lastName].filter(Boolean).join(' ')
+    const hostDisplayName = hostNameParts || user.email || 'Anonymous'
+
     // Generate unique join code
     let joinCode = generateJoinCode()
     let isUnique = false
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest) {
         course: courseId,
         host: user.id,
         joinCode,
-        sessionName: sessionName || `${user.name || 'Anonymous'}'s Session`,
+        sessionName: sessionName || `${hostDisplayName}'s Session`,
         status: 'active',
         currentActivity: 'waiting',
         participantCount: 0,
