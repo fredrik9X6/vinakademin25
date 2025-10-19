@@ -247,6 +247,7 @@ Vinakademin is a modern, comprehensive swedish wine education platform designed 
 - Tailwind CSS
 - OpenAI API (GPT-4 or equivalent)
 - Stripe Payment Processing
+- Mux video streaming
 
 ## Wine Education Standards
 - Alignment with recognized wine education certification programs
@@ -254,7 +255,7 @@ Vinakademin is a modern, comprehensive swedish wine education platform designed 
 - Standardized wine terminology and classification systems
 
 ## User Research Insights
-- Educational wine content most valued by 30-50 age demographic
+- Educational wine content most valued by 25-40 age demographic
 - Strong correlation between structured learning and wine purchasing behavior
 - Mobile usage patterns indicate need for bite-sized learning modules
 - Growing interest in personalized recommendations among wine consumers 

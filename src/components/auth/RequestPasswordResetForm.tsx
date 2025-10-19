@@ -5,7 +5,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -16,132 +23,126 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Loader2, MailCheck, XCircle } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
-import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
+import { Loader2, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
-// Schema for the request form (Swedish messages)
-const RequestSchema = z.object({
-  email: z.string().email({ message: 'Ange en giltig e-postadress.' }),
+// Define Zod schema for validation (Swedish messages)
+const RequestPasswordResetSchema = z.object({
+  email: z.string().email({ message: 'Ogiltig e-postadress.' }),
 })
 
-type RequestFormValues = z.infer<typeof RequestSchema>
+type RequestPasswordResetFormValues = z.infer<typeof RequestPasswordResetSchema>
 
-// Simulate API call function (Swedish messages)
-async function requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
-  console.log('Begär lösenordsåterställning för:', email)
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  // Replace with actual backend call
-
-  // Simulation:
-  if (email === 'error@example.com') {
-    return { success: false, message: 'Kunde inte skicka återställningslänk. Försök igen.' }
-  }
-  return {
-    success: true,
-    message: 'Om ett konto finns för denna e-post har en återställningslänk skickats.',
-  }
+interface RequestPasswordResetFormProps {
+  onSuccess?: () => void
 }
 
-export function RequestPasswordResetForm({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+export function RequestPasswordResetForm({ onSuccess }: RequestPasswordResetFormProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const { toast } = useToast()
+  const [emailSent, setEmailSent] = useState(false)
 
-  const form = useForm<RequestFormValues>({
-    resolver: zodResolver(RequestSchema),
-    defaultValues: { email: '' },
+  const form = useForm<RequestPasswordResetFormValues>({
+    resolver: zodResolver(RequestPasswordResetSchema),
+    defaultValues: {
+      email: '',
+    },
   })
 
-  async function onSubmit(values: RequestFormValues) {
+  async function onSubmit(values: RequestPasswordResetFormValues) {
     setIsLoading(true)
-    setError(null)
-    setSuccessMessage(null)
     try {
-      const result = await requestPasswordReset(values.email)
-      if (result.success) {
-        setSuccessMessage(result.message) // Display success message directly in the form
-        form.reset()
+      const response = await fetch('/api/users/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        setEmailSent(true)
+        toast.success('E-post skickat', {
+          description:
+            'Kontrollera din inkorg för instruktioner om hur du återställer ditt lösenord.',
+        })
+        onSuccess?.()
       } else {
-        setError(result.message) // Display error message directly
+        const errorData = await response.json()
+        const errorMessage = errorData.message || 'Kunde inte skicka återställnings-e-post.'
+        toast.error('Fel vid återställning', {
+          description: errorMessage,
+        })
       }
-    } catch (err) {
-      console.error('Request reset error:', err)
-      setError('Ett oväntat fel inträffade.')
-      toast({ title: 'Fel', description: 'Ett oväntat fel inträffade.', variant: 'destructive' })
+    } catch (error) {
+      console.error('Password reset request error:', error)
+      toast.error('Återställningsfel', {
+        description: 'Ett oväntat fel inträffade. Försök igen senare.',
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
-  return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Återställ lösenord</CardTitle>
+  if (emailSent) {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">E-post skickat</CardTitle>
           <CardDescription>
-            Ange din e-postadress så skickar vi en länk för att återställa ditt lösenord.
+            Vi har skickat instruktioner för lösenordsåterställning till din e-post.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
-              <div className="grid gap-6">
-                {successMessage ? (
-                  <Alert variant="default">
-                    <MailCheck className="h-4 w-4" />
-                    <AlertTitle>Kontrollera din e-post</AlertTitle>
-                    <AlertDescription>{successMessage}</AlertDescription>
-                  </Alert>
-                ) : (
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="grid gap-2">
-                        <FormLabel>E-post</FormLabel>
-                        <FormControl>
-                          <Input placeholder="namn@exempel.com" {...field} disabled={isLoading} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                {error && (
-                  <Alert variant="destructive">
-                    <XCircle className="h-4 w-4" />
-                    <AlertTitle>Fel</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                {!successMessage && (
-                  <Button type="submit" variant={'default'} className="w-full" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {isLoading ? 'Skickar...' : 'Skicka återställningslänk'}
-                  </Button>
-                )}
-              </div>
-              <div className="text-center text-sm">
-                Kom du ihåg ditt lösenord?{' '}
-                <a href="/logga-in" className="underline underline-offset-4">
-                  Logga in
-                </a>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
+        <CardFooter>
+          <Link href="/logga-in" className="w-full">
+            <Button variant="outline" className="w-full">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Tillbaka till inloggning
+            </Button>
+          </Link>
+        </CardFooter>
       </Card>
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
-        Genom att fortsätta, godkänner du våra <a href="/villkor">villkor</a> och{' '}
-        <a href="/integritetspolicy">integritetspolicy</a>.
-      </div>
-    </div>
+    )
+  }
+
+  return (
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle className="text-2xl">Återställ lösenord</CardTitle>
+        <CardDescription>
+          Ange din e-postadress så skickar vi instruktioner för att återställa ditt lösenord.
+        </CardDescription>
+      </CardHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>E-post</FormLabel>
+                  <FormControl>
+                    <Input placeholder="namn@exempel.com" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-2">
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isLoading ? 'Skickar...' : 'Skicka återställnings-e-post'}
+            </Button>
+            <Link href="/logga-in" className="w-full">
+              <Button variant="outline" className="w-full">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Tillbaka till inloggning
+              </Button>
+            </Link>
+          </CardFooter>
+        </form>
+      </Form>
+    </Card>
   )
 }

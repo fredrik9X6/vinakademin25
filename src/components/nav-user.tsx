@@ -7,6 +7,7 @@ import {
   MoreVerticalIcon,
   UserCircleIcon,
 } from 'lucide-react'
+import Link from 'next/link'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -88,17 +89,23 @@ export function NavUser({ user }: NavUserProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem className="[&:hover_svg]:text-secondary">
-                <UserCircleIcon />
-                Konto
+              <DropdownMenuItem asChild className="[&:hover_svg]:text-secondary">
+                <Link href="/profil?tab=uppgifter">
+                  <UserCircleIcon />
+                  Konto
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="[&:hover_svg]:text-secondary">
-                <CreditCardIcon />
-                Hantera betalning
+              <DropdownMenuItem asChild className="[&:hover_svg]:text-secondary">
+                <Link href="/profil?tab=betalningar">
+                  <CreditCardIcon />
+                  Hantera betalning
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-accent/15 [&:hover_svg]:text-secondary">
-                <BellIcon />
-                Notifications
+              <DropdownMenuItem asChild className="[&:hover_svg]:text-secondary">
+                <Link href="/profil?tab=notiser">
+                  <BellIcon />
+                  Notiser
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

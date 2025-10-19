@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-// Note: cookies() import removed as we use request.headers directly
-// Removed getPayload and configPromise imports
 
 // Define protected paths and their required roles
 // Default role upon registration is now 'user' (set in AuthContext)
 const protectedPaths = [
-  {
-    path: '/mina-sidor', // Renamed from /dashboard
-    roles: ['admin', 'instructor', 'subscriber', 'user'],
-  },
-  {
-    path: '/kurser', // Assuming Swedish name for /courses
-    roles: ['admin', 'instructor', 'subscriber', 'user'],
-  },
-  {
-    path: '/admin', // Keep as is, matches Payload default
-    roles: ['admin'],
-  },
+  // Removed legacy /mina-sidor; use /profil instead
+  // Temporarily comment out admin protection to allow first user setup
+  // {
+  //   path: '/admin', // Keep as is, matches Payload default
+  //   roles: ['admin'],
+  // },
   {
     path: '/instruktor', // Assuming Swedish name for /instructor
     roles: ['admin', 'instructor'],
@@ -40,6 +32,7 @@ export async function middleware(request: NextRequest) {
   // Ensure public paths match renamed routes
   if (
     pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/payload') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
     pathname === '/' ||
@@ -48,7 +41,10 @@ export async function middleware(request: NextRequest) {
     pathname === '/glomt-losenord' ||
     pathname === '/aterstall-losenord' ||
     pathname === '/verifiera-epost' ||
-    pathname === '/verifiera-epost-meddelande' // Added the verification message page
+    pathname === '/verifiera-epost-meddelande' || // Added the verification message page
+    pathname === '/vinprovningar' || // Allow public access to courses listing page
+    (pathname.startsWith('/vinprovningar/') && !url.searchParams.has('lesson')) || // Allow public access to course landing pages, but not lessons
+    pathname.startsWith('/admin') // Temporarily allow admin access for first user setup
   ) {
     return NextResponse.next()
   }
@@ -74,8 +70,8 @@ export async function middleware(request: NextRequest) {
 
   // If user is authenticated and trying to access login/register, redirect to dashboard
   if (payloadToken && (pathname === '/logga-in' || pathname === '/registrera')) {
-    console.log(`Middleware: Auth cookie found, redirecting from ${pathname} to /mina-sidor`)
-    url.pathname = '/mina-sidor'
+    console.log(`Middleware: Auth cookie found, redirecting from ${pathname} to /profil`)
+    url.pathname = '/profil'
     return NextResponse.redirect(url)
   }
 

@@ -67,16 +67,66 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    users: User;
     media: Media;
+    users: User;
+    courses: Course;
+    modules: Module;
+    lessons: Lesson;
+    'user-progress': UserProgress;
+    questions: Question;
+    quizzes: Quiz;
+    'quiz-attempts': QuizAttempt;
+    'content-templates': ContentTemplate;
+    enrollments: Enrollment;
+    wines: Wine;
+    'user-wines': UserWine;
+    transactions: Transaction;
+    subscriptions: Subscription;
+    orders: Order;
+    grapes: Grape;
+    countries: Country;
+    regions: Region;
+    'user-wine-lists': UserWineList;
+    reviews: Review;
+    'course-reviews': CourseReview;
+    'blog-posts': BlogPost;
+    'blog-categories': BlogCategory;
+    'blog-tags': BlogTag;
+    'course-sessions': CourseSession;
+    'session-participants': SessionParticipant;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
+    courses: CoursesSelect<false> | CoursesSelect<true>;
+    modules: ModulesSelect<false> | ModulesSelect<true>;
+    lessons: LessonsSelect<false> | LessonsSelect<true>;
+    'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
+    questions: QuestionsSelect<false> | QuestionsSelect<true>;
+    quizzes: QuizzesSelect<false> | QuizzesSelect<true>;
+    'quiz-attempts': QuizAttemptsSelect<false> | QuizAttemptsSelect<true>;
+    'content-templates': ContentTemplatesSelect<false> | ContentTemplatesSelect<true>;
+    enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
+    wines: WinesSelect<false> | WinesSelect<true>;
+    'user-wines': UserWinesSelect<false> | UserWinesSelect<true>;
+    transactions: TransactionsSelect<false> | TransactionsSelect<true>;
+    subscriptions: SubscriptionsSelect<false> | SubscriptionsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    grapes: GrapesSelect<false> | GrapesSelect<true>;
+    countries: CountriesSelect<false> | CountriesSelect<true>;
+    regions: RegionsSelect<false> | RegionsSelect<true>;
+    'user-wine-lists': UserWineListsSelect<false> | UserWineListsSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
+    'course-reviews': CourseReviewsSelect<false> | CourseReviewsSelect<true>;
+    'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>;
+    'blog-categories': BlogCategoriesSelect<false> | BlogCategoriesSelect<true>;
+    'blog-tags': BlogTagsSelect<false> | BlogTagsSelect<true>;
+    'course-sessions': CourseSessionsSelect<false> | CourseSessionsSelect<true>;
+    'session-participants': SessionParticipantsSelect<false> | SessionParticipantsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -114,94 +164,6 @@ export interface UserAuthOperations {
   };
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  /**
-   * User's first name
-   */
-  firstName?: string | null;
-  /**
-   * User's last name
-   */
-  lastName?: string | null;
-  /**
-   * User's profile picture
-   */
-  avatar?: (number | null) | Media;
-  /**
-   * Short user biography
-   */
-  bio?: string | null;
-  /**
-   * User role determines permissions
-   */
-  role: 'admin' | 'instructor' | 'subscriber' | 'user';
-  /**
-   * Has the user verified their email address?
-   */
-  isVerified?: boolean | null;
-  /**
-   * Current status of the user account
-   */
-  accountStatus?: ('active' | 'suspended' | 'deactivated') | null;
-  /**
-   * Current subscription status
-   */
-  subscriptionStatus?: ('none' | 'free_trial' | 'active' | 'past_due' | 'canceled') | null;
-  /**
-   * Type of subscription plan
-   */
-  subscriptionPlan?: ('none' | 'monthly' | 'annual') | null;
-  /**
-   * Date when the subscription expires
-   */
-  subscriptionExpiry?: string | null;
-  /**
-   * User's wine preferences
-   */
-  winePreferences?: {
-    favoriteTypes?: ('red' | 'white' | 'rose' | 'sparkling' | 'dessert')[] | null;
-    preferredRegions?: ('france' | 'italy' | 'spain' | 'usa' | 'australia' | 'south_america' | 'other')[] | null;
-    tasteProfile?: ('dry' | 'sweet' | 'fruity' | 'bold' | 'light' | 'acidic' | 'tannic')[] | null;
-    priceRange?: ('budget' | 'mid' | 'premium' | 'luxury') | null;
-  };
-  /**
-   * User's progress in enrolled courses
-   */
-  courseProgress?:
-    | {
-        courseId: string;
-        progress?: number | null;
-        lastAccessed?: string | null;
-        completed?: boolean | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * User's communication preferences
-   */
-  communicationPreferences?: {
-    marketingEmails?: boolean | null;
-    newsletterSubscription?: boolean | null;
-    courseNotifications?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  _verified?: boolean | null;
-  _verificationToken?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  password?: string | null;
-}
-/**
  * Media files such as images, videos, and documents
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -212,7 +174,7 @@ export interface Media {
   /**
    * Descriptive text for screen readers and SEO
    */
-  alt: string;
+  alt?: string | null;
   /**
    * Optional caption text to display with the media
    */
@@ -269,18 +231,2926 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  /**
+   * User's first name
+   */
+  firstName?: string | null;
+  /**
+   * User's last name
+   */
+  lastName?: string | null;
+  /**
+   * User's profile picture
+   */
+  avatar?: (number | null) | Media;
+  /**
+   * Short user biography
+   */
+  bio?: string | null;
+  /**
+   * User role determines permissions
+   */
+  role: 'admin' | 'instructor' | 'subscriber' | 'user';
+  /**
+   * Has the user verified their email address?
+   */
+  isVerified?: boolean | null;
+  /**
+   * Current status of the user account
+   */
+  accountStatus?: ('active' | 'suspended' | 'deactivated') | null;
+  /**
+   * Current subscription status
+   */
+  subscriptionStatus?: ('none' | 'free_trial' | 'active' | 'past_due' | 'canceled') | null;
+  /**
+   * Type of subscription plan
+   */
+  subscriptionPlan?: ('none' | 'monthly' | 'annual') | null;
+  /**
+   * Date when the subscription expires
+   */
+  subscriptionExpiry?: string | null;
+  /**
+   * User's wine preferences
+   */
+  winePreferences?: {
+    /**
+     * User preferred grape varieties
+     */
+    favoriteGrapes?: (number | Grape)[] | null;
+    /**
+     * User preferred wine regions
+     */
+    favoriteRegions?: (number | Region)[] | null;
+    preferredStyles?:
+      | (
+          | 'light_red'
+          | 'medium_red'
+          | 'full_red'
+          | 'light_white'
+          | 'full_white'
+          | 'sparkling'
+          | 'rose'
+          | 'sweet'
+          | 'fortified'
+        )[]
+      | null;
+    tastingExperience?: ('Nybörjare' | 'Medel' | 'Avancerad' | 'Expert') | null;
+    discoveryPreferences?:
+      | ('new_grapes' | 'new_regions' | 'price_ranges' | 'wine_culture' | 'recommendations' | 'virtual_tastings')[]
+      | null;
+    priceRange?: ('budget' | 'mid' | 'premium' | 'luxury') | null;
+    /**
+     * User personal notes about wine preferences
+     */
+    tastingNotes?: string | null;
+  };
+  /**
+   * User's progress in enrolled courses
+   */
+  courseProgress?:
+    | {
+        courseId: string;
+        progress?: number | null;
+        lastAccessed?: string | null;
+        completed?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * User's notification preferences
+   */
+  notifications?: {
+    email?: {
+      courseProgress?: boolean | null;
+      newCourses?: boolean | null;
+      wineRecommendations?: boolean | null;
+      tastingEvents?: boolean | null;
+      newsletter?: boolean | null;
+      accountUpdates?: boolean | null;
+    };
+    push?: {
+      courseReminders?: boolean | null;
+      tastingReminders?: boolean | null;
+      achievements?: boolean | null;
+      socialActivity?: boolean | null;
+    };
+    platform?: {
+      inAppMessages?: boolean | null;
+      systemAnnouncements?: boolean | null;
+      maintenanceAlerts?: boolean | null;
+      featureUpdates?: boolean | null;
+    };
+  };
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  _verified?: boolean | null;
+  _verificationToken?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  password?: string | null;
+}
+/**
+ * Grape varieties/varietals for wines
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "grapes".
+ */
+export interface Grape {
+  id: number;
+  /**
+   * Name of the grape/varietal
+   */
+  name: string;
+  /**
+   * Color category of the grape
+   */
+  color?: ('red' | 'white') | null;
+  /**
+   * User who created this grape entry
+   */
+  createdBy?: (number | null) | User;
+  /**
+   * User who last updated this grape entry
+   */
+  updatedBy?: (number | null) | User;
+  /**
+   * Optional description or notes about this grape
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Wine regions, related to a country
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "regions".
+ */
+export interface Region {
+  id: number;
+  /**
+   * Name of the region
+   */
+  name: string;
+  /**
+   * Country this region belongs to
+   */
+  country: number | Country;
+  /**
+   * User who created this region entry
+   */
+  createdBy?: (number | null) | User;
+  /**
+   * User who last updated this region entry
+   */
+  updatedBy?: (number | null) | User;
+  /**
+   * Optional description or notes about this region
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Countries for wine origin
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries".
+ */
+export interface Country {
+  id: number;
+  /**
+   * Name of the country
+   */
+  name: string;
+  /**
+   * User who created this country entry
+   */
+  createdBy?: (number | null) | User;
+  /**
+   * User who last updated this country entry
+   */
+  updatedBy?: (number | null) | User;
+  /**
+   * Optional description or notes about this country
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Wine education courses offered on the platform
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses".
+ */
+export interface Course {
+  id: number;
+  /**
+   * Course title displayed to students
+   */
+  title: string;
+  /**
+   * URL-friendly version of the title
+   */
+  slug: string;
+  /**
+   * Brief description of the course content and goals
+   */
+  description: string;
+  /**
+   * Detailed course description with formatting
+   */
+  fullDescription?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Main course image for thumbnails and hero sections
+   */
+  featuredImage: number | Media;
+  /**
+   * Preview video for course overview page
+   */
+  previewVideoProvider?: ('none' | 'mux') | null;
+  previewMuxData?: {
+    /**
+     * Mux Asset ID
+     */
+    assetId?: string | null;
+    /**
+     * Mux Playback ID
+     */
+    playbackId?: string | null;
+    status?: ('preparing' | 'ready' | 'errored') | null;
+    /**
+     * Duration in seconds
+     */
+    duration?: number | null;
+    /**
+     * e.g., 16:9
+     */
+    aspectRatio?: string | null;
+  };
+  /**
+   * Upload a preview video file to process with Mux
+   */
+  previewSourceVideo?: (number | null) | Media;
+  /**
+   * Course price in SEK
+   */
+  price: number;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  /**
+   * Estimated course duration in hours
+   */
+  duration?: number | null;
+  /**
+   * Number of items (lessons + quizzes) available for free (counted across all modules in order)
+   */
+  freeItemCount?: number | null;
+  /**
+   * Display this course prominently on homepage and course listing
+   */
+  isFeatured?: boolean | null;
+  /**
+   * Course instructor
+   */
+  instructor: number | User;
+  /**
+   * Course modules in order
+   */
+  modules?: (number | Module)[] | null;
+  /**
+   * Course tags for search and filtering
+   */
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Stripe Product ID for this course
+   */
+  stripeProductId?: string | null;
+  /**
+   * Stripe Price ID for this course
+   */
+  stripePriceId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * Course modules that contain lessons
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules".
+ */
+export interface Module {
+  id: number;
+  title: string;
+  description?: string | null;
+  order: number;
+  course?: (number | null) | Course;
+  /**
+   * Lägg till och ordna lektioner och quiz med drag & drop. Detta styr ordningen i kursens innehåll.
+   */
+  contents?:
+    | (
+        | {
+            lesson: number | Lesson;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'lesson-item';
+          }
+        | {
+            quiz: number | Quiz;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'quiz-item';
+          }
+      )[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lessons".
+ */
+export interface Lesson {
+  id: number;
+  title: string;
+  description?: string | null;
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  videoProvider?: ('none' | 'mux' | 'youtube' | 'vimeo') | null;
+  muxData?: {
+    /**
+     * Mux Asset ID
+     */
+    assetId?: string | null;
+    /**
+     * Mux Playback ID
+     */
+    playbackId?: string | null;
+    status?: ('preparing' | 'ready' | 'errored') | null;
+    /**
+     * Duration in seconds
+     */
+    duration?: number | null;
+    /**
+     * e.g., 16:9
+     */
+    aspectRatio?: string | null;
+  };
+  /**
+   * YouTube/Vimeo URL or embed code
+   */
+  videoUrl?: string | null;
+  /**
+   * Upload a video file to process with Mux
+   */
+  sourceVideo?: (number | null) | Media;
+  module: number | Module;
+  order?: number | null;
+  /**
+   * Primary type of content in this lesson
+   */
+  lessonType?: ('video' | 'text' | 'quiz' | 'mixed' | 'wineReview') | null;
+  /**
+   * Whether this lesson includes a quiz component
+   */
+  hasQuiz?: boolean | null;
+  /**
+   * Select the canonical WSET answer review for comparison (tip: mark review as Trusted to use it here).
+   */
+  answerKeyReview?: (number | null) | Review;
+  status?: ('draft' | 'published') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * User reviews for wines, including WSET tasting notes
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: number;
+  /**
+   * The wine being reviewed
+   */
+  wine: number | Wine;
+  /**
+   * Associated lesson when used as a Wine Review quiz
+   */
+  lesson?: (number | null) | Lesson;
+  /**
+   * User who wrote the review
+   */
+  user?: (number | null) | User;
+  /**
+   * Session participant who submitted this review (for guest reviews)
+   */
+  sessionParticipant?: (number | null) | SessionParticipant;
+  /**
+   * Session this review was submitted in (for group tastings)
+   */
+  session?: (number | null) | CourseSession;
+  /**
+   * User who created this review
+   */
+  createdBy?: (number | null) | User;
+  /**
+   * User who last updated this review
+   */
+  updatedBy?: (number | null) | User;
+  /**
+   * User rating from 1-5
+   */
+  rating: number;
+  /**
+   * User review text
+   */
+  reviewText?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Mark as trusted (admins/instructors only)
+   */
+  isTrusted?: boolean | null;
+  /**
+   * WSET systematiskt provningsprotokoll
+   */
+  wsetTasting?: {
+    appearance?: {
+      clarity?: ('Klar' | 'Oklar') | null;
+      intensity?: ('Blek' | 'Mellan' | 'Djup') | null;
+      color?:
+        | (
+            | 'Citrongul'
+            | 'Guld'
+            | 'Bärnstensfärgad'
+            | 'Rosa'
+            | 'Rosa-orange'
+            | 'Orange'
+            | 'Lila'
+            | 'Rubinröd'
+            | 'Granatröd'
+            | 'Läderfärgad'
+          )
+        | null;
+    };
+    nose?: {
+      intensity?: ('Låg' | 'Mellan' | 'Hög') | null;
+      primaryAromas?:
+        | (
+            | 'Jordgubbe'
+            | 'Päron'
+            | 'Persika'
+            | 'Apelsin'
+            | 'Citron'
+            | 'Äpple'
+            | 'Krusbär'
+            | 'Grapefrukt'
+            | 'Druva'
+            | 'Lime'
+            | 'Aprikos'
+            | 'Banan'
+            | 'Nektarin'
+            | 'Litchi'
+            | 'Mango'
+            | 'Passionsfrukt'
+            | 'Melon'
+            | 'Ananas'
+            | 'Tranbär'
+            | 'Röda vinbär'
+            | 'Hallon'
+            | 'Röda körsbär'
+            | 'Svarta vinbär'
+            | 'Björnbär'
+            | 'Mörka körsbär'
+            | 'Blåbär'
+            | 'Mörka plommon'
+            | 'Röda plommon'
+            | 'Blomma'
+            | 'Ros'
+            | 'Viol'
+            | 'Grön paprika'
+            | 'Gräs'
+            | 'Tomatblad'
+            | 'Sparris'
+            | 'Eukalyptus'
+            | 'Mynta'
+            | 'Fänkål'
+            | 'Dill'
+            | 'Torkade örter'
+            | 'Svart- & Vitpeppar'
+            | 'Lakrits'
+            | 'Omogen frukt'
+            | 'Mogen frukt'
+            | 'Blöta stenar'
+          )[]
+        | null;
+      secondaryAromas?:
+        | (
+            | 'Vanilj'
+            | 'Ceder'
+            | 'Kex'
+            | 'Bröd'
+            | 'Bröddeg'
+            | 'yoghurt'
+            | 'Grädde'
+            | 'Smör'
+            | 'Ost'
+            | 'Kokosnöt'
+            | 'Förkolnat trä'
+            | 'Rök'
+            | 'Godis'
+            | 'Bakverk'
+            | 'Rostat bröd'
+            | 'Kryddnejlika'
+            | 'Kanel'
+            | 'Muskot'
+            | 'Ingefära'
+            | 'Kokt frukt'
+            | 'Kaffe'
+          )[]
+        | null;
+      tertiaryAromas?:
+        | (
+            | 'Choklad'
+            | 'Läder'
+            | 'Kola'
+            | 'Jord'
+            | 'Svamp'
+            | 'Kött'
+            | 'Tobak'
+            | 'Blöta löv'
+            | 'Skogsbotten'
+            | 'Apelsinmarmelad'
+            | 'Bensin'
+            | 'Mandel'
+            | 'Hasselnöt'
+            | 'Honung'
+            | 'Torkad frukt'
+          )[]
+        | null;
+    };
+    palate?: {
+      sweetness?: ('Torr' | 'Halvtorr' | 'Mellan' | 'Söt') | null;
+      acidity?: ('Låg' | 'Mellan' | 'Hög') | null;
+      tannin?: ('Låg' | 'Mellan' | 'Hög') | null;
+      alcohol?: ('Låg' | 'Mellan' | 'Hög') | null;
+      body?: ('Lätt' | 'Mellan' | 'Fyllig') | null;
+      flavourIntensity?: ('Låg' | 'Medium' | 'Uttalad') | null;
+      primaryFlavours?:
+        | (
+            | 'Jordgubbe'
+            | 'Päron'
+            | 'Persika'
+            | 'Apelsin'
+            | 'Citron'
+            | 'Äpple'
+            | 'Krusbär'
+            | 'Grapefrukt'
+            | 'Druva'
+            | 'Lime'
+            | 'Aprikos'
+            | 'Banan'
+            | 'Nektarin'
+            | 'Litchi'
+            | 'Mango'
+            | 'Passionsfrukt'
+            | 'Melon'
+            | 'Ananas'
+            | 'Tranbär'
+            | 'Röda vinbär'
+            | 'Hallon'
+            | 'Röda körsbär'
+            | 'Svarta vinbär'
+            | 'Björnbär'
+            | 'Mörka körsbär'
+            | 'Blåbär'
+            | 'Mörka plommon'
+            | 'Röda plommon'
+            | 'Blomma'
+            | 'Ros'
+            | 'Viol'
+            | 'Grön paprika'
+            | 'Gräs'
+            | 'Tomatblad'
+            | 'Sparris'
+            | 'Eukalyptus'
+            | 'Mynta'
+            | 'Fänkål'
+            | 'Dill'
+            | 'Torkade örter'
+            | 'Svart- & Vitpeppar'
+            | 'Lakrits'
+            | 'Omogen frukt'
+            | 'Mogen frukt'
+            | 'Blöta stenar'
+          )[]
+        | null;
+      secondaryFlavours?:
+        | (
+            | 'Vanilj'
+            | 'Ceder'
+            | 'Kex'
+            | 'Bröd'
+            | 'Bröddeg'
+            | 'yoghurt'
+            | 'Grädde'
+            | 'Smör'
+            | 'Ost'
+            | 'Kokosnöt'
+            | 'Förkolnat trä'
+            | 'Rök'
+            | 'Godis'
+            | 'Bakverk'
+            | 'Rostat bröd'
+            | 'Kryddnejlika'
+            | 'Kanel'
+            | 'Muskot'
+            | 'Ingefära'
+            | 'Kokt frukt'
+            | 'Kaffe'
+          )[]
+        | null;
+      tertiaryFlavours?:
+        | (
+            | 'Choklad'
+            | 'Läder'
+            | 'Kola'
+            | 'Jord'
+            | 'Svamp'
+            | 'Kött'
+            | 'Tobak'
+            | 'Blöta löv'
+            | 'Skogsbotten'
+            | 'Apelsinmarmelad'
+            | 'Bensin'
+            | 'Mandel'
+            | 'Hasselnöt'
+            | 'Honung'
+            | 'Torkad frukt'
+          )[]
+        | null;
+      finish?: ('Kort' | 'Mellan' | 'Lång') | null;
+    };
+    conclusion?: {
+      quality?: ('Dålig' | 'Acceptabel' | 'Bra' | 'Mycket bra' | 'Enastående') | null;
+      summary?: string | null;
+    };
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Wine database for the platform
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wines".
+ */
+export interface Wine {
+  id: number;
+  /**
+   * The name of the wine
+   */
+  name: string;
+  /**
+   * URL-friendly version of the name (e.g., "chateau-margaux-2015")
+   */
+  slug: string;
+  /**
+   * The producer or winery of the wine
+   */
+  winery: string;
+  /**
+   * The harvest year of the wine
+   */
+  vintage?: number | null;
+  /**
+   * Check if this is a non-vintage wine
+   */
+  nonVintage?: boolean | null;
+  /**
+   * Grape varieties in the wine
+   */
+  grapes: (number | Grape)[];
+  /**
+   * Country of origin
+   */
+  country: number | Country;
+  /**
+   * Wine region (e.g., Bordeaux, Napa Valley)
+   */
+  region: number | Region;
+  /**
+   * Price at Systembolaget in SEK
+   */
+  price?: number | null;
+  /**
+   * External link to Systembolaget product page
+   */
+  systembolagetUrl?: string | null;
+  /**
+   * Image of the wine bottle or label
+   */
+  image?: (number | null) | Media;
+  /**
+   * Detailed description of the wine
+   */
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Recommended food pairings
+   */
+  foodPairings?:
+    | {
+        pairing: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Participants in live course sessions
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "session-participants".
+ */
+export interface SessionParticipant {
+  id: number;
+  /**
+   * The session this participant belongs to
+   */
+  session: number | CourseSession;
+  /**
+   * Display name chosen by the participant
+   */
+  nickname: string;
+  /**
+   * Unique token for this participant in the session
+   */
+  participantToken: string;
+  /**
+   * Associated user account (if logged in)
+   */
+  user?: (number | null) | User;
+  /**
+   * Whether the participant is currently active in the session
+   */
+  isActive?: boolean | null;
+  /**
+   * Last time the participant was active
+   */
+  lastActivityAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Live group learning sessions for courses
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-sessions".
+ */
+export interface CourseSession {
+  id: number;
+  /**
+   * The course this session is for
+   */
+  course: number | Course;
+  /**
+   * Currently active lesson in the session
+   */
+  currentLesson?: (number | null) | Lesson;
+  /**
+   * Currently active quiz in the session
+   */
+  currentQuiz?: (number | null) | Quiz;
+  /**
+   * User who created and hosts this session
+   */
+  host: number | User;
+  /**
+   * 6-character code for participants to join (e.g., WINE42)
+   */
+  joinCode: string;
+  /**
+   * Optional friendly name for the session
+   */
+  sessionName?: string | null;
+  /**
+   * Current status of the session
+   */
+  status: 'active' | 'paused' | 'completed';
+  /**
+   * What participants are currently doing
+   */
+  currentActivity: 'waiting' | 'video' | 'quiz' | 'wine_review' | 'results';
+  /**
+   * Number of participants currently in the session
+   */
+  participantCount?: number | null;
+  /**
+   * Maximum number of participants allowed
+   */
+  maxParticipants?: number | null;
+  /**
+   * Session automatically expires after this time (24 hours default)
+   */
+  expiresAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quizzes".
+ */
+export interface Quiz {
+  id: number;
+  /**
+   * Quiz title
+   */
+  title: string;
+  /**
+   * Quiz description and instructions
+   */
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Course this quiz belongs to
+   */
+  course: number | Course;
+  /**
+   * Optional: Specific module this quiz belongs to
+   */
+  module?: (number | null) | Module;
+  /**
+   * Optional: Specific lesson this quiz belongs to
+   */
+  lesson?: (number | null) | Lesson;
+  /**
+   * Questions in this quiz
+   */
+  questions: {
+    question: number | Question;
+    /**
+     * Order of this question in the quiz
+     */
+    order: number;
+    /**
+     * Whether this question is required
+     */
+    required?: boolean | null;
+    id?: string | null;
+  }[];
+  quizSettings: {
+    /**
+     * Time limit in minutes (0 for no limit)
+     */
+    timeLimit?: number | null;
+    /**
+     * Minimum percentage score to pass
+     */
+    passingScore: number;
+    /**
+     * Maximum number of attempts allowed
+     */
+    maxAttempts?: number | null;
+    /**
+     * Randomize question order for each attempt
+     */
+    randomizeQuestions?: boolean | null;
+    /**
+     * Randomize answer order for multiple choice questions
+     */
+    randomizeAnswers?: boolean | null;
+    showCorrectAnswers?: ('never' | 'after-question' | 'after-submission' | 'after-all-attempts') | null;
+    /**
+     * Allow students to review their answers before submission
+     */
+    allowReview?: boolean | null;
+    /**
+     * Allow students to go back to previous questions
+     */
+    allowBackNavigation?: boolean | null;
+  };
+  grading?: {
+    gradingType?: ('automatic' | 'manual' | 'mixed') | null;
+    pointsDistribution?: ('equal' | 'question-based' | 'custom') | null;
+    /**
+     * Total points for the quiz (auto-calculated if not set)
+     */
+    totalPoints?: number | null;
+  };
+  availability?: {
+    /**
+     * When the quiz becomes available
+     */
+    availableFrom?: string | null;
+    /**
+     * When the quiz is no longer available
+     */
+    availableUntil?: string | null;
+    /**
+     * Prerequisites that must be completed before taking this quiz
+     */
+    prerequisites?:
+      | {
+          type: 'course' | 'module' | 'lesson' | 'quiz';
+          /**
+           * ID of the prerequisite item
+           */
+          item: string;
+          /**
+           * Minimum score required (for quiz prerequisites)
+           */
+          minScore?: number | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  feedback?: {
+    /**
+     * Message shown when student passes the quiz
+     */
+    passMessage?: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    /**
+     * Message shown when student fails the quiz
+     */
+    failMessage?: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    /**
+     * General feedback shown to all students
+     */
+    generalFeedback?: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+  };
+  /**
+   * Quiz analytics and statistics
+   */
+  analytics?: {
+    /**
+     * Total number of attempts across all students
+     */
+    totalAttempts?: number | null;
+    /**
+     * Average score across all attempts
+     */
+    averageScore?: number | null;
+    /**
+     * Percentage of students who passed
+     */
+    passRate?: number | null;
+    /**
+     * Average time spent in minutes
+     */
+    averageTimeSpent?: number | null;
+  };
+  status?: ('draft' | 'published' | 'archived') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "questions".
+ */
+export interface Question {
+  id: number;
+  /**
+   * The question text or prompt
+   */
+  title: string;
+  type: 'multiple-choice' | 'true-false' | 'short-answer' | 'essay' | 'fill-blank' | 'matching';
+  /**
+   * Additional question content, context, or media
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Answer options for multiple choice and matching questions
+   */
+  options?:
+    | {
+        text: string;
+        /**
+         * Mark as correct answer
+         */
+        isCorrect?: boolean | null;
+        /**
+         * Optional explanation for this answer choice
+         */
+        explanation?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The correct answer for non-multiple choice questions
+   */
+  correctAnswer?: string | null;
+  /**
+   * Alternative acceptable answers
+   */
+  acceptableAnswers?:
+    | {
+        answer: string;
+        caseSensitive?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Explanation provided after answering (for all question types)
+   */
+  explanation?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Points awarded for correct answer
+   */
+  points: number;
+  difficulty?: ('easy' | 'medium' | 'hard') | null;
+  /**
+   * Tags for categorizing questions
+   */
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Time limit in seconds (optional)
+   */
+  timeLimit?: number | null;
+  /**
+   * Progressive hints for the question
+   */
+  hints?:
+    | {
+        hint: string;
+        order: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional image, video, or audio for the question
+   */
+  media?: (number | null) | Media;
+  status?: ('active' | 'inactive' | 'review') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Track user progress through courses
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-progress".
+ */
+export interface UserProgress {
+  id: number;
+  /**
+   * Student taking the course
+   */
+  user: number | User;
+  /**
+   * Course being tracked
+   */
+  course: number | Course;
+  /**
+   * Course title for easy reference
+   */
+  courseTitle?: string | null;
+  /**
+   * Current status of the course
+   */
+  status: 'not-started' | 'in-progress' | 'completed' | 'paused' | 'dropped';
+  /**
+   * Percentage of course completed
+   */
+  progressPercentage?: number | null;
+  /**
+   * When the student enrolled in the course
+   */
+  enrolledAt?: string | null;
+  /**
+   * When the student started the course
+   */
+  startedAt?: string | null;
+  /**
+   * When the student completed the course
+   */
+  completedAt?: string | null;
+  /**
+   * When the student last accessed the course
+   */
+  lastAccessedAt?: string | null;
+  /**
+   * Total time spent on the course in minutes
+   */
+  timeSpent?: number | null;
+  /**
+   * Current module being studied
+   */
+  currentModule?: (number | null) | Module;
+  /**
+   * Current lesson being studied
+   */
+  currentLesson?: (number | null) | Lesson;
+  /**
+   * Modules completed by the student
+   */
+  completedModules?: (number | Module)[] | null;
+  /**
+   * Lessons completed by the student
+   */
+  completedLessons?: (number | Lesson)[] | null;
+  /**
+   * Lessons bookmarked by the student
+   */
+  bookmarkedLessons?: (number | Lesson)[] | null;
+  /**
+   * Quiz scores for the course
+   */
+  scores?:
+    | {
+        /**
+         * Lesson with quiz
+         */
+        lesson: number | Lesson;
+        /**
+         * Score achieved (percentage)
+         */
+        score: number;
+        /**
+         * Number of attempts taken
+         */
+        attempts: number;
+        /**
+         * When the quiz was completed
+         */
+        completedAt: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Results for quizzes (per user, per course)
+   */
+  quizScores?:
+    | {
+        quiz: number | Quiz;
+        /**
+         * Score achieved (percentage)
+         */
+        score: number;
+        attempts: number;
+        passed?: boolean | null;
+        completedAt: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Per-lesson watch progress & resume position
+   */
+  lessonStates?:
+    | {
+        lesson: number | Lesson;
+        progress?: number | null;
+        /**
+         * Last watched position (seconds)
+         */
+        positionSeconds?: number | null;
+        durationSeconds?: number | null;
+        lastWatchedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Notes taken by the student
+   */
+  notes?:
+    | {
+        /**
+         * Lesson the note is related to
+         */
+        lesson: number | Lesson;
+        /**
+         * Student note content
+         */
+        note: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        /**
+         * Video timestamp if applicable
+         */
+        timestamp?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Has a certificate been issued for this course?
+   */
+  certificateIssued?: boolean | null;
+  /**
+   * When the certificate was issued
+   */
+  certificateIssuedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quiz-attempts".
+ */
+export interface QuizAttempt {
+  id: number;
+  /**
+   * Student who took the quiz
+   */
+  user: number | User;
+  /**
+   * Quiz that was attempted
+   */
+  quiz: number | Quiz;
+  /**
+   * Which attempt this is for the user (1, 2, 3, etc.)
+   */
+  attemptNumber: number;
+  status: 'in-progress' | 'completed' | 'abandoned' | 'expired';
+  /**
+   * When the attempt was started
+   */
+  startedAt: string;
+  /**
+   * When the attempt was completed
+   */
+  completedAt?: string | null;
+  /**
+   * Total time spent in seconds
+   */
+  timeSpent?: number | null;
+  /**
+   * User answers for each question
+   */
+  answers?:
+    | {
+        question: number | Question;
+        /**
+         * User's answer (format depends on question type)
+         */
+        answer?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        /**
+         * Whether the answer is correct
+         */
+        isCorrect?: boolean | null;
+        /**
+         * Points awarded for this answer
+         */
+        pointsAwarded?: number | null;
+        /**
+         * Time spent on this question in seconds
+         */
+        timeSpent?: number | null;
+        /**
+         * When this question was answered
+         */
+        answeredAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  scoring?: {
+    /**
+     * Total points scored
+     */
+    totalPoints?: number | null;
+    /**
+     * Maximum points possible
+     */
+    maxPoints?: number | null;
+    /**
+     * Score as percentage
+     */
+    score?: number | null;
+    /**
+     * Whether the attempt passed the quiz
+     */
+    passed?: boolean | null;
+    /**
+     * Letter grade (optional)
+     */
+    grade?:
+      | (
+          | 'a-plus'
+          | 'a'
+          | 'a-minus'
+          | 'b-plus'
+          | 'b'
+          | 'b-minus'
+          | 'c-plus'
+          | 'c'
+          | 'c-minus'
+          | 'd-plus'
+          | 'd'
+          | 'd-minus'
+          | 'f'
+        )
+      | null;
+  };
+  feedback?: {
+    /**
+     * Automatic feedback based on score
+     */
+    autoFeedback?: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    /**
+     * Manual feedback from instructor
+     */
+    instructorFeedback?: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    /**
+     * When instructor feedback was provided
+     */
+    feedbackGivenAt?: string | null;
+  };
+  /**
+   * Additional metadata about the attempt
+   */
+  metadata?: {
+    /**
+     * IP address of the user
+     */
+    ipAddress?: string | null;
+    /**
+     * User agent string
+     */
+    userAgent?: string | null;
+    deviceType?: ('desktop' | 'mobile' | 'tablet') | null;
+    /**
+     * Browser information
+     */
+    browserInfo?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+  };
+  /**
+   * Special flags for this attempt
+   */
+  flags?: {
+    /**
+     * Whether this is a retake attempt
+     */
+    isRetake?: boolean | null;
+    /**
+     * Whether user was granted extended time
+     */
+    hasExtendedTime?: boolean | null;
+    /**
+     * Whether this was a proctored attempt
+     */
+    proctored?: boolean | null;
+    /**
+     * Whether this attempt is flagged for manual review
+     */
+    flaggedForReview?: boolean | null;
+    /**
+     * Notes from manual review
+     */
+    reviewNotes?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-templates".
+ */
+export interface ContentTemplate {
+  id: number;
+  /**
+   * Template name for easy identification
+   */
+  name: string;
+  /**
+   * Description of what this template is for
+   */
+  description?: string | null;
+  type:
+    | 'video-quiz'
+    | 'reading-exercise'
+    | 'interactive-demo'
+    | 'case-study'
+    | 'lab-exercise'
+    | 'discussion-forum'
+    | 'assignment'
+    | 'custom';
+  category?: ('general' | 'introduction' | 'core-content' | 'practice' | 'assessment' | 'review' | 'advanced') | null;
+  /**
+   * Content blocks that make up this template
+   */
+  contentBlocks: (
+    | {
+        /**
+         * Optional title for this text section
+         */
+        title?: string | null;
+        /**
+         * Rich text content
+         */
+        content: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        style?: ('default' | 'highlight' | 'callout' | 'warning' | 'info' | 'success') | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'text-block';
+      }
+    | {
+        /**
+         * Video title
+         */
+        title?: string | null;
+        videoProvider?: ('upload' | 'youtube' | 'vimeo' | 'mux') | null;
+        /**
+         * Upload video file
+         */
+        videoFile?: (number | null) | Media;
+        /**
+         * YouTube or Vimeo URL
+         */
+        videoUrl?: string | null;
+        /**
+         * Mux playback ID
+         */
+        muxPlaybackId?: string | null;
+        /**
+         * Video thumbnail image
+         */
+        thumbnail?: (number | null) | Media;
+        /**
+         * Video description or transcript
+         */
+        description?: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        /**
+         * Video duration in minutes
+         */
+        duration?: number | null;
+        autoplay?: boolean | null;
+        showControls?: boolean | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'video-block';
+      }
+    | {
+        /**
+         * Gallery title
+         */
+        title?: string | null;
+        images: {
+          image: number | Media;
+          /**
+           * Image caption
+           */
+          caption?: string | null;
+          /**
+           * Alt text for accessibility
+           */
+          alt?: string | null;
+          id?: string | null;
+        }[];
+        layout?: ('grid' | 'carousel' | 'masonry') | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'image-gallery';
+      }
+    | {
+        /**
+         * Code snippet title
+         */
+        title?: string | null;
+        language?:
+          | (
+              | 'javascript'
+              | 'typescript'
+              | 'python'
+              | 'java'
+              | 'csharp'
+              | 'php'
+              | 'html'
+              | 'css'
+              | 'sql'
+              | 'json'
+              | 'other'
+            )
+          | null;
+        /**
+         * Code content
+         */
+        code: string;
+        /**
+         * Code explanation or notes
+         */
+        explanation?: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        showLineNumbers?: boolean | null;
+        /**
+         * Comma-separated line numbers to highlight (e.g., 1,3,5-7)
+         */
+        highlightLines?: string | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'code-snippet';
+      }
+    | {
+        /**
+         * Interactive element title
+         */
+        title?: string | null;
+        elementType: 'quiz' | 'poll' | 'survey' | 'simulation' | 'calculator' | 'drag-drop' | 'embedded-widget';
+        /**
+         * Select quiz to embed
+         */
+        quiz?: (number | null) | Quiz;
+        /**
+         * Embed code for external widget
+         */
+        embedCode?: string | null;
+        /**
+         * Configuration options for the interactive element
+         */
+        configuration?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        /**
+         * Instructions for using the interactive element
+         */
+        instructions?: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'interactive-element';
+      }
+    | {
+        /**
+         * Section title
+         */
+        title?: string | null;
+        files: {
+          file: number | Media;
+          /**
+           * Display title for the file
+           */
+          title?: string | null;
+          /**
+           * File description
+           */
+          description?: string | null;
+          fileType?: ('pdf' | 'doc' | 'excel' | 'ppt' | 'image' | 'video' | 'audio' | 'archive' | 'other') | null;
+          id?: string | null;
+        }[];
+        /**
+         * Require user to be logged in to download
+         */
+        requiresLogin?: boolean | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'download-files';
+      }
+    | {
+        /**
+         * Assignment title
+         */
+        title: string;
+        /**
+         * Assignment instructions
+         */
+        instructions: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        /**
+         * Assignment due date
+         */
+        dueDate?: string | null;
+        /**
+         * Maximum points for this assignment
+         */
+        maxPoints?: number | null;
+        submissionType?: ('text' | 'file' | 'both') | null;
+        /**
+         * Allowed file types (e.g., .pdf, .docx, .txt)
+         */
+        allowedFileTypes?: string | null;
+        /**
+         * Maximum file size in MB
+         */
+        maxFileSize?: number | null;
+        /**
+         * Assignment rubric or grading criteria
+         */
+        rubric?: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'assignment-block';
+      }
+  )[];
+  settings?: {
+    /**
+     * Estimated time to complete in minutes
+     */
+    estimatedDuration?: number | null;
+    difficulty?: ('beginner' | 'intermediate' | 'advanced') | null;
+    /**
+     * Prerequisites for using this template
+     */
+    prerequisites?:
+      | {
+          prerequisite: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Tags for categorizing this template
+     */
+    tags?:
+      | {
+          tag: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  metadata?: {
+    /**
+     * Template author
+     */
+    author?: (number | null) | User;
+    /**
+     * Template version
+     */
+    version?: string | null;
+    /**
+     * Last updated date
+     */
+    lastUpdated?: string | null;
+    /**
+     * Number of times this template has been used
+     */
+    usageCount?: number | null;
+    /**
+     * Template rating (1-5 stars)
+     */
+    rating?: number | null;
+  };
+  /**
+   * Whether this template is active and available for use
+   */
+  isActive?: boolean | null;
+  /**
+   * Whether this template is publicly available to all users
+   */
+  isPublic?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments".
+ */
+export interface Enrollment {
+  id: number;
+  /**
+   * Student enrolled in the course
+   */
+  user: number | User;
+  /**
+   * Course the student is enrolled in
+   */
+  course: number | Course;
+  status: 'active' | 'completed' | 'suspended' | 'cancelled' | 'expired' | 'pending';
+  enrollmentType: 'paid' | 'free' | 'trial' | 'scholarship' | 'staff' | 'beta';
+  /**
+   * When the student enrolled
+   */
+  enrolledAt: string;
+  /**
+   * When the enrollment expires (if applicable)
+   */
+  expiresAt?: string | null;
+  accessLevel?: ('full' | 'preview' | 'limited' | 'audit') | null;
+  permissions?: {
+    /**
+     * Can view course content
+     */
+    canViewContent?: boolean | null;
+    /**
+     * Can take quizzes and assessments
+     */
+    canTakeQuizzes?: boolean | null;
+    /**
+     * Can download course files
+     */
+    canDownloadFiles?: boolean | null;
+    /**
+     * Can post comments and participate in discussions
+     */
+    canPostComments?: boolean | null;
+    /**
+     * Can view their grades and progress
+     */
+    canViewGrades?: boolean | null;
+    /**
+     * Can receive course completion certificate
+     */
+    canReceiveCertificate?: boolean | null;
+  };
+  /**
+   * Payment information
+   */
+  payment?: {
+    paymentStatus?: ('pending' | 'paid' | 'failed' | 'refunded' | 'cancelled' | 'free') | null;
+    /**
+     * Amount paid for the course
+     */
+    amount?: number | null;
+    /**
+     * Currency code (e.g., SEK, USD, EUR)
+     */
+    currency?: string | null;
+    /**
+     * Payment transaction ID
+     */
+    transactionId?: string | null;
+    /**
+     * When payment was completed
+     */
+    paidAt?: string | null;
+  };
+  /**
+   * Course progress tracking
+   */
+  progress?: {
+    /**
+     * Completion percentage (0-100)
+     */
+    completionPercentage?: number | null;
+    /**
+     * Last time the student accessed the course
+     */
+    lastAccessedAt?: string | null;
+    /**
+     * Total time spent in minutes
+     */
+    timeSpent?: number | null;
+    /**
+     * Current module being studied
+     */
+    currentModule?: (number | null) | Module;
+    /**
+     * Current lesson being studied
+     */
+    currentLesson?: (number | null) | Lesson;
+    /**
+     * When the course was completed
+     */
+    completedAt?: string | null;
+  };
+  /**
+   * Access restrictions and limitations
+   */
+  restrictions?: {
+    /**
+     * Maximum login attempts (0 = unlimited)
+     */
+    maxLoginAttempts?: number | null;
+    /**
+     * Allowed IP addresses (leave empty for no restriction)
+     */
+    allowedIpAddresses?:
+      | {
+          ipAddress: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Maximum number of devices (0 = unlimited)
+     */
+    allowedDevices?: number | null;
+    /**
+     * Requires proctoring for assessments
+     */
+    requiresProctoring?: boolean | null;
+    /**
+     * Allows offline access to content
+     */
+    offlineAccess?: boolean | null;
+  };
+  /**
+   * Administrative notes and communication
+   */
+  notes?: {
+    /**
+     * Internal notes about this enrollment
+     */
+    adminNotes?: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    /**
+     * Notes from the student
+     */
+    studentNotes?: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    /**
+     * Special instructions for this enrollment
+     */
+    specialInstructions?: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+  };
+  /**
+   * Additional metadata
+   */
+  metadata?: {
+    /**
+     * How the student found the course
+     */
+    referralSource?: string | null;
+    /**
+     * Coupon code used for enrollment
+     */
+    couponCode?: string | null;
+    enrollmentReason?: ('professional' | 'personal' | 'academic' | 'company' | 'career-change' | 'other') | null;
+    /**
+     * When the student expects to complete the course
+     */
+    expectedCompletionDate?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * User wine collections including tried, favorites, and wishlist items
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-wines".
+ */
+export interface UserWine {
+  id: number;
+  /**
+   * Automatically generated display title (User + Wine)
+   */
+  title?: string | null;
+  /**
+   * User who owns this wine entry
+   */
+  user: number | User;
+  /**
+   * Wine in the collection
+   */
+  wine: number | Wine;
+  /**
+   * The list this wine belongs to (e.g., Favorites, Wishlist, or a custom list)
+   */
+  list: number | UserWineList;
+  /**
+   * User rating from 1-5
+   */
+  rating?: number | null;
+  /**
+   * User personal notes about this wine
+   */
+  notes?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Details about where/when the wine was purchased
+   */
+  purchaseInfo?: {
+    purchaseDate?: string | null;
+    purchaseLocation?: string | null;
+    price?: number | null;
+  };
+  /**
+   * User personal categorization tags
+   */
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * User-defined wine lists (e.g., Favorites, Wishlist, or custom lists)
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-wine-lists".
+ */
+export interface UserWineList {
+  id: number;
+  /**
+   * Owner of this wine list
+   */
+  user: number | User;
+  /**
+   * Name of the wine list (e.g., Favorites, Wishlist, "My Summer Wines")
+   */
+  name: string;
+  /**
+   * Is this a system/predefined list (e.g., Favorites, Wishlist)?
+   */
+  isSystem?: boolean | null;
+  /**
+   * User who created this wine list
+   */
+  createdBy?: (number | null) | User;
+  /**
+   * User who last updated this wine list
+   */
+  updatedBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Financial transaction records for the platform
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: number;
+  /**
+   * Unique transaction ID (typically from payment processor)
+   */
+  transactionId: string;
+  /**
+   * User associated with this transaction
+   */
+  user: number | User;
+  /**
+   * Type of transaction
+   */
+  type:
+    | 'course_purchase'
+    | 'subscription_initial'
+    | 'subscription_renewal'
+    | 'subscription_upgrade'
+    | 'subscription_downgrade'
+    | 'refund'
+    | 'credit'
+    | 'other';
+  /**
+   * Transaction amount in SEK (negative for refunds)
+   */
+  amount: number;
+  /**
+   * Current status of the transaction
+   */
+  status: 'pending' | 'completed' | 'failed' | 'refunded' | 'partially_refunded' | 'disputed';
+  /**
+   * Payment method used
+   */
+  paymentMethod:
+    | 'credit_card'
+    | 'bank_transfer'
+    | 'invoice'
+    | 'paypal'
+    | 'apple_pay'
+    | 'google_pay'
+    | 'klarna'
+    | 'swish'
+    | 'other';
+  /**
+   * Currency of the transaction
+   */
+  currency: 'sek' | 'eur' | 'usd' | 'gbp' | 'other';
+  /**
+   * Related course for course purchases
+   */
+  relatedCourse?: (number | null) | Course;
+  /**
+   * Information from the payment processor
+   */
+  paymentProcessor: {
+    processor: 'stripe' | 'paypal' | 'manual' | 'other';
+    /**
+     * Transaction ID from the payment processor
+     */
+    processorTransactionId?: string | null;
+    /**
+     * Fee charged by the payment processor
+     */
+    processorFee?: number | null;
+    /**
+     * Full response JSON from the payment processor
+     */
+    processorResponse?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+  };
+  /**
+   * Internal notes about this transaction
+   */
+  notes?: string | null;
+  /**
+   * Notes visible to the customer
+   */
+  customerNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Wine club subscription management
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions".
+ */
+export interface Subscription {
+  id: number;
+  /**
+   * Unique subscription identifier
+   */
+  subscriptionNumber: string;
+  /**
+   * Subscriber
+   */
+  user: number | User;
+  /**
+   * Current subscription status
+   */
+  status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'paused';
+  /**
+   * Subscription plan type
+   */
+  planId: 'wine_club_monthly' | 'wine_club_yearly';
+  /**
+   * Subscription amount (in SEK)
+   */
+  amount: number;
+  /**
+   * Subscription currency
+   */
+  currency: string;
+  /**
+   * Billing interval
+   */
+  interval: 'month' | 'year';
+  /**
+   * Stripe Subscription ID
+   */
+  stripeSubscriptionId?: string | null;
+  /**
+   * Stripe Customer ID
+   */
+  stripeCustomerId?: string | null;
+  /**
+   * Stripe Price ID for this subscription plan
+   */
+  stripePriceId?: string | null;
+  /**
+   * Start of current billing period
+   */
+  currentPeriodStart: string;
+  /**
+   * End of current billing period
+   */
+  currentPeriodEnd: string;
+  /**
+   * Trial period start (if applicable)
+   */
+  trialStart?: string | null;
+  /**
+   * Trial period end (if applicable)
+   */
+  trialEnd?: string | null;
+  /**
+   * Scheduled cancellation date
+   */
+  cancelAt?: string | null;
+  /**
+   * Cancel at the end of current billing period
+   */
+  cancelAtPeriodEnd?: boolean | null;
+  /**
+   * When subscription was cancelled
+   */
+  canceledAt?: string | null;
+  /**
+   * Default payment method details
+   */
+  defaultPaymentMethod?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Latest invoice ID from Stripe
+   */
+  latestInvoice?: string | null;
+  /**
+   * Subscription features and benefits
+   */
+  features?:
+    | {
+        feature: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Courses included with this subscription
+   */
+  coursesIncluded?: (number | Course)[] | null;
+  /**
+   * Discount percentage for course purchases
+   */
+  discountPercent?: number | null;
+  /**
+   * Internal notes about this subscription
+   */
+  notes?: string | null;
+  /**
+   * Additional subscription metadata
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Course purchase orders and payment tracking
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  /**
+   * Unique order identifier
+   */
+  orderNumber: string;
+  /**
+   * Customer who placed the order
+   */
+  user: number | User;
+  /**
+   * Current status of the order
+   */
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+  /**
+   * Courses included in this order
+   */
+  items: {
+    /**
+     * Course being purchased
+     */
+    course: number | Course;
+    /**
+     * Price paid for this course (in SEK)
+     */
+    price: number;
+    /**
+     * Quantity (usually 1 for courses)
+     */
+    quantity: number;
+    id?: string | null;
+  }[];
+  /**
+   * Total order amount (in SEK)
+   */
+  amount: number;
+  /**
+   * Order currency
+   */
+  currency: string;
+  /**
+   * Total discount applied (in SEK)
+   */
+  discountAmount?: number | null;
+  /**
+   * Discount code used (if any)
+   */
+  discountCode?: string | null;
+  /**
+   * Stripe Payment Intent ID
+   */
+  stripePaymentIntentId?: string | null;
+  /**
+   * Stripe Checkout Session ID
+   */
+  stripeSessionId?: string | null;
+  /**
+   * Stripe Customer ID
+   */
+  stripeCustomerId?: string | null;
+  /**
+   * Stripe Charge ID (for completed payments)
+   */
+  stripeChargeId?: string | null;
+  /**
+   * Payment method used
+   */
+  paymentMethod?: ('card' | 'klarna') | null;
+  /**
+   * Payment method details (last 4 digits, brand, etc.)
+   */
+  paymentMethodDetails?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * URL to downloadable invoice
+   */
+  invoiceUrl?: string | null;
+  /**
+   * URL to payment receipt
+   */
+  receiptUrl?: string | null;
+  /**
+   * When the payment was completed
+   */
+  paidAt?: string | null;
+  /**
+   * When the payment failed (if applicable)
+   */
+  failedAt?: string | null;
+  /**
+   * When the order was refunded (if applicable)
+   */
+  refundedAt?: string | null;
+  /**
+   * Internal notes about this order
+   */
+  notes?: string | null;
+  /**
+   * Additional order metadata
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-reviews".
+ */
+export interface CourseReview {
+  id: number;
+  title: string;
+  course: number | Course;
+  author: number | User;
+  rating: number;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  pros?:
+    | {
+        point: string;
+        id?: string | null;
+      }[]
+    | null;
+  cons?:
+    | {
+        point: string;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'published' | 'pending' | 'rejected';
+  isVerifiedPurchase?: boolean | null;
+  completionStatus?: ('not_started' | 'in_progress' | 'completed') | null;
+  helpfulVotes?: number | null;
+  totalVotes?: number | null;
+  moderatorNotes?: string | null;
+  metadata?: {
+    deviceType?: ('desktop' | 'mobile' | 'tablet') | null;
+    userAgent?: string | null;
+    location?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Blog posts for wine education, news, and articles
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-posts".
+ */
+export interface BlogPost {
+  id: number;
+  title: string;
+  /**
+   * URL-friendly version of the title
+   */
+  slug: string;
+  /**
+   * Brief summary shown in listings and SEO
+   */
+  excerpt?: string | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Main image for the blog post
+   */
+  featuredImage?: (number | null) | Media;
+  author: number | User;
+  category: number | BlogCategory;
+  tags?: (number | BlogTag)[] | null;
+  /**
+   * When this post was/will be published
+   */
+  publishedDate?: string | null;
+  /**
+   * SEO title (default: post title)
+   */
+  seoTitle?: string | null;
+  /**
+   * SEO meta description (default: excerpt)
+   */
+  seoDescription?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * Categories for organizing blog posts
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-categories".
+ */
+export interface BlogCategory {
+  id: number;
+  /**
+   * Name of the blog category
+   */
+  name: string;
+  /**
+   * URL-friendly version of the category name
+   */
+  slug: string;
+  /**
+   * Brief description of this category
+   */
+  description?: string | null;
+  /**
+   * Color theme for visual distinction
+   */
+  color?: ('red' | 'blue' | 'green' | 'purple' | 'orange' | 'yellow' | 'pink' | 'gray') | null;
+  /**
+   * User who created this category
+   */
+  createdBy?: (number | null) | User;
+  /**
+   * User who last updated this category
+   */
+  updatedBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Tags for categorizing blog posts
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-tags".
+ */
+export interface BlogTag {
+  id: number;
+  /**
+   * Name of the blog tag
+   */
+  name: string;
+  /**
+   * URL-friendly version of the tag name
+   */
+  slug: string;
+  /**
+   * Brief description of this tag
+   */
+  description?: string | null;
+  /**
+   * Type of tag for better organization
+   */
+  type?:
+    | (
+        | 'general'
+        | 'wine-type'
+        | 'wine-region'
+        | 'grape-variety'
+        | 'tasting-note'
+        | 'food-pairing'
+        | 'wine-technique'
+        | 'industry-topic'
+      )
+    | null;
+  /**
+   * Color theme for visual distinction
+   */
+  color?: ('red' | 'blue' | 'green' | 'purple' | 'orange' | 'yellow' | 'pink' | 'gray') | null;
+  /**
+   * User who created this tag
+   */
+  createdBy?: (number | null) | User;
+  /**
+   * User who last updated this tag
+   */
+  updatedBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'media';
+        value: number | Media;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
     | ({
-        relationTo: 'media';
-        value: number | Media;
+        relationTo: 'courses';
+        value: number | Course;
+      } | null)
+    | ({
+        relationTo: 'modules';
+        value: number | Module;
+      } | null)
+    | ({
+        relationTo: 'lessons';
+        value: number | Lesson;
+      } | null)
+    | ({
+        relationTo: 'user-progress';
+        value: number | UserProgress;
+      } | null)
+    | ({
+        relationTo: 'questions';
+        value: number | Question;
+      } | null)
+    | ({
+        relationTo: 'quizzes';
+        value: number | Quiz;
+      } | null)
+    | ({
+        relationTo: 'quiz-attempts';
+        value: number | QuizAttempt;
+      } | null)
+    | ({
+        relationTo: 'content-templates';
+        value: number | ContentTemplate;
+      } | null)
+    | ({
+        relationTo: 'enrollments';
+        value: number | Enrollment;
+      } | null)
+    | ({
+        relationTo: 'wines';
+        value: number | Wine;
+      } | null)
+    | ({
+        relationTo: 'user-wines';
+        value: number | UserWine;
+      } | null)
+    | ({
+        relationTo: 'transactions';
+        value: number | Transaction;
+      } | null)
+    | ({
+        relationTo: 'subscriptions';
+        value: number | Subscription;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'grapes';
+        value: number | Grape;
+      } | null)
+    | ({
+        relationTo: 'countries';
+        value: number | Country;
+      } | null)
+    | ({
+        relationTo: 'regions';
+        value: number | Region;
+      } | null)
+    | ({
+        relationTo: 'user-wine-lists';
+        value: number | UserWineList;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: number | Review;
+      } | null)
+    | ({
+        relationTo: 'course-reviews';
+        value: number | CourseReview;
+      } | null)
+    | ({
+        relationTo: 'blog-posts';
+        value: number | BlogPost;
+      } | null)
+    | ({
+        relationTo: 'blog-categories';
+        value: number | BlogCategory;
+      } | null)
+    | ({
+        relationTo: 'blog-tags';
+        value: number | BlogTag;
+      } | null)
+    | ({
+        relationTo: 'course-sessions';
+        value: number | CourseSession;
+      } | null)
+    | ({
+        relationTo: 'session-participants';
+        value: number | SessionParticipant;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -323,57 +3193,6 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
- */
-export interface UsersSelect<T extends boolean = true> {
-  firstName?: T;
-  lastName?: T;
-  avatar?: T;
-  bio?: T;
-  role?: T;
-  isVerified?: T;
-  accountStatus?: T;
-  subscriptionStatus?: T;
-  subscriptionPlan?: T;
-  subscriptionExpiry?: T;
-  winePreferences?:
-    | T
-    | {
-        favoriteTypes?: T;
-        preferredRegions?: T;
-        tasteProfile?: T;
-        priceRange?: T;
-      };
-  courseProgress?:
-    | T
-    | {
-        courseId?: T;
-        progress?: T;
-        lastAccessed?: T;
-        completed?: T;
-        id?: T;
-      };
-  communicationPreferences?:
-    | T
-    | {
-        marketingEmails?: T;
-        newsletterSubscription?: T;
-        courseNotifications?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  _verified?: T;
-  _verificationToken?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -441,6 +3260,1013 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  firstName?: T;
+  lastName?: T;
+  avatar?: T;
+  bio?: T;
+  role?: T;
+  isVerified?: T;
+  accountStatus?: T;
+  subscriptionStatus?: T;
+  subscriptionPlan?: T;
+  subscriptionExpiry?: T;
+  winePreferences?:
+    | T
+    | {
+        favoriteGrapes?: T;
+        favoriteRegions?: T;
+        preferredStyles?: T;
+        tastingExperience?: T;
+        discoveryPreferences?: T;
+        priceRange?: T;
+        tastingNotes?: T;
+      };
+  courseProgress?:
+    | T
+    | {
+        courseId?: T;
+        progress?: T;
+        lastAccessed?: T;
+        completed?: T;
+        id?: T;
+      };
+  notifications?:
+    | T
+    | {
+        email?:
+          | T
+          | {
+              courseProgress?: T;
+              newCourses?: T;
+              wineRecommendations?: T;
+              tastingEvents?: T;
+              newsletter?: T;
+              accountUpdates?: T;
+            };
+        push?:
+          | T
+          | {
+              courseReminders?: T;
+              tastingReminders?: T;
+              achievements?: T;
+              socialActivity?: T;
+            };
+        platform?:
+          | T
+          | {
+              inAppMessages?: T;
+              systemAnnouncements?: T;
+              maintenanceAlerts?: T;
+              featureUpdates?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  _verified?: T;
+  _verificationToken?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses_select".
+ */
+export interface CoursesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  fullDescription?: T;
+  featuredImage?: T;
+  previewVideoProvider?: T;
+  previewMuxData?:
+    | T
+    | {
+        assetId?: T;
+        playbackId?: T;
+        status?: T;
+        duration?: T;
+        aspectRatio?: T;
+      };
+  previewSourceVideo?: T;
+  price?: T;
+  level?: T;
+  duration?: T;
+  freeItemCount?: T;
+  isFeatured?: T;
+  instructor?: T;
+  modules?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  stripeProductId?: T;
+  stripePriceId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules_select".
+ */
+export interface ModulesSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  order?: T;
+  course?: T;
+  contents?:
+    | T
+    | {
+        'lesson-item'?:
+          | T
+          | {
+              lesson?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'quiz-item'?:
+          | T
+          | {
+              quiz?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lessons_select".
+ */
+export interface LessonsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  content?: T;
+  videoProvider?: T;
+  muxData?:
+    | T
+    | {
+        assetId?: T;
+        playbackId?: T;
+        status?: T;
+        duration?: T;
+        aspectRatio?: T;
+      };
+  videoUrl?: T;
+  sourceVideo?: T;
+  module?: T;
+  order?: T;
+  lessonType?: T;
+  hasQuiz?: T;
+  answerKeyReview?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-progress_select".
+ */
+export interface UserProgressSelect<T extends boolean = true> {
+  user?: T;
+  course?: T;
+  courseTitle?: T;
+  status?: T;
+  progressPercentage?: T;
+  enrolledAt?: T;
+  startedAt?: T;
+  completedAt?: T;
+  lastAccessedAt?: T;
+  timeSpent?: T;
+  currentModule?: T;
+  currentLesson?: T;
+  completedModules?: T;
+  completedLessons?: T;
+  bookmarkedLessons?: T;
+  scores?:
+    | T
+    | {
+        lesson?: T;
+        score?: T;
+        attempts?: T;
+        completedAt?: T;
+        id?: T;
+      };
+  quizScores?:
+    | T
+    | {
+        quiz?: T;
+        score?: T;
+        attempts?: T;
+        passed?: T;
+        completedAt?: T;
+        id?: T;
+      };
+  lessonStates?:
+    | T
+    | {
+        lesson?: T;
+        progress?: T;
+        positionSeconds?: T;
+        durationSeconds?: T;
+        lastWatchedAt?: T;
+        id?: T;
+      };
+  notes?:
+    | T
+    | {
+        lesson?: T;
+        note?: T;
+        timestamp?: T;
+        id?: T;
+      };
+  certificateIssued?: T;
+  certificateIssuedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "questions_select".
+ */
+export interface QuestionsSelect<T extends boolean = true> {
+  title?: T;
+  type?: T;
+  content?: T;
+  options?:
+    | T
+    | {
+        text?: T;
+        isCorrect?: T;
+        explanation?: T;
+        id?: T;
+      };
+  correctAnswer?: T;
+  acceptableAnswers?:
+    | T
+    | {
+        answer?: T;
+        caseSensitive?: T;
+        id?: T;
+      };
+  explanation?: T;
+  points?: T;
+  difficulty?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  timeLimit?: T;
+  hints?:
+    | T
+    | {
+        hint?: T;
+        order?: T;
+        id?: T;
+      };
+  media?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quizzes_select".
+ */
+export interface QuizzesSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  course?: T;
+  module?: T;
+  lesson?: T;
+  questions?:
+    | T
+    | {
+        question?: T;
+        order?: T;
+        required?: T;
+        id?: T;
+      };
+  quizSettings?:
+    | T
+    | {
+        timeLimit?: T;
+        passingScore?: T;
+        maxAttempts?: T;
+        randomizeQuestions?: T;
+        randomizeAnswers?: T;
+        showCorrectAnswers?: T;
+        allowReview?: T;
+        allowBackNavigation?: T;
+      };
+  grading?:
+    | T
+    | {
+        gradingType?: T;
+        pointsDistribution?: T;
+        totalPoints?: T;
+      };
+  availability?:
+    | T
+    | {
+        availableFrom?: T;
+        availableUntil?: T;
+        prerequisites?:
+          | T
+          | {
+              type?: T;
+              item?: T;
+              minScore?: T;
+              id?: T;
+            };
+      };
+  feedback?:
+    | T
+    | {
+        passMessage?: T;
+        failMessage?: T;
+        generalFeedback?: T;
+      };
+  analytics?:
+    | T
+    | {
+        totalAttempts?: T;
+        averageScore?: T;
+        passRate?: T;
+        averageTimeSpent?: T;
+      };
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quiz-attempts_select".
+ */
+export interface QuizAttemptsSelect<T extends boolean = true> {
+  user?: T;
+  quiz?: T;
+  attemptNumber?: T;
+  status?: T;
+  startedAt?: T;
+  completedAt?: T;
+  timeSpent?: T;
+  answers?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        isCorrect?: T;
+        pointsAwarded?: T;
+        timeSpent?: T;
+        answeredAt?: T;
+        id?: T;
+      };
+  scoring?:
+    | T
+    | {
+        totalPoints?: T;
+        maxPoints?: T;
+        score?: T;
+        passed?: T;
+        grade?: T;
+      };
+  feedback?:
+    | T
+    | {
+        autoFeedback?: T;
+        instructorFeedback?: T;
+        feedbackGivenAt?: T;
+      };
+  metadata?:
+    | T
+    | {
+        ipAddress?: T;
+        userAgent?: T;
+        deviceType?: T;
+        browserInfo?: T;
+      };
+  flags?:
+    | T
+    | {
+        isRetake?: T;
+        hasExtendedTime?: T;
+        proctored?: T;
+        flaggedForReview?: T;
+        reviewNotes?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-templates_select".
+ */
+export interface ContentTemplatesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  type?: T;
+  category?: T;
+  contentBlocks?:
+    | T
+    | {
+        'text-block'?:
+          | T
+          | {
+              title?: T;
+              content?: T;
+              style?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'video-block'?:
+          | T
+          | {
+              title?: T;
+              videoProvider?: T;
+              videoFile?: T;
+              videoUrl?: T;
+              muxPlaybackId?: T;
+              thumbnail?: T;
+              description?: T;
+              duration?: T;
+              autoplay?: T;
+              showControls?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'image-gallery'?:
+          | T
+          | {
+              title?: T;
+              images?:
+                | T
+                | {
+                    image?: T;
+                    caption?: T;
+                    alt?: T;
+                    id?: T;
+                  };
+              layout?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'code-snippet'?:
+          | T
+          | {
+              title?: T;
+              language?: T;
+              code?: T;
+              explanation?: T;
+              showLineNumbers?: T;
+              highlightLines?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'interactive-element'?:
+          | T
+          | {
+              title?: T;
+              elementType?: T;
+              quiz?: T;
+              embedCode?: T;
+              configuration?: T;
+              instructions?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'download-files'?:
+          | T
+          | {
+              title?: T;
+              files?:
+                | T
+                | {
+                    file?: T;
+                    title?: T;
+                    description?: T;
+                    fileType?: T;
+                    id?: T;
+                  };
+              requiresLogin?: T;
+              id?: T;
+              blockName?: T;
+            };
+        'assignment-block'?:
+          | T
+          | {
+              title?: T;
+              instructions?: T;
+              dueDate?: T;
+              maxPoints?: T;
+              submissionType?: T;
+              allowedFileTypes?: T;
+              maxFileSize?: T;
+              rubric?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  settings?:
+    | T
+    | {
+        estimatedDuration?: T;
+        difficulty?: T;
+        prerequisites?:
+          | T
+          | {
+              prerequisite?: T;
+              id?: T;
+            };
+        tags?:
+          | T
+          | {
+              tag?: T;
+              id?: T;
+            };
+      };
+  metadata?:
+    | T
+    | {
+        author?: T;
+        version?: T;
+        lastUpdated?: T;
+        usageCount?: T;
+        rating?: T;
+      };
+  isActive?: T;
+  isPublic?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments_select".
+ */
+export interface EnrollmentsSelect<T extends boolean = true> {
+  user?: T;
+  course?: T;
+  status?: T;
+  enrollmentType?: T;
+  enrolledAt?: T;
+  expiresAt?: T;
+  accessLevel?: T;
+  permissions?:
+    | T
+    | {
+        canViewContent?: T;
+        canTakeQuizzes?: T;
+        canDownloadFiles?: T;
+        canPostComments?: T;
+        canViewGrades?: T;
+        canReceiveCertificate?: T;
+      };
+  payment?:
+    | T
+    | {
+        paymentStatus?: T;
+        amount?: T;
+        currency?: T;
+        transactionId?: T;
+        paidAt?: T;
+      };
+  progress?:
+    | T
+    | {
+        completionPercentage?: T;
+        lastAccessedAt?: T;
+        timeSpent?: T;
+        currentModule?: T;
+        currentLesson?: T;
+        completedAt?: T;
+      };
+  restrictions?:
+    | T
+    | {
+        maxLoginAttempts?: T;
+        allowedIpAddresses?:
+          | T
+          | {
+              ipAddress?: T;
+              id?: T;
+            };
+        allowedDevices?: T;
+        requiresProctoring?: T;
+        offlineAccess?: T;
+      };
+  notes?:
+    | T
+    | {
+        adminNotes?: T;
+        studentNotes?: T;
+        specialInstructions?: T;
+      };
+  metadata?:
+    | T
+    | {
+        referralSource?: T;
+        couponCode?: T;
+        enrollmentReason?: T;
+        expectedCompletionDate?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wines_select".
+ */
+export interface WinesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  winery?: T;
+  vintage?: T;
+  nonVintage?: T;
+  grapes?: T;
+  country?: T;
+  region?: T;
+  price?: T;
+  systembolagetUrl?: T;
+  image?: T;
+  description?: T;
+  foodPairings?:
+    | T
+    | {
+        pairing?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-wines_select".
+ */
+export interface UserWinesSelect<T extends boolean = true> {
+  title?: T;
+  user?: T;
+  wine?: T;
+  list?: T;
+  rating?: T;
+  notes?: T;
+  purchaseInfo?:
+    | T
+    | {
+        purchaseDate?: T;
+        purchaseLocation?: T;
+        price?: T;
+      };
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions_select".
+ */
+export interface TransactionsSelect<T extends boolean = true> {
+  transactionId?: T;
+  user?: T;
+  type?: T;
+  amount?: T;
+  status?: T;
+  paymentMethod?: T;
+  currency?: T;
+  relatedCourse?: T;
+  paymentProcessor?:
+    | T
+    | {
+        processor?: T;
+        processorTransactionId?: T;
+        processorFee?: T;
+        processorResponse?: T;
+      };
+  notes?: T;
+  customerNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions_select".
+ */
+export interface SubscriptionsSelect<T extends boolean = true> {
+  subscriptionNumber?: T;
+  user?: T;
+  status?: T;
+  planId?: T;
+  amount?: T;
+  currency?: T;
+  interval?: T;
+  stripeSubscriptionId?: T;
+  stripeCustomerId?: T;
+  stripePriceId?: T;
+  currentPeriodStart?: T;
+  currentPeriodEnd?: T;
+  trialStart?: T;
+  trialEnd?: T;
+  cancelAt?: T;
+  cancelAtPeriodEnd?: T;
+  canceledAt?: T;
+  defaultPaymentMethod?: T;
+  latestInvoice?: T;
+  features?:
+    | T
+    | {
+        feature?: T;
+        id?: T;
+      };
+  coursesIncluded?: T;
+  discountPercent?: T;
+  notes?: T;
+  metadata?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  orderNumber?: T;
+  user?: T;
+  status?: T;
+  items?:
+    | T
+    | {
+        course?: T;
+        price?: T;
+        quantity?: T;
+        id?: T;
+      };
+  amount?: T;
+  currency?: T;
+  discountAmount?: T;
+  discountCode?: T;
+  stripePaymentIntentId?: T;
+  stripeSessionId?: T;
+  stripeCustomerId?: T;
+  stripeChargeId?: T;
+  paymentMethod?: T;
+  paymentMethodDetails?: T;
+  invoiceUrl?: T;
+  receiptUrl?: T;
+  paidAt?: T;
+  failedAt?: T;
+  refundedAt?: T;
+  notes?: T;
+  metadata?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "grapes_select".
+ */
+export interface GrapesSelect<T extends boolean = true> {
+  name?: T;
+  color?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries_select".
+ */
+export interface CountriesSelect<T extends boolean = true> {
+  name?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "regions_select".
+ */
+export interface RegionsSelect<T extends boolean = true> {
+  name?: T;
+  country?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-wine-lists_select".
+ */
+export interface UserWineListsSelect<T extends boolean = true> {
+  user?: T;
+  name?: T;
+  isSystem?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  wine?: T;
+  lesson?: T;
+  user?: T;
+  sessionParticipant?: T;
+  session?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  rating?: T;
+  reviewText?: T;
+  isTrusted?: T;
+  wsetTasting?:
+    | T
+    | {
+        appearance?:
+          | T
+          | {
+              clarity?: T;
+              intensity?: T;
+              color?: T;
+            };
+        nose?:
+          | T
+          | {
+              intensity?: T;
+              primaryAromas?: T;
+              secondaryAromas?: T;
+              tertiaryAromas?: T;
+            };
+        palate?:
+          | T
+          | {
+              sweetness?: T;
+              acidity?: T;
+              tannin?: T;
+              alcohol?: T;
+              body?: T;
+              flavourIntensity?: T;
+              primaryFlavours?: T;
+              secondaryFlavours?: T;
+              tertiaryFlavours?: T;
+              finish?: T;
+            };
+        conclusion?:
+          | T
+          | {
+              quality?: T;
+              summary?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-reviews_select".
+ */
+export interface CourseReviewsSelect<T extends boolean = true> {
+  title?: T;
+  course?: T;
+  author?: T;
+  rating?: T;
+  content?: T;
+  pros?:
+    | T
+    | {
+        point?: T;
+        id?: T;
+      };
+  cons?:
+    | T
+    | {
+        point?: T;
+        id?: T;
+      };
+  status?: T;
+  isVerifiedPurchase?: T;
+  completionStatus?: T;
+  helpfulVotes?: T;
+  totalVotes?: T;
+  moderatorNotes?: T;
+  metadata?:
+    | T
+    | {
+        deviceType?: T;
+        userAgent?: T;
+        location?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-posts_select".
+ */
+export interface BlogPostsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  excerpt?: T;
+  content?: T;
+  featuredImage?: T;
+  author?: T;
+  category?: T;
+  tags?: T;
+  publishedDate?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-categories_select".
+ */
+export interface BlogCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  color?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-tags_select".
+ */
+export interface BlogTagsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  type?: T;
+  color?: T;
+  createdBy?: T;
+  updatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-sessions_select".
+ */
+export interface CourseSessionsSelect<T extends boolean = true> {
+  course?: T;
+  currentLesson?: T;
+  currentQuiz?: T;
+  host?: T;
+  joinCode?: T;
+  sessionName?: T;
+  status?: T;
+  currentActivity?: T;
+  participantCount?: T;
+  maxParticipants?: T;
+  expiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "session-participants_select".
+ */
+export interface SessionParticipantsSelect<T extends boolean = true> {
+  session?: T;
+  nickname?: T;
+  participantToken?: T;
+  user?: T;
+  isActive?: T;
+  lastActivityAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
@@ -470,6 +4296,128 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "WineReferenceBlock".
+ */
+export interface WineReferenceBlock {
+  /**
+   * Select a wine to reference in this content
+   */
+  wine: number | Wine;
+  /**
+   * How this wine reference should be displayed
+   */
+  displayStyle?: ('inline' | 'card' | 'link') | null;
+  /**
+   * Optional custom text to display instead of wine name
+   */
+  customText?: string | null;
+  /**
+   * Configure which wine details to display
+   */
+  showDetails?: {
+    showImage?: boolean | null;
+    showRegion?: boolean | null;
+    showVintage?: boolean | null;
+    showGrapes?: boolean | null;
+  };
+  /**
+   * Optional caption to display below the wine reference
+   */
+  caption?: string | null;
+  /**
+   * Open wine page in a new tab when clicked
+   */
+  openInNewTab?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'wine-reference';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "NewsletterSignupBlock".
+ */
+export interface NewsletterSignupBlock {
+  /**
+   * Huvudrubrik för nyhetsbrevsprenumeration
+   */
+  title?: string | null;
+  /**
+   * Beskrivningstext under rubriken
+   */
+  description?: string | null;
+  /**
+   * Text för prenumerationsknappen
+   */
+  buttonText?: string | null;
+  /**
+   * Platshållartext för e-postfältet
+   */
+  placeholderText?: string | null;
+  /**
+   * Visuell stil för nyhetsbrevsprenumerationen
+   */
+  style?: ('minimal' | 'featured' | 'inline' | 'swedish') | null;
+  /**
+   * Bakgrundsfärgtema
+   */
+  backgroundColor?: ('default' | 'orange' | 'blue' | 'green' | 'transparent') | null;
+  /**
+   * Visa nyhetsbrev/e-post-ikon
+   */
+  showIcon?: boolean | null;
+  /**
+   * Liten integriteetstext under formuläret
+   */
+  disclaimer?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'newsletter-signup';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CourseReferenceBlock".
+ */
+export interface CourseReferenceBlock {
+  /**
+   * Select a course to reference in this content
+   */
+  course: number | Course;
+  /**
+   * How this course reference should be displayed
+   */
+  displayStyle?: ('card' | 'banner' | 'link') | null;
+  /**
+   * Optional custom text to display instead of course title
+   */
+  customText?: string | null;
+  /**
+   * Configure which course details to display
+   */
+  showDetails?: {
+    showImage?: boolean | null;
+    showPrice?: boolean | null;
+    showLevel?: boolean | null;
+    showDuration?: boolean | null;
+    showInstructor?: boolean | null;
+  };
+  /**
+   * Text for the action button/link
+   */
+  callToAction?: string | null;
+  /**
+   * Optional caption to display below the course reference
+   */
+  caption?: string | null;
+  /**
+   * Open course page in a new tab when clicked
+   */
+  openInNewTab?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'course-reference';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

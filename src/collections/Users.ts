@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { adminFieldLevel, adminOnly, adminOrInstructorFieldLevel, adminOrSelf } from '../lib/access'
+import { UserWineLists } from './UserWineLists'
 
 type User = {
   id: string
@@ -279,58 +280,87 @@ export const Users: CollectionConfig = {
       },
       fields: [
         {
-          name: 'favoriteTypes',
+          name: 'favoriteGrapes',
+          type: 'relationship',
+          label: 'Favorite Grape Varieties',
+          relationTo: 'grapes',
+          hasMany: true,
+          admin: {
+            description: 'User preferred grape varieties',
+          },
+        },
+        {
+          name: 'favoriteRegions',
+          type: 'relationship',
+          label: 'Favorite Wine Regions',
+          relationTo: 'regions',
+          hasMany: true,
+          admin: {
+            description: 'User preferred wine regions',
+          },
+        },
+        {
+          name: 'preferredStyles',
           type: 'select',
-          label: 'Favorite Wine Types',
+          label: 'Preferred Wine Styles',
           hasMany: true,
           options: [
-            { label: 'Red', value: 'red' },
-            { label: 'White', value: 'white' },
-            { label: 'Rosé', value: 'rose' },
-            { label: 'Sparkling', value: 'sparkling' },
-            { label: 'Dessert', value: 'dessert' },
+            { label: 'Lätta röda viner', value: 'light_red' },
+            { label: 'Medeltunga röda viner', value: 'medium_red' },
+            { label: 'Fylliga röda viner', value: 'full_red' },
+            { label: 'Lätta vita viner', value: 'light_white' },
+            { label: 'Fylliga vita viner', value: 'full_white' },
+            { label: 'Mousserande viner', value: 'sparkling' },
+            { label: 'Rosévin', value: 'rose' },
+            { label: 'Sött vin', value: 'sweet' },
+            { label: 'Starkvin', value: 'fortified' },
           ],
         },
         {
-          name: 'preferredRegions',
+          name: 'tastingExperience',
           type: 'select',
-          label: 'Preferred Regions',
-          hasMany: true,
+          label: 'Tasting Experience Level',
+          defaultValue: 'Nybörjare',
           options: [
-            { label: 'France', value: 'france' },
-            { label: 'Italy', value: 'italy' },
-            { label: 'Spain', value: 'spain' },
-            { label: 'United States', value: 'usa' },
-            { label: 'Australia', value: 'australia' },
-            { label: 'South America', value: 'south_america' },
-            { label: 'Other', value: 'other' },
+            { label: 'Nybörjare', value: 'Nybörjare' },
+            { label: 'Medel', value: 'Medel' },
+            { label: 'Avancerad', value: 'Avancerad' },
+            { label: 'Expert', value: 'Expert' },
           ],
         },
         {
-          name: 'tasteProfile',
+          name: 'discoveryPreferences',
           type: 'select',
-          label: 'Taste Profile',
+          label: 'Discovery Preferences',
           hasMany: true,
           options: [
-            { label: 'Dry', value: 'dry' },
-            { label: 'Sweet', value: 'sweet' },
-            { label: 'Fruity', value: 'fruity' },
-            { label: 'Bold', value: 'bold' },
-            { label: 'Light', value: 'light' },
-            { label: 'Acidic', value: 'acidic' },
-            { label: 'Tannic', value: 'tannic' },
+            { label: 'Upptäck nya druvor', value: 'new_grapes' },
+            { label: 'Utforska nya regioner', value: 'new_regions' },
+            { label: 'Prova olika prisklasser', value: 'price_ranges' },
+            { label: 'Lär dig om vinkultur', value: 'wine_culture' },
+            { label: 'Få personliga rekommendationer', value: 'recommendations' },
+            { label: 'Delta i virtuella provningar', value: 'virtual_tastings' },
           ],
         },
         {
           name: 'priceRange',
           type: 'select',
           label: 'Preferred Price Range',
+          defaultValue: 'mid',
           options: [
-            { label: 'Budget', value: 'budget' },
-            { label: 'Mid-range', value: 'mid' },
-            { label: 'Premium', value: 'premium' },
-            { label: 'Luxury', value: 'luxury' },
+            { label: 'Under 200 kr', value: 'budget' },
+            { label: '200-500 kr', value: 'mid' },
+            { label: '500-1000 kr', value: 'premium' },
+            { label: 'Över 1000 kr', value: 'luxury' },
           ],
+        },
+        {
+          name: 'tastingNotes',
+          type: 'textarea',
+          label: 'Personal Tasting Notes',
+          admin: {
+            description: 'User personal notes about wine preferences',
+          },
         },
       ],
     },
@@ -372,33 +402,162 @@ export const Users: CollectionConfig = {
     },
     // Privacy & Communication Preferences
     {
-      name: 'communicationPreferences',
+      name: 'notifications',
       type: 'group',
-      label: 'Communication Preferences',
+      label: 'Notification Preferences',
       admin: {
-        description: "User's communication preferences",
+        description: "User's notification preferences",
       },
       fields: [
+        // Email Notifications
         {
-          name: 'marketingEmails',
-          type: 'checkbox',
-          label: 'Marketing Emails',
-          defaultValue: true,
+          name: 'email',
+          type: 'group',
+          label: 'Email Notifications',
+          fields: [
+            {
+              name: 'courseProgress',
+              type: 'checkbox',
+              label: 'Course Progress Updates',
+              defaultValue: true,
+            },
+            {
+              name: 'newCourses',
+              type: 'checkbox',
+              label: 'New Course Announcements',
+              defaultValue: true,
+            },
+            {
+              name: 'wineRecommendations',
+              type: 'checkbox',
+              label: 'Wine Recommendations',
+              defaultValue: true,
+            },
+            {
+              name: 'tastingEvents',
+              type: 'checkbox',
+              label: 'Tasting Events',
+              defaultValue: true,
+            },
+            {
+              name: 'newsletter',
+              type: 'checkbox',
+              label: 'Newsletter',
+              defaultValue: true,
+            },
+            {
+              name: 'accountUpdates',
+              type: 'checkbox',
+              label: 'Account & Security Updates',
+              defaultValue: true,
+            },
+          ],
         },
+        // Push Notifications
         {
-          name: 'newsletterSubscription',
-          type: 'checkbox',
-          label: 'Newsletter Subscription',
-          defaultValue: true,
+          name: 'push',
+          type: 'group',
+          label: 'Push Notifications',
+          fields: [
+            {
+              name: 'courseReminders',
+              type: 'checkbox',
+              label: 'Course Reminders',
+              defaultValue: true,
+            },
+            {
+              name: 'tastingReminders',
+              type: 'checkbox',
+              label: 'Tasting Reminders',
+              defaultValue: true,
+            },
+            {
+              name: 'achievements',
+              type: 'checkbox',
+              label: 'Achievement Notifications',
+              defaultValue: true,
+            },
+            {
+              name: 'socialActivity',
+              type: 'checkbox',
+              label: 'Social Activity',
+              defaultValue: false,
+            },
+          ],
         },
+        // Platform Notifications
         {
-          name: 'courseNotifications',
-          type: 'checkbox',
-          label: 'Course Notifications',
-          defaultValue: true,
+          name: 'platform',
+          type: 'group',
+          label: 'Platform Notifications',
+          fields: [
+            {
+              name: 'inAppMessages',
+              type: 'checkbox',
+              label: 'In-App Messages',
+              defaultValue: true,
+            },
+            {
+              name: 'systemAnnouncements',
+              type: 'checkbox',
+              label: 'System Announcements',
+              defaultValue: true,
+            },
+            {
+              name: 'maintenanceAlerts',
+              type: 'checkbox',
+              label: 'Maintenance Alerts',
+              defaultValue: true,
+            },
+            {
+              name: 'featureUpdates',
+              type: 'checkbox',
+              label: 'Feature Updates',
+              defaultValue: false,
+            },
+          ],
         },
       ],
     },
   ],
   timestamps: true,
+  hooks: {
+    afterChange: [
+      async ({ req, doc, operation }) => {
+        if (operation !== 'create') return doc
+        const payload = req.payload
+        const userId = doc.id
+        const systemLists = [
+          { name: 'Favorites', isSystem: true },
+          { name: 'Wishlist', isSystem: true },
+        ]
+        for (const list of systemLists) {
+          // Check if the list already exists for this user
+          const existing = await payload.find({
+            collection: UserWineLists.slug as any, // TODO: Remove 'as any' if Payload exposes custom collection slugs
+            where: {
+              and: [
+                { user: { equals: userId } },
+                { name: { equals: list.name } },
+                { isSystem: { equals: true } },
+              ],
+            },
+            limit: 1,
+          })
+          if (!existing?.docs?.length) {
+            await payload.create({
+              collection: UserWineLists.slug as any, // TODO: Remove 'as any' if Payload exposes custom collection slugs
+              data: {
+                user: userId,
+                name: list.name,
+                isSystem: true,
+              },
+              req,
+            })
+          }
+        }
+        return doc
+      },
+    ],
+  },
 }

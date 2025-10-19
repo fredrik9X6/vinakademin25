@@ -17,6 +17,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+// Using SidebarMenuButton tooltip prop for full-button tooltips
 
 export function NavDocuments({
   items,
@@ -25,21 +26,39 @@ export function NavDocuments({
     name: string
     url: string
     icon: LucideIcon
+    disabled?: boolean
   }[]
 }) {
   const { isMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Documents</SidebarGroupLabel>
+      <SidebarGroupLabel>Mina sidor</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild className="hover:bg-accent [&:hover_svg]:text-secondary">
-              <a href={item.url}>
-                <item.icon />
-                <span>{item.name}</span>
-              </a>
+            <SidebarMenuButton
+              asChild={!item.disabled}
+              tooltip={item.disabled ? { children: 'Kommer snart', hidden: false } : item.name}
+              className={
+                item.disabled
+                  ? 'cursor-default opacity-60 hover:bg-transparent'
+                  : 'hover:bg-accent [&:hover_svg]:text-secondary'
+              }
+            >
+              {item.disabled ? (
+                <div className="flex items-center gap-2">
+                  <item.icon className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground group-data-[collapsible=icon]:hidden">
+                    {item.name}
+                  </span>
+                </div>
+              ) : (
+                <a href={item.url}>
+                  <item.icon />
+                  <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
+                </a>
+              )}
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

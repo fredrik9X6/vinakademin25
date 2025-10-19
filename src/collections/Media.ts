@@ -49,7 +49,7 @@ export const Media: CollectionConfig = {
     {
       name: 'alt',
       type: 'text',
-      required: true,
+      required: false, // Temporarily optional due to existing null values
       label: 'Alt Text',
       admin: {
         description: 'Descriptive text for screen readers and SEO',

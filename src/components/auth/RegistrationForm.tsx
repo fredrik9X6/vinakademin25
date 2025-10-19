@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
@@ -16,10 +17,9 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { useAuth, RegisterUserData } from '@/context/AuthContext'
-import { Loader2 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { Loader2 } from 'lucide-react'
 
 // Define Zod schema for validation (Swedish messages)
 const RegistrationSchema = z
@@ -28,17 +28,20 @@ const RegistrationSchema = z
     lastName: z.string().min(1, { message: 'Efternamn krävs.' }),
     email: z.string().email({ message: 'Ogiltig e-postadress.' }),
     password: z.string().min(8, { message: 'Lösenordet måste vara minst 8 tecken.' }),
-    confirmPassword: z.string(),
+    confirmPassword: z.string().min(1, { message: 'Bekräfta lösenord krävs.' }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Lösenorden matchar inte',
+    message: 'Lösenorden matchar inte.',
     path: ['confirmPassword'],
   })
 
-// Export the type so it can be used in AuthContext
 export type RegistrationFormValues = z.infer<typeof RegistrationSchema>
 
-export function RegistrationForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
+interface RegistrationFormProps extends React.ComponentPropsWithoutRef<'div'> {
+  returnTo?: string
+}
+
+export function RegistrationForm({ className, returnTo, ...props }: RegistrationFormProps) {
   const { registerUser, isLoading } = useAuth()
   const router = useRouter()
 
@@ -54,27 +57,31 @@ export function RegistrationForm({ className, ...props }: React.ComponentPropsWi
   })
 
   async function onSubmit(values: RegistrationFormValues) {
-    const apiData: RegisterUserData = {
+    // Transform the form data to match the expected API structure
+    const userData = {
       firstName: values.firstName,
       lastName: values.lastName,
       email: values.email,
       password: values.password,
     }
 
-    const success = await registerUser(apiData)
+    const success = await registerUser(userData)
     if (success) {
-      // We need a dedicated page to show the VerifyEmailMessage component
-      // Let's assume this page will be at /verifiera-epost-meddelande
-      router.push('/verifiera-epost-meddelande')
+      // Show success message and redirect to email verification, passing along returnTo
+      const verificationUrl = returnTo
+        ? `/verifiera-epost-meddelande?from=${encodeURIComponent(returnTo)}`
+        : '/verifiera-epost-meddelande'
+      router.push(verificationUrl)
     }
+    // Error handling is done via toasts in AuthContext
   }
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Skapa konto</CardTitle>
-          <CardDescription>Ange dina uppgifter för att skapa ett konto</CardDescription>
+          <CardTitle className="text-xl">Skapa ditt konto</CardTitle>
+          <CardDescription>Fyll i uppgifterna nedan för att komma igång</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -86,9 +93,14 @@ export function RegistrationForm({ className, ...props }: React.ComponentPropsWi
                     name="firstName"
                     render={({ field }) => (
                       <FormItem className="grid gap-2">
-                        <FormLabel>Förnamn</FormLabel>
+                        <FormLabel htmlFor="firstName">Förnamn</FormLabel>
                         <FormControl>
-                          <Input placeholder="Max" {...field} disabled={isLoading} />
+                          <Input
+                            id="firstName"
+                            placeholder="Anna"
+                            {...field}
+                            disabled={isLoading}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -99,9 +111,14 @@ export function RegistrationForm({ className, ...props }: React.ComponentPropsWi
                     name="lastName"
                     render={({ field }) => (
                       <FormItem className="grid gap-2">
-                        <FormLabel>Efternamn</FormLabel>
+                        <FormLabel htmlFor="lastName">Efternamn</FormLabel>
                         <FormControl>
-                          <Input placeholder="Robinson" {...field} disabled={isLoading} />
+                          <Input
+                            id="lastName"
+                            placeholder="Andersson"
+                            {...field}
+                            disabled={isLoading}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -113,9 +130,15 @@ export function RegistrationForm({ className, ...props }: React.ComponentPropsWi
                   name="email"
                   render={({ field }) => (
                     <FormItem className="grid gap-2">
-                      <FormLabel>E-post</FormLabel>
+                      <FormLabel htmlFor="email">E-post</FormLabel>
                       <FormControl>
-                        <Input placeholder="namn@exempel.com" {...field} disabled={isLoading} />
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="anna@exempel.com"
+                          {...field}
+                          disabled={isLoading}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -126,9 +149,9 @@ export function RegistrationForm({ className, ...props }: React.ComponentPropsWi
                   name="password"
                   render={({ field }) => (
                     <FormItem className="grid gap-2">
-                      <FormLabel>Lösenord</FormLabel>
+                      <FormLabel htmlFor="password">Lösenord</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} disabled={isLoading} />
+                        <Input id="password" type="password" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -139,23 +162,31 @@ export function RegistrationForm({ className, ...props }: React.ComponentPropsWi
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem className="grid gap-2">
-                      <FormLabel>Bekräfta lösenord</FormLabel>
+                      <FormLabel htmlFor="confirmPassword">Bekräfta lösenord</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} disabled={isLoading} />
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          {...field}
+                          disabled={isLoading}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" variant={'default'} className="w-full" disabled={isLoading}>
+                <Button variant={'default'} type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {isLoading ? 'Skapar konto...' : 'Skapa konto'}
                 </Button>
               </div>
               <div className="text-center text-sm">
                 Har du redan ett konto?{' '}
-                <a href="/logga-in" className="underline underline-offset-4">
-                  Logga in
+                <a
+                  href={returnTo ? `/logga-in?from=${encodeURIComponent(returnTo)}` : '/logga-in'}
+                  className="underline underline-offset-4"
+                >
+                  Logga in här
                 </a>
               </div>
             </form>

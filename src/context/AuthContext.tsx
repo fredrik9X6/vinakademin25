@@ -9,7 +9,7 @@ import React, {
   useCallback,
 } from 'react'
 import { User as PayloadUser } from '@/payload-types' // Import User type from generated types
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 // We don't need the full form values type here anymore
 // import { RegistrationFormValues } from '@/components/auth/RegistrationForm'
@@ -51,7 +51,6 @@ interface AuthContextType {
   permissions: Permissions | null // Add permissions state
   setPermissions: React.Dispatch<React.SetStateAction<Permissions | null>> // Add setter
   isLoading: boolean
-  error: string | null
   loginUser: (credentials: { email: string; password: string }) => Promise<boolean>
   logoutUser: () => Promise<void>
   // Use the specific API data type
@@ -70,7 +69,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [permissions, setPermissions] = useState<Permissions | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
   const router = useRouter()
 
   const checkAuth = useCallback(async () => {
@@ -108,20 +106,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(null)
         }
       } else {
-        console.log(`AuthContext: /me request failed with status ${response.status}`)
+        console.log(`AuthContext: /api/users/me request failed with status ${response.status}`)
         // Attempt to read error message from response if possible
         try {
-          const errorData = await response.json()
-          console.error('AuthContext: /me error response body:', errorData)
-          setError(errorData.message || `Authentication check failed (${response.status})`)
+          const responseText = await response.text()
+          console.log('AuthContext: Raw response text:', responseText)
+
+          if (responseText && responseText.trim()) {
+            const errorData = JSON.parse(responseText)
+            // Only log meaningful error data, not empty objects
+            if (errorData && Object.keys(errorData).length > 0) {
+              console.warn('AuthContext: /me error response body (non-fatal):', errorData)
+            }
+            setError(errorData.message || `Authentication check failed (${response.status})`)
+          } else {
+            console.log('AuthContext: Empty response body from /api/users/me endpoint')
+            setError(`Authentication check failed - empty response (${response.status})`)
+          }
         } catch (jsonError) {
-          console.error('AuthContext: Failed to parse error response from /me')
+          console.log('AuthContext: Failed to parse error response from /api/users/me:', jsonError)
           setError(`Authentication check failed (${response.status})`)
         }
         setUser(null)
       }
     } catch (err) {
-      console.error('AuthContext: Network or other error during checkAuth:', err)
+      console.warn('AuthContext: Network or other error during checkAuth (non-fatal):', err)
       setError('Failed to check authentication status due to a network error.')
       setUser(null)
     } finally {
@@ -133,6 +142,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     checkAuth()
   }, [checkAuth])
+
+  // Helper function to translate common error messages to Swedish
+  const translateErrorMessage = (message: string): string => {
+    const translations: Record<string, string> = {
+      'The email or password provided is incorrect.': 'Ogiltig e-postadress eller lösenord.',
+      'User with email already exists.': 'En användare med denna e-postadress finns redan.',
+      'Password must be at least 8 characters.': 'Lösenordet måste vara minst 8 tecken.',
+      'Email is required.': 'E-postadress krävs.',
+      'Password is required.': 'Lösenord krävs.',
+      'First name is required.': 'Förnamn krävs.',
+      'Last name is required.': 'Efternamn krävs.',
+      'Account is not verified.': 'Kontot är inte verifierat.',
+      'Account is locked.': 'Kontot är låst.',
+      'Too many login attempts.': 'För många inloggningsförsök.',
+    }
+
+    return translations[message] || message
+  }
 
   // Login function
   const loginUser = async (credentials: { email: string; password: string }): Promise<boolean> => {
@@ -148,21 +175,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       })
 
       const data = await response.json()
+      console.log('AuthContext: Login response:', { status: response.status, data })
 
       if (response.ok && data.user) {
         setUser(data.user)
-        toast({ title: 'Inloggning lyckades', description: 'Välkommen tillbaka!' })
+        toast.success('Inloggning lyckades', {
+          description: 'Välkommen tillbaka!',
+        })
 
-        // Refresh and redirect (KEY CHANGE)
+        // Refresh server components but don't redirect here - let component handle it
         router.refresh() // Refresh all server components
-        router.push('/mina-sidor') // Redirect to dashboard
 
         setIsLoading(false)
         return true
       } else {
-        const message = data.message || 'Ogiltig e-post eller lösenord.'
+        // Handle PayloadCMS error format: { "errors": [{ "message": "..." }] }
+        let message = 'Ogiltig e-post eller lösenord.'
+
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          message = translateErrorMessage(data.errors[0].message) || message
+        } else if (data.message) {
+          message = translateErrorMessage(data.message)
+        }
+
+        console.log('AuthContext: Login failed with error:', message)
         setError(message)
-        toast({ title: 'Inloggning misslyckades', description: message, variant: 'destructive' })
+        toast.error('Inloggning misslyckades', {
+          description: message,
+        })
         setIsLoading(false)
         return false
       }
@@ -170,7 +210,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Login error:', err)
       const message = 'Ett oväntat fel inträffade vid inloggning.'
       setError(message)
-      toast({ title: 'Inloggningsfel', description: message, variant: 'destructive' })
+      toast.error('Inloggningsfel', {
+        description: message,
+      })
       setIsLoading(false)
       return false
     }
@@ -187,7 +229,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         setUser(null)
-        toast({ title: 'Utloggad', description: 'Du har loggats ut.' })
+        toast.success('Utloggad', {
+          description: 'Du har loggats ut.',
+        })
 
         // Refresh and redirect (KEY CHANGE)
         router.refresh() // Refresh all server components
@@ -198,21 +242,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (err) {
       console.error('Logout error:', err)
       setUser(null) // Still clear user locally even if API call fails
-      toast({
-        title: 'Utloggningsfel',
+      toast.error('Utloggningsfel', {
         description: 'Kunde inte logga ut korrekt, sessionen rensad lokalt.',
-        variant: 'destructive',
       })
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Registration function
+  // Registration function using PayloadCMS native API
   const registerUser = async (userData: RegisterUserData): Promise<boolean> => {
     setIsLoading(true)
     setError(null)
     try {
+      // Use PayloadCMS's built-in REST API for user creation
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -224,40 +267,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       })
 
       const data = await response.json()
+      console.log('AuthContext: Registration response via PayloadCMS API:', {
+        status: response.status,
+        data,
+      })
 
+      // PayloadCMS returns the created user in 'doc' field on success
       if (response.ok && data.doc) {
-        toast({
-          title: 'Registrering lyckades',
-          description:
-            data.message || 'Kontot skapat. Vänligen kontrollera din e-post för att verifiera.',
+        toast.success('Registrering lyckades', {
+          description: 'Kontot skapat. Vänligen kontrollera din e-post för att verifiera.',
         })
 
-        // Refresh server components (KEY CHANGE)
+        // Refresh server components
         router.refresh()
 
         setIsLoading(false)
         return true
       } else {
+        // Handle PayloadCMS native error format
         let errorMessage = 'Registreringen misslyckades.'
+
         if (data.errors && Array.isArray(data.errors)) {
-          errorMessage = data.errors.map((e: any) => `${e.field}: ${e.message}`).join(', ')
+          // PayloadCMS native error format: { "errors": [{ "message": "...", "field": "..." }] }
+          const errorMessages = data.errors.map((e: any) => {
+            const translatedMessage = translateErrorMessage(e.message || 'Okänt fel')
+            if (e.field && e.message) {
+              // Format field-specific errors in Swedish
+              const fieldTranslations: Record<string, string> = {
+                email: 'E-post',
+                password: 'Lösenord',
+                firstName: 'Förnamn',
+                lastName: 'Efternamn',
+              }
+              const fieldName = fieldTranslations[e.field] || e.field
+              return `${fieldName}: ${translatedMessage}`
+            }
+            return translatedMessage
+          })
+          errorMessage = errorMessages.join(', ')
+        } else if (data.message) {
+          errorMessage = translateErrorMessage(data.message)
         }
-        setError(data.message || errorMessage)
-        toast({
-          title: 'Registrering misslyckades',
-          description: data.message || errorMessage,
-          variant: 'destructive',
+
+        console.log('AuthContext: Registration failed with error:', errorMessage)
+        setError(errorMessage)
+        toast.error('Registrering misslyckades', {
+          description: errorMessage,
         })
         setIsLoading(false)
         return false
       }
     } catch (err) {
       console.error('Registration error:', err)
-      setError('Ett oväntat fel inträffade vid registrering.')
-      toast({
-        title: 'Registreringsfel',
-        description: 'Ett oväntat fel inträffade.',
-        variant: 'destructive',
+      const message = 'Ett oväntat fel inträffade vid registrering.'
+      setError(message)
+      toast.error('Registreringsfel', {
+        description: message,
       })
       setIsLoading(false)
       return false
@@ -272,7 +337,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         permissions,
         setPermissions,
         isLoading,
-        error,
         loginUser,
         logoutUser,
         registerUser,

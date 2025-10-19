@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
-import payload from 'payload'
+import { getPayload } from 'payload'
+import config from '@/payload.config'
 
 // GET user notification preferences
 export async function GET(
@@ -8,8 +9,9 @@ export async function GET(
   { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
+    const payload = await getPayload({ config })
     const { userId } = await params
-    const { user } = await getUser()
+    const user = await getUser()
 
     // Check if user is authenticated and authorized
     if (!user) {
@@ -17,7 +19,8 @@ export async function GET(
     }
 
     // Check if user can access this profile (own profile or admin)
-    if (user.id !== parseInt(userId) && user.role !== 'admin') {
+    // Convert userId string to number for comparison since PayloadCMS uses numbers for IDs
+    if (String(user.id) !== userId && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -68,8 +71,9 @@ export async function PUT(
   { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
+    const payload = await getPayload({ config })
     const { userId } = await params
-    const { user } = await getUser()
+    const user = await getUser()
 
     // Check if user is authenticated and authorized
     if (!user) {
@@ -77,7 +81,8 @@ export async function PUT(
     }
 
     // Check if user can access this profile (own profile or admin)
-    if (user.id !== parseInt(userId) && user.role !== 'admin') {
+    // Convert userId string to number for comparison since PayloadCMS uses numbers for IDs
+    if (String(user.id) !== userId && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

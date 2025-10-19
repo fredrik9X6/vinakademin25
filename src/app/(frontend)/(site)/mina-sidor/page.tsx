@@ -11,11 +11,11 @@ import AuthGuard from '@/components/auth/AuthGuard'
 import RoleBasedContent from '@/components/dashboard/RoleBasedContent'
 
 export default function DashboardPage() {
-  return (
-    <AuthGuard>
-      <DashboardContent />
-    </AuthGuard>
-  )
+  // Legacy route: redirect to consolidated profile page
+  if (typeof window !== 'undefined') {
+    window.location.replace('/profil')
+  }
+  return null
 }
 
 function DashboardContent() {
@@ -30,20 +30,11 @@ function DashboardContent() {
     )
   }
 
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-xl mb-4">Du måste vara inloggad för att se denna sida</p>
-        <Link href="/login">
-          <Button>Logga in</Button>
-        </Link>
-      </div>
-    )
-  }
+  if (!user) return null
 
   return (
     <div className="container max-w-5xl mx-auto py-10 px-4 sm:px-6">
-      <h1 className="text-3xl font-heading font-bold mb-8">Mina Sidor</h1>
+      <h1 className="text-3xl md:text-4xl font-medium mb-8">Mina Sidor</h1>
 
       <Card className="mb-8">
         <CardHeader>
@@ -82,7 +73,7 @@ function DashboardContent() {
             <CardDescription>Se vilka kurser du är anmäld till</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/mina-sidor/kurser">
+            <Link href="/profil?tab=kurser">
               <Button className="w-full">Visa mina kurser</Button>
             </Link>
           </CardContent>
@@ -97,7 +88,7 @@ function DashboardContent() {
             <CardDescription>Uppdatera dina uppgifter</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/mina-sidor/inställningar">
+            <Link href="/profil?tab=installningar">
               <Button className="w-full">Hantera profil</Button>
             </Link>
           </CardContent>

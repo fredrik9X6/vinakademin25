@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
-import payload from 'payload'
+import { getPayload } from 'payload'
+import config from '@/payload.config'
 
 // PUT update user profile
 export async function PUT(
@@ -8,8 +9,10 @@ export async function PUT(
   { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
+    // Use PayloadCMS 3 proper pattern
+    const payload = await getPayload({ config })
     const { userId } = await params
-    const { user } = await getUser()
+    const user = await getUser() // getUser() returns user directly, not { user }
 
     // Check if user is authenticated and authorized
     if (!user) {
@@ -17,16 +20,17 @@ export async function PUT(
     }
 
     // Check if user can access this profile (own profile or admin)
-    if (user.id !== parseInt(userId) && user.role !== 'admin') {
+    // Convert userId string to number for comparison since PayloadCMS uses numbers for IDs
+    if (String(user.id) !== userId && user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json()
 
-    // Update user profile information
+    // Update user profile using PayloadCMS 3 best practices
     const updatedUser = await payload.update({
       collection: 'users',
-      id: userId,
+      id: parseInt(userId, 10), // Ensure ID is number for PayloadCMS 3
       data: {
         firstName: body.firstName,
         lastName: body.lastName,

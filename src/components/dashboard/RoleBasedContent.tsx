@@ -34,7 +34,7 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
             <p className="text-purple-600 mt-2">Du har inga pågående kurser.</p>
             <div className="mt-4">
               <Link
-                href="/kurser"
+                href="/vinprovningar"
                 className="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
               >
                 Utforska kurser
@@ -51,7 +51,7 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
             <p className="text-teal-600 mt-2">Lista dina prenumerantkurser här.</p>
             <div className="mt-4">
               <Link
-                href="/mina-sidor/kurser"
+                href="/profil?tab=kurser"
                 className="inline-block px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition"
               >
                 Mina Kursregistreringar
@@ -67,7 +67,7 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
           <p className="text-green-600 mt-2">Hantera dina kurser och studenter här.</p>
           <div className="mt-4">
             <Link
-              href="/admin/kurser"
+              href="/admin/vinprovningar"
               className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
             >
               Hantera kurser

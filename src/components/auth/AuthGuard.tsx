@@ -1,7 +1,7 @@
 'use client'
 
 import React, { ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { Loader2 } from 'lucide-react'
 
@@ -12,13 +12,20 @@ interface AuthGuardProps {
 export default function AuthGuard({ children }: AuthGuardProps) {
   const { user, isLoading, error } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   React.useEffect(() => {
     if (!isLoading && !user) {
       console.log('AuthGuard: No user found after loading, redirecting to login.')
-      router.push('/logga-in')
+      // Capture current URL to redirect back after login
+      const returnUrl = encodeURIComponent(
+        typeof window !== 'undefined'
+          ? window.location.pathname + window.location.search
+          : pathname,
+      )
+      router.push(`/logga-in?from=${returnUrl}`)
     }
-  }, [isLoading, user, router])
+  }, [isLoading, user, router, pathname])
 
   if (isLoading) {
     return (

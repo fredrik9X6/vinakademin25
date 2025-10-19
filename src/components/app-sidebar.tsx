@@ -10,7 +10,6 @@ import {
   FileTextIcon,
   HelpCircleIcon,
   MonitorPlay,
-  SearchIcon,
   SettingsIcon,
   LogInIcon,
   Sparkles,
@@ -21,10 +20,14 @@ import {
   Newspaper,
   SunIcon,
   MoonIcon,
+  MapPin,
+  PlusCircle,
 } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Switch } from '@/components/ui/switch'
+import { useAuth } from '@/context/AuthContext'
 
 import { NavDocuments } from '@/components/nav-documents'
 import { NavMain } from '@/components/nav-main'
@@ -47,36 +50,17 @@ const data = {
     avatar: '/avatars/shadcn.jpg',
   },
   navMain: [
-    {
-      title: 'Kurser',
-      url: '#',
-      icon: MonitorPlay,
-    },
-    {
-      title: 'Artiklar',
-      url: '#',
-      icon: Newspaper,
-    },
-    {
-      title: 'Vinlistan',
-      url: '#',
-      icon: Wine,
-    },
-    {
-      title: 'Nyhetsbrev',
-      url: '#',
-      icon: Mail,
-    },
-    {
-      title: 'AI Sommelier',
-      url: '#',
-      icon: Bot,
-    },
-    {
-      title: 'Kalender',
-      url: '#',
-      icon: CalendarIcon,
-    },
+    { title: 'Vinprovningar', url: '/vinprovningar', icon: MonitorPlay },
+    { title: 'Artiklar', url: '/artiklar', icon: Newspaper },
+    { title: 'Nyhetsbrev', url: '/nyhetsbrev', icon: Mail },
+    { title: 'Kommer snart', url: '#', type: 'label' as const },
+    { title: 'Skapa Vinprovning', url: '#', icon: PlusCircle, comingSoon: true },
+    { title: 'Vinlistan', url: '/vinlistan', icon: Wine, comingSoon: true },
+    { title: 'Vinbarer & Upplevelser', url: '#', icon: MapPin, comingSoon: true },
+    { title: 'AI sommelier', url: '#', icon: Bot, comingSoon: true },
+    { title: 'Kalender', url: '#', icon: CalendarIcon, comingSoon: true },
+    { title: 'Vinkällare', url: '#', icon: ClipboardListIcon, comingSoon: true },
+    { title: 'Recenssera vin', url: '#', icon: FileIcon, comingSoon: true },
   ],
   navClouds: [
     {
@@ -129,49 +113,32 @@ const data = {
   navSecondary: [
     {
       title: 'Inställningar',
-      url: '#',
+      url: '/profil?tab=uppgifter',
       icon: SettingsIcon,
     },
     {
       title: 'Hjälp',
-      url: '#',
+      url: '/hjalp',
       icon: HelpCircleIcon,
     },
-    {
-      title: 'Sök',
-      url: '#',
-      icon: SearchIcon,
-    },
   ],
-  documents: [
-    {
-      name: 'Data Library',
-      url: '#',
-      icon: DatabaseIcon,
-    },
-    {
-      name: 'Reports',
-      url: '#',
-      icon: ClipboardListIcon,
-    },
-    {
-      name: 'Word Assistant',
-      url: '#',
-      icon: FileIcon,
-    },
-  ],
+  documents: [],
 }
 
-// Define an interface for the props, including the user object
-// Use a more specific type if available, like the one from payload-types
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  // Allow user to be null or undefined
-  user: any | null | undefined
-}
+// Update interface to not require user prop since we're using AuthContext
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {}
 
-// Accept user prop
-export function AppSidebar({ user, ...props }: AppSidebarProps) {
+// Use AuthContext instead of user prop
+export function AppSidebar({ ...props }: AppSidebarProps) {
+  const { user } = useAuth()
   const { setTheme, theme } = useTheme()
+  const pathname = usePathname()
+  const [mounted, setMounted] = React.useState(false)
+
+  // Only render theme switch on client to avoid hydration mismatch
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -179,31 +146,36 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
-              <a href="#">
+              <Link href="/">
                 <Sparkles className="h-5 w-5 text-orange-300 dark:text-secondary" />
                 <span className="text-2xl font-heading">Vinakademin</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
 
         <SidebarMenu className="mt-auto">
           <SidebarMenuItem className="px-3 py-2">
             <div className="flex w-full items-center justify-start space-x-2">
-              <Switch
-                id="theme-switch"
-                checked={theme === 'dark'}
-                onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                aria-label="Toggle theme"
-              />
-              {theme === 'light' ? (
-                <SunIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              {mounted ? (
+                <>
+                  <Switch
+                    id="theme-switch"
+                    checked={theme === 'dark'}
+                    onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                    aria-label="Toggle theme"
+                  />
+                  {theme === 'light' ? (
+                    <SunIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  ) : (
+                    <MoonIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  )}
+                </>
               ) : (
-                <MoonIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <div className="w-9 h-5" /> /* Placeholder with same dimensions to avoid layout shift */
               )}
             </div>
           </SidebarMenuItem>
@@ -218,7 +190,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         ) : (
           <SidebarMenu>
             <SidebarMenuItem>
-              <Link href="/logga-in" className="w-full">
+              <Link href={`/logga-in?from=${encodeURIComponent(pathname)}`} className="w-full">
                 <SidebarMenuButton
                   variant={'outline'}
                   className="w-full justify-center text-white bg-neutral-900 hover:bg-neutral-800/90 hover:text-white dark:bg-white dark:text-black dark:hover:bg-neutral-200/95"

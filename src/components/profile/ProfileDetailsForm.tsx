@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -16,77 +16,76 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
-// Assume User type is defined or imported
-interface User {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  bio?: string | null
-}
-
-interface ProfileDetailsFormProps {
-  user: User
-}
-
-// Zod schema (Swedish messages)
-const ProfileDetailsSchema = z.object({
+// Define Zod schema for profile validation (Swedish messages)
+const ProfileSchema = z.object({
   firstName: z.string().min(1, { message: 'Förnamn krävs.' }),
   lastName: z.string().min(1, { message: 'Efternamn krävs.' }),
-  bio: z.string().max(200, { message: 'Biografin får inte överstiga 200 tecken.' }).optional(),
+  email: z.string().email({ message: 'Ogiltig e-postadress.' }),
+  bio: z.string().max(500, { message: 'Bio kan inte vara längre än 500 tecken.' }).optional(),
 })
 
-type ProfileDetailsFormValues = z.infer<typeof ProfileDetailsSchema>
+export type ProfileFormValues = z.infer<typeof ProfileSchema>
 
-// Simulate update function (Swedish messages)
-async function updateProfileDetails(
-  userId: string,
-  data: ProfileDetailsFormValues,
-): Promise<{ success: boolean; message: string }> {
-  console.log('Uppdaterar profil för användare:', userId, data)
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  // Replace with actual API call
-  return { success: true, message: 'Profilen uppdaterad!' }
+interface ProfileDetailsFormProps {
+  userId: string
+  initialData?: Partial<ProfileFormValues>
+  onSuccess?: () => void
 }
 
-export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
+export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDetailsFormProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
 
-  const form = useForm<ProfileDetailsFormValues>({
-    resolver: zodResolver(ProfileDetailsSchema),
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(ProfileSchema),
     defaultValues: {
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      bio: user.bio || '',
+      firstName: initialData?.firstName || '',
+      lastName: initialData?.lastName || '',
+      email: initialData?.email || '',
+      bio: initialData?.bio || '',
     },
   })
 
-  async function onSubmit(values: ProfileDetailsFormValues) {
+  // Update form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        firstName: initialData.firstName || '',
+        lastName: initialData.lastName || '',
+        email: initialData.email || '',
+        bio: initialData.bio || '',
+      })
+    }
+  }, [initialData, form])
+
+  async function onSubmit(values: ProfileFormValues) {
     setIsLoading(true)
     try {
-      const result = await updateProfileDetails(user.id, values)
-      if (result.success) {
-        toast({
-          title: 'Klart',
-          description: result.message,
+      const response = await fetch(`/api/users/${userId}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        toast.success('Profil uppdaterad', {
+          description: 'Dina profiluppgifter har sparats.',
         })
+        onSuccess?.()
       } else {
-        toast({
-          title: 'Fel',
-          description: result.message,
-          variant: 'destructive',
+        const errorData = await response.json()
+        const errorMessage = errorData.message || 'Kunde inte uppdatera profilen.'
+        toast.error('Uppdatering misslyckades', {
+          description: errorMessage,
         })
       }
-    } catch (err) {
-      console.error('Update profile error:', err)
-      toast({
-        title: 'Fel',
-        description: 'Ett oväntat fel inträffade när profilen skulle uppdateras.',
-        variant: 'destructive',
+    } catch (error) {
+      console.error('Profile update error:', error)
+      toast.error('Profilfel', {
+        description: 'Ett oväntat fel inträffade vid uppdatering av profilen.',
       })
     } finally {
       setIsLoading(false)
@@ -96,7 +95,7 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="firstName"
@@ -104,7 +103,7 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
               <FormItem>
                 <FormLabel>Förnamn</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isLoading} />
+                  <Input placeholder="Anna" {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -117,7 +116,7 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
               <FormItem>
                 <FormLabel>Efternamn</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isLoading} />
+                  <Input placeholder="Andersson" {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -127,16 +126,15 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
 
         <FormField
           control={form.control}
-          name="bio"
+          name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Biografi</FormLabel>
+              <FormLabel>E-post</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Berätta lite om dig själv"
-                  className="resize-none"
+                <Input
+                  type="email"
+                  placeholder="anna@exempel.com"
                   {...field}
-                  value={field.value ?? ''}
                   disabled={isLoading}
                 />
               </FormControl>
@@ -144,12 +142,30 @@ export function ProfileDetailsForm({ user }: ProfileDetailsFormProps) {
             </FormItem>
           )}
         />
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isLoading || !form.formState.isDirty}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isLoading ? 'Sparar...' : 'Spara ändringar'}
-          </Button>
-        </div>
+
+        <FormField
+          control={form.control}
+          name="bio"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Bio (valfritt)</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Berätta lite om dig själv..."
+                  className="resize-none"
+                  {...field}
+                  disabled={isLoading}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isLoading ? 'Sparar...' : 'Spara ändringar'}
+        </Button>
       </form>
     </Form>
   )

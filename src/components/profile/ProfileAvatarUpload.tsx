@@ -1,156 +1,142 @@
 'use client'
 
-import React, { useState, ChangeEvent } from 'react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import React, { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useToast } from '@/hooks/use-toast'
-import { Loader2 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { toast } from 'sonner'
+import { Camera, Loader2 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 interface ProfileAvatarUploadProps {
   userId: string
-  currentAvatarUrl?: string | null
-  userName?: string // For fallback initials
-  onUploadSuccess?: (newAvatarUrl: string) => void // Callback after successful upload
-}
-
-// Simulate upload function (Swedish messages)
-async function uploadAvatar(
-  userId: string,
-  file: File,
-): Promise<{ success: boolean; message: string; data?: { url: string } }> {
-  console.log('Laddar upp profilbild för användare:', userId, file.name)
-  await new Promise((resolve) => setTimeout(resolve, 1500)) // Simulate network delay
-
-  // Replace with actual API call to Payload backend
-  // Example using FormData:
-  // const formData = new FormData();
-  // formData.append('file', file);
-  // formData.append('userId', userId); // Add necessary data
-  // const response = await fetch('/api/users/upload-avatar', { // Or directly to Payload endpoint
-  //   method: 'POST',
-  //   body: formData,
-  //   // Add authentication headers if needed
-  // });
-  // const result = await response.json();
-  // return { success: response.ok, message: result.message, data: result.data };
-
-  // Simulation
-  if (file.type.startsWith('image/')) {
-    const simulatedUrl = URL.createObjectURL(file) // Use blob URL for immediate preview in simulation
-    return { success: true, message: 'Profilbild uppdaterad!', data: { url: simulatedUrl } }
-  } else {
-    return { success: false, message: 'Ogiltig filtyp. Ladda upp en bild.' }
-  }
+  currentAvatar?: string | null
+  userInitials?: string
+  onAvatarUpdate?: (newAvatarUrl: string) => void
 }
 
 export function ProfileAvatarUpload({
   userId,
-  currentAvatarUrl,
-  userName,
-  onUploadSuccess,
+  currentAvatar,
+  userInitials = 'AB',
+  onAvatarUpdate,
 }: ProfileAvatarUploadProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [isUploading, setIsUploading] = useState(false)
+  const [avatar, setAvatar] = useState<string | null>(currentAvatar || null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { checkAuth } = useAuth()
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast({ title: 'Ogiltig fil', description: 'Välj en bildfil.', variant: 'destructive' }) // Swedish
-        setSelectedFile(null)
-        setPreviewUrl(null)
-        return
-      }
-      setSelectedFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    } else {
-      setSelectedFile(null)
-      setPreviewUrl(null)
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Ogiltigt filformat', {
+        description: 'Vänligen välj en bildfil (JPG, PNG, etc.).',
+      })
+      return
     }
-  }
 
-  const handleUpload = async () => {
-    if (!selectedFile) return
+    // Validate file size (e.g., 5MB limit)
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      toast.error('Filen är för stor', {
+        description: 'Bildstorlek får inte överstiga 5MB.',
+      })
+      return
+    }
 
-    setIsLoading(true)
+    setIsUploading(true)
     try {
-      const result = await uploadAvatar(userId, selectedFile)
-      if (result.success && result.data?.url) {
-        toast({ title: 'Klart', description: result.message }) // Swedish
-        setSelectedFile(null)
-        setPreviewUrl(null)
-        if (onUploadSuccess) {
-          onUploadSuccess(result.data.url)
-        }
-      } else {
-        toast({ title: 'Fel', description: result.message, variant: 'destructive' }) // Swedish
+      // 1) Upload to Payload media via our custom endpoint
+      const mediaForm = new FormData()
+      mediaForm.append('file', file)
+      mediaForm.append('alt', `Profile picture for user ${userId}`)
+
+      const mediaRes = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: mediaForm,
+        credentials: 'include',
+        headers: {
+          // Don't set Content-Type for FormData - let browser set it with boundary
+        },
+      })
+
+      if (!mediaRes.ok) {
+        const err = await mediaRes.json().catch(() => ({}))
+        throw new Error(err?.errors?.[0]?.message || err?.message || 'Kunde inte ladda upp bilden')
       }
+
+      const mediaData = await mediaRes.json()
+      const mediaId = mediaData?.doc?.id || mediaData?.id
+      const mediaUrl = mediaData?.doc?.url || mediaData?.url
+      if (!mediaId) throw new Error('Media-ID saknas efter uppladdning')
+
+      // 2) Update user avatar field using our custom API
+      const userRes = await fetch(`/api/users/${userId}/avatar`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ avatar: mediaId }),
+      })
+
+      if (!userRes.ok) {
+        const err = await userRes.json().catch(() => ({}))
+        throw new Error(
+          err?.errors?.[0]?.message || err?.message || 'Kunde inte spara profilbilden',
+        )
+      }
+
+      setAvatar(mediaUrl || avatar)
+      onAvatarUpdate?.(mediaUrl || '')
+
+      // Refresh the auth context to update navbar and other components
+      await checkAuth()
+      toast.success('Profilbild uppdaterad', {
+        description: 'Din nya profilbild har sparats.',
+      })
     } catch (error) {
       console.error('Avatar upload error:', error)
-      toast({
-        title: 'Fel',
-        description: 'Kunde inte ladda upp profilbild.',
-        variant: 'destructive',
-      }) // Swedish
+      toast.error('Uppladdningsfel', {
+        description: error instanceof Error ? error.message : 'Ett oväntat fel inträffade.',
+      })
     } finally {
-      setIsLoading(false)
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
-  const getInitials = (name?: string) => {
-    if (!name) return 'A' // Användare -> A
-    const names = name.trim().split(' ')
-    if (names.length === 1 && names[0].length > 0) return names[0][0].toUpperCase()
-    if (names.length > 1) {
-      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase()
-    }
-    return 'A' // Fallback
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
   }
-
-  const displayUrl = previewUrl || currentAvatarUrl
 
   return (
-    <div className="space-y-4 flex flex-col items-center">
-      <Avatar className="h-24 w-24">
-        {displayUrl ? (
-          <AvatarImage
-            src={displayUrl}
-            alt={userName ? `${userName} profilbild` : 'Användarprofilbild'}
-          /> // Swedish alt
-        ) : (
-          <AvatarFallback>{getInitials(userName)}</AvatarFallback>
-        )}
-      </Avatar>
+    <div className="flex flex-col items-center space-y-4">
+      <div className="relative">
+        <Avatar className="h-24 w-24">
+          <AvatarImage src={avatar || undefined} alt="Profilbild" />
+          <AvatarFallback className="text-lg">{userInitials}</AvatarFallback>
+        </Avatar>
 
-      <div className="grid w-full max-w-sm items-center gap-1.5">
-        <Label htmlFor="avatar-upload">
-          {selectedFile ? `Vald fil: ${selectedFile.name}` : 'Välj en ny profilbild'}{' '}
-          {/* Swedish */}
-        </Label>
-        <Input
-          id="avatar-upload"
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          disabled={isLoading}
-          className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-        />
+        {isUploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+            <Loader2 className="h-6 w-6 animate-spin text-white" />
+          </div>
+        )}
       </div>
 
-      {selectedFile && (
-        <Button onClick={handleUpload} disabled={isLoading} className="w-full max-w-sm">
-          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {isLoading ? 'Laddar upp...' : 'Ladda upp ny bild'} {/* Swedish */}
-        </Button>
-      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      <Button variant="outline" size="sm" onClick={handleUploadClick} disabled={isUploading}>
+        <Camera className="mr-2 h-4 w-4" />
+        {isUploading ? 'Laddar upp...' : 'Byt profilbild'}
+      </Button>
     </div>
   )
 }
