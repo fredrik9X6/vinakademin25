@@ -138,11 +138,6 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
     const selectedValues = isControlled ? value! : uncontrolledValues
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
     const handleOpenChange = React.useCallback((open: boolean) => {
-      try {
-        // Debug: track popover open/close
-        // eslint-disable-next-line no-console
-        console.log('[MultiSelect] open:', open)
-      } catch {}
       setIsPopoverOpen(open)
     }, [])
     const [isAnimating, setIsAnimating] = React.useState(false)
@@ -159,11 +154,6 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
     }
 
     const toggleOption = (option: string) => {
-      // Debug: track toggle attempts
-      try {
-        // eslint-disable-next-line no-console
-        console.log('[MultiSelect] toggleOption:', option)
-      } catch {}
       const newSelectedValues = selectedValues.includes(option)
         ? selectedValues.filter((value) => value !== option)
         : [...selectedValues, option]
@@ -172,10 +162,6 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
       } else {
         setUncontrolledValues(newSelectedValues)
       }
-      try {
-        // eslint-disable-next-line no-console
-        console.log('[MultiSelect] onValueChange ->', newSelectedValues)
-      } catch {}
       onValueChange(newSelectedValues)
       // Do not close popover on selection; leave as-is
     }

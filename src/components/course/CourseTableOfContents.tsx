@@ -271,17 +271,6 @@ export default function CourseTableOfContents({
                   const isQuizCompleted = !!courseProgress?.completedQuizzes?.some(
                     (qid) => Number(qid) === qIdNum,
                   )
-                  if (process.env.NODE_ENV === 'development') {
-                    try {
-                      // eslint-disable-next-line no-console
-                      console.debug(
-                        '[ToC] completedQuizzes:',
-                        courseProgress?.completedQuizzes,
-                        'quizId:',
-                        qIdNum,
-                      )
-                    } catch {}
-                  }
                   return (
                     <button
                       key={`quiz-${qIdNum}`}

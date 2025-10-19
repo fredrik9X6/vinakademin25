@@ -68,13 +68,14 @@ async function fetchTrustedReviewsAndWines(params: SearchParams) {
 
   // Dedupe by wine id, keep highest rating per wine
   const byWine = new Map<number, any>()
-  for (const r of reviews.docs || []) {
-    const wine = typeof r.wine === 'object' ? r.wine : null
+  for (const reviewDoc of reviews.docs || []) {
+    const review = reviewDoc as any
+    const wine = typeof review?.wine === 'object' ? review.wine : null
     if (!wine) continue
-    const wid = Number(wine.id)
+    const wid = Number((wine as any).id)
     const prev = byWine.get(wid)
-    if (!prev || (Number(r.rating) || 0) > (Number(prev.rating) || 0)) {
-      byWine.set(wid, r)
+    if (!prev || (Number(review.rating) || 0) > (Number(prev.rating) || 0)) {
+      byWine.set(wid, review)
     }
   }
 
