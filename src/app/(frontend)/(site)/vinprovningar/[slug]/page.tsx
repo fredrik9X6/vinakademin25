@@ -353,17 +353,37 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 export async function generateStaticParams() {
   if (process.env.NODE_ENV === 'development') return []
 
-  const payload = await getPayload({ config })
+  const hasDatabaseUrl = Boolean(
+    process.env.DATABASE_URI ||
+      process.env.DATABASE_URL ||
+      process.env.POSTGRES_URL ||
+      process.env.POSTGRES_PRISMA_URL ||
+      process.env.POSTGRES_URL_NON_POOLING,
+  )
 
-  const courses = await payload.find({
-    collection: 'courses',
-    where: { _status: { equals: 'published' } },
-    limit: 1000,
-  })
+  if (!process.env.PAYLOAD_SECRET || !hasDatabaseUrl) {
+    console.warn(
+      '[generateStaticParams] Skipping course prebuild – missing PAYLOAD_SECRET or database URL.',
+    )
+    return []
+  }
 
-  return courses.docs
-    .filter((course) => course.slug)
-    .map((course) => ({
-      slug: course.slug,
-    }))
+  try {
+    const payload = await getPayload({ config })
+
+    const courses = await payload.find({
+      collection: 'courses',
+      where: { _status: { equals: 'published' } },
+      limit: 1000,
+    })
+
+    return courses.docs
+      .filter((course) => course.slug)
+      .map((course) => ({
+        slug: course.slug,
+      }))
+  } catch (error) {
+    console.warn('[generateStaticParams] Failed to fetch courses during build:', error)
+    return []
+  }
 }
