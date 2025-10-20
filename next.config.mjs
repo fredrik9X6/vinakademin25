@@ -4,7 +4,6 @@ import { withPayload } from '@payloadcms/next/withPayload'
 const nextConfig = {
   // Your Next.js config here
   turbopack: {},
-  output: 'standalone',
   async redirects() {
     return [
       {

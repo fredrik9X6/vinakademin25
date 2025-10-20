@@ -13,6 +13,14 @@ import StripeServer from 'stripe'
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY
 
+if (!stripePublishableKey) {
+  throw new Error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not defined')
+}
+
+if (!stripeSecretKey && typeof window === 'undefined') {
+  throw new Error('STRIPE_SECRET_KEY is not defined')
+}
+
 // Client-side Stripe instance (for frontend)
 let stripePromise: Promise<Stripe | null>
 

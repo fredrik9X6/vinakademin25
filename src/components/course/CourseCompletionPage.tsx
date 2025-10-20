@@ -41,10 +41,9 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
   const timeSpentHours = progressData?.timeSpent ? Math.round(progressData.timeSpent / 60) : null
 
   const totalLessons =
-    course.modules?.reduce((acc: number, module) => {
-      const lessons = (module as any)?.lessons
-      const count = Array.isArray(lessons) ? lessons.length : 0
-      return acc + count
+    course.modules?.reduce((acc, module) => {
+      const lessons = module.lessons || []
+      return acc + lessons.length
     }, 0) || 0
 
   return (
@@ -52,7 +51,8 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
       {showConfetti && (
         <Confetti
           className="absolute left-0 top-0 z-50 size-full"
-          options={{ particleCount: 200, scalar: 1 }}
+          particleCount={200}
+          particleSize={10}
         />
       )}
 

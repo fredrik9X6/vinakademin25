@@ -315,10 +315,10 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
         <CourseCompletionPage
           course={courseWithModules}
           progressData={{
-            completedAt: userProgress?.completedAt ?? undefined,
-            timeSpent: userProgress?.timeSpent ?? undefined,
-            progressPercentage: userProgress?.progressPercentage ?? undefined,
-            certificateIssued: userProgress?.certificateIssued ?? undefined,
+            completedAt: userProgress?.completedAt,
+            timeSpent: userProgress?.timeSpent,
+            progressPercentage: userProgress?.progressPercentage,
+            certificateIssued: userProgress?.certificateIssued,
           }}
         />
       ) : selectedLesson ? (
@@ -353,35 +353,17 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 export async function generateStaticParams() {
   if (process.env.NODE_ENV === 'development') return []
 
-  const hasDatabaseUrl = Boolean(
-    process.env.DATABASE_URI ||
-      process.env.DATABASE_URL ||
-      process.env.POSTGRES_URL ||
-      process.env.POSTGRES_PRISMA_URL ||
-      process.env.POSTGRES_URL_NON_POOLING,
-  )
+  const payload = await getPayload({ config })
 
-  if (!hasDatabaseUrl) {
-    console.warn('[generateStaticParams] Skipping course prebuild – no database URL configured.')
-    return []
-  }
+  const courses = await payload.find({
+    collection: 'courses',
+    where: { _status: { equals: 'published' } },
+    limit: 1000,
+  })
 
-  try {
-    const payload = await getPayload({ config })
-
-    const courses = await payload.find({
-      collection: 'courses',
-      where: { _status: { equals: 'published' } },
-      limit: 1000,
-    })
-
-    return courses.docs
-      .filter((course) => course.slug)
-      .map((course) => ({
-        slug: course.slug,
-      }))
-  } catch (error) {
-    console.warn('[generateStaticParams] Failed to fetch courses – falling back to runtime paths.', error)
-    return []
-  }
+  return courses.docs
+    .filter((course) => course.slug)
+    .map((course) => ({
+      slug: course.slug,
+    }))
 }

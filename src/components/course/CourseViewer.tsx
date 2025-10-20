@@ -26,7 +26,6 @@ interface ModuleWithLessons {
   title: string
   description: string
   order: number
-  contents?: Array<unknown>
   lessons: Array<{
     id: number
     title: string

@@ -282,9 +282,6 @@ importers:
       '@types/react-dom':
         specifier: 19.1.2
         version: 19.1.2(@types/react@19.1.0)
-      '@types/three':
-        specifier: ^0.180.0
-        version: 0.180.0
       autoprefixer:
         specifier: ^10.4.19
         version: 10.4.21(postcss@8.5.3)

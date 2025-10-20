@@ -20,7 +20,7 @@ interface QuizAttemptRunnerProps {
 }
 
 export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerProps) {
-  const questions = useMemo<any[]>(() => {
+  const questions = useMemo(() => {
     return Array.isArray(quiz.questions)
       ? quiz.questions
           .map((q: any) => (typeof q.question === 'object' ? q.question : q.question))

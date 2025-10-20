@@ -28,8 +28,6 @@ interface CourseProgress {
   completedLessons: number
   progressPercentage: number
   lessonProgress: LessonProgress[]
-  modulesProgress?: Array<{ moduleId: number; completed: boolean }>
-  completedQuizzes?: Array<number | string>
 }
 
 interface CourseLesson {

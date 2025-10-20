@@ -113,13 +113,7 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString:
-        process.env.DATABASE_URI ||
-        process.env.DATABASE_URL ||
-        process.env.POSTGRES_URL ||
-        process.env.POSTGRES_PRISMA_URL ||
-        process.env.POSTGRES_URL_NON_POOLING ||
-        '',
+      connectionString: process.env.DATABASE_URI || '',
     },
   }),
   sharp,
