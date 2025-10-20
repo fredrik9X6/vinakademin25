@@ -94,13 +94,16 @@ export async function POST(request: NextRequest) {
     expiresAt.setHours(expiresAt.getHours() + 24)
 
     // Create session
+    const hostName =
+      [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'Anonymous'
+
     const session = await payload.create({
       collection: 'course-sessions',
       data: {
         course: courseId,
         host: user.id,
         joinCode,
-        sessionName: sessionName || `${user.name || 'Anonymous'}'s Session`,
+        sessionName: sessionName || `${hostName}'s Session`,
         status: 'active',
         currentActivity: 'waiting',
         participantCount: 0,

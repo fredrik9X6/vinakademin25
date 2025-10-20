@@ -161,17 +161,17 @@ export const Lessons: CollectionConfig = {
           'Select the canonical WSET answer review for comparison (tip: mark review as Trusted to use it here).',
         condition: (data) => (data as any)?.lessonType === 'wineReview',
       },
-      filterOptions: ({ data }) => {
+      filterOptions: ({ data }: { data: any }) => {
         try {
           const lessonId = data?.id ? String(data.id) : undefined
           if (lessonId) {
             return {
               or: [{ lesson: { equals: lessonId } }, { isTrusted: { equals: true } }],
-            }
+            } as any
           }
-          return { isTrusted: { equals: true } }
+          return { isTrusted: { equals: true } } as any
         } catch {
-          return {}
+          return {} as any
         }
       },
     },

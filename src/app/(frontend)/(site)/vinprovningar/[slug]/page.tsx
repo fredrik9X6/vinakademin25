@@ -315,10 +315,10 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
         <CourseCompletionPage
           course={courseWithModules}
           progressData={{
-            completedAt: userProgress?.completedAt,
-            timeSpent: userProgress?.timeSpent,
-            progressPercentage: userProgress?.progressPercentage,
-            certificateIssued: userProgress?.certificateIssued,
+            completedAt: userProgress?.completedAt ?? undefined,
+            timeSpent: userProgress?.timeSpent ?? undefined,
+            progressPercentage: userProgress?.progressPercentage ?? undefined,
+            certificateIssued: userProgress?.certificateIssued ?? undefined,
           }}
         />
       ) : selectedLesson ? (

@@ -20,7 +20,7 @@ interface QuizAttemptRunnerProps {
 }
 
 export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerProps) {
-  const questions = useMemo(() => {
+  const questions = useMemo<any[]>(() => {
     return Array.isArray(quiz.questions)
       ? quiz.questions
           .map((q: any) => (typeof q.question === 'object' ? q.question : q.question))
@@ -141,7 +141,7 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
     if (!attemptId) return
     setSubmitting(true)
     try {
-      const ordered = questions.map((q) => ({
+      const ordered = questions.map((q: any) => ({
         question: String(q.id),
         answer: answersMap[String(q.id)],
       }))

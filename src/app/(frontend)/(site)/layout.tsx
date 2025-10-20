@@ -6,6 +6,8 @@ import { Footer } from '@/components/ui/footer'
 import { SessionProvider } from '@/context/SessionContext'
 import { ActiveSessionBanner } from '@/components/course/ActiveSessionBanner'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>

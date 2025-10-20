@@ -131,7 +131,7 @@ export const hasFreePreviewAccess = async (
         id: lessonId,
       })
 
-      return lesson.isFree === true
+      return (lesson as any)?.isFree === true
     }
 
     // For now, return false if no lesson-specific check
@@ -292,33 +292,48 @@ export const canAccessLesson = async (
     }
 
     // Get the course through module relationship
+    const lessonModuleRelation = lesson.module
+    const lessonModuleId =
+      lessonModuleRelation && typeof lessonModuleRelation === 'object'
+        ? lessonModuleRelation.id
+        : lessonModuleRelation
+
+    if (!lessonModuleId) {
+      return false
+    }
+
     const module = await req.payload.findByID({
       collection: 'modules',
-      id: lesson.moduleRelationship,
+      id: String(lessonModuleId),
     })
 
     if (!module) {
       return false
     }
 
+    const moduleCourseRelation = module.course
     const courseId =
-      typeof module.courseRelationship === 'object'
-        ? module.courseRelationship.id
-        : module.courseRelationship
+      moduleCourseRelation && typeof moduleCourseRelation === 'object'
+        ? moduleCourseRelation.id
+        : moduleCourseRelation
+
+    if (!courseId) {
+      return false
+    }
 
     // Check if lesson allows free preview
-    if (lesson.isFree) {
+    if ((lesson as any)?.isFree) {
       return true
     }
 
     // Check if user is enrolled and has content access
-    const isEnrolled = await isEnrollmentValid(req, userId, courseId)
+    const isEnrolled = await isEnrollmentValid(req, userId, String(courseId))
     if (!isEnrolled) {
       return false
     }
 
     // Check content viewing permission
-    return await hasPermission(req, userId, courseId, 'viewContent')
+    return await hasPermission(req, userId, String(courseId), 'viewContent')
   } catch (error) {
     console.error('Error checking lesson access:', error)
     return false
@@ -343,16 +358,24 @@ export const canTakeQuiz = async (
       return false
     }
 
-    const courseId = quiz.course
+    const quizCourseRelation = quiz.course
+    const courseId =
+      quizCourseRelation && typeof quizCourseRelation === 'object'
+        ? quizCourseRelation.id
+        : quizCourseRelation
+
+    if (!courseId) {
+      return false
+    }
 
     // Check if user is enrolled and has quiz permissions
-    const isEnrolled = await isEnrollmentValid(req, userId, courseId)
+    const isEnrolled = await isEnrollmentValid(req, userId, String(courseId))
     if (!isEnrolled) {
       return false
     }
 
     // Check quiz taking permission
-    return await hasPermission(req, userId, courseId, 'takeQuizzes')
+    return await hasPermission(req, userId, String(courseId), 'takeQuizzes')
   } catch (error) {
     console.error('Error checking quiz access:', error)
     return false

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import type { User } from '@/payload-types'
 
 // DELETE user account
 export async function DELETE(
@@ -25,7 +26,7 @@ export async function DELETE(
 
     // For security reasons, we'll anonymize the user data instead of completely deleting
     // This maintains referential integrity while protecting user privacy
-    const anonymizedData = {
+    const anonymizedData: Partial<User> = {
       firstName: 'Deleted',
       lastName: 'User',
       email: `deleted-${Date.now()}@deleted.local`,
@@ -65,9 +66,6 @@ export async function DELETE(
           featureUpdates: false,
         },
       },
-      // Add deletion metadata
-      deletedAt: new Date().toISOString(),
-      deletionReason: 'User requested account deletion',
     }
 
     // Update user with anonymized data
@@ -93,7 +91,6 @@ export async function DELETE(
         data: {
           status: 'canceled',
           canceledAt: new Date().toISOString(),
-          cancelReason: 'Account deletion',
         },
       })
     }

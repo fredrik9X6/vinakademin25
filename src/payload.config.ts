@@ -1,5 +1,6 @@
 
 
+import { s3Storage } from '@payloadcms/storage-s3'
 // storage-adapter-import-placeholder
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -38,6 +39,12 @@ import { SessionParticipants } from './collections/SessionParticipants'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+const s3Enabled =
+  !!process.env.S3_BUCKET &&
+  !!process.env.S3_REGION &&
+  !!process.env.S3_ACCESS_KEY_ID &&
+  !!process.env.S3_SECRET_ACCESS_KEY
 
 export default buildConfig({
   admin: {
@@ -118,6 +125,32 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    // storage-adapter-placeholder
+    ...(s3Enabled
+      ? [
+          s3Storage({
+            bucket: process.env.S3_BUCKET as string,
+            collections: {
+              media: {
+                ...(process.env.S3_PREFIX ? { prefix: process.env.S3_PREFIX } : {}),
+                ...(process.env.S3_PUBLIC_URL
+                  ? {
+                      generateFileURL: ({ filename }: { filename: string }) =>
+                        `${process.env.S3_PUBLIC_URL!.replace(/\/$/, '')}/${filename}`,
+                    }
+                  : {}),
+              },
+            },
+            config: {
+              region: process.env.S3_REGION,
+              endpoint: process.env.S3_ENDPOINT,
+              forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
+              credentials: {
+                accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
+                secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
+              },
+            },
+          }),
+        ]
+      : []),
   ],
 })

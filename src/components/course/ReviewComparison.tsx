@@ -259,11 +259,30 @@ export default function ReviewComparison({
         ).toFixed(1)
       : '—'
 
-  const renderReviewCard = (review: WineReview) => (
-    <Card
-      key={review.id}
-      className={review.isVerified ? 'border-[#FDBA75] dark:border-[#FB914C] border-2' : ''}
-    >
+  const renderReviewCard = (review: WineReview) => {
+    const hasNoseDetails = Boolean(
+      review.noseIntensity ||
+        review.noseDevelopment ||
+        (Array.isArray(review.aromas) && review.aromas.length > 0),
+    )
+    const hasPalateDetails = Boolean(
+      review.sweetness ||
+        review.acidity ||
+        review.tannin ||
+        review.alcohol ||
+        review.body ||
+        (Array.isArray(review.flavors) && review.flavors.length > 0) ||
+        review.finish,
+    )
+    const hasConclusionDetails = Boolean(
+      review.quality || review.readiness || (review.notes !== undefined && review.notes !== null),
+    )
+
+    return (
+      <Card
+        key={review.id}
+        className={review.isVerified ? 'border-[#FDBA75] dark:border-[#FB914C] border-2' : ''}
+      >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{review.participantName}</CardTitle>
@@ -302,7 +321,7 @@ export default function ReviewComparison({
           )}
 
           {/* Nose */}
-          {(review.noseIntensity || review.noseDevelopment || review.aromas) && (
+          {hasNoseDetails && (
             <div className="p-3">
               <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
                 Doft
@@ -320,7 +339,7 @@ export default function ReviewComparison({
                     <span className="col-span-2">{review.noseDevelopment}</span>
                   </div>
                 )}
-                {review.aromas && review.aromas.length > 0 && (
+                {Array.isArray(review.aromas) && review.aromas.length > 0 && (
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <span className="text-muted-foreground">Aromer</span>
                     <span className="col-span-2 break-words">{review.aromas.join(', ')}</span>
@@ -331,13 +350,7 @@ export default function ReviewComparison({
           )}
 
           {/* Palate */}
-          {(review.sweetness ||
-            review.acidity ||
-            review.tannin ||
-            review.alcohol ||
-            review.body ||
-            review.flavors ||
-            review.finish) && (
+          {hasPalateDetails && (
             <div className="p-3">
               <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
                 Smak
@@ -373,7 +386,7 @@ export default function ReviewComparison({
                     <span className="col-span-2">{review.body}</span>
                   </div>
                 )}
-                {review.flavors && review.flavors.length > 0 && (
+                {Array.isArray(review.flavors) && review.flavors.length > 0 && (
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <span className="text-muted-foreground">Smaker</span>
                     <span className="col-span-2 break-words">{review.flavors.join(', ')}</span>
@@ -390,7 +403,7 @@ export default function ReviewComparison({
           )}
 
           {/* Conclusion */}
-          {(review.quality || review.readiness || review.notes) && (
+          {hasConclusionDetails && (
             <div className="p-3">
               <h4 className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">
                 Slutsats
@@ -408,14 +421,14 @@ export default function ReviewComparison({
                     <span className="col-span-2">{review.readiness}</span>
                   </div>
                 )}
-                {review.notes && (
+                {review.notes !== undefined && review.notes !== null && (
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <span className="text-muted-foreground">Noteringar</span>
                     <div className="col-span-2 text-muted-foreground italic">
                       {typeof review.notes === 'object' &&
                       review.notes !== null &&
                       'root' in review.notes ? (
-                        <RichTextRenderer content={review.notes} />
+                        <RichTextRenderer content={review.notes as any} />
                       ) : (
                         <span>{String(review.notes)}</span>
                       )}
@@ -427,8 +440,9 @@ export default function ReviewComparison({
           )}
         </div>
       </CardContent>
-    </Card>
-  )
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-6">

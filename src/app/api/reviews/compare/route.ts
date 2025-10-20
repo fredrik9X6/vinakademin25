@@ -110,7 +110,12 @@ export async function GET(request: NextRequest) {
           }
         } else if (review.user) {
           const user = typeof review.user === 'object' ? review.user : null
-          participantName = user?.name || 'User'
+          if (user) {
+            const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ')
+            participantName = fullName || user.email || 'User'
+          } else {
+            participantName = 'User'
+          }
         }
 
         return {

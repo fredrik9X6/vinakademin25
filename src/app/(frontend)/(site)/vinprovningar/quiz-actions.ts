@@ -16,7 +16,13 @@ export async function startQuizAttempt(quizId: number | string) {
   const course = await payload.findByID({ collection: 'courses', id: String(courseId) })
 
   // Get module to find quiz position
-  const moduleId = typeof quiz.module === 'object' ? quiz.module.id : quiz.module
+  const moduleRelation = quiz.module
+  const moduleId =
+    moduleRelation && typeof moduleRelation === 'object' ? moduleRelation.id : moduleRelation
+
+  if (!moduleId) {
+    throw new Error('Quiz saknar kopplat modul-id')
+  }
   const allModules = await payload.find({
     collection: 'modules',
     where: { course: { equals: String(courseId) } },
@@ -44,13 +50,15 @@ export async function startQuizAttempt(quizId: number | string) {
   for (const module of allModules.docs.sort((a, b) => (a.order || 0) - (b.order || 0))) {
     const moduleLessons = allLessons.docs
       .filter((l) => {
-        const lModId = typeof l.module === 'object' ? l.module.id : l.module
+        const moduleField = l.module
+        const lModId = moduleField && typeof moduleField === 'object' ? moduleField.id : moduleField
         return lModId === module.id
       })
       .sort((a, b) => (a.order || 0) - (b.order || 0))
 
     const moduleQuizzes = allQuizzes.docs.filter((q) => {
-      const qModId = typeof q.module === 'object' ? q.module.id : q.module
+      const moduleField = q.module
+      const qModId = moduleField && typeof moduleField === 'object' ? moduleField.id : moduleField
       return qModId === module.id
     })
 
@@ -132,7 +140,7 @@ export async function startQuizAttempt(quizId: number | string) {
       quiz: Number(quizId),
       attemptNumber,
       status: 'in-progress',
-      startedAt: new Date(),
+      startedAt: new Date().toISOString(),
       answers: seededAnswers,
     },
   })
@@ -176,13 +184,15 @@ export async function getQuizStartInfo(quizId: number | string) {
   for (const module of allModules.docs.sort((a, b) => (a.order || 0) - (b.order || 0))) {
     const moduleLessons = allLessons.docs
       .filter((l) => {
-        const lModId = typeof l.module === 'object' ? l.module.id : l.module
+        const moduleField = l.module
+        const lModId = moduleField && typeof moduleField === 'object' ? moduleField.id : moduleField
         return lModId === module.id
       })
       .sort((a, b) => (a.order || 0) - (b.order || 0))
 
     const moduleQuizzes = allQuizzes.docs.filter((q) => {
-      const qModId = typeof q.module === 'object' ? q.module.id : q.module
+      const moduleField = q.module
+      const qModId = moduleField && typeof moduleField === 'object' ? moduleField.id : moduleField
       return qModId === module.id
     })
 
@@ -409,7 +419,7 @@ export async function submitQuizAttempt(
     id: String(attemptId),
     data: {
       status: 'completed',
-      completedAt: new Date(),
+      completedAt: new Date().toISOString(),
       timeSpent: timeSpentSeconds,
       answers: evaluated.map((a) => ({
         question: Number(a.question),
@@ -492,7 +502,7 @@ export async function submitQuizAttempt(
           user: Number(user.id),
           course: courseId,
           status: 'in-progress',
-          lastAccessedAt: new Date(),
+          lastAccessedAt: new Date().toISOString(),
         },
       })
       progressId = createdProgress.id
@@ -545,7 +555,7 @@ export async function submitQuizAttempt(
           lesson: lessonId,
           score,
           attempts: attemptsForThis,
-          completedAt: new Date(),
+          completedAt: new Date().toISOString(),
         }
         if (idx >= 0) nextScores[idx] = entry
         else nextScores.push(entry)
@@ -564,7 +574,7 @@ export async function submitQuizAttempt(
         score,
         attempts: attemptsForThis,
         passed,
-        completedAt: new Date(),
+        completedAt: new Date().toISOString(),
       }
       if (qIdx >= 0) nextQuizScores[qIdx] = qEntry
       else nextQuizScores.push(qEntry)
@@ -574,7 +584,7 @@ export async function submitQuizAttempt(
         id: String(upsertTarget),
         data: {
           status: 'in-progress',
-          lastAccessedAt: new Date(),
+          lastAccessedAt: new Date().toISOString(),
           ...(lessonId ? { scores: nextScores } : {}),
           quizScores: nextQuizScores,
         },

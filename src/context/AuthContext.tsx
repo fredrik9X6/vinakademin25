@@ -51,6 +51,7 @@ interface AuthContextType {
   permissions: Permissions | null // Add permissions state
   setPermissions: React.Dispatch<React.SetStateAction<Permissions | null>> // Add setter
   isLoading: boolean
+  error: string | null
   loginUser: (credentials: { email: string; password: string }) => Promise<boolean>
   logoutUser: () => Promise<void>
   // Use the specific API data type
@@ -334,13 +335,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       value={{
         user,
         setUser,
-        permissions,
-        setPermissions,
-        isLoading,
-        loginUser,
-        logoutUser,
-        registerUser,
-        checkAuth,
+      permissions,
+      setPermissions,
+      isLoading,
+      error,
+      loginUser,
+      logoutUser,
+      registerUser,
+      checkAuth,
       }}
     >
       {children}
