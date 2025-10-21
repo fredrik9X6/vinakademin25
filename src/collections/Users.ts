@@ -9,6 +9,20 @@ type User = {
   role?: string
 }
 
+const resolveSiteURL = () => {
+  const baseURL =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.PAYLOAD_PUBLIC_SITE_URL ||
+    process.env.PAYLOAD_PUBLIC_SERVER_URL ||
+    (process.env.NODE_ENV === 'production'
+      ? 'https://www.vinakademin.se'
+      : 'http://localhost:3000')
+
+  return typeof baseURL === 'string' ? baseURL.replace(/\/$/, '') : ''
+}
+
+const SITE_URL = resolveSiteURL()
+
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
@@ -29,7 +43,7 @@ export const Users: CollectionConfig = {
           <h1>Reset Your Password</h1>
           <p>Hello ${(user as any)?.firstName || 'there'},</p>
           <p>Click the link below to reset your password:</p>
-          <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/reset-password?token=${token}">Reset Password</a></p>
+          <p><a href="${SITE_URL}/reset-password?token=${token}">Reset Password</a></p>
           <p>If you didn't request this, please ignore this email.</p>
         `
       },
@@ -42,7 +56,7 @@ export const Users: CollectionConfig = {
           <h1>Verifiera din e-post</h1>
           <p>Hej ${(user as any)?.firstName || 'där'},</p>
           <p>Klicka på länken nedan för att verifiera din e-postadress:</p>
-          <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/verifiera-epost?token=${token}">Verifiera E-post</a></p>
+          <p><a href="${SITE_URL}/verifiera-epost?token=${token}">Verifiera E-post</a></p>
           <p>Om du inte skapade detta konto, vänligen ignorera detta e-postmeddelande.</p>
         `
       },
