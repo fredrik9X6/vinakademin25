@@ -42,8 +42,8 @@ export function FeaturedCourseCard({ course }: FeaturedCourseCardProps) {
   const instructorInitials =
     instructorName
       .split(' ')
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase())
+      .filter((part): part is string => Boolean(part))
+      .map((part: string) => part.charAt(0).toUpperCase())
       .slice(0, 2)
       .join('') || 'I'
 
