@@ -40,12 +40,12 @@ export function FeaturedCourseCard({ course }: FeaturedCourseCardProps) {
 
   const instructorAvatarUrl = instructor ? resolveMediaUrl((instructor as any).avatar) : null
   const instructorInitials = (() => {
-    const segments = instructorName.split(' ').filter((segment) => segment.trim().length > 0)
+    const segments = instructorName.split(' ').filter((segment: string) => segment.trim().length > 0)
     if (segments.length === 0) {
       return 'I'
     }
     return segments
-      .map((segment) => segment.charAt(0).toUpperCase())
+      .map((segment: string) => segment.charAt(0).toUpperCase())
       .slice(0, 2)
       .join('')
   })()
