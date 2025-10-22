@@ -39,13 +39,16 @@ export function FeaturedCourseCard({ course }: FeaturedCourseCardProps) {
   }
 
   const instructorAvatarUrl = instructor ? resolveMediaUrl((instructor as any).avatar) : null
-  const instructorInitials =
-    instructorName
-      .split(' ')
-      .filter((part): part is string => Boolean(part))
-      .map((part: string) => part.charAt(0).toUpperCase())
+  const instructorInitials = (() => {
+    const segments = instructorName.split(' ').filter((segment) => segment.trim().length > 0)
+    if (segments.length === 0) {
+      return 'I'
+    }
+    return segments
+      .map((segment) => segment.charAt(0).toUpperCase())
       .slice(0, 2)
-      .join('') || 'I'
+      .join('')
+  })()
 
   const formatPrice = (price: number) => {
     if (price === 0) return 'Gratis'
