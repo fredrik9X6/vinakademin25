@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react'
 import { type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 
@@ -9,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar'
 // Removed badge usage for coming soon items
 // Using SidebarMenuButton tooltip prop for full-button tooltips
@@ -24,6 +26,14 @@ export function NavMain({
     type?: 'link' | 'label'
   }[]
 }) {
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  const handleNavigate = React.useCallback(() => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }, [isMobile, setOpenMobile])
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -73,7 +83,7 @@ export function NavMain({
                       </span>
                     </div>
                   ) : (
-                    <Link href={item.url}>
+                    <Link href={item.url} onClick={handleNavigate}>
                       {item.icon && <item.icon />}
                       <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
                     </Link>

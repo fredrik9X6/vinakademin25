@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { LucideIcon, PanelLeftIcon } from 'lucide-react'
+import { LucideIcon } from 'lucide-react'
+import Link from 'next/link'
 
 import {
   SidebarGroup,
@@ -22,7 +23,13 @@ export function NavSecondary({
     icon: LucideIcon
   }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
-  const { toggleSidebar, state } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  const handleNavigate = React.useCallback(() => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }, [isMobile, setOpenMobile])
 
   return (
     <SidebarGroup {...props}>
@@ -31,10 +38,10 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild className="hover:bg-accent [&:hover_svg]:text-secondary">
-                <a href={item.url}>
+                <Link href={item.url} onClick={handleNavigate}>
                   <item.icon />
                   <span>{item.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

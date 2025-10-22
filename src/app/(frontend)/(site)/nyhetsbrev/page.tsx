@@ -6,10 +6,10 @@ import { Mail, Clock, Star, Users, ChevronRight } from 'lucide-react'
 export const metadata: Metadata = {
   title: 'Nyhetsbrev - Vinakademin',
   description:
-    'Få veckans bästa vintips, smaknoter och expertråd direkt i din inbox. Gratis och lärorikt för alla som älskar vin.',
+    'Få veckans bästa vintips, smaknoter och artiklar direkt i din inbox. Gratis och lärorikt för alla som älskar vin.',
   openGraph: {
     title: 'Vinakademins Nyhetsbrev - Veckans Vintips',
-    description: 'Få veckans bästa vintips, smaknoter och expertråd direkt i din inbox.',
+    description: 'Få veckans bästa vintips, smaknoter och artiklar direkt i din inbox.',
     type: 'website',
   },
 }
@@ -59,7 +59,7 @@ export default function NewsletterPage() {
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-medium text-foreground mb-4">Nyhetsbrev</h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-              Lär dig om vin utan flum. Varje torsdag får du konkreta tips som gör dig till en
+              Lär dig om vin utan flum. Varje mail innehåller konkreta tips som gör dig till en
               bättre vinälskare.
             </p>
           </div>
@@ -173,9 +173,9 @@ export default function NewsletterPage() {
       <div className="py-16 bg-background">
         <div className="container mx-auto px-4 text-center min-w-0">
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-medium mb-6">Redo att bli bättre på vin?</h2>
+            <h2 className="text-3xl font-medium mb-6">Redo att gå med?</h2>
             <p className="text-lg mb-8 text-muted-foreground">
-              Anslut dig till vår community av vinentusiaster som förvandlar sina middagar.
+              Skriv upp dig och gå med i vår community av vinentusiaster.
             </p>
 
             <NewsletterSignupBlock

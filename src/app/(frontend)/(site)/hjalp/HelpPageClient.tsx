@@ -51,7 +51,7 @@ const faqSections = [
     questions: [
       {
         q: 'Vad är skillnaden mellan gratis och betalda vinprovningar?',
-        a: 'Alla vinprovningar har gratis moment som du kan prova direkt. Fullständig tillgång till alla lektioner och quiz kräver ett engångsköp. Du äger vinprovningen för alltid när du köpt den.',
+        a: 'Alla vinprovningar har gratis moment som du kan prova direkt. Fullständig tillgång till alla lektioner och quiz kräver ett engångsköp. Du kan kolla på vinprovningen hur många gånger du vill',
       },
       {
         q: 'Hur fungerar gruppsessioner?',
@@ -59,16 +59,16 @@ const faqSections = [
       },
       {
         q: 'Kan jag gå vinprovningen i min egen takt?',
-        a: 'Absolut! När du köpt en vinprovning har du livstid tillgång. Du kan pausa och återuppta när det passar dig.',
+        a: 'Absolut! När du köpt en vinprovning kan du kolla på vinprovningen hur många gånger du vill. Du kan pausa och återuppta när det passar dig.',
       },
       {
         q: 'Hur lång är en typisk vinprovning?',
-        a: 'Det varierar beroende på vinprovning, men de flesta tar 1-3 timmar att genomföra om du går dem i ett svep. Du ser exakt längd på varje vinprovnings översiktssida.',
+        a: 'Det beror på hur mycket tid du lägger på att smaka, prova och hur trevligt ni har! En vinprovning innehåller ofta 3-4 video à 10 min med efterföljande quiz och tid för reflektion och egen provning. Du ser exakt längd på varje vinprovnings översiktssida.',
       },
     ],
   },
   {
-    category: 'Betalning & Fakturering',
+    category: 'Betalning',
     icon: CreditCard,
     questions: [
       {
@@ -219,7 +219,7 @@ export function HelpPageClient() {
               className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
             >
               <span className="text-sm font-medium">Alla Vinprovningar</span>
-              <Badge variant="outline">Kurser</Badge>
+              <Badge variant="outline">Vinprovningar</Badge>
             </Link>
             <Link
               href="/artiklar"

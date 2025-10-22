@@ -3,6 +3,7 @@ import { getStripeServer, getOrCreateStripeCustomer } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { getSiteURL } from '@/lib/site-url'
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe Checkout Session
     const stripe = getStripeServer()
-    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const baseUrl = getSiteURL()
 
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,

@@ -2,7 +2,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { BookOpen, Clock, User, ArrowRight, Sparkles, Play } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { BookOpen, Clock, ArrowRight, Sparkles, Play } from 'lucide-react'
 import { getTotalCourseItems, countFreeItems } from '@/lib/course-utils'
 
 interface FeaturedCourseCardProps {
@@ -12,15 +13,39 @@ interface FeaturedCourseCardProps {
 export function FeaturedCourseCard({ course }: FeaturedCourseCardProps) {
   const totalItems = getTotalCourseItems(course.modules as any)
   const freeItems = countFreeItems(course.modules as any)
+  const instructor =
+    typeof course.instructor === 'object' && course.instructor ? course.instructor : null
   const instructorName =
-    typeof course.instructor === 'object' && course.instructor
-      ? `${course.instructor.firstName || ''} ${course.instructor.lastName || ''}`.trim() ||
-        'Okänd instruktör'
-      : 'Okänd instruktör'
+    (instructor &&
+      `${instructor.firstName || ''} ${instructor.lastName || ''}`.replace(/\s+/g, ' ').trim()) ||
+    instructor?.name ||
+    'Okänd instruktör'
   const featuredImageUrl =
     typeof course.featuredImage === 'object' && course.featuredImage
       ? (course.featuredImage as any).url
       : null
+
+  const resolveMediaUrl = (media: any): string | null => {
+    if (!media || typeof media !== 'object') return null
+    if (typeof media.url === 'string') return media.url
+    if (media.sizes && typeof media.sizes === 'object') {
+      for (const size of Object.values(media.sizes)) {
+        if (size && typeof size === 'object' && typeof (size as any).url === 'string') {
+          return (size as any).url
+        }
+      }
+    }
+    return null
+  }
+
+  const instructorAvatarUrl = instructor ? resolveMediaUrl((instructor as any).avatar) : null
+  const instructorInitials =
+    instructorName
+      .split(' ')
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join('') || 'I'
 
   const formatPrice = (price: number) => {
     if (price === 0) return 'Gratis'
@@ -124,12 +149,19 @@ export function FeaturedCourseCard({ course }: FeaturedCourseCardProps) {
                   )}
 
                   {/* Instructor */}
-                  <div className="flex items-center gap-2 pt-2 pb-4 border-t border-border">
-                    <div className="p-2 rounded-full bg-[#FDBA75]/10">
-                      <User className="h-4 w-4 text-[#FB914C]" />
-                    </div>
-                    <div className="text-sm">
-                      <div className="text-xs text-muted-foreground">Instruktör</div>
+                  <div className="flex items-center gap-3 pt-2 pb-4 border-t border-border">
+                    <Avatar className="h-12 w-12 border border-border bg-[#FDBA75]/10">
+                      {instructorAvatarUrl ? (
+                        <AvatarImage src={instructorAvatarUrl} alt={instructorName} />
+                      ) : null}
+                      <AvatarFallback className="bg-[#FDBA75]/10 text-[#FB914C]">
+                        {instructorInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-sm text-left">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Instruktör
+                      </div>
                       <div className="font-medium text-foreground">{instructorName}</div>
                     </div>
                   </div>

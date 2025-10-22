@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { adminFieldLevel, adminOnly, adminOrInstructorFieldLevel, adminOrSelf } from '../lib/access'
+import { getSiteURL } from '../lib/site-url'
 import { UserWineLists } from './UserWineLists'
 
 type User = {
@@ -9,19 +10,7 @@ type User = {
   role?: string
 }
 
-const resolveSiteURL = () => {
-  const baseURL =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.PAYLOAD_PUBLIC_SITE_URL ||
-    process.env.PAYLOAD_PUBLIC_SERVER_URL ||
-    (process.env.NODE_ENV === 'production'
-      ? 'https://www.vinakademin.se'
-      : 'http://localhost:3000')
-
-  return typeof baseURL === 'string' ? baseURL.replace(/\/$/, '') : ''
-}
-
-const SITE_URL = resolveSiteURL()
+const SITE_URL = getSiteURL()
 
 export const Users: CollectionConfig = {
   slug: 'users',

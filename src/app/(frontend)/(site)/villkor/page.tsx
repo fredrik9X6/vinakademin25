@@ -70,7 +70,7 @@ export default function VillkorPage() {
                 <li>Lämna korrekta och fullständiga uppgifter vid registrering</li>
                 <li>Hålla dina inloggningsuppgifter säkra och hemliga</li>
                 <li>Meddela oss omedelbart om obehörig användning av ditt konto</li>
-                <li>Vara minst 18 år gammal eller ha vårdnadshavares tillstånd</li>
+                <li>Vara minst 18 år gammal</li>
               </ul>
 
               <Separator className="my-4" />
@@ -226,8 +226,8 @@ export default function VillkorPage() {
                 <li>Användning av tjänsten leder till specifika resultat</li>
               </ul>
               <p className="text-base leading-7">
-                Vi ansvarar inte för indirekta skador eller förlorad vinst som uppstår i samband med
-                användning av tjänsten.
+                Vi ansvarar inte för indirekta skador som uppstår i samband med användning av
+                tjänsten.
               </p>
             </CardContent>
           </Card>

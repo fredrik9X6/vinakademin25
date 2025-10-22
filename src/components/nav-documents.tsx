@@ -1,6 +1,8 @@
 'use client'
 
+import * as React from 'react'
 import { FolderIcon, MoreHorizontalIcon, ShareIcon, type LucideIcon } from 'lucide-react'
+import Link from 'next/link'
 
 import {
   DropdownMenu,
@@ -29,7 +31,13 @@ export function NavDocuments({
     disabled?: boolean
   }[]
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  const handleNavigate = React.useCallback(() => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }, [isMobile, setOpenMobile])
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -54,10 +62,10 @@ export function NavDocuments({
                   </span>
                 </div>
               ) : (
-                <a href={item.url}>
+                <Link href={item.url} onClick={handleNavigate}>
                   <item.icon />
                   <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
-                </a>
+                </Link>
               )}
             </SidebarMenuButton>
             <DropdownMenu>

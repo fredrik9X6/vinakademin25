@@ -175,29 +175,27 @@ export default async function HomePage() {
                 {
                   icon: ShoppingCart,
                   title: 'Välj en vinprovning',
-                  description:
-                    'Bläddra bland våra kurerade vinprovningar och välj den som passar dig bäst.',
+                  description: 'Hitta en vinprovning som passar vad just du är sugen på',
                   step: '01',
                 },
                 {
                   icon: Wine,
                   title: 'Köp vinen',
-                  description:
-                    'Få en lista med viner från Systembolaget. Enkla länkar så du hittar rätt.',
+                  description: 'Vi har valt ut passande och goda viner som finns på systembolaget',
                   step: '02',
                 },
                 {
                   icon: VideoIcon,
-                  title: 'Följ guiden',
+                  title: 'Sätt igång',
                   description:
-                    'Bjud in vänner eller gör det själv. Se videor, läs noter och utforska vinerna.',
+                    'Provingen kan göras själv eller med vänner. Underhållande videos med tillhörande smaknoter, quiz och matnyttig info',
                   step: '03',
                 },
                 {
                   icon: BarChart3,
-                  title: 'Jämför resultat',
+                  title: 'Utvärdera',
                   description:
-                    'Se expertens smaknoter och jämför med dina egna (och gästernas) intryck.',
+                    'Hur gick det för dig? Jämför dina smaknoter med lärarens, gästernas och ta med dig feedbacken för vidare lärande',
                   step: '04',
                 },
               ].map((step, index) => (

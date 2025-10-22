@@ -402,7 +402,7 @@ function CheckoutFormInner({ course, onProcessing, onSuccess, onError }: Checkou
             användarvillkor
           </a>{' '}
           och{' '}
-          <a href="/integritet" className="underline hover:no-underline">
+          <a href="/integritetspolicy" className="underline hover:no-underline">
             integritetspolicy
           </a>
           .

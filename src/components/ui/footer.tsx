@@ -32,11 +32,11 @@ export function Footer() {
   return (
     <footer className="bg-background border-t border-border">
       <div className="mx-auto max-w-7xl px-6 py-12 min-w-0 overflow-x-hidden">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 items-center gap-8 text-center sm:grid-cols-2 sm:items-start sm:text-left lg:grid-cols-5">
           {/* Utforska Column */}
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-foreground">Utforska</h3>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 flex flex-col items-center space-y-3 sm:items-start">
               {exploreLinks.map((link) => (
                 <li key={link.label}>
                   <Link
@@ -53,7 +53,7 @@ export function Footer() {
           {/* Om Vinakademin Column */}
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-foreground">Om Vinakademin</h3>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 flex flex-col items-center space-y-3 sm:items-start">
               {aboutLinks.map((link) => (
                 <li key={link.label}>
                   <Link
@@ -70,7 +70,7 @@ export function Footer() {
           {/* Resurser Column */}
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-foreground">Resurser</h3>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 flex flex-col items-center space-y-3 sm:items-start">
               {resourcesLinks.map((link) => (
                 <li key={link.label}>
                   <Link
@@ -88,17 +88,21 @@ export function Footer() {
           <div className="min-w-0 lg:col-span-2">
             <h3 className="text-sm font-semibold text-foreground">Följ oss & Nyhetsbrev</h3>
             <div className="mt-4">
-              <form className="flex gap-2 flex-col sm:flex-row min-w-0">
+              <form className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-stretch min-w-0">
                 <Input
                   type="email"
                   placeholder="Din e-postadress"
-                  className="h-10 text-sm flex-1 min-w-0"
+                  className="h-12 w-full min-w-0 text-base sm:h-10 sm:flex-1 sm:text-sm"
                 />
-                <Button type="submit" className="h-10" variant="secondary">
+                <Button
+                  type="submit"
+                  className="h-12 w-full sm:h-10 sm:w-auto"
+                  variant="secondary"
+                >
                   Prenumerera
                 </Button>
               </form>
-              <div className="mt-6 flex gap-4 flex-wrap">
+              <div className="mt-6 flex flex-wrap justify-center gap-4 sm:justify-start">
                 {socialLinks.map((social) => {
                   const Icon = social.icon
                   return (
