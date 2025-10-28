@@ -6,7 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 import { cn } from '@/lib/utils'
-import { Check, X, Lightbulb } from 'lucide-react'
+import {
+  Check,
+  X,
+  Lightbulb,
+  Award,
+  TrendingUp,
+  RotateCcw,
+  ArrowRight,
+  Sparkles,
+} from 'lucide-react'
 import confetti from 'canvas-confetti'
 import {
   startQuizAttempt,
@@ -64,6 +73,8 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
     setAnswersMap({})
     setSelected(null)
     setShowFeedback(null)
+    setResult(null) // Reset result to hide results screen
+    setSubmitting(false) // Reset submitting state
   }
 
   const showCorrectAfterQuestion = quiz?.quizSettings?.showCorrectAnswers === 'after-question'
@@ -71,13 +82,27 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
   const currentQuestion = questions[currentIndex]
   const currentQuestionId = currentQuestion ? String(currentQuestion.id) : null
 
+  // Array of varied success messages for better UX
+  const getRandomSuccessMessage = () => {
+    const messages = [
+      'Perfekt! 🎯',
+      'Utmärkt! 🌟',
+      'Helt rätt! 👏',
+      'Bra jobbat! ✨',
+      'Fantastiskt! 🎉',
+      'Du har koll! 🍷',
+      'Imponerande! 💫',
+    ]
+    return messages[Math.floor(Math.random() * messages.length)]
+  }
+
   const evaluateAnswer = (q: any, value: any) => {
     if (!q) return { correct: false, feedbackText: undefined }
     if (q.type === 'multiple-choice') {
       const correctOption = (q.options || []).find((o: any) => o.isCorrect)
       const isCorrect = correctOption && value != null && value === correctOption.text
       const feedbackText = isCorrect
-        ? 'Rätt!'
+        ? getRandomSuccessMessage()
         : correctOption
           ? `Rätt svar: ${correctOption.text}`
           : undefined
@@ -86,7 +111,7 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
     if (q.type === 'true-false') {
       const isCorrect = String(value) === String(q.correctAnswer)
       const feedbackText = isCorrect
-        ? 'Rätt!'
+        ? getRandomSuccessMessage()
         : `Rätt svar: ${String(q.correctAnswer) === 'true' ? 'Sant' : 'Falskt'}`
       return { correct: Boolean(isCorrect), feedbackText }
     }
@@ -101,7 +126,7 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
             .trim()
             .toLowerCase()
       const feedbackText = isCorrect
-        ? 'Rätt!'
+        ? getRandomSuccessMessage()
         : acceptable.length
           ? `Exempel på godkända svar: ${acceptable.join(', ')}`
           : q.correctAnswer
@@ -248,7 +273,7 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-semibold tracking-tight">Quiz: {quiz.title}</CardTitle>
-          {!attemptId ? (
+          {!attemptId && !result && (
             <Button
               variant="secondary"
               onClick={startAttempt}
@@ -256,18 +281,23 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
             >
               {startInfo?.allowed === false ? 'Försök ej tillgängligt' : 'Starta försök'}
             </Button>
-          ) : result ? (
-            <div className="text-sm">
-              Resultat: {result.score}% {result.passed ? '✅' : '❌'}
-            </div>
-          ) : null}
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {submitting && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="h-10 w-10 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
-            <div className="text-sm text-muted-foreground">Räknar ut poäng...</div>
+          <div className="flex flex-col items-center justify-center py-16 text-center space-y-6 animate-in fade-in duration-500">
+            <div className="relative">
+              <div className="h-16 w-16 border-4 border-orange-200 dark:border-orange-900/40 rounded-full" />
+              <div className="absolute inset-0 h-16 w-16 border-4 border-orange-500 dark:border-orange-400 border-t-transparent rounded-full animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-orange-500 dark:text-orange-400 animate-pulse" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-lg font-semibold text-foreground">Beräknar ditt resultat...</div>
+              <div className="text-sm text-muted-foreground">Detta tar bara några sekunder</div>
+            </div>
           </div>
         )}
 
@@ -355,29 +385,37 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
               {showFeedback && (
                 <div
                   className={cn(
-                    'rounded-xl p-3 flex items-start gap-3',
+                    'rounded-xl p-4 flex items-start gap-3 transition-all duration-300 animate-in fade-in slide-in-from-top-2',
                     showFeedback.correct
-                      ? 'bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300'
-                      : 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300',
+                      ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/40 dark:to-emerald-900/40 text-green-900 dark:text-green-50 border-2 border-green-200 dark:border-green-500'
+                      : 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/40 dark:to-orange-900/40 text-red-800 dark:text-red-50 border-2 border-red-200 dark:border-red-500',
                   )}
                 >
                   {showFeedback.correct ? (
-                    <Check className="h-4 w-4 mt-0.5" />
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 dark:bg-green-400 flex items-center justify-center shadow-sm dark:shadow-lg dark:shadow-green-400/30">
+                      <Check className="h-4 w-4 text-white dark:text-green-950" strokeWidth={3} />
+                    </div>
                   ) : (
-                    <X className="h-4 w-4 mt-0.5" />
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 dark:bg-red-400 flex items-center justify-center shadow-sm dark:shadow-lg dark:shadow-red-400/30">
+                      <X className="h-4 w-4 text-white dark:text-red-950" strokeWidth={3} />
+                    </div>
                   )}
-                  <div className="text-sm">
-                    {showFeedback.correct ? 'Rätt svar!' : 'Fel svar.'}
-                    {showFeedback.text && (
-                      <div className="mt-1 opacity-90">{showFeedback.text}</div>
-                    )}
+                  <div className="flex-1">
+                    <div
+                      className={cn(
+                        'font-semibold mb-1',
+                        showFeedback.correct ? 'text-base' : 'text-sm',
+                      )}
+                    >
+                      {showFeedback.text || (showFeedback.correct ? 'Rätt svar!' : 'Fel svar.')}
+                    </div>
                     {q?.explanation && (
-                      <div className="mt-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-950/60 p-3">
-                        <div className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          <Lightbulb className="h-3.5 w-3.5" />
+                      <div className="mt-3 rounded-lg border border-gray-200 dark:border-zinc-500 bg-white/90 dark:bg-zinc-800/60 p-3">
+                        <div className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-200 mb-2">
+                          <Lightbulb className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
                           Förklaring
                         </div>
-                        <div className="prose prose-sm max-w-none dark:prose-invert text-gray-800 dark:text-gray-200">
+                        <div className="prose prose-sm max-w-none dark:prose-invert text-gray-800 dark:text-gray-100">
                           <RichTextRenderer content={q.explanation} />
                         </div>
                       </div>
@@ -414,34 +452,166 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
         )}
 
         {result && (
-          <Card className="relative overflow-hidden">
-            <CardContent className="p-6 text-center">
-              <div className="text-4xl font-extrabold tracking-tight mb-2 text-foreground">
-                {result.score}%
-              </div>
-              <div
-                className={cn(
-                  'mb-4 text-sm font-medium',
-                  result.passed
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-red-600 dark:text-red-400',
-                )}
-              >
-                {result.passed ? 'Godkänd! Grymt jobbat 🎉' : 'Inte godkänd – försök igen'}
-              </div>
-              <div className="flex items-center justify-center gap-3">
-                {result.passed ? (
-                  <Button variant="secondary" onClick={() => onPassed?.(Number(quiz.id))}>
-                    fortsätt till nästa lektion
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {result.passed ? (
+              <Card className="relative overflow-hidden border-2 border-green-200 dark:border-green-800/40 bg-transparent">
+                {/* Decorative background overlay to avoid bg-card conflicts */}
+                <div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-green-50 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900"
+                />
+                {/* Subtle accent overlay for dark mode */}
+                <div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent dark:from-emerald-500/8 dark:via-transparent dark:to-green-500/5"
+                />
+                <CardContent className="relative p-8 text-center space-y-6">
+                  {/* Success Icon */}
+                  <div className="flex justify-center">
+                    <div className="relative">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 dark:from-green-700 dark:to-emerald-800 flex items-center justify-center shadow-xl shadow-green-500/30 dark:shadow-green-900/40">
+                        <Award
+                          className="w-10 h-10 text-white dark:text-green-100"
+                          strokeWidth={2.5}
+                        />
+                      </div>
+                      <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-amber-400 dark:bg-amber-600 flex items-center justify-center shadow-lg animate-bounce">
+                        <Sparkles className="w-4 h-4 text-amber-900 dark:text-amber-100" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Success Message */}
+                  <div className="space-y-2">
+                    <h3 className="text-2xl md:text-3xl font-bold text-green-900 dark:text-green-400">
+                      Fantastiskt jobbat!
+                    </h3>
+                    <p className="text-green-700 dark:text-green-500/80 text-base">
+                      Du klarade quizet med ett strålande resultat
+                    </p>
+                  </div>
+
+                  {/* Score Display */}
+                  <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/80 dark:bg-zinc-800/80 border-2 border-green-300 dark:border-green-800/50">
+                    <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-500" />
+                    <span className="text-3xl font-bold text-green-900 dark:text-green-400">
+                      {result.score}%
+                    </span>
+                    <span className="text-sm font-medium text-green-700 dark:text-green-500/80">
+                      rätt svar
+                    </span>
+                  </div>
+
+                  {/* Success Stats */}
+                  <div className="grid grid-cols-3 gap-4 py-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-900 dark:text-green-400">
+                        {questions.length}
+                      </div>
+                      <div className="text-xs text-green-700 dark:text-green-600">Frågor</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-900 dark:text-green-400">
+                        {Math.round((result.score / 100) * questions.length)}
+                      </div>
+                      <div className="text-xs text-green-700 dark:text-green-600">Rätt</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-900 dark:text-green-400">✓</div>
+                      <div className="text-xs text-green-700 dark:text-green-600">Godkänd</div>
+                    </div>
+                  </div>
+
+                  {/* CTA Button */}
+                  <Button
+                    onClick={() => onPassed?.(Number(quiz.id))}
+                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white shadow-lg shadow-green-600/30 dark:shadow-none"
+                    size="lg"
+                  >
+                    Fortsätt till nästa lektion
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                ) : (
-                  <Button variant="secondary" onClick={startAttempt}>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="relative overflow-hidden border-2 border-orange-200 dark:border-orange-800/40 bg-transparent">
+                {/* Decorative background overlay to avoid bg-card conflicts */}
+                <div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900"
+                />
+                {/* Subtle accent overlay for dark mode */}
+                <div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent dark:from-orange-500/8 dark:via-transparent dark:to-amber-500/5"
+                />
+                <CardContent className="relative p-8 text-center space-y-6">
+                  {/* Retry Icon */}
+                  <div className="flex justify-center">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 dark:from-orange-700 dark:to-amber-800 flex items-center justify-center shadow-xl shadow-orange-500/30 dark:shadow-orange-900/40">
+                      <RotateCcw
+                        className="w-10 h-10 text-white dark:text-orange-100"
+                        strokeWidth={2.5}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Encouragement Message */}
+                  <div className="space-y-2">
+                    <h3 className="text-2xl md:text-3xl font-bold text-orange-900 dark:text-orange-400">
+                      Nästan där!
+                    </h3>
+                    <p className="text-orange-700 dark:text-orange-500/80 text-base">
+                      Fortsätt öva så kommer du klara det nästa gång
+                    </p>
+                  </div>
+
+                  {/* Score Display */}
+                  <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/80 dark:bg-zinc-800/80 border-2 border-orange-300 dark:border-orange-800/50">
+                    <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+                    <span className="text-3xl font-bold text-orange-900 dark:text-orange-400">
+                      {result.score}%
+                    </span>
+                    <span className="text-sm font-medium text-orange-700 dark:text-orange-500/80">
+                      rätt svar
+                    </span>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-4 py-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-900 dark:text-orange-400">
+                        {questions.length}
+                      </div>
+                      <div className="text-xs text-orange-700 dark:text-orange-600">Frågor</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-900 dark:text-orange-400">
+                        {Math.round((result.score / 100) * questions.length)}
+                      </div>
+                      <div className="text-xs text-orange-700 dark:text-orange-600">Rätt</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-900 dark:text-orange-400">
+                        {quiz.quizSettings?.passingScore ?? 70}%
+                      </div>
+                      <div className="text-xs text-orange-700 dark:text-orange-600">Krävs</div>
+                    </div>
+                  </div>
+
+                  {/* Retry Button */}
+                  <Button
+                    onClick={startAttempt}
+                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-800 text-white shadow-lg shadow-orange-600/30 dark:shadow-none"
+                    size="lg"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
                     Försök igen
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

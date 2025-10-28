@@ -195,43 +195,53 @@ export default function CourseQuizViewer({
 
           {/* Table of Contents Sidebar - Desktop always visible, Mobile collapsible */}
           <div className="space-y-6 order-1 lg:order-2">
-            {/* Mobile TOC Toggle Button */}
-            <div className="lg:hidden">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsTocOpen(!isTocOpen)}
-                className="w-full flex items-center justify-between hover:bg-muted"
-              >
-                <span className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  Kursinnehåll
-                </span>
-                {isTocOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-              </Button>
-
-              {/* Progress indicator on mobile */}
-              {courseProgress && (
-                <div className="mt-2 space-y-1">
-                  <div className="w-full h-2 rounded-full bg-orange-50 dark:bg-orange-950">
-                    <div
-                      className="h-2 rounded-full bg-orange-400"
-                      style={{
-                        width: `${courseProgress.progressPercentage || 0}%`,
-                        transition: 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                      }}
-                    />
+            {/* Mobile TOC Header - Always Visible */}
+            <Card className="lg:hidden">
+              <CardContent className="p-0">
+                {/* Progress indicator - Always visible on mobile */}
+                {courseProgress && (
+                  <div className="px-4 pt-4 pb-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Framsteg</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {courseProgress.completedLessons}/{courseProgress.totalLessons}
+                      </Badge>
+                    </div>
+                    <div className="w-full h-2.5 rounded-full bg-orange-50 dark:bg-orange-950">
+                      <div
+                        className="h-2.5 rounded-full bg-orange-400"
+                        style={{
+                          width: `${courseProgress.progressPercentage || 0}%`,
+                          transition: 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      />
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    {courseProgress.completedLessons} / {courseProgress.totalLessons} slutförda
-                  </p>
-                </div>
-              )}
-            </div>
+                )}
+
+                {/* Toggle Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsTocOpen(!isTocOpen)}
+                  className="w-full flex items-center justify-between hover:bg-muted rounded-none border-t"
+                >
+                  <span className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    {isTocOpen ? 'Dölj innehåll' : 'Visa allt innehåll'}
+                  </span>
+                  {isTocOpen ? (
+                    <ChevronRight className="h-4 w-4 rotate-90" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 -rotate-90" />
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
 
             {/* TOC - Always visible on desktop, collapsible on mobile */}
             <div
-              className={`${isTocOpen ? 'block animate-in slide-in-from-top-2 fade-in duration-300' : 'hidden'} lg:block space-y-6 lg:sticky lg:top-24 lg:self-start transition-all`}
+              className={`${isTocOpen ? 'block animate-in-from-top-2 fade-in duration-300' : 'hidden'} lg:block space-y-6 lg:sticky lg:top-24 lg:self-start transition-all`}
             >
               <CourseTableOfContents
                 modules={course.modules as any}
@@ -240,6 +250,7 @@ export default function CourseQuizViewer({
                 activeQuizId={quiz.id}
                 onItemClick={handleItemClick}
                 loading={progressLoading}
+                hideMobileProgress={true}
               />
             </div>
           </div>

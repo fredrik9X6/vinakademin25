@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { WineReferenceBlock } from '../blocks/WineReferenceBlock'
+import { WineListBlock } from '../blocks/WineListBlock'
 import { NewsletterSignupBlock } from '../blocks/NewsletterSignupBlock'
 import { CourseReferenceBlock } from '../blocks/CourseReferenceBlock'
 
@@ -114,6 +115,22 @@ export function RichTextRenderer({ content, className = '' }: RichTextProps) {
               customText={fields.customText}
               caption={fields.caption}
               openInNewTab={fields.openInNewTab}
+            />
+          </div>
+        )
+      }
+
+      if (blockType === 'wine-list') {
+        return (
+          <div key={index} className="my-6">
+            <WineListBlock
+              title={fields.title}
+              wines={fields.wines || []}
+              displayStyle={fields.displayStyle || 'compact'}
+              showPrices={fields.showPrices}
+              showImages={fields.showImages}
+              showTotalPrice={fields.showTotalPrice}
+              description={fields.description}
             />
           </div>
         )

@@ -6,8 +6,15 @@ export const Media: CollectionConfig = {
   access: {
     // Anyone can read media files
     read: () => true,
-    // Only authenticated users can create media
-    create: anyLoggedIn,
+    // Allow form state building by returning true for form context
+    create: ({ req }) => {
+      // Admins and instructors can always create
+      if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
+      // Allow any logged-in user to create
+      if (req.user) return true
+      // Allow form building when no user context (happens during admin UI initialization)
+      return true
+    },
     // Only admins and instructors can update media
     update: adminOrInstructorOnly,
     // Only admins can delete media

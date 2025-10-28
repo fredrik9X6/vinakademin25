@@ -36,7 +36,7 @@ export async function GET(
         session: { equals: sessionId },
         isActive: { equals: true },
       },
-      depth: 1, // Populate user relationship
+      depth: 2, // Populate user relationship and their avatars
       limit: 100,
       sort: 'createdAt',
     })
@@ -64,6 +64,22 @@ export async function GET(
       : false
 
     // Map participants with user info (all participants can see each other)
+    const getAvatarUrl = (userDoc: any) => {
+      const avatar = userDoc?.avatar
+      if (!avatar) return null
+      if (typeof avatar === 'object') {
+        if (typeof avatar.url === 'string') return avatar.url
+        if (avatar.sizes) {
+          for (const value of Object.values(avatar.sizes)) {
+            if (value && typeof value === 'object' && typeof (value as any).url === 'string') {
+              return (value as any).url
+            }
+          }
+        }
+      }
+      return null
+    }
+
     const participantsList = participants.docs.map((p) => {
       const userObj = typeof p.user === 'object' ? p.user : null
       return {
@@ -78,6 +94,7 @@ export async function GET(
               firstName: userObj.firstName,
               lastName: userObj.lastName,
               email: userObj.email,
+              avatarUrl: getAvatarUrl(userObj),
             }
           : null,
       }
@@ -87,6 +104,7 @@ export async function GET(
     const hostUser = await payload.findByID({
       collection: 'users',
       id: hostId,
+      depth: 1,
     })
 
     if (hostUser) {
@@ -101,6 +119,7 @@ export async function GET(
           firstName: hostUser.firstName,
           lastName: hostUser.lastName,
           email: hostUser.email,
+          avatarUrl: getAvatarUrl(hostUser),
         },
       })
     }

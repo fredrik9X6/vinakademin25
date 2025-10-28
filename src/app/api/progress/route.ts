@@ -355,7 +355,7 @@ export async function POST(request: NextRequest) {
     const autoComplete = clampedProgress != null && clampedProgress >= 90
     const effectiveCompleted = isCompleted || autoComplete
 
-    // Get total lessons count to calculate progress
+    // Get total lessons AND quizzes count to calculate progress (matching GET logic)
     const modules = await payload.find({
       collection: 'modules',
       where: { course: { equals: courseIdInt } },
@@ -372,7 +372,45 @@ export async function POST(request: NextRequest) {
       limit: 1000,
     })
 
-    const totalCount = totalLessons.docs.length
+    const totalQuizzes = await payload.find({
+      collection: 'quizzes',
+      where: {
+        module: {
+          in: modules.docs.map((m: any) => m.id),
+        },
+      },
+      limit: 1000,
+    })
+
+    // Build lesson and quiz counts per module
+    const moduleIdToLessonsCount = new Map<number, number>()
+    for (const l of totalLessons.docs as any[]) {
+      const mid = typeof l.module === 'object' ? l.module.id : l.module
+      moduleIdToLessonsCount.set(Number(mid), (moduleIdToLessonsCount.get(Number(mid)) || 0) + 1)
+    }
+
+    const moduleIdToQuizzesCount = new Map<number, number>()
+    for (const q of totalQuizzes.docs as any[]) {
+      const mid = typeof q.module === 'object' ? q.module.id : q.module
+      moduleIdToQuizzesCount.set(Number(mid), (moduleIdToQuizzesCount.get(Number(mid)) || 0) + 1)
+    }
+
+    // Calculate total items (lessons + quizzes) respecting module.contents when present
+    const totalCount = (modules.docs as any[]).reduce((sum, m: any) => {
+      if (Array.isArray(m.contents) && m.contents.length > 0) {
+        const count = m.contents.filter(
+          (b: any) =>
+            b?.blockType === 'lesson-item' ||
+            b?.blockType === 'quiz-item' ||
+            b?.blockType === 'wine-review-item',
+        ).length
+        return sum + count
+      }
+      const lCount = moduleIdToLessonsCount.get(Number(m.id)) || 0
+      const qCount = moduleIdToQuizzesCount.get(Number(m.id)) || 0
+      return sum + lCount + qCount
+    }, 0)
+
     // Maintain completed list
     if (effectiveCompleted) {
       const already = completedLessons.some(
@@ -381,7 +419,12 @@ export async function POST(request: NextRequest) {
       if (!already) completedLessons.push(lessonId)
     }
 
-    const completedCount = completedLessons.length
+    // Calculate completed quizzes (passed quizzes)
+    const completedQuizzesCount = Array.isArray((userProgress as any).quizScores)
+      ? (userProgress as any).quizScores.filter((qs: any) => qs && qs.passed).length
+      : 0
+
+    const completedCount = completedLessons.length + completedQuizzesCount
     const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
     // Determine status (ensure it matches UserProgress status enum)

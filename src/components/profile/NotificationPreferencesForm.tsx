@@ -197,7 +197,8 @@ export function NotificationPreferencesForm({
             <CardDescription>Hantera vilka e-postmeddelanden du vill ta emot.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField
+            {/* TEMPORARILY HIDDEN - Vinrekommendationer */}
+            {/* <FormField
               control={form.control}
               name="email.wineRecommendations"
               render={({ field }) => (
@@ -219,8 +220,9 @@ export function NotificationPreferencesForm({
                   </FormControl>
                 </FormItem>
               )}
-            />
-            <FormField
+            /> */}
+            {/* TEMPORARILY HIDDEN - Kursframsteg */}
+            {/* <FormField
               control={form.control}
               name="email.courseProgress"
               render={({ field }) => (
@@ -240,7 +242,7 @@ export function NotificationPreferencesForm({
                   </FormControl>
                 </FormItem>
               )}
-            />
+            /> */}
             <FormField
               control={form.control}
               name="email.newCourses"
@@ -281,7 +283,8 @@ export function NotificationPreferencesForm({
                 </FormItem>
               )}
             />
-            <FormField
+            {/* TEMPORARILY HIDDEN - Kontouppdateringar */}
+            {/* <FormField
               control={form.control}
               name="email.accountUpdates"
               render={({ field }) => (
@@ -301,7 +304,7 @@ export function NotificationPreferencesForm({
                   </FormControl>
                 </FormItem>
               )}
-            />
+            /> */}
             <FormField
               control={form.control}
               name="email.tastingEvents"
@@ -328,8 +331,8 @@ export function NotificationPreferencesForm({
           </CardContent>
         </Card>
 
-        {/* Push Notifications */}
-        <Card>
+        {/* TEMPORARILY HIDDEN - Push Notifications */}
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Bell className="h-5 w-5" />
@@ -425,10 +428,10 @@ export function NotificationPreferencesForm({
               )}
             />
           </CardContent>
-        </Card>
+        </Card> */}
 
-        {/* Platform Notifications */}
-        <Card>
+        {/* TEMPORARILY HIDDEN - Platform Notifications */}
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Smartphone className="h-5 w-5" />
@@ -530,7 +533,7 @@ export function NotificationPreferencesForm({
               )}
             />
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </Form>
   )

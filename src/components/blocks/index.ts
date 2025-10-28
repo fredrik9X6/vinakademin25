@@ -1,5 +1,7 @@
 export { WineReference } from './WineReference'
 export { WineReferenceBlock } from './WineReferenceBlock'
+export { WineList } from './WineList'
+export { WineListBlock } from './WineListBlock'
 export { NewsletterSignup } from './NewsletterSignup'
 export { NewsletterSignupBlock } from './NewsletterSignupBlock'
 export { CourseReference } from './CourseReference'

@@ -71,27 +71,30 @@ export const Reviews: CollectionConfig = {
         session: data?.session,
         sessionParticipant: data?.sessionParticipant,
         wine: data?.wine,
+        hasUser: !!req.user,
+        userRole: req.user?.role,
       })
 
-      // Admins/instructors can create
+      // Admins/instructors can always create (including form state building)
       if (req.user?.role === 'admin' || req.user?.role === 'instructor') {
         console.log('✅ [REVIEW CREATE ACCESS] Admin/Instructor - ALLOWED')
         return true
       }
 
-      // Must be logged in
+      // If no data or no lesson, it's a form state check - allow it to pass
+      // This happens when Payload is building the UI and doesn't have actual review data yet
+      const lessonId = data?.lesson
+      console.log('📚 [REVIEW CREATE ACCESS] Lesson ID:', lessonId)
+      if (!lessonId) {
+        console.log('⚠️ [REVIEW CREATE ACCESS] No lesson ID - allowing for form state building')
+        return true // Allow form state building
+      }
+
+      // Beyond this point, we need a logged-in user for actual review creation
       const userId = req.user?.id
       console.log('👤 [REVIEW CREATE ACCESS] User ID:', userId)
       if (!userId) {
         console.log('❌ [REVIEW CREATE ACCESS] No user ID - DENIED')
-        return false
-      }
-
-      // Must target a lesson
-      const lessonId = data?.lesson
-      console.log('📚 [REVIEW CREATE ACCESS] Lesson ID:', lessonId)
-      if (!lessonId) {
-        console.log('❌ [REVIEW CREATE ACCESS] No lesson ID - DENIED')
         return false
       }
 

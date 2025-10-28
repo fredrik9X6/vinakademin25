@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Users, Clock, UserCheck } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -19,6 +19,7 @@ interface Participant {
     firstName?: string
     lastName?: string
     email: string
+    avatarUrl?: string | null
   } | null
 }
 
@@ -71,11 +72,16 @@ export function SessionParticipantsDisplay({
   }, [sessionId, participantToken])
 
   const getInitials = (name: string) => {
-    return name
+    const parts = name
       .split(' ')
-      .map((n) => n[0])
+      .map((n) => n.trim())
+      .filter(Boolean)
+    if (parts.length === 0) {
+      return 'VA'
+    }
+    return parts
+      .map((n) => n.charAt(0).toUpperCase())
       .join('')
-      .toUpperCase()
       .slice(0, 2)
   }
 
@@ -161,44 +167,45 @@ export function SessionParticipantsDisplay({
               Inga deltagare ännu. Dela koden för att bjuda in personer!
             </p>
           ) : (
-            participants.map((participant, index) => (
-              <div
-                key={participant.id}
-                className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-[#FB914C]/30 transition-colors"
-              >
-                <Avatar className={`${getAvatarColor(index)} text-white`}>
-                  <AvatarFallback className={`${getAvatarColor(index)} text-white`}>
-                    {participant.user && (participant.user.firstName || participant.user.lastName)
-                      ? getInitials(
-                          `${participant.user.firstName || ''} ${participant.user.lastName || ''}`.trim(),
-                        )
-                      : getInitials(participant.nickname)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm truncate">
-                      {participant.user && (participant.user.firstName || participant.user.lastName)
-                        ? `${participant.user.firstName || ''} ${participant.user.lastName || ''}`.trim()
-                        : participant.nickname}
+            participants.map((participant, index) => {
+              const displayName =
+                participant.user && (participant.user.firstName || participant.user.lastName)
+                  ? `${participant.user.firstName || ''} ${participant.user.lastName || ''}`.trim()
+                  : participant.nickname
+              const avatarUrl = participant.user?.avatarUrl ?? null
+              const avatarBg = getAvatarColor(index)
+              const initials = getInitials(displayName || participant.nickname)
+
+              return (
+                <div
+                  key={participant.id}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-[#FB914C]/30 transition-colors"
+                >
+                  <Avatar className={avatarUrl ? '' : `${avatarBg} text-white`}>
+                    {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
+                    <AvatarFallback className={`${avatarBg} text-white`}>{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm truncate">{displayName}</p>
+                      {participant.isHost && <Badge variant="outline">Värd</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {participant.isHost ? 'Startade sessionen' : 'Anslöt'}{' '}
+                      {formatDistanceToNow(new Date(participant.joinedAt), {
+                        addSuffix: true,
+                        locale: sv,
+                      })}
                     </p>
-                    {participant.isHost && <Badge variant="outline">Värd</Badge>}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {participant.isHost ? 'Startade sessionen' : 'Anslöt'}{' '}
-                    {formatDistanceToNow(new Date(participant.joinedAt), {
-                      addSuffix: true,
-                      locale: sv,
-                    })}
-                  </p>
+                  {participant.isActive && (
+                    <div className="flex-shrink-0">
+                      <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    </div>
+                  )}
                 </div>
-                {participant.isActive && (
-                  <div className="flex-shrink-0">
-                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  </div>
-                )}
-              </div>
-            ))
+              )
+            })
           )}
         </div>
 

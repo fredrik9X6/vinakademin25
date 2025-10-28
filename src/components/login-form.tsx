@@ -60,20 +60,11 @@ export function LoginForm({ className, returnTo, ...props }: LoginFormProps) {
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Välkommen tillbaka</CardTitle>
-          <CardDescription>Logga in med ditt Apple eller Google konto</CardDescription>
+          <CardDescription>Logga in med ditt konto</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
-              <div className="flex flex-col gap-4">
-                
-                
-              </div>
-              <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                <span className="relative z-10 bg-background px-2 text-muted-foreground">
-                  Eller fortsätt med e-post
-                </span>
-              </div>
               <div className="grid gap-6">
                 <FormField
                   control={form.control}

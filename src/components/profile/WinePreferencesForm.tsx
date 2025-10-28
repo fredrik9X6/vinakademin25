@@ -261,8 +261,8 @@ export function WinePreferencesForm({ userId, initialData, onSuccess }: WinePref
   return (
     <Form {...form}>
       <div className="space-y-6">
-        {/* Favorite Grapes */}
-        <Card>
+        {/* TEMPORARILY HIDDEN - Favorite Grapes */}
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Palette className="h-5 w-5" />
@@ -294,10 +294,10 @@ export function WinePreferencesForm({ userId, initialData, onSuccess }: WinePref
               )}
             />
           </CardContent>
-        </Card>
+        </Card> */}
 
-        {/* Favorite Regions */}
-        <Card>
+        {/* TEMPORARILY HIDDEN - Favorite Regions */}
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <MapPin className="h-5 w-5" />
@@ -329,10 +329,10 @@ export function WinePreferencesForm({ userId, initialData, onSuccess }: WinePref
               )}
             />
           </CardContent>
-        </Card>
+        </Card> */}
 
-        {/* Price Range */}
-        <Card>
+        {/* TEMPORARILY HIDDEN - Price Range */}
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <DollarSign className="h-5 w-5" />
@@ -370,7 +370,7 @@ export function WinePreferencesForm({ userId, initialData, onSuccess }: WinePref
               )}
             />
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Preferred Wine Styles */}
         <Card>

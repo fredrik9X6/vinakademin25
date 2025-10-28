@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   },
 }
 
-const testimonials = [
+// Testimonials - Hidden until we have real ones
+/* const testimonials = [
   {
     quote: 'Varje vecka lär jag mig något nytt. Enkelt, tydligt och alltid användbart.',
     author: 'Maria L.',
@@ -30,7 +31,7 @@ const testimonials = [
     author: 'Anna K.',
     role: 'Prenumerant sedan 2023',
   },
-]
+] */
 
 const features = [
   {
@@ -142,8 +143,8 @@ export default function NewsletterPage() {
         </div>
       </div>
 
-      {/* Testimonials */}
-      <div className="py-16 bg-background">
+      {/* Testimonials - Hidden until we have real ones */}
+      {/* <div className="py-16 bg-background">
         <div className="container mx-auto px-4 min-w-0">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-medium text-center text-foreground mb-12">
@@ -167,7 +168,7 @@ export default function NewsletterPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Final CTA */}
       <div className="py-16 bg-background">

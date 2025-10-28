@@ -32,6 +32,7 @@ import MuxPlayer from '@mux/mux-player-react'
 import Image from 'next/image'
 import { SessionParticipantsDisplay } from './SessionParticipantsDisplay'
 import { useActiveSession } from '@/context/SessionContext'
+import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 
 interface CourseOverviewProps {
   course: {
@@ -39,6 +40,7 @@ interface CourseOverviewProps {
     title: string
     slug?: string
     description?: string
+    fullDescription?: any
     shortDescription?: string
     level?: string
     price?: number
@@ -399,15 +401,16 @@ export default function CourseOverview({
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Course Description */}
-            {course.description && (
+            {course.fullDescription && (
               <Card>
                 <CardHeader>
                   <CardTitle>Om {course.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="prose max-w-none">
-                    <p className="text-muted-foreground leading-relaxed">{course.description}</p>
-                  </div>
+                  <RichTextRenderer
+                    content={course.fullDescription}
+                    className="prose-headings:font-semibold prose-headings:text-foreground"
+                  />
                 </CardContent>
               </Card>
             )}

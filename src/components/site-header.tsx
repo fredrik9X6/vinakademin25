@@ -57,6 +57,8 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
         label = 'Artiklar'
       } else if (segment === 'vinlistan') {
         label = 'Vinlistan'
+      } else if (segment === 'om-oss') {
+        label = 'Om oss'
       } else if (segment === 'kategori' && pathSegments[0] === 'artiklar') {
         label = 'Kategori'
       } else if (segment === 'tagg' && pathSegments[0] === 'artiklar') {

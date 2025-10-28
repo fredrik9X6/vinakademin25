@@ -73,6 +73,7 @@ interface CourseTableOfContentsProps {
   activeQuizId?: number
   onItemClick: (moduleId: number, item: { type: 'lesson' | 'quiz'; id: number }) => void
   loading?: boolean
+  hideMobileProgress?: boolean
 }
 
 export default function CourseTableOfContents({
@@ -83,6 +84,7 @@ export default function CourseTableOfContents({
   activeQuizId,
   onItemClick,
   loading = false,
+  hideMobileProgress = false,
 }: CourseTableOfContentsProps) {
   const getLessonIcon = (lesson: CourseLesson) => {
     // Use lessonType if available, otherwise fall back to detecting from other fields
@@ -150,15 +152,18 @@ export default function CourseTableOfContents({
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">Kursinnehåll</CardTitle>
           {courseProgress && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge
+              variant="secondary"
+              className={`text-xs ${hideMobileProgress ? 'hidden lg:inline-flex' : ''}`}
+            >
               {courseProgress.completedLessons}/{courseProgress.totalLessons}
             </Badge>
           )}
         </div>
 
-        {/* Progress bar */}
+        {/* Progress bar - Hidden on mobile when hideMobileProgress is true */}
         {courseProgress && (
-          <div className="mt-3 space-y-1">
+          <div className={`mt-3 space-y-1 ${hideMobileProgress ? 'hidden lg:block' : ''}`}>
             <div className="w-full h-2 rounded-full bg-orange-50 dark:bg-orange-950">
               <div
                 className="h-2 rounded-full bg-orange-400"

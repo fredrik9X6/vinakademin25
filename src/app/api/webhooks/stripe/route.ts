@@ -25,11 +25,12 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = await getPayload({ config })
+  const stripe = getStripeServer()
 
   try {
     switch (event.type) {
       case 'payment_intent.succeeded':
-        await handlePaymentSucceeded(event.data.object, payload)
+        await handlePaymentSucceeded(event.data.object, payload, stripe)
         break
 
       case 'payment_intent.payment_failed':
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object, payload)
+        await handleCheckoutSessionCompleted(event.data.object, payload, stripe)
         break
 
       case 'invoice.payment_succeeded':
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handlePaymentSucceeded(paymentIntent: any, payload: any) {
+async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: any) {
   console.log('🔔 Webhook: Payment succeeded:', paymentIntent.id)
 
   const { courseId, userId } = paymentIntent.metadata
@@ -109,6 +110,34 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any) {
       const order = orders.docs[0]
       console.log('📦 Found order for payment intent:', order.id)
 
+      const paymentIntentId = paymentIntent.id
+      let chargeId: string | null = null
+      let receiptUrl: string | null = null
+      let paymentMethodType: string | null = paymentIntent.payment_method_types?.[0] || null
+      let paymentMethodDetails: any = null
+
+      if (typeof paymentIntent.latest_charge === 'string') {
+        chargeId = paymentIntent.latest_charge
+      } else if (
+        paymentIntent.charges?.data &&
+        Array.isArray(paymentIntent.charges.data) &&
+        paymentIntent.charges.data.length > 0
+      ) {
+        chargeId = paymentIntent.charges.data[0].id
+      }
+
+      if (chargeId) {
+        try {
+          const charge = await stripe.charges.retrieve(chargeId)
+          receiptUrl = charge.receipt_url ?? null
+          paymentMethodType =
+            charge.payment_method_details?.type || paymentMethodType || null
+          paymentMethodDetails = charge.payment_method_details
+        } catch (chargeError) {
+          console.error('⚠️ Unable to retrieve charge while handling payment intent:', chargeError)
+        }
+      }
+
       // Update order status
       await payload.update({
         collection: 'orders',
@@ -116,8 +145,13 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any) {
         data: {
           status: 'completed',
           paidAt: new Date().toISOString(),
-          stripeChargeId: paymentIntent.latest_charge,
-          paymentMethod: paymentIntent.payment_method_types?.[0] || null,
+          stripePaymentIntentId: paymentIntentId,
+          stripeChargeId: chargeId,
+          receiptUrl,
+          paymentMethod: paymentMethodType,
+          paymentMethodDetails: paymentMethodDetails
+            ? JSON.parse(JSON.stringify(paymentMethodDetails))
+            : null,
         },
       })
 
@@ -213,7 +247,7 @@ async function handleSubscriptionDeleted(subscription: any, payload: any) {
   // Handle subscription deletion
 }
 
-async function handleCheckoutSessionCompleted(session: any, payload: any) {
+async function handleCheckoutSessionCompleted(session: any, payload: any, stripe: any) {
   console.log('🔔 Webhook: Checkout session completed:', session.id)
   console.log('🔍 Session metadata:', session.metadata)
 
@@ -257,6 +291,42 @@ async function handleCheckoutSessionCompleted(session: any, payload: any) {
       const order = orders.docs[0]
       console.log('📦 Found order:', order.id, 'Current status:', order.status)
 
+      let paymentIntentId: string | null = null
+      let chargeId: string | null = null
+      let receiptUrl: string | null = null
+      let paymentMethodType: string | null = session.payment_method_types?.[0] || null
+      let paymentMethodDetails: any = null
+
+      if (session.payment_intent) {
+        paymentIntentId =
+          typeof session.payment_intent === 'string'
+            ? session.payment_intent
+            : session.payment_intent.id
+        try {
+          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+            expand: ['latest_charge'],
+          })
+          if (typeof paymentIntent.latest_charge === 'string') {
+            chargeId = paymentIntent.latest_charge
+          } else if (paymentIntent.latest_charge?.id) {
+            chargeId = paymentIntent.latest_charge.id
+          }
+
+          if (chargeId) {
+            const charge =
+              typeof paymentIntent.latest_charge === 'object' && paymentIntent.latest_charge?.id
+                ? paymentIntent.latest_charge
+                : await stripe.charges.retrieve(chargeId)
+
+            receiptUrl = charge?.receipt_url ?? null
+            paymentMethodType = charge?.payment_method_details?.type || paymentMethodType || null
+            paymentMethodDetails = charge?.payment_method_details ?? null
+          }
+        } catch (intentError) {
+          console.error('⚠️ Unable to enrich payment details from Payment Intent:', intentError)
+        }
+      }
+
       // Update order status to completed
       console.log('🔄 Updating order status to completed...')
       const updatedOrder = await payload.update({
@@ -265,10 +335,13 @@ async function handleCheckoutSessionCompleted(session: any, payload: any) {
         data: {
           status: 'completed',
           paidAt: new Date().toISOString(),
-          // Add payment method details if available
-          paymentMethod: session.payment_method_types?.[0] || null,
-          // Store Stripe session ID for receipt retrieval
-          stripeChargeId: session.payment_intent || null,
+          paymentMethod: paymentMethodType,
+          paymentMethodDetails: paymentMethodDetails
+            ? JSON.parse(JSON.stringify(paymentMethodDetails))
+            : null,
+          stripePaymentIntentId: paymentIntentId,
+          stripeChargeId: chargeId,
+          receiptUrl,
         },
       })
       console.log('✅ Order updated successfully:', updatedOrder.id)

@@ -136,20 +136,20 @@ export function PaymentHistory({ userId }: PaymentHistoryProps) {
     switch (status) {
       case 'completed':
       case 'paid':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/50'
       case 'pending':
       case 'open':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800/50'
       case 'failed':
       case 'void':
-        return 'bg-red-100 text-red-800'
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50'
       case 'processing':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800/50'
       case 'cancelled':
       case 'refunded':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800/50 dark:text-gray-400 dark:border-gray-700/50'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800/50 dark:text-gray-400 dark:border-gray-700/50'
     }
   }
 
@@ -244,21 +244,29 @@ export function PaymentHistory({ userId }: PaymentHistoryProps) {
         <CardDescription>Dina ordrar och fakturor</CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Tab Navigation */}
-        <div className="flex space-x-1 mb-6">
+        {/* Tab Navigation - Mobile Optimized */}
+        <div className="flex gap-2 mb-6 w-full">
           <Button
             variant={activeTab === 'orders' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setActiveTab('orders')}
+            className="flex-1 sm:flex-none"
           >
-            Ordrar ({orders.length})
+            <Receipt className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Ordrar</span>
+            <span className="sm:hidden">Ordrar</span>
+            <span className="ml-1">({orders.length})</span>
           </Button>
           <Button
             variant={activeTab === 'invoices' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setActiveTab('invoices')}
+            className="flex-1 sm:flex-none"
           >
-            Fakturor ({invoices.length})
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Fakturor</span>
+            <span className="sm:hidden">Fakturor</span>
+            <span className="ml-1">({invoices.length})</span>
           </Button>
         </div>
 
@@ -274,50 +282,54 @@ export function PaymentHistory({ userId }: PaymentHistoryProps) {
               orders.map((order) => (
                 <Card key={order.id} className="border-l-4 border-l-primary">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <CreditCard className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <h4 className="font-medium">Order #{order.orderNumber}</h4>
+                    {/* Header Section - Mobile Optimized */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <div className="flex-shrink-0">
+                          <CreditCard className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-medium truncate">
+                            {order.items[0]?.course.title || `Order #${order.orderNumber}`}
+                          </h4>
                           <p className="text-sm text-muted-foreground">
                             {formatDate(order.createdAt)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(order.status)}>
+
+                      {/* Status and Amount - Stacked on Mobile */}
+                      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 flex-shrink-0">
+                        <Badge className={`${getStatusColor(order.status)} flex-shrink-0`}>
                           {getStatusIcon(order.status)}
                           <span className="ml-1">{getStatusText(order.status)}</span>
                         </Badge>
-                        <span className="font-semibold">
+                        <span className="font-bold text-lg sm:text-base">
                           {formatPrice(order.amount, order.currency)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      {order.items.map((item, index) => (
-                        <div key={index} className="flex justify-between text-sm">
-                          <span>{item.course.title}</span>
-                          <span>{formatPrice(item.price * item.quantity, order.currency)}</span>
-                        </div>
-                      ))}
-                    </div>
-
                     <Separator className="my-3" />
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        {order.paidAt && (
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>Betald: {formatDate(order.paidAt)}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
+                    {/* Footer Section - Mobile Optimized */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      {order.paidAt && (
+                        <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">Betald: {formatDate(order.paidAt)}</span>
+                        </div>
+                      )}
+
+                      {/* Action Buttons - Full Width on Mobile */}
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
                         {order.invoiceUrl && (
-                          <Button variant="outline" size="sm" asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="flex-1 sm:flex-none"
+                          >
                             <a href={order.invoiceUrl} target="_blank" rel="noopener noreferrer">
                               <Download className="h-4 w-4 mr-1" />
                               Faktura
@@ -328,6 +340,7 @@ export function PaymentHistory({ userId }: PaymentHistoryProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDownloadReceipt(order.id)}
+                          className="flex-1 sm:flex-none"
                         >
                           <Receipt className="h-4 w-4 mr-1" />
                           Kvitto
@@ -353,60 +366,71 @@ export function PaymentHistory({ userId }: PaymentHistoryProps) {
               invoices.map((invoice) => (
                 <Card key={invoice.id} className="border-l-4 border-l-primary">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
+                    {/* Header Section - Mobile Optimized */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                       <div className="flex items-center space-x-3">
-                        <Receipt className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <h4 className="font-medium">Faktura #{invoice.number}</h4>
+                        <div className="flex-shrink-0">
+                          <Receipt className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-medium truncate">Faktura #{invoice.number}</h4>
                           <p className="text-sm text-muted-foreground">
                             {formatDate(invoice.createdAt)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(invoice.status)}>
+
+                      {/* Status and Amount - Stacked on Mobile */}
+                      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                        <Badge className={`${getStatusColor(invoice.status)} flex-shrink-0`}>
                           {getStatusIcon(invoice.status)}
                           <span className="ml-1">{getStatusText(invoice.status)}</span>
                         </Badge>
-                        <span className="font-semibold">
+                        <span className="font-bold text-lg sm:text-base">
                           {formatPrice(invoice.amount, invoice.currency)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    {/* Dates Section - Stacked on Mobile */}
+                    {(invoice.dueDate || invoice.paidAt) && (
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3 bg-muted/30 rounded-lg p-3">
                         {invoice.dueDate && (
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>Förfaller: {formatDate(invoice.dueDate)}</span>
+                          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">
+                              Förfaller: {formatDate(invoice.dueDate)}
+                            </span>
                           </div>
                         )}
                         {invoice.paidAt && (
-                          <div className="flex items-center space-x-1">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Betald: {formatDate(invoice.paidAt)}</span>
+                          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                            <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">Betald: {formatDate(invoice.paidAt)}</span>
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {invoice.downloadUrl && (
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={invoice.downloadUrl} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              Visa
-                            </a>
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadInvoice(invoice.id)}
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Ladda ner
+                    )}
+
+                    {/* Action Buttons - Full Width on Mobile */}
+                    <div className="flex items-center gap-2 w-full sm:w-auto sm:justify-end">
+                      {invoice.downloadUrl && (
+                        <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-none">
+                          <a href={invoice.downloadUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Visa
+                          </a>
                         </Button>
-                      </div>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadInvoice(invoice.id)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Ladda ner
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

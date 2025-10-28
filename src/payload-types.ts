@@ -470,9 +470,9 @@ export interface Course {
    */
   description: string;
   /**
-   * Detailed course description with formatting
+   * Detailed course description with rich formatting, wine lists, and custom blocks
    */
-  fullDescription?: {
+  fullDescription: {
     root: {
       type: string;
       children: {
@@ -486,7 +486,7 @@ export interface Course {
       version: number;
     };
     [k: string]: unknown;
-  } | null;
+  };
   /**
    * Main course image for thumbnails and hero sections
    */
@@ -4296,6 +4296,43 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "WineListBlock".
+ */
+export interface WineListBlock {
+  /**
+   * Title displayed above the wine list
+   */
+  title?: string | null;
+  /**
+   * Select wines required for this course/tasting
+   */
+  wines: (number | Wine)[];
+  /**
+   * How the wine list should be displayed
+   */
+  displayStyle?: ('compact' | 'grid' | 'detailed') | null;
+  /**
+   * Display wine prices in the list
+   */
+  showPrices?: boolean | null;
+  /**
+   * Display wine images
+   */
+  showImages?: boolean | null;
+  /**
+   * Display total price for all wines
+   */
+  showTotalPrice?: boolean | null;
+  /**
+   * Optional description or instructions for purchasing these wines
+   */
+  description?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'wine-list';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

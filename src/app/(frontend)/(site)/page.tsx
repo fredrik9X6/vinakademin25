@@ -518,9 +518,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-16 lg:py-24 relative overflow-hidden">
-        {/* Background decorative elements */}
+      {/* Testimonials Section - Hidden until we have real testimonials */}
+      {/* <section className="py-16 lg:py-24 relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-1/3 right-10 w-96 h-96 bg-[#FDBA75]/5 rounded-full blur-3xl" />
           <div className="absolute bottom-1/3 left-10 w-72 h-72 bg-[#FB914C]/5 rounded-full blur-3xl" />
@@ -566,16 +565,13 @@ export default async function HomePage() {
                 key={index}
                 className="group relative hover:shadow-2xl transition-all duration-300 border-border hover:border-[#FB914C]/20 overflow-hidden"
               >
-                {/* Orange accent corner */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#FDBA75]/20 to-transparent rounded-bl-full opacity-50 group-hover:opacity-100 transition-opacity" />
 
                 <CardContent className="pt-8 pb-6 px-6 relative">
-                  {/* Large decorative quote mark */}
                   <div className="absolute top-4 left-4 text-6xl font-serif text-[#FDBA75]/20 leading-none">
                     "
                   </div>
 
-                  {/* Rating stars with orange gradient */}
                   <div className="flex gap-1 mb-6 relative z-10">
                     {Array.from({ length: testimonial.rating }).map((_, i) => (
                       <Star
@@ -586,14 +582,11 @@ export default async function HomePage() {
                     ))}
                   </div>
 
-                  {/* Quote text */}
                   <p className="text-base md:text-lg text-foreground mb-8 leading-relaxed relative z-10 min-h-[120px]">
                     {testimonial.quote}
                   </p>
 
-                  {/* Author info with orange accent */}
                   <div className="flex items-center gap-4 pt-6 border-t border-[#FDBA75]/20">
-                    {/* Avatar placeholder with orange gradient border */}
                     <div className="relative flex-shrink-0">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] p-[2px]">
                         <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
@@ -611,7 +604,6 @@ export default async function HomePage() {
             ))}
           </div>
 
-          {/* Trust badge */}
           <div className="mt-12 text-center">
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-[#FDBA75]/5 border border-[#FDBA75]/20">
               <div className="flex -space-x-2">
@@ -631,7 +623,7 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Newsletter Section */}
       <section className="py-16 lg:py-24 relative overflow-hidden">
