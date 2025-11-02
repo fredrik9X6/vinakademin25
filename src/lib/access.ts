@@ -88,8 +88,8 @@ export const isAdminUIRequest = (req: PayloadRequest): boolean => {
     // Headers can be a plain object or a Fetch Headers instance
     const getHeader = (name: string) => {
       if (typeof headers.get === 'function') return headers.get(name)
-      const key = Object.keys(headers).find((k) => k.toLowerCase() === name.toLowerCase())
-      return key ? headers[key] : undefined
+      const key = Object.keys(headers as any).find((k) => k.toLowerCase() === name.toLowerCase())
+      return key ? (headers as any)[key] : undefined
     }
     const fromHeader = getHeader('x-payload-admin')
     return Boolean(fromHeader)

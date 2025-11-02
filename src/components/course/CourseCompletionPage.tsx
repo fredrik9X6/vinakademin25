@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, Award, Clock, Calendar, ArrowRight, Sparkles } from 'lucide-react'
 import { Confetti } from '@/components/magicui/confetti'
-import { Course } from '@/payload-types'
+import type { Vinprovningar } from '@/payload-types'
 import Link from 'next/link'
 
 interface CourseCompletionPageProps {
-  course: Course & {
+  course: Vinprovningar & {
     modules?: any[]
   }
   progressData?: {

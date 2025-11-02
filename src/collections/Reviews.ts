@@ -69,15 +69,15 @@ export const Reviews: CollectionConfig = {
         return data
       },
       // Generate title from wine name and rating
-      async ({ data, req, operation, payload }) => {
-        if (!data || operation === 'read') return data
+      async ({ data, req, operation }) => {
+        if (!data) return data
         
         // Generate title from wine name and rating
         if (data.wine) {
           try {
             const wineId = typeof data.wine === 'object' ? data.wine.id : data.wine
             if (wineId) {
-              const wine = await payload.findByID({
+              const wine = await req.payload.findByID({
                 collection: 'wines',
                 id: typeof wineId === 'string' ? parseInt(wineId) : wineId,
                 depth: 0,

@@ -6,10 +6,10 @@ import { Badge } from '../ui/badge'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { ExternalLink, BookOpen, Clock, User, Star } from 'lucide-react'
-import type { Course, Media, User as UserType } from '../../payload-types'
+import type { Vinprovningar, Media, User as UserType } from '../../payload-types'
 
 interface CourseReferenceBlockData {
-  course: Course
+  course: Vinprovningar
   displayStyle: 'card' | 'banner' | 'link'
   showDetails?: {
     showImage?: boolean
@@ -25,7 +25,7 @@ interface CourseReferenceBlockData {
 }
 
 interface CourseReferenceBlockProps {
-  course: Course
+  course: Vinprovningar
   displayStyle: CourseReferenceBlockData['displayStyle']
   showDetails?: CourseReferenceBlockData['showDetails']
   customText?: string

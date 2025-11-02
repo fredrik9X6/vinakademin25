@@ -12,10 +12,10 @@ import { DiscountCodeInput } from './DiscountCodeInput'
 import { formatPrice, getStripe } from '@/lib/stripe'
 import { useAuth } from '@/context/AuthContext'
 import { Loader2, CreditCard, ShieldCheck } from 'lucide-react'
-import type { Course } from '@/payload-types'
+import type { Vinprovningar } from '@/payload-types'
 
 interface CheckoutFormProps {
-  course: Course
+  course: Vinprovningar
   onProcessing: (clientSecret: string) => void
   onSuccess: () => void
   onError: (error: string) => void

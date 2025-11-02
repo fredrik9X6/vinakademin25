@@ -1,10 +1,10 @@
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, Clock, BarChart3, User } from 'lucide-react'
 import Image from 'next/image'
-import type { Course } from '@/payload-types'
+import type { Vinprovningar } from '@/payload-types'
 
 interface OrderSummaryProps {
-  course: Course
+  course: Vinprovningar
 }
 
 export function OrderSummary({ course }: OrderSummaryProps) {

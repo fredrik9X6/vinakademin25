@@ -130,7 +130,7 @@ export const hasFreePreviewAccess = async (
     // Check if specific lesson allows free preview
     if (lessonId) {
       const lesson = await req.payload.findByID({
-        collection: 'lessons',
+        collection: 'content-items',
         id: lessonId,
       })
 
@@ -289,7 +289,7 @@ export const canAccessLesson = async (
 ): Promise<boolean> => {
   try {
     const lesson = await req.payload.findByID({
-      collection: 'lessons',
+      collection: 'content-items',
       id: lessonId,
     })
 
@@ -297,35 +297,39 @@ export const canAccessLesson = async (
       return false
     }
 
-    // Get the course through module relationship
-    const lessonModuleRelation = lesson.module
-    const lessonModuleId =
-      lessonModuleRelation && typeof lessonModuleRelation === 'object'
-        ? lessonModuleRelation.id
-        : lessonModuleRelation
+    // Find the module that contains this content item
+    const modules = await req.payload.find({
+      collection: 'modules',
+      where: {
+        'contentItems.contentItem': { equals: lessonId },
+      },
+      limit: 1,
+    })
 
-    if (!lessonModuleId) {
+    if (!modules.docs.length) {
       return false
     }
 
-    const module = await req.payload.findByID({
-      collection: 'modules',
-      id: String(lessonModuleId),
-    })
+    const module = modules.docs[0]
 
     if (!module) {
       return false
     }
 
-    const moduleCourseRelation = module.course
-    const courseId =
-      moduleCourseRelation && typeof moduleCourseRelation === 'object'
-        ? moduleCourseRelation.id
-        : moduleCourseRelation
+    // Find the vinprovning that contains this module
+    const vinprovningar = await req.payload.find({
+      collection: 'vinprovningar',
+      where: {
+        'modules.module': { equals: module.id },
+      },
+      limit: 1,
+    })
 
-    if (!courseId) {
+    if (!vinprovningar.docs.length) {
       return false
     }
+
+    const courseId = vinprovningar.docs[0].id
 
     // Check if lesson allows free preview
     if ((lesson as any)?.isFree) {
@@ -356,7 +360,7 @@ export const canTakeQuiz = async (
 ): Promise<boolean> => {
   try {
     const quiz = await req.payload.findByID({
-      collection: 'quizzes',
+      collection: 'content-items',
       id: quizId,
     })
 
@@ -364,15 +368,35 @@ export const canTakeQuiz = async (
       return false
     }
 
-    const quizCourseRelation = quiz.course
-    const courseId =
-      quizCourseRelation && typeof quizCourseRelation === 'object'
-        ? quizCourseRelation.id
-        : quizCourseRelation
+    // Find the module that contains this content item
+    const modules = await req.payload.find({
+      collection: 'modules',
+      where: {
+        'contentItems.contentItem': { equals: quizId },
+      },
+      limit: 1,
+    })
 
-    if (!courseId) {
+    if (!modules.docs.length) {
       return false
     }
+
+    const module = modules.docs[0]
+
+    // Find the vinprovning that contains this module
+    const vinprovningar = await req.payload.find({
+      collection: 'vinprovningar',
+      where: {
+        'modules.module': { equals: module.id },
+      },
+      limit: 1,
+    })
+
+    if (!vinprovningar.docs.length) {
+      return false
+    }
+
+    const courseId = vinprovningar.docs[0].id
 
     // Check if user is enrolled and has quiz permissions
     const isEnrolled = await isEnrollmentValid(req, userId, String(courseId))

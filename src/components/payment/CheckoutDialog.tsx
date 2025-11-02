@@ -10,10 +10,10 @@ import { PaymentStatus } from './PaymentStatus'
 
 import { useAuth } from '@/context/AuthContext'
 import { usePathname } from 'next/navigation'
-import type { Course } from '@/payload-types'
+import type { Vinprovningar } from '@/payload-types'
 
 interface CheckoutDialogProps {
-  course: Course
+  course: Vinprovningar
   isOpen: boolean
   onClose: () => void
 }

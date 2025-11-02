@@ -57,11 +57,6 @@ export const Vinprovningar: CollectionConfig = {
       if (!req.user) return true
       return req.user?.role === 'admin' || req.user?.role === 'instructor'
     },
-    readDrafts: ({ req }) => {
-      // Allow form building (no user context)
-      if (!req.user) return true
-      return req.user?.role === 'admin' || req.user?.role === 'instructor'
-    },
   },
   hooks: {
     beforeChange: [

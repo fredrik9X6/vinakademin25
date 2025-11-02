@@ -6,10 +6,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/context/AuthContext'
 import { Loader2, CreditCard, ShieldCheck, Lock, Sparkles } from 'lucide-react'
 import { formatPrice } from '@/lib/stripe'
-import type { Course } from '@/payload-types'
+import type { Vinprovningar } from '@/payload-types'
 
 interface SimpleCheckoutProps {
-  course: Course
+  course: Vinprovningar
   discountAmount?: number
   onError?: (error: string) => void
 }

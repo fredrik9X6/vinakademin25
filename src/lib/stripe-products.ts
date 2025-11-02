@@ -1,7 +1,7 @@
 import { getStripeServer, STRIPE_CONFIG, formatAmountForStripe } from './stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import type { Course } from '@/payload-types'
+import type { Vinprovningar } from '@/payload-types'
 
 // Types for Stripe product management
 export interface StripeProductData {
@@ -85,7 +85,7 @@ export async function syncCourseWithStripe(courseId: string): Promise<{
     collection: 'vinprovningar',
     id: courseId,
     overrideAccess: true, // Bypass access control
-  })) as Course
+  })) as Vinprovningar
 
   if (!course) {
     throw new Error(`Course with ID ${courseId} not found`)
@@ -258,7 +258,7 @@ export async function getStripePriceByCourseId(courseId: string): Promise<string
     const course = (await payload.findByID({
       collection: 'vinprovningar',
       id: courseId,
-    })) as Course
+    })) as Vinprovningar
 
     return course.stripePriceId || null
   } catch (error) {
@@ -307,7 +307,7 @@ export async function validateStripePrice(priceId: string): Promise<boolean> {
  * Get course purchase data for Stripe checkout
  */
 export async function getCourseCheckoutData(courseId: string): Promise<{
-  course: Course
+  course: Vinprovningar
   priceId: string
   amount: number
 } | null> {
@@ -317,7 +317,7 @@ export async function getCourseCheckoutData(courseId: string): Promise<{
     const course = (await payload.findByID({
       collection: 'vinprovningar',
       id: courseId,
-    })) as Course
+    })) as Vinprovningar
 
     if (!course || !course.stripePriceId) {
       return null

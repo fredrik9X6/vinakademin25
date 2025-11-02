@@ -337,17 +337,18 @@ export default function CourseOverview({
                         id: course.id,
                         title: course.title,
                         description: course.description || '',
+                        fullDescription: course.fullDescription || null,
                         price: course.price || 0,
                         slug: course.slug || course.id.toString(),
-                        featuredImage: course.featuredImage,
+                        featuredImage: course.featuredImage as any,
                         level:
                           (course.level as 'beginner' | 'intermediate' | 'advanced') || 'beginner',
                         duration: totalLessons,
-                        instructor: course.instructor,
+                        instructor: course.instructor as any,
                         updatedAt: new Date().toISOString(),
                         createdAt: new Date().toISOString(),
                         _status: 'published',
-                      }}
+                      } as any}
                       variant="outline"
                       size="lg"
                       fullWidth
