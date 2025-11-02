@@ -419,6 +419,10 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
 
     if (moduleIdsForUpdate.length === 0) {
+      // Calculate status early for early return case
+      const status: 'not-started' | 'in-progress' | 'completed' | 'paused' | 'dropped' = 
+        completedLessons.length === 0 ? 'not-started' : 'in-progress'
+      
       return NextResponse.json({
         success: true,
         progress: {

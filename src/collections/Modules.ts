@@ -20,14 +20,12 @@ export const Modules: CollectionConfig = {
       type: 'text',
       required: true,
       admin: {
-        label: 'Module Title',
       },
     },
     {
       name: 'description',
       type: 'textarea',
       admin: {
-        label: 'Module Description',
       },
     },
     // Content Items array - ordered lessons and quizzes

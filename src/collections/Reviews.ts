@@ -1,6 +1,5 @@
 import type { CollectionConfig } from 'payload'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
-import { ReviewRowLabel } from '../components/admin/ReviewRowLabel'
 
 export const Reviews: CollectionConfig = {
   slug: 'reviews',
@@ -9,9 +8,6 @@ export const Reviews: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'wine', 'user', 'rating', 'isTrusted', 'createdAt'],
     description: 'User reviews for wines, including WSET tasting notes',
-    components: {
-      RowLabel: ReviewRowLabel,
-    },
   },
   access: {
     // Bare minimum access control - simplified
@@ -20,10 +16,10 @@ export const Reviews: CollectionConfig = {
       if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
       // Users can read their own reviews
       if (req.user) {
-        return { user: { equals: req.user.id } }
+        return { user: { equals: req.user.id } } as any
       }
       // Public can read trusted reviews
-      return { isTrusted: { equals: true } }
+      return { isTrusted: { equals: true } } as any
     },
     create: ({ req }) => Boolean(req.user),
     // Allow update for form building

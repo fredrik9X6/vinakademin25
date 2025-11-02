@@ -7,6 +7,7 @@ import { Clock, BookOpen, User, ArrowRight, Star } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { transformCourseWithModules } from '@/lib/course-utils-server'
+import { getTotalCourseItems, countFreeItems } from '@/lib/course-utils'
 import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
 
 export default async function KurserPage() {

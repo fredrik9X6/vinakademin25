@@ -5,6 +5,7 @@ export const Media: CollectionConfig = {
   slug: 'media',
   admin: {
     group: 'Media',
+    description: 'Media files such as images, videos, and documents',
   },
   access: {
     // Anyone can read media files
@@ -22,9 +23,6 @@ export const Media: CollectionConfig = {
     update: () => true,
     // Only admins can delete media
     delete: adminOnly,
-  },
-  admin: {
-    description: 'Media files such as images, videos, and documents',
   },
   upload: {
     adminThumbnail: 'thumbnail',

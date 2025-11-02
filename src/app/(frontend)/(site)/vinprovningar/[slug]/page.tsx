@@ -1,6 +1,6 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { Course, Module, ContentItem } from '@/payload-types'
+import { Vinprovningar, Module, ContentItem } from '@/payload-types'
 import { notFound, redirect } from 'next/navigation'
 import CourseOverview from '@/components/course/CourseOverview'
 import LessonViewer from '@/components/course/LessonViewer'
@@ -8,7 +8,6 @@ import CourseQuizViewer from '@/components/course/CourseQuizViewer'
 import CourseCompletionPage from '@/components/course/CourseCompletionPage'
 import { cookies } from 'next/headers'
 import { getUser } from '@/lib/get-user'
-import { markFreeLessons } from '@/lib/course-utils'
 
 interface CoursePageProps {
   params: Promise<{

@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
               previewMuxData: {
                 assetId: asset.id,
                 playbackId: asset.playback_ids?.[0]?.id || '',
-                status: 'ready',
+                status: 'ready' as 'ready' | 'preparing' | 'errored',
                 duration: asset.duration || 0,
                 aspectRatio: asset.aspect_ratio || '16:9',
               },

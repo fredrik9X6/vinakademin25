@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       response.cookies.set('payload-token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         domain: process.env.NODE_ENV === 'production' ? '.vinakademin.se' : 'localhost',
         path: '/',
         maxAge: 60 * 60 * 24 * 7, // 7 days
