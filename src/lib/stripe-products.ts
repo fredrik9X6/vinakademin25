@@ -80,10 +80,11 @@ export async function syncCourseWithStripe(courseId: string): Promise<{
 }> {
   const payload = await getPayload({ config })
 
-  // Fetch course from PayloadCMS
+  // Fetch course from PayloadCMS with overrideAccess to bypass access control
   const course = (await payload.findByID({
-    collection: 'courses',
+    collection: 'vinprovningar',
     id: courseId,
+    overrideAccess: true, // Bypass access control
   })) as Course
 
   if (!course) {
@@ -154,13 +155,16 @@ export async function syncCourseWithStripe(courseId: string): Promise<{
   })
 
   // Update course in PayloadCMS with Stripe IDs
+  // Use overrideAccess to bypass access control and only update the Stripe fields
+  // Fetch fresh to avoid validation issues with incomplete module data
   await payload.update({
-    collection: 'courses',
+    collection: 'vinprovningar',
     id: courseId,
     data: {
       stripeProductId: product.id,
       stripePriceId: price.id,
     },
+    overrideAccess: true, // Bypass access control since this is a system operation
   })
 
   return {
@@ -222,7 +226,7 @@ export async function syncAllCoursesWithStripe(): Promise<void> {
   const payload = await getPayload({ config })
 
   const courses = await payload.find({
-    collection: 'courses',
+    collection: 'vinprovningar',
     where: {
       _status: { equals: 'published' },
     },
@@ -252,7 +256,7 @@ export async function getStripePriceByCourseId(courseId: string): Promise<string
 
   try {
     const course = (await payload.findByID({
-      collection: 'courses',
+      collection: 'vinprovningar',
       id: courseId,
     })) as Course
 
@@ -311,7 +315,7 @@ export async function getCourseCheckoutData(courseId: string): Promise<{
 
   try {
     const course = (await payload.findByID({
-      collection: 'courses',
+      collection: 'vinprovningar',
       id: courseId,
     })) as Course
 

@@ -91,6 +91,8 @@ interface LessonViewerProps {
   userHasAccess?: boolean
   sessionId?: string
   isSessionParticipant?: boolean
+  // Separate prop for actual purchase status (for ToC display)
+  userPurchasedAccess?: boolean
 }
 
 export default function LessonViewer({
@@ -100,6 +102,7 @@ export default function LessonViewer({
   userHasAccess = false,
   sessionId,
   isSessionParticipant = false,
+  userPurchasedAccess = false,
 }: LessonViewerProps) {
   const router = useRouter()
   const {
@@ -124,7 +127,8 @@ export default function LessonViewer({
   }
 
   const isLessonFree = lesson.isFree || false
-  const canAccessLesson = userHasAccess || isLessonFree
+  // Allow access if: user has purchased, is session participant, OR lesson is free (authenticated users can access free lessons)
+  const canAccessLesson = userHasAccess || isSessionParticipant || isLessonFree
 
   // Get all items (lessons and quizzes) in order
   const allItems = getFlattenedCourseItems(course.modules)
@@ -258,7 +262,9 @@ export default function LessonViewer({
                 </div>
                 <h1 className="text-2xl md:text-3xl font-bold">{lesson.title}</h1>
                 {lesson.description && (
-                  <p className="text-base md:text-lg text-muted-foreground">{lesson.description}</p>
+                  <div className="text-base md:text-lg text-muted-foreground">
+                    <RichTextRenderer content={lesson.description} />
+                  </div>
                 )}
               </div>
               {/* Desktop navigation */}
@@ -429,7 +435,7 @@ export default function LessonViewer({
               <CourseTableOfContents
                 modules={course.modules as any}
                 courseProgress={courseProgress || undefined}
-                userHasAccess={userHasAccess}
+                userHasAccess={userPurchasedAccess || isSessionParticipant}
                 activeLessonId={lesson.id}
                 onItemClick={handleItemClick}
                 hideMobileProgress={true}

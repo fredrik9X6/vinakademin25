@@ -3,9 +3,10 @@ import type { CollectionConfig } from 'payload'
 export const Modules: CollectionConfig = {
   slug: 'modules',
   admin: {
+    group: 'Wine Tastings',
     useAsTitle: 'title',
-    defaultColumns: ['title', 'order', 'course'],
-    description: 'Course modules that contain lessons',
+    defaultColumns: ['title'],
+    description: 'Course modules that contain lessons and quizzes',
   },
   access: {
     read: () => true,
@@ -18,64 +19,48 @@ export const Modules: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
-      label: 'Module Title',
+      admin: {
+        label: 'Module Title',
+      },
     },
     {
       name: 'description',
       type: 'textarea',
-      label: 'Module Description',
-    },
-    {
-      name: 'order',
-      type: 'number',
-      required: true,
-      defaultValue: 0,
-      min: 0,
-      label: 'Display Order',
-    },
-    {
-      name: 'course',
-      type: 'relationship',
-      relationTo: 'courses',
-      hasMany: false,
-      label: 'Course',
-    },
-    // Drag & drop ordering of module contents (lessons/quizzes)
-    {
-      name: 'contents',
-      type: 'blocks',
-      label: 'Innehåll',
       admin: {
-        description:
-          'Lägg till och ordna lektioner och quiz med drag & drop. Detta styr ordningen i kursens innehåll.',
+        label: 'Module Description',
       },
-      blocks: [
+    },
+    // Content Items array - ordered lessons and quizzes
+    {
+      name: 'contentItems',
+      type: 'array',
+      admin: {
+        description: 'Add and order lessons and quizzes in this module. Drag and drop to reorder. Click "Add Content Item" to select or create a new lesson or quiz.',
+        initCollapsed: false,
+      },
+      fields: [
         {
-          slug: 'lesson-item',
-          labels: { singular: 'Lektion', plural: 'Lektioner' },
-          fields: [
-            {
-              name: 'lesson',
-              type: 'relationship',
-              relationTo: 'lessons',
-              required: true,
-            },
-          ],
+          name: 'contentItem',
+          type: 'relationship',
+          relationTo: 'content-items',
+          required: true,
+          admin: {
+            description: 'Select an existing content item or click "+ Create" to create a new lesson or quiz',
+            allowCreate: true,
+          },
         },
         {
-          slug: 'quiz-item',
-          labels: { singular: 'Quiz', plural: 'Quizzer' },
-          fields: [
-            {
-              name: 'quiz',
-              type: 'relationship',
-              relationTo: 'quizzes',
-              required: true,
-            },
-          ],
+          name: 'isFree',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            description: 'Mark this content item as free preview (accessible without purchase)',
+            position: 'sidebar',
+          },
         },
       ],
     },
   ],
   timestamps: true,
 }
+

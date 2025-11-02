@@ -65,10 +65,22 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
         label = 'Tagg'
       } else if (segment === 'mina-sidor') {
         label = 'Mina sidor'
+      } else if (segment === 'vinprovningar') {
+        label = 'Vinprovningar'
       } else if (segment === 'profil') {
         label = 'Profil'
+      } else if (segment === 'checkout') {
+        label = 'Kassa'
+      } else if (segment === 'success' && pathSegments[0] === 'checkout') {
+        label = 'Betalning genomförd'
       } else if (i === 1 && pathSegments[0] === 'kurser') {
         // This is a course slug - format it nicely
+        label = segment
+          .split('-')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
+      } else if (i === 1 && pathSegments[0] === 'vinprovningar') {
+        // This is a wine tasting slug - format it nicely
         label = segment
           .split('-')
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -119,6 +131,16 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
         isCurrentPage: true,
       })
       // Update the course breadcrumb to not be current page
+      if (breadcrumbs.length > 2) {
+        breadcrumbs[breadcrumbs.length - 2].isCurrentPage = false
+      }
+    } else if (lessonId && pathSegments[0] === 'vinprovningar' && pathSegments[1]) {
+      breadcrumbs.push({
+        label: `Lektion ${lessonId}`,
+        href: `${pathname}?lesson=${lessonId}`,
+        isCurrentPage: true,
+      })
+      // Update the wine tasting breadcrumb to not be current page
       if (breadcrumbs.length > 2) {
         breadcrumbs[breadcrumbs.length - 2].isCurrentPage = false
       }

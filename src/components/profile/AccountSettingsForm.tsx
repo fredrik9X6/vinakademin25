@@ -133,8 +133,8 @@ export function AccountSettingsForm({ userId, userEmail }: AccountSettingsFormPr
 
     setIsDeletingAccount(true)
     try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
+      const response = await fetch(`/api/users/${userId}/anonymize`, {
+        method: 'POST',
         credentials: 'include',
       })
 

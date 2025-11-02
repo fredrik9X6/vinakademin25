@@ -4,110 +4,81 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 
+/**
+ * Helper function to find course and module for a content item (quiz or lesson)
+ */
+async function findCourseAndModuleForContentItem(contentItemId: number | string) {
+  const payload = await getPayload({ config })
+  
+  // Find all modules that contain this content item
+  const modules = await payload.find({
+    collection: 'modules',
+    where: {
+      'contentItems.contentItem': { equals: contentItemId },
+    },
+    limit: 1000,
+    depth: 2,
+  })
+
+  if (modules.docs.length === 0) {
+    return { course: null, module: null, isFree: false }
+  }
+
+  // Get the first module that contains this content item
+  const module = modules.docs[0]
+  
+  // Find which course contains this module
+  const courses = await payload.find({
+    collection: 'vinprovningar',
+    where: {
+      'modules.module': { equals: module.id },
+    },
+    limit: 1,
+    depth: 1,
+  })
+
+  if (courses.docs.length === 0) {
+    return { course: null, module: null, isFree: false }
+  }
+
+  const course = courses.docs[0]
+  
+  // Find isFree flag from module's contentItems array
+  const contentItems = (module as any).contentItems || []
+  const contentItemEntry = contentItems.find((ci: any) => {
+    const itemId = typeof ci.contentItem === 'object' ? ci.contentItem.id : ci.contentItem
+    return itemId === contentItemId
+  })
+  
+  const isFree = contentItemEntry?.isFree || false
+
+  return { course, module, isFree }
+}
+
 export async function startQuizAttempt(quizId: number | string) {
   const payload = await getPayload({ config })
   const user = await getUser()
 
-  const quiz = await payload.findByID({ collection: 'quizzes', id: String(quizId), depth: 1 })
-  if (!quiz || quiz.status === 'archived') throw new Error('Quiz not found')
-
-  // Check if quiz is free by checking the course structure
-  const courseId = typeof quiz.course === 'object' ? quiz.course.id : quiz.course
-  const course = await payload.findByID({ collection: 'courses', id: String(courseId) })
-
-  // Get module to find quiz position
-  const moduleRelation = quiz.module
-  const moduleId =
-    moduleRelation && typeof moduleRelation === 'object' ? moduleRelation.id : moduleRelation
-
-  if (!moduleId) {
-    throw new Error('Quiz saknar kopplat modul-id')
-  }
-  const allModules = await payload.find({
-    collection: 'modules',
-    where: { course: { equals: String(courseId) } },
-    limit: 1000,
-    sort: 'order',
-  })
-
-  // Get all lessons and quizzes for the course
-  const [allLessons, allQuizzes] = await Promise.all([
-    payload.find({
-      collection: 'lessons',
-      where: { module: { in: allModules.docs.map((m) => m.id) } },
-      limit: 1000,
-      sort: 'order',
-    }),
-    payload.find({
-      collection: 'quizzes',
-      where: { course: { equals: String(courseId) } },
-      limit: 1000,
-    }),
-  ])
-
-  // Build ordered items list to determine position
-  const orderedItems: any[] = []
-  for (const module of allModules.docs.sort((a, b) => (a.order || 0) - (b.order || 0))) {
-    const moduleLessons = allLessons.docs
-      .filter((l) => {
-        const moduleField = l.module
-        const lModId = moduleField && typeof moduleField === 'object' ? moduleField.id : moduleField
-        return lModId === module.id
-      })
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-
-    const moduleQuizzes = allQuizzes.docs.filter((q) => {
-      const moduleField = q.module
-      const qModId = moduleField && typeof moduleField === 'object' ? moduleField.id : moduleField
-      return qModId === module.id
-    })
-
-    // Check if module has contents ordering
-    const contents = Array.isArray((module as any).contents) ? (module as any).contents : []
-    if (contents.length > 0) {
-      contents.forEach((c: any) => {
-        if (c.blockType === 'lesson-item') {
-          const lessonId = typeof c.lesson === 'object' ? c.lesson.id : c.lesson
-          const lesson = moduleLessons.find((l) => l.id === lessonId)
-          if (lesson) orderedItems.push({ type: 'lesson', id: lesson.id })
-        } else if (c.blockType === 'quiz-item') {
-          const quizId = typeof c.quiz === 'object' ? c.quiz.id : c.quiz
-          const quiz = moduleQuizzes.find((q) => q.id === quizId)
-          if (quiz) orderedItems.push({ type: 'quiz', id: quiz.id })
-        }
-      })
-    } else {
-      // No contents, use lesson/quiz order
-      moduleLessons.forEach((l) => orderedItems.push({ type: 'lesson', id: l.id }))
-      moduleQuizzes.forEach((q) => orderedItems.push({ type: 'quiz', id: q.id }))
-    }
+  // Fetch quiz with depth 2 to populate questions array and question relationships
+  const quiz = await payload.findByID({ collection: 'content-items', id: String(quizId), depth: 2 })
+  if (!quiz || quiz.status === 'archived' || quiz.contentType !== 'quiz') {
+    throw new Error('Quiz not found')
   }
 
-  // Find position of this quiz
-  const quizPosition = orderedItems.findIndex((item) => item.type === 'quiz' && item.id === quiz.id)
-  const freeItemCount = course.freeItemCount || 0
-  const isFree = quizPosition >= 0 && quizPosition < freeItemCount
-
-  if (!user && !isFree) throw new Error('Unauthorized')
-
-  // Enforce availability window
-  const now = new Date()
-  const availableFrom = quiz.availability?.availableFrom
-    ? new Date(quiz.availability.availableFrom)
-    : null
-  const availableUntil = quiz.availability?.availableUntil
-    ? new Date(quiz.availability.availableUntil)
-    : null
-  if ((availableFrom && now < availableFrom) || (availableUntil && now > availableUntil)) {
-    throw new Error('Quiz is not currently available')
+  // Verify quiz has questions
+  if (!quiz.questions || !Array.isArray(quiz.questions) || quiz.questions.length === 0) {
+    throw new Error('Quiz has no questions')
   }
 
-  // For guest users (free quizzes), return a special guest attempt ID
-  if (!user) {
-    // Generate a client-side only attempt ID for guest users
-    const guestAttemptId = `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    return { attemptId: guestAttemptId }
+  // Find course and module for this quiz
+  const { course, module: quizModule, isFree } = await findCourseAndModuleForContentItem(quizId)
+  
+  if (!course) {
+    throw new Error('Quiz not associated with any course')
   }
+
+  // Require authentication even for free quizzes
+  if (!user) throw new Error('Unauthorized')
 
   const attempts = await payload.find({
     collection: 'quiz-attempts',
@@ -117,12 +88,6 @@ export async function startQuizAttempt(quizId: number | string) {
     limit: 0,
   })
   const attemptNumber = (attempts?.totalDocs || 0) + 1
-
-  // Enforce max attempts if configured
-  const maxAttempts = quiz.quizSettings?.maxAttempts
-  if (typeof maxAttempts === 'number' && maxAttempts > 0 && attemptNumber > maxAttempts) {
-    throw new Error('Maximum number of attempts reached')
-  }
 
   const seededAnswers = Array.isArray(quiz.questions)
     ? quiz.questions.map((q: any) => ({
@@ -152,126 +117,38 @@ export async function getQuizStartInfo(quizId: number | string) {
   const payload = await getPayload({ config })
   const user = await getUser()
 
-  const quiz = await payload.findByID({ collection: 'quizzes', id: String(quizId), depth: 1 })
-  if (!quiz || quiz.status === 'archived') throw new Error('Quiz not found')
+  // Fetch quiz with depth 1 (we don't need questions for start info)
+  const quiz = await payload.findByID({ collection: 'content-items', id: String(quizId), depth: 1 })
+  if (!quiz || quiz.status === 'archived' || quiz.contentType !== 'quiz') {
+    throw new Error('Quiz not found')
+  }
 
-  // Check if quiz is free by checking course structure (same logic as startQuizAttempt)
-  const courseId = typeof quiz.course === 'object' ? quiz.course.id : quiz.course
-  const course = await payload.findByID({ collection: 'courses', id: String(courseId) })
+  // Find course and module for this quiz
+  const { course, isFree } = await findCourseAndModuleForContentItem(quizId)
+  
+  if (!course) {
+    throw new Error('Quiz not associated with any course')
+  }
 
-  const allModules = await payload.find({
-    collection: 'modules',
-    where: { course: { equals: String(courseId) } },
-    limit: 1000,
-    sort: 'order',
+  // Require authentication even for free quizzes
+  if (!user) throw new Error('Unauthorized')
+
+  const attempts = await payload.find({
+    collection: 'quiz-attempts',
+    where: { and: [{ user: { equals: String(user.id) } }, { quiz: { equals: String(quizId) } }] },
+    limit: 0,
   })
+  const totalAttempts = attempts?.totalDocs || 0
 
-  const [allLessons, allQuizzes] = await Promise.all([
-    payload.find({
-      collection: 'lessons',
-      where: { module: { in: allModules.docs.map((m) => m.id) } },
-      limit: 1000,
-      sort: 'order',
-    }),
-    payload.find({
-      collection: 'quizzes',
-      where: { course: { equals: String(courseId) } },
-      limit: 1000,
-    }),
-  ])
-
-  const orderedItems: any[] = []
-  for (const module of allModules.docs.sort((a, b) => (a.order || 0) - (b.order || 0))) {
-    const moduleLessons = allLessons.docs
-      .filter((l) => {
-        const moduleField = l.module
-        const lModId = moduleField && typeof moduleField === 'object' ? moduleField.id : moduleField
-        return lModId === module.id
-      })
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-
-    const moduleQuizzes = allQuizzes.docs.filter((q) => {
-      const moduleField = q.module
-      const qModId = moduleField && typeof moduleField === 'object' ? moduleField.id : moduleField
-      return qModId === module.id
-    })
-
-    const contents = Array.isArray((module as any).contents) ? (module as any).contents : []
-    if (contents.length > 0) {
-      contents.forEach((c: any) => {
-        if (c.blockType === 'lesson-item') {
-          const lessonId = typeof c.lesson === 'object' ? c.lesson.id : c.lesson
-          const lesson = moduleLessons.find((l) => l.id === lessonId)
-          if (lesson) orderedItems.push({ type: 'lesson', id: lesson.id })
-        } else if (c.blockType === 'quiz-item') {
-          const quizId = typeof c.quiz === 'object' ? c.quiz.id : c.quiz
-          const quiz = moduleQuizzes.find((q) => q.id === quizId)
-          if (quiz) orderedItems.push({ type: 'quiz', id: quiz.id })
-        }
-      })
-    } else {
-      moduleLessons.forEach((l) => orderedItems.push({ type: 'lesson', id: l.id }))
-      moduleQuizzes.forEach((q) => orderedItems.push({ type: 'quiz', id: q.id }))
-    }
-  }
-
-  const quizPosition = orderedItems.findIndex((item) => item.type === 'quiz' && item.id === quiz.id)
-  const freeItemCount = course.freeItemCount || 0
-  const isFree = quizPosition >= 0 && quizPosition < freeItemCount
-
-  if (!user && !isFree) throw new Error('Unauthorized')
-
-  const now = new Date()
-  const availableFrom = quiz.availability?.availableFrom
-    ? new Date(quiz.availability.availableFrom)
-    : null
-  const availableUntil = quiz.availability?.availableUntil
-    ? new Date(quiz.availability.availableUntil)
-    : null
-
-  let availabilityOk = true
-  let availabilityMessage: string | null = null
-  if (availableFrom && now < availableFrom) {
-    availabilityOk = false
-    availabilityMessage = 'Quizen är inte tillgänglig ännu.'
-  } else if (availableUntil && now > availableUntil) {
-    availabilityOk = false
-    availabilityMessage = 'Quizen är inte längre tillgänglig.'
-  }
-
-  // Only check attempts if user is logged in
-  let totalAttempts = 0
-  let attemptsOk = true
-  let attemptsMessage: string | null = null
-  let remainingAttempts: number | null = null
-  const maxAttempts = quiz.quizSettings?.maxAttempts ?? null
-
-  if (user) {
-    const attempts = await payload.find({
-      collection: 'quiz-attempts',
-      where: { and: [{ user: { equals: String(user.id) } }, { quiz: { equals: String(quizId) } }] },
-      limit: 0,
-    })
-    totalAttempts = attempts?.totalDocs || 0
-
-    if (typeof maxAttempts === 'number' && maxAttempts > 0) {
-      remainingAttempts = Math.max(0, maxAttempts - totalAttempts)
-      if (remainingAttempts === 0) {
-        attemptsOk = false
-        attemptsMessage = 'Du har nått max antal försök.'
-      }
-    }
-  }
-
-  const allowed = availabilityOk && attemptsOk
-  const message = !allowed ? availabilityMessage || attemptsMessage : null
+  const allowed = true
+  const message = null
 
   return {
     allowed,
     message,
     totalAttempts,
-    maxAttempts,
-    remainingAttempts,
+    maxAttempts: null,
+    remainingAttempts: null,
   }
 }
 
@@ -283,63 +160,14 @@ export async function submitQuizAttempt(
   const payload = await getPayload({ config })
   const user = await getUser()
 
-  // Check if this is a guest attempt
-  const isGuestAttempt = String(attemptId).startsWith('guest-')
-
-  // For guest attempts, just calculate the score without saving to database
-  if (isGuestAttempt && quizIdForGuest) {
-    const quiz = await payload.findByID({ collection: 'quizzes', id: String(quizIdForGuest) })
-    if (!quiz) throw new Error('Quiz not found')
-
-    const questionMap = new Map<string, any>()
-    if (Array.isArray(quiz.questions)) {
-      for (const q of quiz.questions) {
-        const qDoc =
-          typeof q.question === 'object'
-            ? q.question
-            : await payload.findByID({ collection: 'questions', id: q.question })
-        if (qDoc) questionMap.set(String(qDoc.id), qDoc)
-      }
-    }
-
-    // Evaluate answers (same logic as for logged-in users)
-    let correctCount = 0
-    const evaluated = (Array.isArray(answers) ? answers : []).map((ans) => {
-      const q = questionMap.get(String(ans.question))
-      if (!q) return { ...ans, isCorrect: false }
-
-      let correct = false
-      if (q.type === 'multiple-choice') {
-        const correctOption = (q.options || []).find((o: any) => o.isCorrect)
-        correct = correctOption && ans.answer != null && ans.answer === correctOption.text
-      } else if (q.type === 'true-false') {
-        correct = ans.answer === q.correctAnswer
-      } else if (q.type === 'short-answer' || q.type === 'fill-blank') {
-        const acceptable = (q.acceptableAnswers || []).map((a: any) => a.answer)
-        correct = acceptable.length
-          ? acceptable.some(
-              (a: string) =>
-                String(ans.answer).trim().toLowerCase() === String(a).trim().toLowerCase(),
-            )
-          : String(ans.answer).trim().toLowerCase() ===
-            String(q.correctAnswer || '')
-              .trim()
-              .toLowerCase()
-      }
-
-      if (correct) correctCount += 1
-      return { ...ans, isCorrect: correct }
-    })
-
-    const totalCount = evaluated.length
-    const score = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0
-    const passed = score >= (quiz.quizSettings?.passingScore ?? 70)
-
-    return { score, passed }
-  }
-
-  // Regular flow for logged-in users
+  // Require authentication - no guest attempts allowed
   if (!user) throw new Error('Unauthorized')
+
+  // Check if this is a guest attempt (should not happen anymore, but handle gracefully)
+  const isGuestAttempt = String(attemptId).startsWith('guest-')
+  if (isGuestAttempt) {
+    throw new Error('Authentication required to submit quiz attempts')
+  }
 
   const attempt = await payload.findByID({ collection: 'quiz-attempts', id: String(attemptId) })
   if (!attempt) throw new Error('Attempt not found')
@@ -350,8 +178,9 @@ export async function submitQuizAttempt(
   if (String(attemptUserId) !== String(user.id)) throw new Error('Attempt not found')
 
   const quizId = typeof attempt.quiz === 'object' ? (attempt.quiz as any).id : attempt.quiz
-  const quiz = await payload.findByID({ collection: 'quizzes', id: String(quizId) })
-  if (!quiz) throw new Error('Quiz not found')
+  // Fetch quiz with depth 2 to ensure questions are populated
+  const quiz = await payload.findByID({ collection: 'content-items', id: String(quizId), depth: 2 })
+  if (!quiz || quiz.contentType !== 'quiz') throw new Error('Quiz not found')
 
   const questionMap = new Map<string, any>()
   if (Array.isArray(quiz.questions)) {
@@ -367,9 +196,19 @@ export async function submitQuizAttempt(
   let totalPoints = 0
   let maxPoints = 0
   let correctCount = 0
+  
+  // Debug: Log submitted answers
+  if (process.env.NODE_ENV === 'development') {
+    console.log('📝 Submitted answers:', JSON.stringify(answers, null, 2))
+    console.log('📋 Question map keys:', Array.from(questionMap.keys()))
+  }
+  
   const evaluated = (Array.isArray(answers) ? answers : []).map((ans) => {
     const q = questionMap.get(String(ans.question))
-    if (!q) return { ...ans, isCorrect: false, pointsAwarded: 0 }
+    if (!q) {
+      console.warn('⚠️ Question not found in map:', ans.question)
+      return { ...ans, isCorrect: false, pointsAwarded: 0 }
+    }
 
     const points = q.points ?? 1
     maxPoints += points
@@ -378,9 +217,42 @@ export async function submitQuizAttempt(
     if (q.type === 'multiple-choice') {
       const correctOption = (q.options || []).find((o: any) => o.isCorrect)
       correct = correctOption && ans.answer != null && ans.answer === correctOption.text
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Multiple-choice evaluation:', {
+          questionId: q.id,
+          questionTitle: q.title,
+          userAnswer: ans.answer,
+          correctOption: correctOption?.text,
+          correct,
+        })
+      }
     } else if (q.type === 'true-false') {
-      correct = ans.answer === q.correctAnswer
-    } else if (q.type === 'short-answer' || q.type === 'fill-blank') {
+      // Use correctAnswerTrueFalse field (select field with 'true'/'false' string values)
+      // Fallback to correctAnswer for backward compatibility
+      const correctAnswer = q.correctAnswerTrueFalse ?? q.correctAnswer
+      
+      // Normalize both values to strings for comparison
+      const userAnswer = String(ans.answer).toLowerCase()
+      const correctAnswerStr = String(correctAnswer).toLowerCase()
+      
+      // Compare normalized strings
+      correct = userAnswer === correctAnswerStr
+      
+      // Debug logging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 True/False evaluation:', {
+          questionId: q.id,
+          questionTitle: q.title,
+          userAnswer: ans.answer,
+          userAnswerNormalized: userAnswer,
+          correctAnswer: correctAnswer,
+          correctAnswerNormalized: correctAnswerStr,
+          correctAnswerTrueFalse: q.correctAnswerTrueFalse,
+          correct,
+        })
+      }
+    } else if (q.type === 'short-answer') {
       const acceptable = (q.acceptableAnswers || []).map((a: any) => a.answer)
       correct = acceptable.length
         ? acceptable.some(
@@ -398,12 +270,37 @@ export async function submitQuizAttempt(
     const awarded = correct ? points : 0
     totalPoints += awarded
     if (correct) correctCount += 1
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📊 Question ${q.id} evaluation:`, {
+        correct,
+        points,
+        awarded,
+        correctCount,
+      })
+    }
+    
     return { ...ans, isCorrect: correct, pointsAwarded: awarded }
   })
+  
   // Use equal-weight scoring (each question counts equally)
   const totalCount = evaluated.length
   const score = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0
   const passed = score >= (quiz.quizSettings?.passingScore ?? 70)
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log('📈 Final scoring:', {
+      totalCount,
+      correctCount,
+      score,
+      passed,
+      evaluated: evaluated.map(e => ({
+        question: e.question,
+        isCorrect: e.isCorrect,
+        pointsAwarded: e.pointsAwarded,
+      })),
+    })
+  }
 
   // Compute time spent
   let timeSpentSeconds = 0
@@ -464,7 +361,7 @@ export async function submitQuizAttempt(
     const averageTimeSpent = totalAttempts > 0 ? Math.round(sumTime / totalAttempts) : 0
 
     await payload.update({
-      collection: 'quizzes',
+      collection: 'content-items',
       id: String(quizId),
       data: {
         analytics: {
@@ -479,12 +376,15 @@ export async function submitQuizAttempt(
 
   // Update user progress (scores + quizScores)
   try {
-    const courseId = Number(
-      typeof quiz.course === 'object' ? (quiz.course as any)?.id : quiz.course,
-    )
-    const lessonId = quiz.lesson
-      ? Number(typeof quiz.lesson === 'object' ? (quiz.lesson as any).id : quiz.lesson)
-      : null
+    // Find course for this quiz
+    const { course } = await findCourseAndModuleForContentItem(quizId)
+    if (!course) {
+      return { score, passed }
+    }
+
+    const courseId = Number(course.id)
+    // Note: quizzes no longer have lesson relationship, so lessonId is null
+    const lessonId = null
 
     const userProgress = await payload.find({
       collection: 'user-progress',

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -29,13 +29,64 @@ interface QuizAttemptRunnerProps {
 }
 
 export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerProps) {
-  const questions = useMemo<any[]>(() => {
-    return Array.isArray(quiz.questions)
-      ? quiz.questions
-          .map((q: any) => (typeof q.question === 'object' ? q.question : q.question))
-          .filter(Boolean)
-      : []
+  // Base questions from quiz
+  const baseQuestions = useMemo<any[]>(() => {
+    console.log('📋 Quiz data:', { 
+      id: quiz.id, 
+      title: quiz.title, 
+      contentType: quiz.contentType,
+      questionsLength: quiz.questions?.length,
+      questions: quiz.questions 
+    })
+    
+    if (!Array.isArray(quiz.questions)) {
+      console.warn('⚠️ Quiz questions is not an array:', quiz.questions)
+      return []
+    }
+    
+    const extracted = quiz.questions
+      .map((q: any) => {
+        // Handle both populated and unpopulated question relationships
+        const question = typeof q.question === 'object' && q.question ? q.question : q.question
+        if (!question) {
+          console.warn('⚠️ Found null/undefined question in array:', q)
+          return null
+        }
+        return question
+      })
+      .filter(Boolean)
+    
+    console.log('✅ Extracted questions:', extracted.length, extracted)
+    return extracted
   }, [quiz])
+
+  // Randomized questions - re-randomize on each new attempt
+  const [questions, setQuestions] = useState<any[]>(baseQuestions)
+
+  // Apply randomization when starting a new attempt
+  const applyRandomization = useCallback((questionsList: any[]) => {
+    let processedQuestions = [...questionsList]
+    
+    if (quiz.quizSettings?.randomizeQuestions) {
+      // Randomize question order
+      processedQuestions = processedQuestions.sort(() => Math.random() - 0.5)
+    }
+
+    // Randomize answers for multiple-choice questions if enabled
+    if (quiz.quizSettings?.randomizeAnswers) {
+      processedQuestions = processedQuestions.map((q) => {
+        if (q.type === 'multiple-choice' && Array.isArray(q.options)) {
+          return {
+            ...q,
+            options: [...q.options].sort(() => Math.random() - 0.5),
+          }
+        }
+        return q
+      })
+    }
+
+    return processedQuestions
+  }, [quiz.quizSettings?.randomizeQuestions, quiz.quizSettings?.randomizeAnswers])
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [mode, setMode] = useState<'idle' | 'primary' | 'done'>('idle')
@@ -65,16 +116,31 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
     })()
   }, [quiz.id])
 
+  // Initialize questions when baseQuestions change
+  useEffect(() => {
+    setQuestions(applyRandomization(baseQuestions))
+  }, [baseQuestions, applyRandomization])
+
   const startAttempt = async () => {
-    const { attemptId } = await startQuizAttempt(quiz.id)
-    setAttemptId(String(attemptId))
-    setMode('primary')
-    setCurrentIndex(0)
-    setAnswersMap({})
-    setSelected(null)
-    setShowFeedback(null)
-    setResult(null) // Reset result to hide results screen
-    setSubmitting(false) // Reset submitting state
+    try {
+      console.log('🚀 Starting quiz attempt for quiz:', quiz.id)
+      const { attemptId } = await startQuizAttempt(quiz.id)
+      console.log('✅ Quiz attempt started:', attemptId)
+      setAttemptId(String(attemptId))
+      setMode('primary')
+      setCurrentIndex(0)
+      setAnswersMap({})
+      setSelected(null)
+      setShowFeedback(null)
+      setResult(null) // Reset result to hide results screen
+      setSubmitting(false) // Reset submitting state
+      
+      // Apply randomization when starting a new attempt
+      setQuestions(applyRandomization(baseQuestions))
+    } catch (error) {
+      console.error('❌ Error starting quiz attempt:', error)
+      setStartError(error instanceof Error ? error.message : 'Kunde inte starta quiz')
+    }
   }
 
   const showCorrectAfterQuestion = quiz?.quizSettings?.showCorrectAnswers === 'after-question'
@@ -109,13 +175,21 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
       return { correct: Boolean(isCorrect), feedbackText }
     }
     if (q.type === 'true-false') {
-      const isCorrect = String(value) === String(q.correctAnswer)
+      // Use correctAnswerTrueFalse field (select field with 'true'/'false' string values)
+      // Fallback to correctAnswer for backward compatibility
+      const correctAnswer = q.correctAnswerTrueFalse ?? q.correctAnswer
+      
+      // Normalize both values to strings for comparison
+      const userAnswer = String(value).toLowerCase()
+      const correctAnswerStr = String(correctAnswer).toLowerCase()
+      
+      const isCorrect = userAnswer === correctAnswerStr
       const feedbackText = isCorrect
         ? getRandomSuccessMessage()
-        : `Rätt svar: ${String(q.correctAnswer) === 'true' ? 'Sant' : 'Falskt'}`
+        : `Rätt svar: ${String(correctAnswer) === 'true' || correctAnswerStr === 'true' ? 'Sant' : 'Falskt'}`
       return { correct: Boolean(isCorrect), feedbackText }
     }
-    if (q.type === 'short-answer' || q.type === 'fill-blank') {
+    if (q.type === 'short-answer') {
       const acceptable = (q.acceptableAnswers || []).map((a: any) => a.answer)
       const isCorrect = acceptable.length
         ? acceptable.some(
@@ -139,8 +213,16 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
 
   const confirmAnswer = () => {
     if (!currentQuestion || currentQuestionId == null) return
-    const { correct, feedbackText } = evaluateAnswer(currentQuestion, selected)
-    setAnswersMap((prev) => ({ ...prev, [currentQuestionId]: selected }))
+    
+    // Ensure we have a selected value - use current selected or get from answersMap
+    const answerToConfirm = selected ?? answersMap[currentQuestionId]
+    if (answerToConfirm == null) {
+      console.warn('⚠️ No answer selected for question:', currentQuestionId)
+      return
+    }
+    
+    const { correct, feedbackText } = evaluateAnswer(currentQuestion, answerToConfirm)
+    setAnswersMap((prev) => ({ ...prev, [currentQuestionId]: answerToConfirm }))
     if (showCorrectAfterQuestion) {
       setShowFeedback({ correct, text: feedbackText })
     } else {
@@ -166,13 +248,37 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
     if (!attemptId) return
     setSubmitting(true)
     try {
-      const ordered = questions.map((q: any) => ({
-        question: String(q.id),
-        answer: answersMap[String(q.id)],
-      }))
+      // Build answers array, ensuring we include the current question's selected answer if not yet saved
+      const ordered = questions.map((q: any) => {
+        const questionId = String(q.id)
+        // Check if answer is in map, otherwise use selected if this is the current question
+        let answer = answersMap[questionId]
+        if (answer === undefined && currentQuestionId === questionId && selected != null) {
+          answer = selected
+        }
+        return {
+          question: questionId,
+          answer: answer,
+        }
+      })
+      
+      console.log('📤 Submitting quiz answers:', {
+        attemptId,
+        quizId: quiz.id,
+        answers: ordered,
+        answersMap,
+        currentQuestionId,
+        currentSelected: selected,
+        questions: questions.map((q: any) => ({ id: q.id, title: q.title })),
+      })
+      
       const { score, passed } = await submitQuizAttempt(attemptId, ordered, quiz.id)
+      console.log('✅ Quiz submission result:', { score, passed })
       setResult({ score, passed })
       setMode('done')
+    } catch (error) {
+      console.error('❌ Error submitting quiz:', error)
+      // You might want to show an error message to the user here
     } finally {
       setSubmitting(false)
     }
@@ -277,9 +383,13 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
             <Button
               variant="secondary"
               onClick={startAttempt}
-              disabled={startInfo?.allowed === false}
+              disabled={startInfo?.allowed === false || baseQuestions.length === 0}
             >
-              {startInfo?.allowed === false ? 'Försök ej tillgängligt' : 'Starta försök'}
+              {startInfo?.allowed === false 
+                ? 'Försök ej tillgängligt' 
+                : baseQuestions.length === 0 
+                ? 'Quiz saknar frågor' 
+                : 'Starta försök'}
             </Button>
           )}
         </div>
@@ -303,6 +413,12 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
 
         {startInfo && startInfo.message && !attemptId && !result && (
           <div className="text-sm text-red-600 dark:text-red-400">{startInfo.message}</div>
+        )}
+
+        {startError && !attemptId && !result && (
+          <div className="text-sm text-red-600 dark:text-red-400 p-4 bg-red-50 dark:bg-red-950 rounded-md">
+            <strong>Fel:</strong> {startError}
+          </div>
         )}
 
         {attemptId && !result && q && !submitting && (
@@ -337,7 +453,14 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
                         className="sr-only"
                         disabled={!!showFeedback}
                         checked={selected === opt.text}
-                        onChange={() => setSelected(opt.text)}
+                        onChange={() => {
+                          setSelected(opt.text)
+                          // For multiple-choice questions, immediately save the answer when selected
+                          // This ensures the answer is stored even if user navigates away
+                          if (currentQuestionId) {
+                            setAnswersMap((prev) => ({ ...prev, [currentQuestionId]: opt.text }))
+                          }
+                        }}
                       />
                       <span className="text-sm font-medium">{opt.text}</span>
                     </label>
@@ -365,7 +488,14 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
                         className="sr-only"
                         disabled={!!showFeedback}
                         checked={selected === opt.val}
-                        onChange={() => setSelected(opt.val)}
+                        onChange={() => {
+                          setSelected(opt.val)
+                          // For True/False questions, immediately save the answer when selected
+                          // This ensures the answer is stored even if user navigates away
+                          if (currentQuestionId) {
+                            setAnswersMap((prev) => ({ ...prev, [currentQuestionId]: opt.val }))
+                          }
+                        }}
                       />
                       <span className="text-sm font-medium">{opt.label}</span>
                     </label>

@@ -5,6 +5,7 @@ import { withCreatedByUpdatedBy } from '../lib/hooks'
 export const BlogCategories: CollectionConfig = {
   slug: 'blog-categories',
   admin: {
+    group: 'Content',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'color', 'createdAt'],
     description: 'Categories for organizing blog posts',

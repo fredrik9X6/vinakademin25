@@ -4,6 +4,7 @@ import { anyLoggedIn, adminOnly } from '../lib/access'
 export const UserWineLists: CollectionConfig = {
   slug: 'user-wine-lists',
   admin: {
+    group: 'Wine Library',
     useAsTitle: 'name',
     defaultColumns: ['name', 'user', 'isSystem', 'createdAt'],
     description: 'User-defined wine lists (e.g., Favorites, Wishlist, or custom lists)',

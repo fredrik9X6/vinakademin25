@@ -75,68 +75,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = useCallback(async () => {
     setIsLoading(true)
     setError(null)
-    console.log('AuthContext: Starting checkAuth...')
+
     try {
+      // Use PayloadCMS 3 native /api/users/me endpoint
       const response = await fetch('/api/users/me', {
-        method: 'GET', // Ensure method is GET
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Crucial for sending cookies
       })
 
-      console.log(`AuthContext: /api/users/me response status: ${response.status}`)
-
       if (response.ok) {
+        // PayloadCMS 3 returns user directly: { user: {...} }
         const data = await response.json()
-        console.log('AuthContext: /api/users/me response data:', data)
-
-        // IMPORTANT: Check the actual structure returned by Payload's /me endpoint
-        // It might be directly the user object, or nested like { user: {...} }
-        const fetchedUser = data.user || data // Adapt this line based on logged `data`
+        const fetchedUser = data.user || data
 
         if (fetchedUser && fetchedUser.id) {
-          // Check for an identifier
-          console.log('AuthContext: User data found:', fetchedUser)
           setUser(fetchedUser)
         } else {
-          console.log(
-            'AuthContext: /me returned OK, but no valid user data found in response.',
-            data,
-          )
           setUser(null)
         }
       } else {
-        console.log(`AuthContext: /api/users/me request failed with status ${response.status}`)
-        // Attempt to read error message from response if possible
-        try {
-          const responseText = await response.text()
-          console.log('AuthContext: Raw response text:', responseText)
-
-          if (responseText && responseText.trim()) {
-            const errorData = JSON.parse(responseText)
-            // Only log meaningful error data, not empty objects
-            if (errorData && Object.keys(errorData).length > 0) {
-              console.warn('AuthContext: /me error response body (non-fatal):', errorData)
-            }
-            setError(errorData.message || `Authentication check failed (${response.status})`)
-          } else {
-            console.log('AuthContext: Empty response body from /api/users/me endpoint')
-            setError(`Authentication check failed - empty response (${response.status})`)
-          }
-        } catch (jsonError) {
-          console.log('AuthContext: Failed to parse error response from /api/users/me:', jsonError)
-          setError(`Authentication check failed (${response.status})`)
-        }
+        // Not authenticated or other error
         setUser(null)
       }
     } catch (err) {
-      console.warn('AuthContext: Network or other error during checkAuth (non-fatal):', err)
-      setError('Failed to check authentication status due to a network error.')
+      console.warn('AuthContext: Network error during checkAuth (non-fatal):', err)
       setUser(null)
     } finally {
       setIsLoading(false)
-      console.log('AuthContext: checkAuth finished.')
     }
   }, [])
 
@@ -162,12 +130,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return translations[message] || message
   }
 
-  // Login function
+  // Login function using PayloadCMS 3 native endpoint
   const loginUser = async (credentials: { email: string; password: string }): Promise<boolean> => {
     setIsLoading(true)
     setError(null)
 
     try {
+      // Use PayloadCMS 3 native /api/users/login endpoint
+      // PayloadCMS expects JSON: { email, password }
       const response = await fetch('/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -176,21 +146,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       })
 
       const data = await response.json()
-      console.log('AuthContext: Login response:', { status: response.status, data })
 
       if (response.ok && data.user) {
+        // PayloadCMS 3 returns: { user, token }
+        // Check if user account is active
+        if (data.user.accountStatus !== 'active') {
+          setError('Kontot är inaktiverat eller suspenderat.')
+          toast.error('Inloggning misslyckades', {
+            description: 'Kontot är inaktiverat eller suspenderat.',
+          })
+          setIsLoading(false)
+          return false
+        }
+
         setUser(data.user)
         toast.success('Inloggning lyckades', {
           description: 'Välkommen tillbaka!',
         })
 
-        // Refresh server components but don't redirect here - let component handle it
         router.refresh() // Refresh all server components
-
         setIsLoading(false)
         return true
       } else {
-        // Handle PayloadCMS error format: { "errors": [{ "message": "..." }] }
+        // Handle PayloadCMS 3 error format: { "errors": [{ "message": "..." }] }
         let message = 'Ogiltig e-post eller lösenord.'
 
         if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
@@ -199,7 +177,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           message = translateErrorMessage(data.message)
         }
 
-        console.log('AuthContext: Login failed with error:', message)
         setError(message)
         toast.error('Inloggning misslyckades', {
           description: message,
@@ -219,22 +196,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
-  // Logout function
+  // Logout function using PayloadCMS 3 native endpoint
   const logoutUser = async (): Promise<void> => {
     setIsLoading(true)
     try {
+      // Use PayloadCMS 3 native /api/users/logout endpoint
       const response = await fetch('/api/users/logout', {
         method: 'POST',
         credentials: 'include', // Important for cookie handling
       })
 
+      // PayloadCMS logout returns success status
       if (response.ok) {
         setUser(null)
         toast.success('Utloggad', {
           description: 'Du har loggats ut.',
         })
 
-        // Refresh and redirect (KEY CHANGE)
         router.refresh() // Refresh all server components
         router.push('/logga-in') // Redirect to login
       } else {
@@ -242,7 +220,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (err) {
       console.error('Logout error:', err)
-      setUser(null) // Still clear user locally even if API call fails
+      // Still clear user locally even if API call fails
+      setUser(null)
       toast.error('Utloggningsfel', {
         description: 'Kunde inte logga ut korrekt, sessionen rensad lokalt.',
       })
@@ -335,14 +314,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       value={{
         user,
         setUser,
-      permissions,
-      setPermissions,
-      isLoading,
-      error,
-      loginUser,
-      logoutUser,
-      registerUser,
-      checkAuth,
+        permissions,
+        setPermissions,
+        isLoading,
+        error,
+        loginUser,
+        logoutUser,
+        registerUser,
+        checkAuth,
       }}
     >
       {children}

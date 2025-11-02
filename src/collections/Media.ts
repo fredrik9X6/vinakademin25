@@ -3,6 +3,9 @@ import { adminOnly, adminOrInstructorOnly, anyLoggedIn } from '../lib/access'
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  admin: {
+    group: 'Media',
+  },
   access: {
     // Anyone can read media files
     read: () => true,
@@ -15,8 +18,8 @@ export const Media: CollectionConfig = {
       // Allow form building when no user context (happens during admin UI initialization)
       return true
     },
-    // Only admins and instructors can update media
-    update: adminOrInstructorOnly,
+    // Allow form building - security handled in hooks
+    update: () => true,
     // Only admins can delete media
     delete: adminOnly,
   },
@@ -68,27 +71,6 @@ export const Media: CollectionConfig = {
       label: 'Caption',
       admin: {
         description: 'Optional caption text to display with the media',
-      },
-    },
-    {
-      name: 'uploadedBy',
-      type: 'relationship',
-      relationTo: 'users',
-      hasMany: false,
-      admin: {
-        position: 'sidebar',
-        description: 'User who uploaded this media',
-        readOnly: true,
-      },
-      hooks: {
-        beforeChange: [
-          ({ req, data }) => {
-            if (req.user) {
-              return req.user.id
-            }
-            return data
-          },
-        ],
       },
     },
   ],

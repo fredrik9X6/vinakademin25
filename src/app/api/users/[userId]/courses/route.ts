@@ -32,7 +32,7 @@ export async function GET(
           equals: userId,
         },
       },
-      depth: 3, // Populate course -> modules -> contents
+      depth: 2, // Populate course -> modules -> module relationship
       limit: 100,
     })
 
@@ -82,32 +82,41 @@ export async function GET(
     const coursesWithProgress = await Promise.all(
       enrollments.docs.map(async (enrollment: any) => {
         const courseProgress = progressMap.get(enrollment.course.id)
+        const course = enrollment.course
 
-        // Fetch modules separately to ensure we get all of them
-        const modulesResult = await payload.find({
-          collection: 'modules',
-          where: {
-            course: {
-              equals: enrollment.course.id,
+        // Get module IDs from course's modules array
+        const courseModules = (course as any).modules || []
+        const moduleIds = courseModules
+          .map((cm: any) => {
+            const moduleId = typeof cm.module === 'object' ? cm.module.id : cm.module
+            return moduleId
+          })
+          .filter(Boolean)
+
+        // Fetch modules by their IDs
+        let modulesResult: any = { docs: [] }
+        if (moduleIds.length > 0) {
+          modulesResult = await payload.find({
+            collection: 'modules',
+            where: {
+              id: { in: moduleIds },
             },
-          },
-          depth: 1, // Populate contents
-          limit: 1000,
-        })
+            limit: 1000,
+            depth: 2, // Populate contentItems.contentItem
+          })
+        }
 
-        // Calculate total items (lessons + quizzes + wine reviews) from modules
+        // Calculate total items (lessons + quizzes) from modules' contentItems array
         let totalItems = 0
         if (modulesResult.docs && Array.isArray(modulesResult.docs)) {
           modulesResult.docs.forEach((module: any) => {
-            // Modules use 'contents' array - count lesson-item, quiz-item, and wine-review-item
-            if (typeof module === 'object' && module.contents && Array.isArray(module.contents)) {
-              const itemCount = module.contents.filter(
-                (item: any) =>
-                  item.blockType === 'lesson-item' ||
-                  item.blockType === 'quiz-item' ||
-                  item.blockType === 'wine-review-item',
-              ).length
-              totalItems += itemCount
+            // Modules use 'contentItems' array - count lessons and quizzes
+            if (
+              typeof module === 'object' &&
+              module.contentItems &&
+              Array.isArray(module.contentItems)
+            ) {
+              totalItems += module.contentItems.length
             }
           })
         }
@@ -135,8 +144,8 @@ export async function GET(
           ...enrollment,
           // Ensure we have access to course slug and other needed fields
           course: {
-            ...enrollment.course,
-            slug: enrollment.course.slug,
+            ...course,
+            slug: course.slug,
             totalLessons: totalItems,
           },
           progress: courseProgress

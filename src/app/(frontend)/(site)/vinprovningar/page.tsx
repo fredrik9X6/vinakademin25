@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Clock, BookOpen, User, ArrowRight, Star } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getTotalCourseItems, markFreeLessons, countFreeItems } from '@/lib/course-utils'
+import { transformCourseWithModules } from '@/lib/course-utils-server'
 import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
 
 export default async function KurserPage() {
@@ -14,71 +14,16 @@ export default async function KurserPage() {
 
   // Fetch all published courses
   const courses = await payload.find({
-    collection: 'courses',
+    collection: 'vinprovningar',
     where: { _status: { equals: 'published' } },
     depth: 1, // Populate featuredImage and instructor
     limit: 1000,
   })
 
-  // Transform courses with their modules - using same approach as course detail page
+  // Transform courses with their modules - using helper function
   const coursesWithModules = await Promise.all(
     courses.docs.map(async (course) => {
-      // Fetch modules AND lessons for THIS course specifically (same as course detail page)
-      const [modules, lessons, quizzes] = await Promise.all([
-        payload.find({
-          collection: 'modules',
-          where: { course: { equals: course.id } },
-          limit: 1000,
-          sort: 'order',
-        }),
-        payload.find({
-          collection: 'lessons',
-          limit: 1000,
-        }),
-        payload.find({
-          collection: 'quizzes',
-          where: { course: { equals: course.id } },
-          limit: 1000,
-        }),
-      ])
-
-      // Group lessons by module ID
-      const lessonsByModule = lessons.docs.reduce(
-        (acc, lesson) => {
-          const moduleId = typeof lesson.module === 'object' ? lesson.module.id : lesson.module
-          if (moduleId) {
-            if (!acc[moduleId]) acc[moduleId] = []
-            acc[moduleId].push(lesson)
-          }
-          return acc
-        },
-        {} as Record<string, typeof lessons.docs>,
-      )
-
-      // Build modules with attached lessons and quizzes
-      const modulesWithLessons = modules.docs.map((module) => {
-        const moduleLessons = lessonsByModule[module.id] || []
-        const moduleQuizzes = quizzes.docs.filter((q: any) => {
-          const qModule = typeof q.module === 'object' ? q.module?.id : q.module
-          return qModule && qModule === module.id
-        })
-
-        return {
-          ...module,
-          lessons: moduleLessons.sort((a, b) => (a.order || 0) - (b.order || 0)),
-          quizzes: moduleQuizzes,
-          contents: (module as any).contents || [],
-        }
-      })
-
-      // Mark lessons as free based on course.freeItemCount
-      const freeItemCount = course.freeItemCount || 0
-      const modulesWithFreeLessons = markFreeLessons(modulesWithLessons as any, freeItemCount)
-
-      return {
-        ...course,
-        modules: modulesWithFreeLessons,
-      }
+      return await transformCourseWithModules(course)
     }),
   )
 

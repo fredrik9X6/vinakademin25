@@ -1,0 +1,79 @@
+---
+description: PayloadCMS v3 API usage guidelines - only use v3 APIs and types
+globs: src/**/*.ts, src/**/*.tsx, src/collections/**/*.ts
+alwaysApply: true
+---
+
+# PayloadCMS v3 API Usage Guidelines
+
+**CRITICAL RULE:** Only use PayloadCMS v3 APIs; do not use any API not present in the documentation at [docs/payload-acl.md](mdc:docs/payload-acl.md). If TypeScript types don't exist, rethink the approach.
+
+- **Version Pinning:**
+  - All PayloadCMS packages are pinned to exact versions (no caret `^` or tilde `~`) in `package.json`
+  - Current version: `3.33.0` for all `@payloadcms/*` packages and `payload`
+  - Never use version ranges for PayloadCMS packages
+
+- **Type Imports:**
+  - Always import types from `payload` package:
+    ```typescript
+    import type { Access, PayloadRequest, CollectionConfig } from 'payload'
+    ```
+  - Use `Access` type for all access control functions
+  - Use `PayloadRequest` for request objects in helper functions
+  - Reference [docs/payload-acl.md](mdc:docs/payload-acl.md) for complete type reference
+
+- **Access Control Functions:**
+  - ✅ DO: Use `Access` type annotation:
+    ```typescript
+    import type { Access } from 'payload'
+    
+    export const myAccessFunction: Access = ({ req: { user }, id }) => {
+      return Boolean(user)
+    }
+    ```
+  - ✅ DO: Use proper function signatures from PayloadCMS v3:
+    ```typescript
+    // Collection access
+    access: {
+      create: ({ req: { user }, data }) => Boolean(user),
+      read: ({ req: { user }, id }) => Boolean(user),
+      update: ({ req: { user }, id, data }) => Boolean(user),
+      delete: ({ req: { user }, id }) => Boolean(user),
+      admin: ({ req: { user } }) => Boolean(user),
+    }
+    ```
+  - ❌ DON'T: Use v2-style access control patterns
+  - ❌ DON'T: Create custom types that duplicate PayloadCMS types
+  - ❌ DON'T: Use types from `payload/types` (v2)
+
+- **Helper Functions:**
+  - ✅ DO: Use `PayloadRequest` type for helper functions that work with requests:
+    ```typescript
+    import type { PayloadRequest } from 'payload'
+    
+    export const helperFunction = async (req: PayloadRequest) => {
+      // Use req.payload.find(), req.payload.findByID(), etc.
+    }
+    ```
+  - ✅ DO: Reference access helper functions from [access.ts](mdc:src/lib/access.ts) and [access-control.ts](mdc:src/lib/access-control.ts)
+  - All access helper functions use proper PayloadCMS v3 types
+
+- **Local API:**
+  - Access Control is **skipped by default** in Local API
+  - To opt back in, use `overrideAccess: false` in requests
+  - See [docs/payload-acl.md](mdc:docs/payload-acl.md) for Local API notes
+
+- **Documentation Reference:**
+  - Always reference [docs/payload-acl.md](mdc:docs/payload-acl.md) before implementing access control
+  - This contains the authoritative PayloadCMS v3 Access Control documentation
+  - If an API or pattern is not documented there, don't use it
+
+- **Type Safety:**
+  - TypeScript types from PayloadCMS constrain completions to valid v3 APIs
+  - If TypeScript complains about a type, it's likely a v2-only pattern
+  - Always check [docs/payload-acl.md](mdc:docs/payload-acl.md) for the correct v3 approach
+
+- **Examples:**
+  - Collection access control: See [Users.ts](mdc:src/collections/Users.ts)
+  - Access helper functions: See [access.ts](mdc:src/lib/access.ts)
+  - Access control utilities: See [access-control.ts](mdc:src/lib/access-control.ts)

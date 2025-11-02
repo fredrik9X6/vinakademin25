@@ -33,6 +33,7 @@ import Image from 'next/image'
 import { SessionParticipantsDisplay } from './SessionParticipantsDisplay'
 import { useActiveSession } from '@/context/SessionContext'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
+import { useAuth } from '@/context/AuthContext'
 
 interface CourseOverviewProps {
   course: {
@@ -95,6 +96,7 @@ export default function CourseOverview({
   const { progress: courseProgress, loading: progressLoading } = useCourseProgress(course.id)
   const { getNextIncompleteItem, getQuizCount } = useCourseProgress(course.id)
   const { activeSession } = useActiveSession()
+  const { user: authUser } = useAuth()
 
   // Use session from props or from context (for persistent navigation)
   const effectiveSessionId =
@@ -167,8 +169,16 @@ export default function CourseOverview({
 
     const isLessonFree = lesson?.isFree || false
 
-    // Allow access if: user has access, is session participant, or lesson is free
-    const canAccess = userHasAccess || isSessionParticipant || isLessonFree
+    // Require authentication for free lessons - redirect to login if not authenticated
+    if (isLessonFree && !authUser) {
+      const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
+      router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
+      toast.info('Du behöver logga in för att prova gratis-lektioner')
+      return
+    }
+
+    // Allow access if: user has purchased, is session participant, OR lesson is free (authenticated users can access free lessons)
+    const canAccess = userHasAccess || isSessionParticipant || (isLessonFree && !!authUser)
 
     if (!canAccess) {
       const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
@@ -218,7 +228,17 @@ export default function CourseOverview({
       const module = course.modules.find((m) => m.id === moduleId)
       const quiz = (module as any)?.quizzes?.find((q: any) => q.id === item.id)
       const isQuizFree = (quiz as any)?.isFree || false
-      const canAccess = userHasAccess || isSessionParticipant || isQuizFree
+
+      // Require authentication for free quizzes - redirect to login if not authenticated
+      if (isQuizFree && !authUser) {
+        const currentUrl = `/vinprovningar/${course.slug || course.id}?quiz=${item.id}`
+        router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
+        toast.info('Du behöver logga in för att prova gratis-quiz')
+        return
+      }
+
+      // Allow access if: user has purchased, is session participant, OR quiz is free (authenticated users can access free quizzes)
+      const canAccess = userHasAccess || isSessionParticipant || (isQuizFree && !!authUser)
 
       if (!canAccess) {
         const currentUrl = `/vinprovningar/${course.slug || course.id}?quiz=${item.id}`
@@ -241,7 +261,7 @@ export default function CourseOverview({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
               {/* Left: Video/Preview */}
               <div className="w-full">
-                <div className="aspect-video bg-muted rounded-lg overflow-hidden border border-border shadow-lg relative">
+                <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
                   {course.previewVideoProvider === 'mux' &&
                   course.previewMuxData?.playbackId &&
                   course.previewMuxData?.status === 'ready' ? (
@@ -254,6 +274,12 @@ export default function CourseOverview({
                       streamType="on-demand"
                       className="w-full h-full"
                       poster={course.featuredImage?.url ? course.featuredImage.url : undefined}
+                      style={{
+                        // Theme Mux Player to use brand orange accents
+                        ['--media-accent-color' as any]: '#f97316', // orange-500
+                        ['--media-focus-ring-color' as any]: '#f97316',
+                        ['--media-controls-background' as any]: 'rgba(0,0,0,0.4)',
+                      }}
                     />
                   ) : course.featuredImage?.url ? (
                     <div className="relative w-full h-full">
@@ -313,11 +339,11 @@ export default function CourseOverview({
                         description: course.description || '',
                         price: course.price || 0,
                         slug: course.slug || course.id.toString(),
-                        featuredImage: course.id,
+                        featuredImage: course.featuredImage,
                         level:
                           (course.level as 'beginner' | 'intermediate' | 'advanced') || 'beginner',
                         duration: totalLessons,
-                        instructor: course.id,
+                        instructor: course.instructor,
                         updatedAt: new Date().toISOString(),
                         createdAt: new Date().toISOString(),
                         _status: 'published',
@@ -334,11 +360,11 @@ export default function CourseOverview({
           </div>
         </div>
       ) : (
-        /* Purchaser/Participant header - Original simple layout */
+        /* Purchaser/Participant header - Simple layout with preview video */
         <div className="bg-background text-foreground">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div className="max-w-4xl">
-              <div className="flex items-center gap-3 mb-6">
+            <div className="max-w-4xl space-y-8">
+              <div className="flex items-center gap-3">
                 <Badge variant="secondary">
                   {course.level === 'beginner' && 'Nybörjare'}
                   {course.level === 'intermediate' && 'Medel'}
@@ -359,15 +385,53 @@ export default function CourseOverview({
                 )}
               </div>
 
-              <h1 className="text-3xl md:text-4xl font-medium mb-6 leading-tight">
+              <h1 className="text-3xl md:text-4xl font-medium leading-tight">
                 {course.title}
               </h1>
 
               {course.shortDescription && (
-                <p className="text-lg md:text-xl mb-8 text-muted-foreground leading-relaxed">
+                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
                   {course.shortDescription}
                 </p>
               )}
+
+              {/* Preview Video - Always shown */}
+              {course.previewVideoProvider === 'mux' &&
+              course.previewMuxData?.playbackId &&
+              course.previewMuxData?.status === 'ready' ? (
+                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                  <MuxPlayer
+                    playbackId={course.previewMuxData.playbackId}
+                    metadata={{
+                      video_title: `${course.title} - Preview`,
+                      video_id: `course-${course.id}-preview`,
+                    }}
+                    streamType="on-demand"
+                    className="w-full h-full"
+                    poster={course.featuredImage?.url ? course.featuredImage.url : undefined}
+                    style={{
+                      // Theme Mux Player to use brand orange accents
+                      ['--media-accent-color' as any]: '#f97316', // orange-500
+                      ['--media-focus-ring-color' as any]: '#f97316',
+                      ['--media-controls-background' as any]: 'rgba(0,0,0,0.4)',
+                    }}
+                  />
+                </div>
+              ) : course.featuredImage?.url ? (
+                <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+                  <Image
+                    src={course.featuredImage.url}
+                    alt={course.featuredImage.alt || course.title}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors">
+                    <div className="bg-white/90 rounded-full p-4 shadow-lg">
+                      <Play className="w-12 h-12 text-primary" />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
                 <div className="flex items-center gap-2">

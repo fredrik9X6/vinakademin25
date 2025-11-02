@@ -37,10 +37,14 @@ export async function GET(request: NextRequest) {
 
     // Check if the lesson has an answer key review
     const lesson = await payload.findByID({
-      collection: 'lessons',
+      collection: 'content-items',
       id: lessonId,
       depth: 2,
     })
+
+    if (!lesson || lesson.contentType !== 'lesson') {
+      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 })
+    }
 
     // Get the wine ID from the lesson's answer key review
     let wineId = null

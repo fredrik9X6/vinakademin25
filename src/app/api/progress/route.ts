@@ -55,79 +55,121 @@ export async function GET(request: NextRequest) {
 
     // Get course data to calculate total lessons
     const course = await payload.findByID({
-      collection: 'courses',
+      collection: 'vinprovningar',
       id: courseIdInt,
+      depth: 1, // Populate modules array
     })
 
-    // Get all modules for this course first
+    // Get module IDs from course's modules array
+    const courseModules = (course as any).modules || []
+    const moduleIds = courseModules
+      .map((cm: any) => {
+        const moduleId = typeof cm.module === 'object' ? cm.module.id : cm.module
+        return moduleId
+      })
+      .filter(Boolean)
+
+    if (moduleIds.length === 0) {
+      return NextResponse.json({
+        totalLessons: 0,
+        completedLessons: 0,
+        progressPercentage: 0,
+        lessonProgress: [],
+        status: progress.status,
+        enrolledAt: progress.enrolledAt,
+        lastAccessedAt: progress.lastAccessedAt,
+        completedQuizzes: [],
+        modulesProgress: [],
+        nextIncompleteItem: null,
+        quizCount: 0,
+      })
+    }
+
+    // Get all modules with their contentItems populated
     const modules = await payload.find({
       collection: 'modules',
-      where: { course: { equals: courseIdInt } },
+      where: {
+        id: { in: moduleIds },
+      },
       limit: 1000,
+      depth: 2, // Populate contentItems.contentItem
     })
 
-    // Then get all lessons for these modules
-    const lessons = await payload.find({
-      collection: 'lessons',
+    // Sort modules by their order in the course's modules array (array index IS the order)
+    const sortedModules = modules.docs.sort((a, b) => {
+      const aIndex = courseModules.findIndex((cm: any) => {
+        const moduleId = typeof cm.module === 'object' ? cm.module.id : cm.module
+        return moduleId === a.id
+      })
+      const bIndex = courseModules.findIndex((cm: any) => {
+        const moduleId = typeof cm.module === 'object' ? cm.module.id : cm.module
+        return moduleId === b.id
+      })
+      // If not found in array, put at end
+      if (aIndex === -1) return 1
+      if (bIndex === -1) return -1
+      return aIndex - bIndex
+    })
+
+    // Collect all content item IDs
+    const contentItemIds: number[] = []
+    sortedModules.forEach((module) => {
+      const contentItems = (module as any).contentItems || []
+      contentItems.forEach((ci: any) => {
+        const itemId = typeof ci.contentItem === 'object' ? ci.contentItem.id : ci.contentItem
+        if (itemId && !contentItemIds.includes(itemId)) {
+          contentItemIds.push(itemId)
+        }
+      })
+    })
+
+    // Fetch all content items
+    const contentItemsResult = await payload.find({
+      collection: 'content-items',
       where: {
-        module: {
-          in: modules.docs.map((m: any) => m.id),
-        },
+        id: { in: contentItemIds },
       },
       limit: 1000,
     })
 
-    // Also get all quizzes for these modules (for fallback counting when module.contents is not used)
-    const quizzes = await payload.find({
-      collection: 'quizzes',
-      where: {
-        module: {
-          in: modules.docs.map((m: any) => m.id),
-        },
-      },
-      limit: 1000,
+    // Create maps for quick lookup
+    const contentItemsMap = new Map<number, any>()
+    contentItemsResult.docs.forEach((item) => {
+      contentItemsMap.set(item.id, item)
     })
 
-    // Build module -> lessons/quizzes maps
+    // Build lessons and quizzes arrays for each module
     const lessonsByModule = new Map<number, any[]>()
-    for (const l of lessons.docs as any[]) {
-      const mid = Number(typeof l.module === 'object' ? l.module?.id : l.module)
-      if (!lessonsByModule.has(mid)) lessonsByModule.set(mid, [])
-      lessonsByModule.get(mid)!.push(l)
-    }
     const quizzesByModule = new Map<number, any[]>()
-    for (const q of quizzes.docs as any[]) {
-      const mid = Number(typeof q.module === 'object' ? q.module?.id : q.module)
-      if (!quizzesByModule.has(mid)) quizzesByModule.set(mid, [])
-      quizzesByModule.get(mid)!.push(q)
-    }
+    
+    sortedModules.forEach((module) => {
+      const contentItems = (module as any).contentItems || []
+      // Array order IS the order - no need to sort
+      
+      const moduleLessons: any[] = []
+      const moduleQuizzes: any[] = []
+      
+      contentItems.forEach((ci: any) => {
+        const itemId = typeof ci.contentItem === 'object' ? ci.contentItem.id : ci.contentItem
+        const contentItem = contentItemsMap.get(itemId)
+        
+        if (!contentItem) return
+        
+        if (contentItem.contentType === 'lesson') {
+          moduleLessons.push(contentItem)
+        } else if (contentItem.contentType === 'quiz') {
+          moduleQuizzes.push(contentItem)
+        }
+      })
+      
+      if (moduleLessons.length > 0) lessonsByModule.set(module.id, moduleLessons)
+      if (moduleQuizzes.length > 0) quizzesByModule.set(module.id, moduleQuizzes)
+    })
 
-    // Compute total count of course items (lessons + quizzes) respecting module.contents ordering when present
-    const moduleIdToLessonsCount = new Map<number, number>()
-    for (const l of lessons.docs as any[]) {
-      const mid = typeof l.module === 'object' ? l.module.id : l.module
-      moduleIdToLessonsCount.set(Number(mid), (moduleIdToLessonsCount.get(Number(mid)) || 0) + 1)
-    }
-
-    const moduleIdToQuizzesCount = new Map<number, number>()
-    for (const q of quizzes.docs as any[]) {
-      const mid = typeof q.module === 'object' ? q.module.id : q.module
-      moduleIdToQuizzesCount.set(Number(mid), (moduleIdToQuizzesCount.get(Number(mid)) || 0) + 1)
-    }
-
-    const totalItems = (modules.docs as any[]).reduce((sum, m: any) => {
-      if (Array.isArray(m.contents) && m.contents.length > 0) {
-        const count = m.contents.filter(
-          (b: any) =>
-            b?.blockType === 'lesson-item' ||
-            b?.blockType === 'quiz-item' ||
-            b?.blockType === 'wine-review-item',
-        ).length
-        return sum + count
-      }
-      const lCount = moduleIdToLessonsCount.get(Number(m.id)) || 0
-      const qCount = moduleIdToQuizzesCount.get(Number(m.id)) || 0
-      return sum + lCount + qCount
+    // Calculate total items
+    const totalItems = sortedModules.reduce((sum, module) => {
+      const contentItems = (module as any).contentItems || []
+      return sum + contentItems.length
     }, 0)
 
     const completedLessonsOnly = Array.isArray(progress.completedLessons)
@@ -145,8 +187,14 @@ export async function GET(request: NextRequest) {
     const completedItems = completedLessonsOnly + completedQuizzes.length
     const progressPercentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0
 
-    // Create lesson progress array
-    const lessonProgress = lessons.docs.map((lesson: any) => {
+    // Create lesson progress array (all lessons from all modules)
+    const allLessons: any[] = []
+    sortedModules.forEach((module) => {
+      const lessons = lessonsByModule.get(module.id) || []
+      allLessons.push(...lessons)
+    })
+
+    const lessonProgress = allLessons.map((lesson: any) => {
       const isCompleted =
         Array.isArray(progress.completedLessons) &&
         progress.completedLessons.some((completedLesson: any) => {
@@ -158,8 +206,8 @@ export async function GET(request: NextRequest) {
       return {
         lessonId: lesson.id,
         isCompleted,
-        progress: isCompleted ? 100 : 0, // Can be enhanced with actual video progress
-        lastWatchedAt: null, // Can be enhanced with actual tracking
+        progress: isCompleted ? 100 : 0,
+        lastWatchedAt: null,
       }
     })
 
@@ -174,28 +222,30 @@ export async function GET(request: NextRequest) {
     type OrderedItem = { type: 'lesson' | 'quiz'; id: number }
     const getOrderedItemsForModule = (m: any): OrderedItem[] => {
       const mId = Number(m.id)
-      const contents = Array.isArray(m.contents) ? m.contents : []
-      if (contents.length > 0) {
-        const out: OrderedItem[] = []
-        for (const c of contents) {
-          if (c.blockType === 'lesson-item') {
-            const id = Number(typeof c.lesson === 'object' ? c.lesson?.id : c.lesson)
-            if (id) out.push({ type: 'lesson', id })
+      const contentItems = (m as any).contentItems || []
+      
+      if (contentItems.length > 0) {
+        // Use contentItems array order directly (array index IS the order)
+        const items: OrderedItem[] = []
+        
+        contentItems.forEach((ci: any) => {
+          const itemId = typeof ci.contentItem === 'object' ? ci.contentItem.id : ci.contentItem
+          const contentItem = contentItemsMap.get(itemId)
+          
+          if (!contentItem) return
+          
+          if (contentItem.contentType === 'lesson') {
+            items.push({ type: 'lesson', id: contentItem.id })
+          } else if (contentItem.contentType === 'quiz') {
+            items.push({ type: 'quiz', id: contentItem.id })
           }
-          if (c.blockType === 'quiz-item') {
-            const id = Number(typeof c.quiz === 'object' ? c.quiz?.id : c.quiz)
-            if (id) out.push({ type: 'quiz', id })
-          }
-          // Wine reviews are tracked as lessons in completedLessons
-          if (c.blockType === 'wine-review-item') {
-            const id = Number(typeof c.wineReview === 'object' ? c.wineReview?.id : c.wineReview)
-            if (id) out.push({ type: 'lesson', id })
-          }
-        }
-        return out
+        })
+        
+        return items
       }
+      
+      // Fallback: use lessons/quizzes arrays if contentItems not available
       const lessonItems = (lessonsByModule.get(mId) || [])
-        .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
         .map((l: any) => ({ type: 'lesson' as const, id: Number(l.id) }))
       const quizItems = (quizzesByModule.get(mId) || []).map((q: any) => ({
         type: 'quiz' as const,
@@ -204,23 +254,21 @@ export async function GET(request: NextRequest) {
       return [...lessonItems, ...quizItems]
     }
 
-    const modulesProgress = (modules.docs as any[])
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((m) => {
-        const items = getOrderedItemsForModule(m)
-        const completedItems = items.filter((it) =>
-          it.type === 'lesson' ? completedLessonsSet.has(it.id) : completedQuizzesSet.has(it.id),
-        ).length
-        return {
-          moduleId: Number(m.id),
-          totalItems: items.length,
-          completedItems,
-          completed: items.length > 0 && completedItems === items.length,
-        }
-      })
+    const modulesProgress = sortedModules.map((m) => {
+      const items = getOrderedItemsForModule(m)
+      const completedItems = items.filter((it) =>
+        it.type === 'lesson' ? completedLessonsSet.has(it.id) : completedQuizzesSet.has(it.id),
+      ).length
+      return {
+        moduleId: Number(m.id),
+        totalItems: items.length,
+        completedItems,
+        completed: items.length > 0 && completedItems === items.length,
+      }
+    })
 
     let nextIncompleteItem: OrderedItem | null = null
-    for (const m of (modules.docs as any[]).sort((a, b) => (a.order || 0) - (b.order || 0))) {
+    for (const m of sortedModules) {
       const items = getOrderedItemsForModule(m)
       for (const it of items) {
         const done =
@@ -233,7 +281,7 @@ export async function GET(request: NextRequest) {
       if (nextIncompleteItem) break
     }
 
-    const quizCount = quizzes.totalDocs || quizzes.docs.length || 0
+    const quizCount = Array.from(quizzesByModule.values()).reduce((sum, quizzes) => sum + quizzes.length, 0)
 
     const courseProgress = {
       totalLessons: totalItems,
@@ -356,59 +404,45 @@ export async function POST(request: NextRequest) {
     const effectiveCompleted = isCompleted || autoComplete
 
     // Get total lessons AND quizzes count to calculate progress (matching GET logic)
-    const modules = await payload.find({
+    const courseForUpdate = await payload.findByID({
+      collection: 'vinprovningar',
+      id: courseIdInt,
+      depth: 1,
+    })
+
+    const courseModulesForUpdate = (courseForUpdate as any).modules || []
+    const moduleIdsForUpdate = courseModulesForUpdate
+      .map((cm: any) => {
+        const moduleId = typeof cm.module === 'object' ? cm.module.id : cm.module
+        return moduleId
+      })
+      .filter(Boolean)
+
+    if (moduleIdsForUpdate.length === 0) {
+      return NextResponse.json({
+        success: true,
+        progress: {
+          totalLessons: 0,
+          completedLessons: completedLessons.length,
+          progressPercentage: 0,
+          status,
+        },
+      })
+    }
+
+    const modulesForUpdate = await payload.find({
       collection: 'modules',
-      where: { course: { equals: courseIdInt } },
-      limit: 1000,
-    })
-
-    const totalLessons = await payload.find({
-      collection: 'lessons',
       where: {
-        module: {
-          in: modules.docs.map((m: any) => m.id),
-        },
+        id: { in: moduleIdsForUpdate },
       },
       limit: 1000,
+      depth: 2,
     })
 
-    const totalQuizzes = await payload.find({
-      collection: 'quizzes',
-      where: {
-        module: {
-          in: modules.docs.map((m: any) => m.id),
-        },
-      },
-      limit: 1000,
-    })
-
-    // Build lesson and quiz counts per module
-    const moduleIdToLessonsCount = new Map<number, number>()
-    for (const l of totalLessons.docs as any[]) {
-      const mid = typeof l.module === 'object' ? l.module.id : l.module
-      moduleIdToLessonsCount.set(Number(mid), (moduleIdToLessonsCount.get(Number(mid)) || 0) + 1)
-    }
-
-    const moduleIdToQuizzesCount = new Map<number, number>()
-    for (const q of totalQuizzes.docs as any[]) {
-      const mid = typeof q.module === 'object' ? q.module.id : q.module
-      moduleIdToQuizzesCount.set(Number(mid), (moduleIdToQuizzesCount.get(Number(mid)) || 0) + 1)
-    }
-
-    // Calculate total items (lessons + quizzes) respecting module.contents when present
-    const totalCount = (modules.docs as any[]).reduce((sum, m: any) => {
-      if (Array.isArray(m.contents) && m.contents.length > 0) {
-        const count = m.contents.filter(
-          (b: any) =>
-            b?.blockType === 'lesson-item' ||
-            b?.blockType === 'quiz-item' ||
-            b?.blockType === 'wine-review-item',
-        ).length
-        return sum + count
-      }
-      const lCount = moduleIdToLessonsCount.get(Number(m.id)) || 0
-      const qCount = moduleIdToQuizzesCount.get(Number(m.id)) || 0
-      return sum + lCount + qCount
+    // Calculate total items from contentItems
+    const totalCount = modulesForUpdate.docs.reduce((sum, module) => {
+      const contentItems = (module as any).contentItems || []
+      return sum + contentItems.length
     }, 0)
 
     // Maintain completed list

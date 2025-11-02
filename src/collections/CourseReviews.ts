@@ -7,6 +7,7 @@ export const CourseReviews: CollectionConfig = {
     plural: 'Course Reviews',
   },
   admin: {
+    group: 'Users & Progress',
     defaultColumns: ['title', 'course', 'author', 'rating', 'status', 'createdAt'],
     useAsTitle: 'title',
   },
@@ -35,7 +36,7 @@ export const CourseReviews: CollectionConfig = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'courses',
+      relationTo: 'vinprovningar',
       required: true,
       label: 'Course',
       index: true,

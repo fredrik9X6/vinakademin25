@@ -8,6 +8,7 @@ import { WineReference, NewsletterSignup, CourseReference } from '../components/
 export const BlogPosts: CollectionConfig = {
   slug: 'blog-posts',
   admin: {
+    group: 'Content',
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', '_status', 'publishedDate', 'author'],
     description: 'Blog posts for wine education, news, and articles',

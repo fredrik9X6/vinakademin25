@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!user?.id) {
       console.log('Checkout Session API: No user found, returning 401')
       return NextResponse.json(
-        { error: 'Du måste vara inloggad för att köpa kurser' },
+        { error: 'Du måste vara inloggad för att köpa vinprovningar' },
         { status: 401 },
       )
     }
@@ -25,12 +25,12 @@ export async function POST(request: NextRequest) {
 
     if (!courseId) {
       console.log('Checkout Session API: No courseId provided')
-      return NextResponse.json({ error: 'Kurs-ID krävs' }, { status: 400 })
+      return NextResponse.json({ error: 'Vinprovnings-ID krävs' }, { status: 400 })
     }
 
     // Fetch course data using PayloadCMS 3 API
     const course = await payload.findByID({
-      collection: 'courses',
+      collection: 'vinprovningar',
       id: courseId,
     })
     console.log(
@@ -40,13 +40,13 @@ export async function POST(request: NextRequest) {
 
     if (!course) {
       console.log('Checkout Session API: Course not found')
-      return NextResponse.json({ error: 'Kursen hittades inte' }, { status: 404 })
+      return NextResponse.json({ error: 'Vinprovningen hittades inte' }, { status: 404 })
     }
 
     // Check if course has a price
     if (!course.price || course.price <= 0) {
       console.log('Checkout Session API: Course has no price')
-      return NextResponse.json({ error: 'Kursen har inget pris' }, { status: 400 })
+      return NextResponse.json({ error: 'Vinprovningen har inget pris' }, { status: 400 })
     }
 
     // Check if user already owns this course
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     if (existingEnrollment.docs.length > 0) {
       console.log('Checkout Session API: User already owns course')
-      return NextResponse.json({ error: 'Du äger redan denna kurs' }, { status: 400 })
+      return NextResponse.json({ error: 'Du äger redan denna vinprovning' }, { status: 400 })
     }
 
     // Get or create Stripe customer
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
             currency: 'sek',
             product_data: {
               name: course.title,
-              description: course.description || `Vinkurs: ${course.title}`,
+              description: course.description || `Vinprovning: ${course.title}`,
               images:
                 course.featuredImage &&
                 typeof course.featuredImage === 'object' &&

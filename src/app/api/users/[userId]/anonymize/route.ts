@@ -4,8 +4,9 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import type { User } from '@/payload-types'
 
-// DELETE user account
-export async function DELETE(
+// POST to anonymize/delete user account
+// Moved from DELETE /api/users/[userId] to avoid conflicting with PayloadCMS REST API
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
 ) {

@@ -29,17 +29,21 @@ export const setUpdatedBy = (args: any) => {
 /**
  * Collection-level hook to automatically set createdBy and updatedBy fields
  * Usage: hooks: { beforeChange: [withCreatedByUpdatedBy] }
+ * 
+ * SAFE: Handles null/undefined data safely for form building
  */
 export const withCreatedByUpdatedBy = (args: any) => {
   const { req, operation, data } = args
 
-  // Ensure data exists
+  // Ensure data exists - return early if null (form building)
   if (!data) {
     return data
   }
 
+  // Clone data to avoid mutations
   let newData = { ...data }
 
+  // Only set metadata if user exists
   if (req?.user) {
     if (operation === 'create') {
       newData.createdBy = req.user.id

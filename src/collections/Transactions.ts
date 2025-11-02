@@ -4,6 +4,7 @@ import { adminOnly } from '../lib/access'
 export const Transactions: CollectionConfig = {
   slug: 'transactions',
   admin: {
+    group: 'Commerce',
     useAsTitle: 'transactionId',
     defaultColumns: ['transactionId', 'user', 'type', 'amount', 'status', 'createdAt'],
     description: 'Financial transaction records for the platform',
@@ -144,7 +145,7 @@ export const Transactions: CollectionConfig = {
     {
       name: 'relatedCourse',
       type: 'relationship',
-      relationTo: 'courses',
+      relationTo: 'vinprovningar',
       hasMany: false,
       admin: {
         description: 'Related course for course purchases',

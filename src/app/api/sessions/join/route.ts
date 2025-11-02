@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     // Get course info
     const courseId = typeof session.course === 'object' ? session.course.id : session.course
     const course = await payload.findByID({
-      collection: 'courses',
+      collection: 'vinprovningar',
       id: courseId,
     })
 

@@ -1,6 +1,6 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { Course, Module, Lesson } from '@/payload-types'
+import { Course, Module, ContentItem } from '@/payload-types'
 import { notFound, redirect } from 'next/navigation'
 import CourseOverview from '@/components/course/CourseOverview'
 import LessonViewer from '@/components/course/LessonViewer'
@@ -31,7 +31,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
   // Fetch the course by slug
   const courseResult = await payload.find({
-    collection: 'courses',
+    collection: 'vinprovningar',
     where: {
       and: [{ slug: { equals: resolvedParams.slug } }, { _status: { equals: 'published' } }],
     },
@@ -45,131 +45,134 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
   const course = courseResult.docs[0]
 
-  // Fetch all modules and lessons for this course
-  const [modules, lessons, quizzes] = await Promise.all([
-    payload.find({
-      collection: 'modules',
-      where: { course: { equals: course.id } },
-      limit: 1000,
-      sort: 'order',
-    }),
-    payload.find({
-      collection: 'lessons',
-      limit: 1000,
-      depth: 2, // Populate media relationships in rich text content
-    }),
-    payload.find({
-      collection: 'quizzes',
-      where: { course: { equals: course.id } },
-      depth: 2,
-      limit: 1000,
-    }),
-  ])
+  // Get module IDs from course's modules array
+  const courseModules = (course as any).modules || []
+  const moduleIds = courseModules
+    .map((cm: any) => {
+      const moduleId = typeof cm.module === 'object' ? cm.module.id : cm.module
+      return moduleId
+    })
+    .filter(Boolean)
 
-  // Group lessons by module ID
-  const lessonsByModule = lessons.docs.reduce(
-    (acc, lesson) => {
-      const moduleId = typeof lesson.module === 'object' ? lesson.module.id : lesson.module
+  if (moduleIds.length === 0) {
+    // No modules yet, return course with empty modules array
+    const courseWithModules = {
+      ...course,
+      modules: [],
+    } as any
 
-      if (moduleId) {
-        if (!acc[moduleId]) {
-          acc[moduleId] = []
-        }
-        acc[moduleId].push(lesson)
-      }
-      return acc
+    return (
+      <div className="min-h-screen bg-background">
+        <CourseOverview
+          course={courseWithModules}
+          userHasAccess={false}
+          isSessionParticipant={false}
+        />
+      </div>
+    )
+  }
+
+  // Fetch all modules with their contentItems populated
+  const modulesResult = await payload.find({
+    collection: 'modules',
+    where: {
+      id: { in: moduleIds },
     },
-    {} as Record<string, typeof lessons.docs>,
-  )
+    limit: 1000,
+    depth: 2, // Populate contentItems.contentItem
+  })
 
-  // Build course structure honoring module.contents ordering if present
+  // Sort modules by their order in the course's modules array (array index IS the order)
+  const modules = modulesResult.docs.sort((a, b) => {
+    const aIndex = courseModules.findIndex((cm: any) => {
+      const moduleId = typeof cm.module === 'object' ? cm.module.id : cm.module
+      return moduleId === a.id
+    })
+    const bIndex = courseModules.findIndex((cm: any) => {
+      const moduleId = typeof cm.module === 'object' ? cm.module.id : cm.module
+      return moduleId === b.id
+    })
+    // If not found in array, put at end
+    if (aIndex === -1) return 1
+    if (bIndex === -1) return -1
+    return aIndex - bIndex
+  })
+
+  // Collect all content item IDs from all modules
+  const contentItemIds: number[] = []
+  modules.forEach((module) => {
+    const contentItems = (module as any).contentItems || []
+    contentItems.forEach((ci: any) => {
+      const itemId = typeof ci.contentItem === 'object' ? ci.contentItem.id : ci.contentItem
+      if (itemId && !contentItemIds.includes(itemId)) {
+        contentItemIds.push(itemId)
+      }
+    })
+  })
+
+  // Fetch all content items in one query
+  // Use depth 3 to ensure questions are fully populated (content-item -> questions array -> question relationship -> question object)
+  const contentItemsResult = await payload.find({
+    collection: 'content-items',
+    where: {
+      id: { in: contentItemIds },
+    },
+    limit: 1000,
+    depth: 3, // Increased depth to populate questions and their nested relationships
+  })
+
+  // Create a map of content items by ID
+  const contentItemsMap = new Map<number, ContentItem>()
+  contentItemsResult.docs.forEach((item) => {
+    contentItemsMap.set(item.id, item as ContentItem)
+  })
+
+  // Build course structure with lessons and quizzes arrays
   const courseWithModules = {
     ...course,
-    modules: modules.docs
-      .map((module) => {
-        const moduleLessons = lessonsByModule[module.id] || []
-        const moduleQuizzes = quizzes.docs.filter((q: any) => {
-          const qModule = typeof q.module === 'object' ? q.module?.id : q.module
-          return qModule && qModule === module.id
-        })
-        const contents = Array.isArray((module as any).contents) ? (module as any).contents : []
+    modules: modules.map((module) => {
+      const contentItems = (module as any).contentItems || []
+      
+      // Use contentItems array order directly (array index IS the order)
+      // Build lessons and quizzes arrays from contentItems
+      const lessons: any[] = []
+      const quizzes: any[] = []
+      const orderedItems: Array<
+        | { type: 'lesson'; id: number; lesson: any }
+        | { type: 'quiz'; id: number; quiz: any }
+      > = []
 
-        // Build ordered arrays based on contents; fallback to numeric order if no contents
-        const orderedLessons =
-          contents.length > 0
-            ? contents
-                .filter((c: any) => c.blockType === 'lesson-item')
-                .map((c: any) => (typeof c.lesson === 'object' ? c.lesson.id : c.lesson))
-                .map((id: any) => moduleLessons.find((l: any) => l.id === id))
-                .filter(Boolean)
-            : moduleLessons.sort((a, b) => (a.order || 0) - (b.order || 0))
+      contentItems.forEach((ci: any) => {
+        const itemId = typeof ci.contentItem === 'object' ? ci.contentItem.id : ci.contentItem
+        const contentItem = contentItemsMap.get(itemId)
+        
+        if (!contentItem) return
 
-        const orderedQuizzes =
-          contents.length > 0
-            ? contents
-                .filter((c: any) => c.blockType === 'quiz-item')
-                .map((c: any) => (typeof c.quiz === 'object' ? c.quiz.id : c.quiz))
-                .map((id: any) => quizzes.docs.find((q: any) => q.id === id))
-                .filter(Boolean)
-            : moduleQuizzes
+        const itemData = {
+          ...contentItem,
+          isFree: ci.isFree || false, // Get isFree from module's contentItems array
+        }
 
-        // First, create the lessons array with isFree initialized
-        const lessonsWithFree = orderedLessons.map((lesson: any) => ({
-          ...lesson,
-          isFree: false, // Will be set below based on course.freeItemCount
-          quiz:
-            quizzes.docs.find((q: any) => {
-              const qLesson = typeof q.lesson === 'object' ? q.lesson?.id : q.lesson
-              return qLesson && qLesson === lesson.id
-            }) || null,
-          hasQuiz: !!quizzes.docs.find((q: any) => {
-            const qLesson = typeof q.lesson === 'object' ? q.lesson?.id : q.lesson
-            return qLesson && qLesson === lesson.id
-          }),
-        }))
-
-        // Create quizzes array with isFree initialized
-        const quizzesWithFree = (orderedQuizzes as any[]).map((quiz: any) => ({
-          ...quiz, // Keep all quiz properties (including questions!)
-          isFree: false, // Will be set below based on course.freeItemCount
-        }))
-
-        // Now create orderedItems that reference the SAME objects that will be marked free
-        const orderedItems =
-          contents.length > 0
-            ? contents
-                .map((c: any) => {
-                  if (c.blockType === 'lesson-item') {
-                    const id = Number(typeof c.lesson === 'object' ? c.lesson.id : c.lesson)
-                    const lesson = lessonsWithFree.find((l: any) => l.id === id)
-                    return lesson ? { type: 'lesson' as const, id, lesson } : null
-                  }
-                  if (c.blockType === 'quiz-item') {
-                    const id = Number(typeof c.quiz === 'object' ? c.quiz.id : c.quiz)
-                    const quiz = quizzesWithFree.find((q: any) => q.id === id)
-                    return quiz ? { type: 'quiz' as const, id, quiz } : null
-                  }
-                  return null
-                })
-                .filter(Boolean)
-            : []
-
-        return {
-          ...module,
-          lessons: lessonsWithFree,
-          quizzes: quizzesWithFree,
-          orderedItems,
-          contents: (module as any).contents, // Preserve contents for counting
+        if (contentItem.contentType === 'lesson') {
+          lessons.push(itemData)
+          orderedItems.push({ type: 'lesson', id: contentItem.id, lesson: itemData })
+        } else if (contentItem.contentType === 'quiz') {
+          quizzes.push(itemData)
+          orderedItems.push({ type: 'quiz', id: contentItem.id, quiz: itemData })
         }
       })
-      .sort((a, b) => (a.order || 0) - (b.order || 0)),
-  } as any // Type assertion to handle null values
 
-  // Mark lessons as free based on course.freeItemCount
-  const freeItemCount = course.freeItemCount || 0
-  markFreeLessons(courseWithModules.modules, freeItemCount)
+      return {
+        ...module,
+        lessons,
+        quizzes,
+        orderedItems,
+        contentItems: contentItems, // Preserve for reference (already in correct order)
+      }
+    }),
+  } as any
 
-  // Check if we're viewing a specific lesson
+  // Check if we're viewing a specific lesson or quiz
   const selectedLessonId = resolvedSearchParams.lesson
     ? parseInt(resolvedSearchParams.lesson)
     : null
@@ -190,8 +193,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   }
   if (!selectedLesson && selectedQuizId) {
     for (const module of courseWithModules.modules) {
-      // Look in module.quizzes (which has isFree property set by markFreeLessons)
-      const quiz = ((module as any).quizzes as any[])?.find((q) => q.id === selectedQuizId)
+      const quiz = module.quizzes?.find((q: any) => q.id === selectedQuizId)
       if (quiz) {
         selectedQuiz = quiz
         selectedModule = module
@@ -237,38 +239,50 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   // Check if the selected quiz is free
   const isSelectedQuizFree = selectedQuiz?.isFree || false
 
-  // Note: We no longer redirect non-authenticated users to login for paid content
-  // Instead, we show them a locked card with a purchase CTA in the LessonViewer/QuizViewer
-
   // Check if user has access to this specific course
   let userHasAccess = false
-  if (isAuthenticated) {
-    try {
-      // Get the current user
-      const user = await getUser()
+  let currentUser = null
+  
+  // Always try to get the user, even if cookie check failed (cookie check might be unreliable)
+  try {
+    // Get the current user
+    currentUser = await getUser()
 
-      if (user) {
-        // Check if user has enrolled in this course
-        const enrollment = await payload.find({
-          collection: 'enrollments',
-          where: {
-            and: [
-              { user: { equals: user.id.toString() } },
-              { course: { equals: course.id.toString() } },
-              { status: { equals: 'active' } },
-            ],
-          },
-          limit: 1,
-        })
+    if (currentUser) {
+      // Check if user has enrolled in this course
+      const enrollment = await payload.find({
+        collection: 'enrollments',
+        where: {
+          and: [
+            { user: { equals: currentUser.id.toString() } },
+            { course: { equals: course.id.toString() } },
+            { status: { equals: 'active' } },
+          ],
+        },
+        limit: 1,
+      })
 
-        userHasAccess = enrollment.docs.length > 0
-      }
-    } catch (error) {
-      // If there's an error checking enrollment, assume no access
-      console.error('Error checking course enrollment:', error)
-      userHasAccess = false
+      userHasAccess = enrollment.docs.length > 0
+    }
+  } catch (error) {
+    // If there's an error checking enrollment, assume no access
+    console.error('Error checking course enrollment:', error)
+    userHasAccess = false
+  }
+
+  // Require authentication for free lessons/quizzes
+  // Redirect to login if user is not authenticated and trying to access a free lesson/quiz
+  if ((isSelectedLessonFree || isSelectedQuizFree) && !isSessionParticipant) {
+    // Only redirect if we're sure the user is not authenticated
+    // Check getUser() result (more reliable than cookie check)
+    if (!currentUser) {
+      const currentUrl = `/vinprovningar/${course.slug || course.id}${selectedLessonId ? `?lesson=${selectedLessonId}` : selectedQuizId ? `?quiz=${selectedQuizId}` : ''}`
+      redirect(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
     }
   }
+
+  // Note: We no longer redirect non-authenticated users to login for paid content
+  // Instead, we show them a locked card with a purchase CTA in the LessonViewer/QuizViewer
 
   // Session participants have full access to all course content
   // Note: We pass the actual userHasAccess to components and let them handle
@@ -326,7 +340,8 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
           course={courseWithModules}
           lesson={selectedLesson}
           module={selectedModule}
-          userHasAccess={effectiveUserAccess}
+          userHasAccess={effectiveUserAccess || (!!currentUser && isSelectedLessonFree)}
+          userPurchasedAccess={userHasAccess}
           sessionId={sessionId || undefined}
           isSessionParticipant={isSessionParticipant}
         />
@@ -335,7 +350,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
           course={courseWithModules}
           quiz={selectedQuiz}
           module={selectedModule}
-          userHasAccess={effectiveUserAccess}
+          userHasAccess={effectiveUserAccess || (!!currentUser && isSelectedQuizFree)}
         />
       ) : (
         <CourseOverview
@@ -372,7 +387,7 @@ export async function generateStaticParams() {
     const payload = await getPayload({ config })
 
     const courses = await payload.find({
-      collection: 'courses',
+      collection: 'vinprovningar',
       where: { _status: { equals: 'published' } },
       limit: 1000,
     })

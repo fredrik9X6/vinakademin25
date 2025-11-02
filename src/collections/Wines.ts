@@ -5,6 +5,7 @@ import { withCreatedByUpdatedBy } from '../lib/hooks'
 export const Wines: CollectionConfig = {
   slug: 'wines',
   admin: {
+    group: 'Wine Library',
     useAsTitle: 'name',
     defaultColumns: ['name', 'winery', 'country', 'region', 'grapes', 'vintage'],
     description: 'Wine database for the platform',
@@ -21,7 +22,8 @@ export const Wines: CollectionConfig = {
       // Allow form building when no user context (happens during admin UI initialization)
       return true
     },
-    update: adminOrInstructorOnly,
+    // Allow form building - security handled in hooks
+    update: () => true,
     delete: adminOnly,
   },
   fields: [

@@ -47,7 +47,7 @@ export function CheckoutDialog({ course, isOpen, onClose }: CheckoutDialogProps)
           <div className="py-4 sm:py-6">
             <Alert>
               <AlertDescription>
-                Du måste vara inloggad för att köpa kurser. Logga in eller skapa ett konto för att
+                Du måste vara inloggad för att köpa vinprovningar. Logga in eller skapa ett konto för att
                 fortsätta.
               </AlertDescription>
             </Alert>
@@ -77,7 +77,7 @@ export function CheckoutDialog({ course, isOpen, onClose }: CheckoutDialogProps)
   const getDialogTitle = () => {
     switch (currentStep) {
       case 'checkout':
-        return 'Köp kurs'
+        return 'Köp vinprovning'
       case 'processing':
         return 'Behandlar betalning...'
       case 'success':
@@ -98,11 +98,9 @@ export function CheckoutDialog({ course, isOpen, onClose }: CheckoutDialogProps)
 
         <div className="py-2 sm:py-4">
           {currentStep === 'checkout' && (
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-6">
               <OrderSummary course={course} />
-              <div className="border-t pt-4 sm:pt-6">
-                <SimpleCheckout course={course} onError={handlePaymentError} />
-              </div>
+              <SimpleCheckout course={course} onError={handlePaymentError} />
             </div>
           )}
 

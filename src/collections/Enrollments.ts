@@ -7,7 +7,7 @@ export const Enrollments: CollectionConfig = {
     plural: 'Enrollments',
   },
   admin: {
-    group: 'Course Management',
+    group: 'Users & Progress',
     defaultColumns: ['user', 'course', 'status', 'enrolledAt', 'expiresAt'],
     useAsTitle: 'id',
   },
@@ -66,7 +66,7 @@ export const Enrollments: CollectionConfig = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'courses',
+      relationTo: 'vinprovningar',
       required: true,
       admin: {
         description: 'Course the student is enrolled in',
@@ -274,9 +274,9 @@ export const Enrollments: CollectionConfig = {
         {
           name: 'currentLesson',
           type: 'relationship',
-          relationTo: 'lessons',
+          relationTo: 'content-items',
           admin: {
-            description: 'Current lesson being studied',
+            description: 'Current content item being studied',
           },
         },
         {

@@ -76,7 +76,7 @@ export const Orders: CollectionConfig = {
         {
           name: 'course',
           type: 'relationship',
-          relationTo: 'courses',
+          relationTo: 'vinprovningar',
           required: true,
           admin: {
             description: 'Course being purchased',

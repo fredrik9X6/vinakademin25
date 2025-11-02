@@ -16,8 +16,8 @@ const exploreLinks = [
 ]
 
 const aboutLinks = [
-  { label: 'Om oss', href: '#' },
-  { label: 'Kontakt', href: '#' },
+  { label: 'Om oss', href: '/om-oss' },
+  { label: 'Kontakt', href: '/kontakt' },
   { label: 'Varumärke', href: '/styleguide' },
 ]
 
@@ -94,11 +94,7 @@ export function Footer() {
                   placeholder="Din e-postadress"
                   className="h-12 w-full min-w-0 text-base sm:h-10 sm:flex-1 sm:text-sm"
                 />
-                <Button
-                  type="submit"
-                  className="h-12 w-full sm:h-10 sm:w-auto"
-                  variant="secondary"
-                >
+                <Button type="submit" className="h-12 w-full sm:h-10 sm:w-auto" variant="secondary">
                   Prenumerera
                 </Button>
               </form>

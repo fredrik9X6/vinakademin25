@@ -4,6 +4,7 @@ import { anyLoggedIn, adminOnly } from '../lib/access'
 export const UserProgress: CollectionConfig = {
   slug: 'user-progress',
   admin: {
+    group: 'Users & Progress',
     useAsTitle: 'courseTitle',
     defaultColumns: ['user', 'courseTitle', 'progressPercentage', 'status', 'lastAccessedAt'],
     description: 'Track user progress through courses',
@@ -34,7 +35,7 @@ export const UserProgress: CollectionConfig = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'courses',
+      relationTo: 'vinprovningar',
       required: true,
       hasMany: false,
       admin: {
@@ -138,10 +139,10 @@ export const UserProgress: CollectionConfig = {
     {
       name: 'currentLesson',
       type: 'relationship',
-      relationTo: 'lessons',
+      relationTo: 'content-items',
       hasMany: false,
       admin: {
-        description: 'Current lesson being studied',
+        description: 'Current content item being studied',
       },
     },
     {
@@ -156,19 +157,19 @@ export const UserProgress: CollectionConfig = {
     {
       name: 'completedLessons',
       type: 'relationship',
-      relationTo: 'lessons',
+      relationTo: 'content-items',
       hasMany: true,
       admin: {
-        description: 'Lessons completed by the student',
+        description: 'Content items completed by the student',
       },
     },
     {
       name: 'bookmarkedLessons',
       type: 'relationship',
-      relationTo: 'lessons',
+      relationTo: 'content-items',
       hasMany: true,
       admin: {
-        description: 'Lessons bookmarked by the student',
+        description: 'Content items bookmarked by the student',
       },
     },
     {
@@ -182,10 +183,10 @@ export const UserProgress: CollectionConfig = {
         {
           name: 'lesson',
           type: 'relationship',
-          relationTo: 'lessons',
+          relationTo: 'content-items',
           required: true,
           admin: {
-            description: 'Lesson with quiz',
+            description: 'Content item with quiz',
           },
         },
         {
@@ -229,7 +230,7 @@ export const UserProgress: CollectionConfig = {
         {
           name: 'quiz',
           type: 'relationship',
-          relationTo: 'quizzes',
+          relationTo: 'content-items',
           required: true,
         },
         {
@@ -270,7 +271,7 @@ export const UserProgress: CollectionConfig = {
         {
           name: 'lesson',
           type: 'relationship',
-          relationTo: 'lessons',
+          relationTo: 'content-items',
           required: true,
         },
         {
@@ -308,7 +309,7 @@ export const UserProgress: CollectionConfig = {
         {
           name: 'lesson',
           type: 'relationship',
-          relationTo: 'lessons',
+          relationTo: 'content-items',
           required: true,
           admin: {
             description: 'Lesson the note is related to',
@@ -360,7 +361,7 @@ export const UserProgress: CollectionConfig = {
         if (data.course && req.payload) {
           try {
             const course = await req.payload.findByID({
-              collection: 'courses',
+              collection: 'vinprovningar',
               id: data.course,
             })
             if (course) {

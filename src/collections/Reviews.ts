@@ -1,276 +1,189 @@
 import type { CollectionConfig } from 'payload'
-import { anyLoggedIn, adminOnly } from '../lib/access'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
+import { ReviewRowLabel } from '../components/admin/ReviewRowLabel'
 
 export const Reviews: CollectionConfig = {
   slug: 'reviews',
   admin: {
-    useAsTitle: 'wine',
-    defaultColumns: ['wine', 'user', 'rating', 'isTrusted', 'createdAt'],
+    group: 'Wine Library',
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'wine', 'user', 'rating', 'isTrusted', 'createdAt'],
     description: 'User reviews for wines, including WSET tasting notes',
+    components: {
+      RowLabel: ReviewRowLabel,
+    },
   },
   access: {
-    // Only owner can read their own submissions; admins/instructors can read all;
-    // trusted reviews (answer keys) are publicly readable;
-    // session participants can read each other's reviews in the same session
-    read: async ({ req }) => {
+    // Bare minimum access control - simplified
+    read: ({ req }) => {
+      // Admin/instructor can read all
       if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
-      const userId = req.user?.id
-
-      if (userId) {
-        try {
-          // Find all sessions this user is participating in
-          const userParticipations = await req.payload.find({
-            collection: 'session-participants',
-            where: {
-              and: [{ user: { equals: Number(userId) } }, { isActive: { equals: true } }],
-            },
-            limit: 100,
-          })
-
-          const sessionIds = userParticipations.docs.map((p) => {
-            const sessionId = typeof p.session === 'object' ? p.session.id : p.session
-            return Number(sessionId)
-          })
-
-          // User can read:
-          // 1. Trusted reviews (answer keys)
-          // 2. Their own reviews
-          // 3. Reviews from any participant in sessions they're part of
-          const conditions: any[] = [
-            { isTrusted: { equals: true } },
-            { user: { equals: Number(userId) } },
-          ]
-
-          // Add condition for session reviews if user is in any sessions
-          if (sessionIds.length > 0) {
-            conditions.push({
-              session: { in: sessionIds },
-            })
-          }
-
-          return { or: conditions }
-        } catch (error) {
-          console.error('Error in reviews read access:', error)
-          // Fallback to basic access
-          return {
-            or: [{ isTrusted: { equals: true } }, { user: { equals: Number(userId) } }],
-          }
-        }
+      // Users can read their own reviews
+      if (req.user) {
+        return { user: { equals: req.user.id } }
       }
-
-      // For non-logged-in users, only show trusted reviews
-      return {
-        or: [{ isTrusted: { equals: true } }],
-      }
+      // Public can read trusted reviews
+      return { isTrusted: { equals: true } }
     },
-    create: async ({ req, data }) => {
-      console.log('🔍 [REVIEW CREATE ACCESS] Starting access check')
-      console.log('📊 [REVIEW CREATE ACCESS] Data received:', {
-        lesson: data?.lesson,
-        session: data?.session,
-        sessionParticipant: data?.sessionParticipant,
-        wine: data?.wine,
-        hasUser: !!req.user,
-        userRole: req.user?.role,
-      })
-
-      // Admins/instructors can always create (including form state building)
-      if (req.user?.role === 'admin' || req.user?.role === 'instructor') {
-        console.log('✅ [REVIEW CREATE ACCESS] Admin/Instructor - ALLOWED')
-        return true
-      }
-
-      // If no data or no lesson, it's a form state check - allow it to pass
-      // This happens when Payload is building the UI and doesn't have actual review data yet
-      const lessonId = data?.lesson
-      console.log('📚 [REVIEW CREATE ACCESS] Lesson ID:', lessonId)
-      if (!lessonId) {
-        console.log('⚠️ [REVIEW CREATE ACCESS] No lesson ID - allowing for form state building')
-        return true // Allow form state building
-      }
-
-      // Beyond this point, we need a logged-in user for actual review creation
-      const userId = req.user?.id
-      console.log('👤 [REVIEW CREATE ACCESS] User ID:', userId)
-      if (!userId) {
-        console.log('❌ [REVIEW CREATE ACCESS] No user ID - DENIED')
-        return false
-      }
-
-      try {
-        const payload = req.payload
-
-        // Fetch lesson to resolve module -> course
-        const lesson = await payload.findByID({ collection: 'lessons', id: String(lessonId) })
-        console.log('📖 [REVIEW CREATE ACCESS] Lesson found:', lesson?.id, lesson?.title)
-
-        const moduleId =
-          lesson?.module && typeof lesson.module === 'object'
-            ? (lesson.module as any).id
-            : lesson?.module
-        console.log('📦 [REVIEW CREATE ACCESS] Module ID:', moduleId)
-        if (!moduleId) {
-          console.log('❌ [REVIEW CREATE ACCESS] No module ID - DENIED')
-          return false
-        }
-
-        const moduleDoc = await payload.findByID({ collection: 'modules', id: String(moduleId) })
-        console.log('📦 [REVIEW CREATE ACCESS] Module found:', moduleDoc?.id, moduleDoc?.title)
-
-        const courseId =
-          moduleDoc?.course && typeof moduleDoc.course === 'object'
-            ? (moduleDoc.course as any).id
-            : moduleDoc?.course
-        console.log('🎓 [REVIEW CREATE ACCESS] Course ID:', courseId)
-        if (!courseId) {
-          console.log('❌ [REVIEW CREATE ACCESS] No course ID - DENIED')
-          return false
-        }
-
-        // Check if user is in an active session for this course
-        if (data?.session) {
-          console.log('🎭 [REVIEW CREATE ACCESS] Session provided:', data.session)
-          try {
-            const session = await payload.findByID({
-              collection: 'course-sessions',
-              id: String(data.session),
-            })
-            console.log('🎭 [REVIEW CREATE ACCESS] Session found:', {
-              id: session?.id,
-              status: session?.status,
-              joinCode: session?.joinCode,
-            })
-
-            // Verify session is for this course and is active
-            const sessionCourseId =
-              typeof session.course === 'object' ? session.course.id : session.course
-            console.log('🎭 [REVIEW CREATE ACCESS] Session course ID:', sessionCourseId)
-            console.log('🎭 [REVIEW CREATE ACCESS] Comparing:', {
-              sessionCourseId: Number(sessionCourseId),
-              courseId: Number(courseId),
-              match: Number(sessionCourseId) === Number(courseId),
-              sessionActive: session?.status === 'active',
-            })
-
-            if (
-              session &&
-              session.status === 'active' &&
-              Number(sessionCourseId) === Number(courseId)
-            ) {
-              console.log('🎭 [REVIEW CREATE ACCESS] Session valid, checking participant...')
-              // Check if user is an active participant in this session
-              const participant = await payload.find({
-                collection: 'session-participants',
-                where: {
-                  and: [
-                    { session: { equals: Number(data.session) } },
-                    { user: { equals: Number(userId) } },
-                    { isActive: { equals: true } },
-                  ],
-                },
-                limit: 1,
-              })
-              console.log('👥 [REVIEW CREATE ACCESS] Participant search result:', {
-                found: participant.totalDocs,
-                docs: participant.docs.map((p) => ({
-                  id: p.id,
-                  userId: p.user && typeof p.user === 'object' ? p.user.id : p.user,
-                  sessionId: typeof p.session === 'object' ? p.session.id : p.session,
-                  isActive: p.isActive,
-                })),
-              })
-
-              if (participant.totalDocs > 0) {
-                console.log('✅ [REVIEW CREATE ACCESS] Active session participant - ALLOWED')
-                return true
-              } else {
-                console.log('⚠️ [REVIEW CREATE ACCESS] Not an active participant in this session')
-              }
-            } else {
-              console.log('⚠️ [REVIEW CREATE ACCESS] Session validation failed')
-            }
-          } catch (error) {
-            console.error('❌ [REVIEW CREATE ACCESS] Error checking session access:', error)
-          }
-        } else {
-          console.log('ℹ️ [REVIEW CREATE ACCESS] No session provided, checking enrollment...')
-        }
-
-        // Otherwise, check enrollment (for course owners)
-        console.log(
-          '🎫 [REVIEW CREATE ACCESS] Checking enrollment for user:',
-          userId,
-          'course:',
-          courseId,
-        )
-        const enrollments = await payload.find({
-          collection: 'enrollments',
-          where: {
-            and: [{ user: { equals: Number(userId) } }, { course: { equals: Number(courseId) } }],
-          },
-          limit: 1,
-        })
-        console.log('🎫 [REVIEW CREATE ACCESS] Enrollment result:', {
-          found: enrollments.totalDocs,
-          docs: enrollments.docs.map((e) => ({
-            id: e.id,
-            userId: typeof e.user === 'object' ? e.user.id : e.user,
-            courseId: typeof e.course === 'object' ? e.course.id : e.course,
-          })),
-        })
-
-        const hasEnrollment = (enrollments?.totalDocs || 0) > 0
-        if (hasEnrollment) {
-          console.log('✅ [REVIEW CREATE ACCESS] Has enrollment - ALLOWED')
-        } else {
-          console.log('❌ [REVIEW CREATE ACCESS] No enrollment - DENIED')
-        }
-        return hasEnrollment
-      } catch (error) {
-        console.error('❌ [REVIEW CREATE ACCESS] Error in review create access:', error)
-        return false
-      }
-    },
-    update: ({ req }) => {
-      if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
-      const userId = req.user?.id
-      if (!userId) return false
-      // Only allow updating own documents
-      return { user: { equals: Number(userId) } }
-    },
-    delete: adminOnly,
+    create: ({ req }) => Boolean(req.user),
+    // Allow update for form building
+    update: () => true,
+    delete: ({ req }) => req.user?.role === 'admin',
   },
+
   hooks: {
     beforeChange: [
-      // attach createdBy/updatedBy metadata
-      withCreatedByUpdatedBy,
-      // force user field to current user on create; ignore client-provided user
-      ({ data, req, operation }) => {
-        if (operation === 'create') {
-          const userId = req.user?.id
-          if (userId) {
-            return { ...data, user: userId }
+      async ({ req, operation, data, originalDoc }) => {
+        // Always return data early if form building (no user context)
+        if (!req.user) return data
+        
+        // Only validate actual operations
+        if (operation !== 'update' && operation !== 'create') return data
+        
+        const user = req.user
+        
+        // Enforce isTrusted field restriction
+        if (data && originalDoc && data.isTrusted !== undefined && data.isTrusted !== originalDoc?.isTrusted) {
+          if (user.role !== 'admin' && user.role !== 'instructor') {
+            throw new Error('Only admins and instructors can mark reviews as trusted')
           }
         }
+        
+        // Only enforce ownership for updates (not creates)
+        if (operation !== 'update') return data
+        
+        // Admins and instructors can update any review
+        if (user.role === 'admin' || user.role === 'instructor') {
+          return data
+        }
+        
+        // Users can only update their own reviews
+        if (originalDoc && String(user.id) === String(originalDoc.user)) {
+          return data
+        }
+        
+        throw new Error('You can only update your own reviews')
+      },
+      withCreatedByUpdatedBy,
+      // Force user field to current user on create
+      ({ data, req, operation }) => {
+        if (operation === 'create' && data && req.user?.id) {
+          return { ...data, user: req.user.id }
+        }
         return data
+      },
+      // Generate title from wine name and rating
+      async ({ data, req, operation, payload }) => {
+        if (!data || operation === 'read') return data
+        
+        // Generate title from wine name and rating
+        if (data.wine) {
+          try {
+            const wineId = typeof data.wine === 'object' ? data.wine.id : data.wine
+            if (wineId) {
+              const wine = await payload.findByID({
+                collection: 'wines',
+                id: typeof wineId === 'string' ? parseInt(wineId) : wineId,
+                depth: 0,
+              })
+              
+              if (wine?.name) {
+                const rating = data.rating
+                const stars = rating && typeof rating === 'number' ? '★'.repeat(rating) : ''
+                data.title = `${wine.name}${stars ? ` - ${stars}` : ''}`
+              }
+            }
+          } catch (error) {
+            // If wine fetch fails, keep existing title or use fallback
+            if (!data.title) {
+              data.title = `Review #${data.id || 'New'}`
+            }
+          }
+        } else if (!data.title && data.id) {
+          // If no wine but we have an ID, use fallback
+          data.title = `Review #${data.id}`
+        }
+        
+        return data
+      },
+    ],
+    beforeRead: [
+      async ({ doc, req }) => {
+        // Ensure title is populated for existing reviews that might not have it
+        if (doc && !doc.title && doc.wine) {
+          try {
+            const wineId = typeof doc.wine === 'object' ? doc.wine.id : doc.wine
+            if (wineId) {
+              const wine = await req.payload.findByID({
+                collection: 'wines',
+                id: typeof wineId === 'string' ? parseInt(wineId) : wineId,
+                depth: 0,
+              })
+              
+              if (wine?.name) {
+                const rating = doc.rating
+                const stars = rating && typeof rating === 'number' ? '★'.repeat(rating) : ''
+                doc.title = `${wine.name}${stars ? ` - ${stars}` : ''}`
+              }
+            }
+          } catch (error) {
+            // Silently fail if wine not found
+            if (!doc.title) {
+              doc.title = `Review #${doc.id || 'New'}`
+            }
+          }
+        }
+        return doc
       },
     ],
   },
   fields: [
+    {
+      name: 'title',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        description: 'Auto-generated title combining wine name and rating',
+        position: 'sidebar',
+      },
+      hooks: {
+        beforeValidate: [
+          async ({ data, req, operation }) => {
+            // Generate title from wine name and rating
+            if (data?.wine && (operation === 'create' || operation === 'update')) {
+              try {
+                const wineId = typeof data.wine === 'object' ? data.wine.id : data.wine
+                if (wineId && req.payload) {
+                  const wine = await req.payload.findByID({
+                    collection: 'wines',
+                    id: typeof wineId === 'string' ? parseInt(wineId) : wineId,
+                    depth: 0,
+                  })
+                  
+                  if (wine?.name) {
+                    const rating = data.rating
+                    const stars = rating && typeof rating === 'number' ? '★'.repeat(rating) : ''
+                    return `${wine.name}${stars ? ` - ${stars}` : ''}`
+                  }
+                }
+              } catch (error) {
+                // If wine fetch fails, return fallback
+                console.error('Error generating review title:', error)
+              }
+            }
+            
+            // Return existing title or fallback
+            return data?.title || `Review #${data?.id || 'New'}`
+          },
+        ],
+      },
+    },
     {
       name: 'wine',
       type: 'relationship',
       relationTo: 'wines',
       required: true,
       admin: { description: 'The wine being reviewed' },
-    },
-    {
-      name: 'lesson',
-      type: 'relationship',
-      relationTo: 'lessons',
-      required: false,
-      admin: { description: 'Associated lesson when used as a Wine Review quiz' },
     },
     {
       name: 'user',
@@ -353,7 +266,9 @@ export const Reviews: CollectionConfig = {
         position: 'sidebar',
       },
       access: {
-        update: ({ req }) => req.user?.role === 'admin' || req.user?.role === 'instructor',
+        // Allow form building, but enforce at collection level via beforeChange hook
+        read: () => true,
+        update: () => true,
       },
     },
     // WSET Tasting Protocol

@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 export const CourseSessions: CollectionConfig = {
   slug: 'course-sessions',
   admin: {
+    group: 'Sessions',
     useAsTitle: 'joinCode',
     defaultColumns: ['joinCode', 'sessionName', 'status', 'participantCount', 'createdAt'],
     description: 'Live group learning sessions for courses',
@@ -17,7 +18,7 @@ export const CourseSessions: CollectionConfig = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'courses',
+      relationTo: 'vinprovningar',
       required: true,
       admin: {
         description: 'The course this session is for',
@@ -26,17 +27,17 @@ export const CourseSessions: CollectionConfig = {
     {
       name: 'currentLesson',
       type: 'relationship',
-      relationTo: 'lessons',
+      relationTo: 'content-items',
       admin: {
-        description: 'Currently active lesson in the session',
+        description: 'Currently active content item in the session',
       },
     },
     {
       name: 'currentQuiz',
       type: 'relationship',
-      relationTo: 'quizzes',
+      relationTo: 'content-items',
       admin: {
-        description: 'Currently active quiz in the session',
+        description: 'Currently active quiz in the session (deprecated - use currentLesson)',
       },
     },
     {

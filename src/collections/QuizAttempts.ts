@@ -7,7 +7,7 @@ export const QuizAttempts: CollectionConfig = {
     plural: 'Quiz Attempts',
   },
   admin: {
-    group: 'Analytics',
+    group: 'Questions & Quizzes',
     defaultColumns: ['user', 'quiz', 'score', 'status', 'completedAt'],
     useAsTitle: 'id',
   },
@@ -54,10 +54,10 @@ export const QuizAttempts: CollectionConfig = {
     {
       name: 'quiz',
       type: 'relationship',
-      relationTo: 'quizzes',
+      relationTo: 'content-items',
       required: true,
       admin: {
-        description: 'Quiz that was attempted',
+        description: 'Content item (quiz) that was attempted',
       },
     },
     {

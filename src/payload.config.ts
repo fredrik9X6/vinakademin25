@@ -11,14 +11,12 @@ import sharp from 'sharp'
 import { resendAdapter } from '@payloadcms/email-resend'
 import { Media } from './collections/Media'
 import { Users } from './collections/Users'
-import { Courses } from './collections/Courses'
+import { Vinprovningar } from './collections/Vinprovningar'
 import { Modules } from './collections/Modules'
-import { Lessons } from './collections/Lessons'
+import { ContentItems } from './collections/ContentItems'
 import { UserProgress } from './collections/UserProgress'
 import { Questions } from './collections/Questions'
-import { Quizzes } from './collections/Quizzes'
 import { QuizAttempts } from './collections/QuizAttempts'
-import { ContentTemplates } from './collections/ContentTemplates'
 import { Enrollments } from './collections/Enrollments'
 import { Wines } from './collections/Wines'
 import { UserWines } from './collections/UserWines'
@@ -53,29 +51,29 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
     dateFormat: 'dd/MM/yyyy',
-    // Enable live preview in admin
-    livePreview: {
-      breakpoints: [
-        {
-          label: 'Mobile',
-          name: 'mobile',
-          width: 375,
-          height: 667,
-        },
-        {
-          label: 'Tablet',
-          name: 'tablet',
-          width: 768,
-          height: 1024,
-        },
-        {
-          label: 'Desktop',
-          name: 'desktop',
-          width: 1440,
-          height: 900,
-        },
-      ],
-    },
+    // TEMPORARILY DISABLED - Testing if livePreview is causing lockedState error
+    // livePreview: {
+    //   breakpoints: [
+    //     {
+    //       label: 'Mobile',
+    //       name: 'mobile',
+    //       width: 375,
+    //       height: 667,
+    //     },
+    //     {
+    //       label: 'Tablet',
+    //       name: 'tablet',
+    //       width: 768,
+    //       height: 1024,
+    //     },
+    //     {
+    //       label: 'Desktop',
+    //       name: 'desktop',
+    //       width: 1440,
+    //       height: 900,
+    //     },
+    //   ],
+    // },
   },
   cors: ['http://localhost:3000', 'http://localhost:3002', 'https://www.vinakademin.se'],
   csrf: ['http://localhost:3000', 'http://localhost:3002', 'https://www.vinakademin.se'],
@@ -87,14 +85,12 @@ export default buildConfig({
   collections: [
     Media,
     Users,
-    Courses,
+    Vinprovningar,
     Modules,
-    Lessons,
+    ContentItems,
     UserProgress,
     Questions,
-    Quizzes,
     QuizAttempts,
-    ContentTemplates,
     Enrollments,
     Wines,
     UserWines,

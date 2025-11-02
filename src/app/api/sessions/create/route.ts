@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Verify course exists
     const course = await payload.findByID({
-      collection: 'courses',
+      collection: 'vinprovningar',
       id: courseId,
     })
 

@@ -38,10 +38,21 @@ export function WineReferenceBlock({
   caption,
   openInNewTab,
 }: WineReferenceBlockProps) {
-  const linkProps = {
-    href: `/wines/${wine.slug}`,
-    ...(openInNewTab && { target: '_blank', rel: 'noopener noreferrer' }),
-  }
+  // Use Systembolaget URL if available, otherwise fall back to internal link
+  const externalUrl = wine.systembolagetUrl
+  const internalUrl = `/wines/${wine.slug}`
+  const href = externalUrl || internalUrl
+  const isExternal = !!externalUrl
+
+  const linkProps = isExternal
+    ? {
+        href,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      }
+    : {
+        href,
+      }
 
   const displayText = customText || wine.name
   const wineImage = wine.image as Media | null
@@ -57,26 +68,28 @@ export function WineReferenceBlock({
   }
 
   if (displayStyle === 'link') {
+    const LinkComponent = isExternal ? 'a' : Link
     return (
-      <Link
+      <LinkComponent
         {...linkProps}
         className="inline-flex items-center gap-1 text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 underline underline-offset-2 transition-colors font-medium"
       >
         {displayText}
-        {openInNewTab && <ExternalLink className="h-3 w-3" />}
-      </Link>
+        {isExternal && <ExternalLink className="h-3 w-3" />}
+      </LinkComponent>
     )
   }
 
   if (displayStyle === 'inline') {
+    const LinkComponent = isExternal ? 'a' : Link
     return (
       <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors">
-        <Link
+        <LinkComponent
           {...linkProps}
           className="text-gray-900 dark:text-gray-100 hover:text-orange-500 dark:hover:text-orange-400 font-medium transition-colors"
         >
           {displayText}
-        </Link>
+        </LinkComponent>
         {wine.price && (
           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
             {formatPrice(wine.price)}
@@ -90,7 +103,7 @@ export function WineReferenceBlock({
         {showDetails?.showVintage && wine.vintage && (
           <span className="text-xs text-gray-500 dark:text-gray-400">{wine.vintage}</span>
         )}
-        {openInNewTab && <ExternalLink className="h-3 w-3 text-gray-400" />}
+        {isExternal && <ExternalLink className="h-3 w-3 text-gray-400" />}
       </span>
     )
   }
@@ -121,15 +134,25 @@ export function WineReferenceBlock({
             {/* Content with minimal styling */}
             <div className="flex-1 p-4 min-h-[144px] flex flex-col justify-between">
               <div className="space-y-2">
-                <Link
-                  {...linkProps}
-                  className="text-lg font-semibold text-sidebar-foreground hover:text-orange-500 dark:hover:text-orange-400 transition-colors line-clamp-2 group"
-                >
-                  {wine.name}
-                  {openInNewTab && (
+                {isExternal ? (
+                  <a
+                    {...linkProps}
+                    className="text-lg font-semibold text-sidebar-foreground hover:text-orange-500 dark:hover:text-orange-400 transition-colors line-clamp-2 group"
+                  >
+                    {wine.name}
                     <ExternalLink className="inline h-4 w-4 ml-1 align-text-top opacity-0 group-hover:opacity-100 transition-opacity" />
-                  )}
-                </Link>
+                  </a>
+                ) : (
+                  <Link
+                    {...linkProps}
+                    className="text-lg font-semibold text-sidebar-foreground hover:text-orange-500 dark:hover:text-orange-400 transition-colors line-clamp-2 group"
+                  >
+                    {wine.name}
+                    {openInNewTab && (
+                      <ExternalLink className="inline h-4 w-4 ml-1 align-text-top opacity-0 group-hover:opacity-100 transition-opacity" />
+                    )}
+                  </Link>
+                )}
                 {wine.winery && (
                   <p className="text-sidebar-foreground/70 mt-0.5 line-clamp-1">{wine.winery}</p>
                 )}

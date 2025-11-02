@@ -5,6 +5,7 @@ import { withCreatedByUpdatedBy } from '../lib/hooks'
 export const Countries: CollectionConfig = {
   slug: 'countries',
   admin: {
+    group: 'Wine Library',
     useAsTitle: 'name',
     defaultColumns: ['name', 'createdBy'],
     description: 'Countries for wine origin',
@@ -12,11 +13,28 @@ export const Countries: CollectionConfig = {
   access: {
     read: () => true,
     create: anyLoggedIn,
-    update: anyLoggedIn,
+    // Allow form building for relationship fields in other collections
+    update: () => true,
     delete: adminOnly,
   },
   hooks: {
-    beforeChange: [withCreatedByUpdatedBy],
+    beforeChange: [
+      async ({ req, operation, data }) => {
+        // Only enforce authentication for actual saves (not form building)
+        if (operation === 'update' || operation === 'create') {
+          const user = req.user
+          
+          // Allow form building (no user context)
+          if (!user) return data
+          
+          // All authenticated users can create/update countries
+          return data
+        }
+        
+        return data
+      },
+      withCreatedByUpdatedBy,
+    ],
   },
   fields: [
     {

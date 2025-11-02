@@ -49,7 +49,7 @@ export default function CourseQuizViewer({
   const router = useRouter()
   const [isTocOpen, setIsTocOpen] = useState(false)
 
-  // Check if quiz is free or user has access
+  // Check if quiz is free - but authentication is still required
   const isQuizFree = quiz.isFree || false
   const canAccessQuiz = userHasAccess || isQuizFree
 

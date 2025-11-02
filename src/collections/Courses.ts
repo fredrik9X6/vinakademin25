@@ -1,13 +1,16 @@
 import type { CollectionConfig } from 'payload'
-import { anyLoggedIn, adminOrInstructorOnly, adminOnly } from '../lib/access'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
 import { uploadVideoToMux, deleteAssetFromMux } from '../lib/mux'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { BlocksFeature, UploadFeature } from '@payloadcms/richtext-lexical'
 import { WineReference, WineList, NewsletterSignup, CourseReference } from '../components/blocks'
 
-export const Courses: CollectionConfig = {
-  slug: 'courses',
+export const Vinprovningar: CollectionConfig = {
+  slug: 'vinprovningar',
+  labels: {
+    singular: 'Wine tasting',
+    plural: 'Wine tastings',
+  },
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'level', 'price', '_status'],
@@ -28,64 +31,62 @@ export const Courses: CollectionConfig = {
     },
   },
   access: {
+    // Bare minimum access control
     read: ({ req }) => {
+      // Admin/instructor can read all
       if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
+      // Allow form building (no user context)
+      if (!req.user) return true
+      // Public can read published
       return {
         _status: { equals: 'published' },
       }
     },
-    create: adminOrInstructorOnly,
-    // Allow form building and autosave
-    // Note: Form building (for Lexical blocks) doesn't pass user context
-    // but doesn't actually save data - it just prepares the UI
-    update: ({ req }) => {
-      console.log('🔍 [COURSE UPDATE ACCESS] User:', {
-        userId: req.user?.id,
-        role: req.user?.role,
-        hasUser: !!req.user,
-      })
-
-      // Admins and instructors can always update
-      if (req.user?.role === 'admin' || req.user?.role === 'instructor') {
-        console.log('✅ [COURSE UPDATE ACCESS] Admin/Instructor - ALLOWED')
-        return true
-      }
-
-      // Allow form building even without user context
-      // This is safe because:
-      // 1. Form building doesn't actually save data
-      // 2. Actual update operations will still validate authentication
-      // 3. The Lexical editor needs this to render block selectors
-      console.log('⚠️ [COURSE UPDATE ACCESS] Allowing for form building (safe)')
-      return true
+    create: ({ req }) => {
+      // Allow form building (no user context)
+      if (!req.user) return true
+      return req.user?.role === 'admin' || req.user?.role === 'instructor'
     },
-    delete: adminOnly,
-    readVersions: adminOrInstructorOnly,
+    // Allow update for form building - security handled in hooks
+    update: () => true,
+    delete: ({ req }) => req.user?.role === 'admin',
+    readVersions: ({ req }) => {
+      // Allow form building (no user context)
+      if (!req.user) return true
+      return req.user?.role === 'admin' || req.user?.role === 'instructor'
+    },
+    readDrafts: ({ req }) => {
+      // Allow form building (no user context)
+      if (!req.user) return true
+      return req.user?.role === 'admin' || req.user?.role === 'instructor'
+    },
   },
   hooks: {
     beforeChange: [
-      // Validate authentication for actual save operations (not form building)
-      async ({ req, operation }) => {
-        // Only validate on update operations (form building uses 'update' too)
-        if (operation === 'update' || operation === 'create') {
-          const user = req.user
-          // If there's no user and this is an actual save (not form building),
-          // the access control will handle it. This hook is just for logging.
-          if (!user) {
-            console.log('⚠️ [COURSE BEFORE CHANGE] No user context - likely form building')
-          } else {
-            console.log('✅ [COURSE BEFORE CHANGE] User authenticated:', {
-              userId: user.id,
-              role: user.role,
-              operation,
-            })
-          }
+      // Validate authentication for actual save operations
+      async ({ req, operation, data }) => {
+        // Only validate actual saves (create/update), not form building
+        if (operation !== 'update' && operation !== 'create') return data
+        
+        // Allow form building (no user context = UI preparation only)
+        if (!req.user) {
+          return data
         }
+        
+        // If user exists, validate role
+        if (req.user.role !== 'admin' && req.user.role !== 'instructor') {
+          throw new Error('Only admins and instructors can save wine tastings')
+        }
+        
+        return data
       },
       withCreatedByUpdatedBy,
     ],
     afterChange: [
       async ({ doc, req, operation, previousDoc }) => {
+        // Always return doc first - PayloadCMS needs this for form state
+        if (!doc) return doc
+        
         const { payload } = req
 
         // Handle Mux preview video upload
@@ -97,11 +98,11 @@ export const Courses: CollectionConfig = {
             (operation === 'update' &&
               previousDoc &&
               doc.previewSourceVideo !== previousDoc.previewSourceVideo)) &&
-          // And only if we have not already created a Mux asset for this course
+          // And only if we have not already created a Mux asset for this wine tasting
           !(doc.previewMuxData && (doc.previewMuxData as any).assetId)
         ) {
           try {
-            payload.logger.info(`Processing Mux preview video upload for course ${doc.id}`)
+            payload.logger.info(`Processing Mux preview video upload for wine tasting ${doc.id}`)
 
             // Get the uploaded media file
             const media = await payload.findByID({
@@ -127,7 +128,7 @@ export const Courses: CollectionConfig = {
               payload.logger.info(`Uploading preview video to Mux with URL: ${fileUrl}`)
 
               // Upload to Mux
-              const asset = await uploadVideoToMux(fileUrl, `course-preview-${doc.id}`)
+              const asset = await uploadVideoToMux(fileUrl, `vinprovning-preview-${doc.id}`)
 
               payload.logger.info(`Mux preview asset created:`, {
                 id: asset.id,
@@ -135,9 +136,9 @@ export const Courses: CollectionConfig = {
                 playback_ids: asset.playback_ids,
               })
 
-              // Update the course with Mux asset info
+              // Update the wine tasting with Mux asset info
               await payload.update({
-                collection: 'courses',
+                collection: 'vinprovningar',
                 id: String(doc.id),
                 data: {
                   previewMuxData: {
@@ -150,23 +151,192 @@ export const Courses: CollectionConfig = {
                 },
               })
 
-              payload.logger.info(`Course ${doc.id} updated with Mux preview data`)
+              payload.logger.info(`Wine tasting ${doc.id} updated with Mux preview data`)
             }
           } catch (error: any) {
-            payload.logger.error(`Error processing Mux preview video for course ${doc.id}:`, error)
+            payload.logger.error(`Error processing Mux preview video for wine tasting ${doc.id}:`, error)
           }
         }
+
+        // Always return doc - PayloadCMS needs this for form state management
+        return doc
       },
     ],
     afterDelete: [
       async ({ doc, req }) => {
         const { payload } = req
 
-        // Delete from Mux when course is deleted
+        // Delete from Mux when wine tasting is deleted
         if (doc.previewVideoProvider === 'mux' && doc.previewMuxData?.assetId) {
           try {
             payload.logger.info(
-              `Deleting Mux preview asset ${doc.previewMuxData.assetId} for course ${doc.id}`,
+              `Deleting Mux preview asset ${doc.previewMuxData.assetId} for wine tasting ${doc.id}`,
+            )
+            await deleteAssetFromMux(doc.previewMuxData.assetId)
+            payload.logger.info(`Mux preview asset deleted successfully`)
+          } catch (error: any) {
+            payload.logger.error(`Error deleting Mux preview asset:`, error)
+          }
+        }
+      },
+    ],
+  },
+    livePreview: {
+      url: ({ data }) => {
+        return `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}/vinprovningar/${data.slug}`
+      },
+    },
+  },
+  // Enable versions, drafts, and autosave
+  versions: {
+    maxPerDoc: 30,
+    drafts: {
+      autosave: {
+        interval: 3000, // Auto-save every 3 seconds
+      },
+    },
+  },
+  access: {
+    // Bare minimum access control
+    read: ({ req }) => {
+      // Admin/instructor can read all
+      if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
+      // Allow form building (no user context)
+      if (!req.user) return true
+      // Public can read published
+      return {
+        _status: { equals: 'published' },
+      }
+    },
+    create: ({ req }) => {
+      // Allow form building (no user context)
+      if (!req.user) return true
+      return req.user?.role === 'admin' || req.user?.role === 'instructor'
+    },
+    // Allow update for form building - security handled in hooks
+    update: () => true,
+    delete: ({ req }) => req.user?.role === 'admin',
+    readVersions: ({ req }) => {
+      // Allow form building (no user context)
+      if (!req.user) return true
+      return req.user?.role === 'admin' || req.user?.role === 'instructor'
+    },
+    readDrafts: ({ req }) => {
+      // Allow form building (no user context)
+      if (!req.user) return true
+      return req.user?.role === 'admin' || req.user?.role === 'instructor'
+    },
+  },
+  hooks: {
+    beforeChange: [
+      // Validate authentication for actual save operations
+      async ({ req, operation, data }) => {
+        // Only validate actual saves (create/update), not form building
+        if (operation !== 'update' && operation !== 'create') return data
+        
+        // Allow form building (no user context = UI preparation only)
+        if (!req.user) {
+          return data
+        }
+        
+        // If user exists, validate role
+        if (req.user.role !== 'admin' && req.user.role !== 'instructor') {
+          throw new Error('Only admins and instructors can save wine tastings')
+        }
+        
+        return data
+      },
+      withCreatedByUpdatedBy,
+    ],
+    afterChange: [
+      async ({ doc, req, operation, previousDoc }) => {
+        // Always return doc first - PayloadCMS needs this for form state
+        if (!doc) return doc
+        
+        const { payload } = req
+
+        // Handle Mux preview video upload
+        if (
+          doc.previewVideoProvider === 'mux' &&
+          doc.previewSourceVideo &&
+          // Only upload on create, or on update when previewSourceVideo actually changed
+          (operation === 'create' ||
+            (operation === 'update' &&
+              previousDoc &&
+              doc.previewSourceVideo !== previousDoc.previewSourceVideo)) &&
+          // And only if we have not already created a Mux asset for this course
+          !(doc.previewMuxData && (doc.previewMuxData as any).assetId)
+        ) {
+          try {
+            payload.logger.info(`Processing Mux preview video upload for wine tasting ${doc.id}`)
+
+            // Get the uploaded media file
+            const media = await payload.findByID({
+              collection: 'media',
+              id: doc.previewSourceVideo,
+            })
+
+            payload.logger.info(`Found media file:`, {
+              id: media?.id,
+              filename: media?.filename,
+              url: media?.url,
+            })
+
+            if (media?.url) {
+              // For development, use ngrok URL so Mux can download the file
+              const baseUrl =
+                process.env.NODE_ENV === 'production'
+                  ? process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'
+                  : process.env.NGROK_URL || 'http://localhost:3000'
+
+              const fileUrl = media.url.startsWith('http') ? media.url : `${baseUrl}${media.url}`
+
+              payload.logger.info(`Uploading preview video to Mux with URL: ${fileUrl}`)
+
+              // Upload to Mux
+              const asset = await uploadVideoToMux(fileUrl, `vinprovning-preview-${doc.id}`)
+
+              payload.logger.info(`Mux preview asset created:`, {
+                id: asset.id,
+                status: asset.status,
+                playback_ids: asset.playback_ids,
+              })
+
+              // Update the wine tasting with Mux asset info
+              await payload.update({
+                collection: 'vinprovningar',
+                id: String(doc.id),
+                data: {
+                  previewMuxData: {
+                    assetId: asset.id,
+                    playbackId: asset.playback_ids?.[0]?.id || '',
+                    status: asset.status as 'preparing' | 'ready' | 'errored',
+                    duration: asset.duration || 0,
+                    aspectRatio: asset.aspect_ratio || '16:9',
+                  },
+                },
+              })
+
+              payload.logger.info(`Wine tasting ${doc.id} updated with Mux preview data`)
+            }
+          } catch (error: any) {
+            payload.logger.error(`Error processing Mux preview video for wine tasting ${doc.id}:`, error)
+          }
+        }
+
+        // Always return doc - PayloadCMS needs this for form state management
+        return doc
+      },
+    ],
+    afterDelete: [
+      async ({ doc, req }) => {
+        const { payload } = req
+
+        // Delete from Mux when wine tasting is deleted
+        if (doc.previewVideoProvider === 'mux' && doc.previewMuxData?.assetId) {
+          try {
+            payload.logger.info(
+              `Deleting Mux preview asset ${doc.previewMuxData.assetId} for wine tasting ${doc.id}`,
             )
             await deleteAssetFromMux(doc.previewMuxData.assetId)
             payload.logger.info(`Mux preview asset deleted successfully`)
@@ -184,7 +354,7 @@ export const Courses: CollectionConfig = {
       required: true,
       maxLength: 100,
       admin: {
-        description: 'Course title displayed to students',
+        description: 'Wine tasting title displayed to students',
       },
     },
     {
@@ -202,7 +372,7 @@ export const Courses: CollectionConfig = {
       required: true,
       maxLength: 500,
       admin: {
-        description: 'Brief description of the course content and goals',
+        description: 'Brief description of the wine tasting content and goals',
       },
     },
     {
@@ -279,7 +449,7 @@ export const Courses: CollectionConfig = {
       }),
       admin: {
         description:
-          'Detailed course description with rich formatting, wine lists, and custom blocks',
+          'Detailed wine tasting description with rich formatting, wine lists, and custom blocks',
       },
     },
     {
@@ -288,7 +458,7 @@ export const Courses: CollectionConfig = {
       relationTo: 'media',
       required: true,
       admin: {
-        description: 'Main course image for thumbnails and hero sections',
+        description: 'Main wine tasting image for thumbnails and hero sections',
       },
     },
     // Preview Video Fields (Mux)
@@ -373,7 +543,7 @@ export const Courses: CollectionConfig = {
       required: true,
       min: 0,
       admin: {
-        description: 'Course price in SEK',
+        description: 'Wine tasting price in SEK',
       },
     },
     {
@@ -390,17 +560,7 @@ export const Courses: CollectionConfig = {
       name: 'duration',
       type: 'number',
       admin: {
-        description: 'Estimated course duration in hours',
-      },
-    },
-    {
-      name: 'freeItemCount',
-      type: 'number',
-      defaultValue: 0,
-      min: 0,
-      admin: {
-        description:
-          'Number of items (lessons + quizzes) available for free (counted across all modules in order)',
+        description: 'Estimated wine tasting duration in hours',
       },
     },
     {
@@ -408,7 +568,7 @@ export const Courses: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Display this course prominently on homepage and course listing',
+        description: 'Display this wine tasting prominently on homepage and listing',
       },
     },
     {
@@ -417,17 +577,32 @@ export const Courses: CollectionConfig = {
       relationTo: 'users',
       required: true,
       admin: {
-        description: 'Course instructor',
+        description: 'Wine tasting instructor',
       },
     },
     {
       name: 'modules',
-      type: 'relationship',
-      relationTo: 'modules',
-      hasMany: true,
+      type: 'array',
       admin: {
-        description: 'Course modules in order',
+        description: 'Ordered modules for this wine tasting',
       },
+      fields: [
+        {
+          name: 'module',
+          type: 'relationship',
+          relationTo: 'modules',
+          required: true,
+        },
+        {
+          name: 'order',
+          type: 'number',
+          required: true,
+          defaultValue: 0,
+          admin: {
+            description: 'Order of this module within the wine tasting',
+          },
+        },
+      ],
     },
     {
       name: 'tags',
@@ -439,7 +614,7 @@ export const Courses: CollectionConfig = {
         },
       ],
       admin: {
-        description: 'Course tags for search and filtering',
+        description: 'Wine tasting tags for search and filtering',
       },
     },
     // Stripe Integration Fields
@@ -447,7 +622,7 @@ export const Courses: CollectionConfig = {
       name: 'stripeProductId',
       type: 'text',
       admin: {
-        description: 'Stripe Product ID for this course',
+        description: 'Stripe Product ID for this wine tasting',
         readOnly: true,
         condition: (data) => Boolean(data?.stripeProductId),
       },
@@ -456,7 +631,7 @@ export const Courses: CollectionConfig = {
       name: 'stripePriceId',
       type: 'text',
       admin: {
-        description: 'Stripe Price ID for this course',
+        description: 'Stripe Price ID for this wine tasting',
         readOnly: true,
         condition: (data) => Boolean(data?.stripePriceId),
       },

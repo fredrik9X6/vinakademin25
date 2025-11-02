@@ -2,25 +2,24 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 
+/**
+ * PayloadCMS 3 compatible /api/users/me endpoint
+ * Returns current authenticated user with avatar relationship populated
+ */
 export async function GET(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
 
-    // Get the cookie string from the request
-    const cookieString = request.headers.get('cookie') || ''
-
-    // Use PayloadCMS's built-in auth method to verify the user
+    // Use PayloadCMS 3 native auth method
     const { user: authUser } = await payload.auth({
-      headers: new Headers({
-        Cookie: cookieString,
-      }),
+      headers: request.headers,
     })
 
     if (!authUser) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    // Fetch the full user data with avatar relationship populated
+    // Fetch full user data with relationships populated (for avatar)
     const user = await payload.findByID({
       collection: 'users',
       id: authUser.id,
@@ -28,14 +27,15 @@ export async function GET(request: NextRequest) {
     })
 
     if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Check if user account is active
+    // Check account status
     if (user.accountStatus !== 'active') {
       return NextResponse.json({ error: 'Account is suspended or deactivated' }, { status: 403 })
     }
 
+    // Return user in PayloadCMS 3 format: { user: {...} }
     return NextResponse.json({
       user: {
         id: user.id,

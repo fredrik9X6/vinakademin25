@@ -69,14 +69,12 @@ export interface Config {
   collections: {
     media: Media;
     users: User;
-    courses: Course;
+    vinprovningar: Vinprovningar;
     modules: Module;
-    lessons: Lesson;
+    'content-items': ContentItem;
     'user-progress': UserProgress;
     questions: Question;
-    quizzes: Quiz;
     'quiz-attempts': QuizAttempt;
-    'content-templates': ContentTemplate;
     enrollments: Enrollment;
     wines: Wine;
     'user-wines': UserWine;
@@ -102,14 +100,12 @@ export interface Config {
   collectionsSelect: {
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
-    courses: CoursesSelect<false> | CoursesSelect<true>;
+    vinprovningar: VinprovningarSelect<false> | VinprovningarSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
-    lessons: LessonsSelect<false> | LessonsSelect<true>;
+    'content-items': ContentItemsSelect<false> | ContentItemsSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
-    quizzes: QuizzesSelect<false> | QuizzesSelect<true>;
     'quiz-attempts': QuizAttemptsSelect<false> | QuizAttemptsSelect<true>;
-    'content-templates': ContentTemplatesSelect<false> | ContentTemplatesSelect<true>;
     enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     wines: WinesSelect<false> | WinesSelect<true>;
     'user-wines': UserWinesSelect<false> | UserWinesSelect<true>;
@@ -179,10 +175,6 @@ export interface Media {
    * Optional caption text to display with the media
    */
   caption?: string | null;
-  /**
-   * User who uploaded this media
-   */
-  uploadedBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -453,12 +445,12 @@ export interface Country {
  * Wine education courses offered on the platform
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "courses".
+ * via the `definition` "vinprovningar".
  */
-export interface Course {
+export interface Vinprovningar {
   id: number;
   /**
-   * Course title displayed to students
+   * Wine tasting title displayed to students
    */
   title: string;
   /**
@@ -466,11 +458,11 @@ export interface Course {
    */
   slug: string;
   /**
-   * Brief description of the course content and goals
+   * Brief description of the wine tasting content and goals
    */
   description: string;
   /**
-   * Detailed course description with rich formatting, wine lists, and custom blocks
+   * Detailed wine tasting description with rich formatting, wine lists, and custom blocks
    */
   fullDescription: {
     root: {
@@ -488,7 +480,7 @@ export interface Course {
     [k: string]: unknown;
   };
   /**
-   * Main course image for thumbnails and hero sections
+   * Main wine tasting image for thumbnails and hero sections
    */
   featuredImage: number | Media;
   /**
@@ -519,32 +511,36 @@ export interface Course {
    */
   previewSourceVideo?: (number | null) | Media;
   /**
-   * Course price in SEK
+   * Wine tasting price in SEK
    */
   price: number;
   level: 'beginner' | 'intermediate' | 'advanced';
   /**
-   * Estimated course duration in hours
+   * Estimated wine tasting duration in hours
    */
   duration?: number | null;
   /**
-   * Number of items (lessons + quizzes) available for free (counted across all modules in order)
-   */
-  freeItemCount?: number | null;
-  /**
-   * Display this course prominently on homepage and course listing
+   * Display this wine tasting prominently on homepage and listing
    */
   isFeatured?: boolean | null;
   /**
-   * Course instructor
+   * Wine tasting instructor
    */
   instructor: number | User;
   /**
-   * Course modules in order
+   * Ordered modules for this wine tasting. Drag and drop to reorder. Click "Add Module" then select an existing module or create a new one.
    */
-  modules?: (number | Module)[] | null;
+  modules?:
+    | {
+        /**
+         * Select an existing module or click "+ Create" to create a new one
+         */
+        module: number | Module;
+        id?: string | null;
+      }[]
+    | null;
   /**
-   * Course tags for search and filtering
+   * Wine tasting tags for search and filtering
    */
   tags?:
     | {
@@ -553,11 +549,11 @@ export interface Course {
       }[]
     | null;
   /**
-   * Stripe Product ID for this course
+   * Stripe Product ID - Auto-generated when wine tasting is published with a price
    */
   stripeProductId?: string | null;
   /**
-   * Stripe Price ID for this course
+   * Stripe Price ID - Auto-generated when wine tasting is published with a price
    */
   stripePriceId?: string | null;
   updatedAt: string;
@@ -565,7 +561,7 @@ export interface Course {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Course modules that contain lessons
+ * Course modules that contain lessons and quizzes
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "modules".
@@ -574,38 +570,59 @@ export interface Module {
   id: number;
   title: string;
   description?: string | null;
-  order: number;
-  course?: (number | null) | Course;
   /**
-   * Lägg till och ordna lektioner och quiz med drag & drop. Detta styr ordningen i kursens innehåll.
+   * Add and order lessons and quizzes in this module. Drag and drop to reorder. Click "Add Content Item" to select or create a new lesson or quiz.
    */
-  contents?:
-    | (
-        | {
-            lesson: number | Lesson;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'lesson-item';
-          }
-        | {
-            quiz: number | Quiz;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'quiz-item';
-          }
-      )[]
+  contentItems?:
+    | {
+        /**
+         * Select an existing content item or click "+ Create" to create a new lesson or quiz
+         */
+        contentItem: number | ContentItem;
+        /**
+         * Mark this content item as free preview (accessible without purchase)
+         */
+        isFree?: boolean | null;
+        id?: string | null;
+      }[]
     | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
+ * Learning content items - lessons and quizzes
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "lessons".
+ * via the `definition` "content-items".
  */
-export interface Lesson {
+export interface ContentItem {
   id: number;
+  /**
+   * Type of content item
+   */
+  contentType: 'lesson' | 'quiz';
   title: string;
-  description?: string | null;
+  /**
+   * Lesson description
+   */
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Lesson content
+   */
   content?: {
     root: {
       type: string;
@@ -649,21 +666,64 @@ export interface Lesson {
    * Upload a video file to process with Mux
    */
   sourceVideo?: (number | null) | Media;
-  module: number | Module;
-  order?: number | null;
   /**
    * Primary type of content in this lesson
    */
-  lessonType?: ('video' | 'text' | 'quiz' | 'mixed' | 'wineReview') | null;
-  /**
-   * Whether this lesson includes a quiz component
-   */
-  hasQuiz?: boolean | null;
+  lessonType?: ('video' | 'text' | 'mixed' | 'wineReview') | null;
   /**
    * Select the canonical WSET answer review for comparison (tip: mark review as Trusted to use it here).
    */
   answerKeyReview?: (number | null) | Review;
-  status?: ('draft' | 'published') | null;
+  /**
+   * Questions in this quiz (drag and drop to reorder)
+   */
+  questions?:
+    | {
+        question: number | Question;
+        /**
+         * Whether this question is required
+         */
+        required?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  quizSettings?: {
+    /**
+     * Minimum percentage score to pass
+     */
+    passingScore: number;
+    /**
+     * Randomize question order for each attempt
+     */
+    randomizeQuestions?: boolean | null;
+    /**
+     * Randomize answer order for multiple choice questions
+     */
+    randomizeAnswers?: boolean | null;
+    showCorrectAnswers?: ('never' | 'after-question' | 'after-submission' | 'after-all-attempts') | null;
+  };
+  /**
+   * Quiz analytics and statistics
+   */
+  analytics?: {
+    /**
+     * Total number of attempts across all students
+     */
+    totalAttempts?: number | null;
+    /**
+     * Average score across all attempts
+     */
+    averageScore?: number | null;
+    /**
+     * Percentage of students who passed
+     */
+    passRate?: number | null;
+    /**
+     * Average time spent in minutes
+     */
+    averageTimeSpent?: number | null;
+  };
+  status?: ('draft' | 'published' | 'archived') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -676,13 +736,13 @@ export interface Lesson {
 export interface Review {
   id: number;
   /**
+   * Auto-generated title combining wine name and rating
+   */
+  title?: string | null;
+  /**
    * The wine being reviewed
    */
   wine: number | Wine;
-  /**
-   * Associated lesson when used as a Wine Review quiz
-   */
-  lesson?: (number | null) | Lesson;
   /**
    * User who wrote the review
    */
@@ -1085,15 +1145,15 @@ export interface CourseSession {
   /**
    * The course this session is for
    */
-  course: number | Course;
+  course: number | Vinprovningar;
   /**
-   * Currently active lesson in the session
+   * Currently active content item in the session
    */
-  currentLesson?: (number | null) | Lesson;
+  currentLesson?: (number | null) | ContentItem;
   /**
-   * Currently active quiz in the session
+   * Currently active quiz in the session (deprecated - use currentLesson)
    */
-  currentQuiz?: (number | null) | Quiz;
+  currentQuiz?: (number | null) | ContentItem;
   /**
    * User who created and hosts this session
    */
@@ -1131,208 +1191,6 @@ export interface CourseSession {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "quizzes".
- */
-export interface Quiz {
-  id: number;
-  /**
-   * Quiz title
-   */
-  title: string;
-  /**
-   * Quiz description and instructions
-   */
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  /**
-   * Course this quiz belongs to
-   */
-  course: number | Course;
-  /**
-   * Optional: Specific module this quiz belongs to
-   */
-  module?: (number | null) | Module;
-  /**
-   * Optional: Specific lesson this quiz belongs to
-   */
-  lesson?: (number | null) | Lesson;
-  /**
-   * Questions in this quiz
-   */
-  questions: {
-    question: number | Question;
-    /**
-     * Order of this question in the quiz
-     */
-    order: number;
-    /**
-     * Whether this question is required
-     */
-    required?: boolean | null;
-    id?: string | null;
-  }[];
-  quizSettings: {
-    /**
-     * Time limit in minutes (0 for no limit)
-     */
-    timeLimit?: number | null;
-    /**
-     * Minimum percentage score to pass
-     */
-    passingScore: number;
-    /**
-     * Maximum number of attempts allowed
-     */
-    maxAttempts?: number | null;
-    /**
-     * Randomize question order for each attempt
-     */
-    randomizeQuestions?: boolean | null;
-    /**
-     * Randomize answer order for multiple choice questions
-     */
-    randomizeAnswers?: boolean | null;
-    showCorrectAnswers?: ('never' | 'after-question' | 'after-submission' | 'after-all-attempts') | null;
-    /**
-     * Allow students to review their answers before submission
-     */
-    allowReview?: boolean | null;
-    /**
-     * Allow students to go back to previous questions
-     */
-    allowBackNavigation?: boolean | null;
-  };
-  grading?: {
-    gradingType?: ('automatic' | 'manual' | 'mixed') | null;
-    pointsDistribution?: ('equal' | 'question-based' | 'custom') | null;
-    /**
-     * Total points for the quiz (auto-calculated if not set)
-     */
-    totalPoints?: number | null;
-  };
-  availability?: {
-    /**
-     * When the quiz becomes available
-     */
-    availableFrom?: string | null;
-    /**
-     * When the quiz is no longer available
-     */
-    availableUntil?: string | null;
-    /**
-     * Prerequisites that must be completed before taking this quiz
-     */
-    prerequisites?:
-      | {
-          type: 'course' | 'module' | 'lesson' | 'quiz';
-          /**
-           * ID of the prerequisite item
-           */
-          item: string;
-          /**
-           * Minimum score required (for quiz prerequisites)
-           */
-          minScore?: number | null;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  feedback?: {
-    /**
-     * Message shown when student passes the quiz
-     */
-    passMessage?: {
-      root: {
-        type: string;
-        children: {
-          type: string;
-          version: number;
-          [k: string]: unknown;
-        }[];
-        direction: ('ltr' | 'rtl') | null;
-        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-        indent: number;
-        version: number;
-      };
-      [k: string]: unknown;
-    } | null;
-    /**
-     * Message shown when student fails the quiz
-     */
-    failMessage?: {
-      root: {
-        type: string;
-        children: {
-          type: string;
-          version: number;
-          [k: string]: unknown;
-        }[];
-        direction: ('ltr' | 'rtl') | null;
-        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-        indent: number;
-        version: number;
-      };
-      [k: string]: unknown;
-    } | null;
-    /**
-     * General feedback shown to all students
-     */
-    generalFeedback?: {
-      root: {
-        type: string;
-        children: {
-          type: string;
-          version: number;
-          [k: string]: unknown;
-        }[];
-        direction: ('ltr' | 'rtl') | null;
-        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-        indent: number;
-        version: number;
-      };
-      [k: string]: unknown;
-    } | null;
-  };
-  /**
-   * Quiz analytics and statistics
-   */
-  analytics?: {
-    /**
-     * Total number of attempts across all students
-     */
-    totalAttempts?: number | null;
-    /**
-     * Average score across all attempts
-     */
-    averageScore?: number | null;
-    /**
-     * Percentage of students who passed
-     */
-    passRate?: number | null;
-    /**
-     * Average time spent in minutes
-     */
-    averageTimeSpent?: number | null;
-  };
-  status?: ('draft' | 'published' | 'archived') | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "questions".
  */
 export interface Question {
@@ -1341,7 +1199,7 @@ export interface Question {
    * The question text or prompt
    */
   title: string;
-  type: 'multiple-choice' | 'true-false' | 'short-answer' | 'essay' | 'fill-blank' | 'matching';
+  type: 'multiple-choice' | 'true-false' | 'short-answer';
   /**
    * Additional question content, context, or media
    */
@@ -1361,7 +1219,7 @@ export interface Question {
     [k: string]: unknown;
   } | null;
   /**
-   * Answer options for multiple choice and matching questions
+   * Answer options for multiple choice questions
    */
   options?:
     | {
@@ -1378,7 +1236,11 @@ export interface Question {
       }[]
     | null;
   /**
-   * The correct answer for non-multiple choice questions
+   * The correct answer for True/False questions
+   */
+  correctAnswerTrueFalse?: ('true' | 'false') | null;
+  /**
+   * The correct answer for short answer questions
    */
   correctAnswer?: string | null;
   /**
@@ -1413,35 +1275,6 @@ export interface Question {
    * Points awarded for correct answer
    */
   points: number;
-  difficulty?: ('easy' | 'medium' | 'hard') | null;
-  /**
-   * Tags for categorizing questions
-   */
-  tags?:
-    | {
-        tag: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Time limit in seconds (optional)
-   */
-  timeLimit?: number | null;
-  /**
-   * Progressive hints for the question
-   */
-  hints?:
-    | {
-        hint: string;
-        order: number;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Optional image, video, or audio for the question
-   */
-  media?: (number | null) | Media;
-  status?: ('active' | 'inactive' | 'review') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1460,7 +1293,7 @@ export interface UserProgress {
   /**
    * Course being tracked
    */
-  course: number | Course;
+  course: number | Vinprovningar;
   /**
    * Course title for easy reference
    */
@@ -1498,30 +1331,30 @@ export interface UserProgress {
    */
   currentModule?: (number | null) | Module;
   /**
-   * Current lesson being studied
+   * Current content item being studied
    */
-  currentLesson?: (number | null) | Lesson;
+  currentLesson?: (number | null) | ContentItem;
   /**
    * Modules completed by the student
    */
   completedModules?: (number | Module)[] | null;
   /**
-   * Lessons completed by the student
+   * Content items completed by the student
    */
-  completedLessons?: (number | Lesson)[] | null;
+  completedLessons?: (number | ContentItem)[] | null;
   /**
-   * Lessons bookmarked by the student
+   * Content items bookmarked by the student
    */
-  bookmarkedLessons?: (number | Lesson)[] | null;
+  bookmarkedLessons?: (number | ContentItem)[] | null;
   /**
    * Quiz scores for the course
    */
   scores?:
     | {
         /**
-         * Lesson with quiz
+         * Content item with quiz
          */
-        lesson: number | Lesson;
+        lesson: number | ContentItem;
         /**
          * Score achieved (percentage)
          */
@@ -1542,7 +1375,7 @@ export interface UserProgress {
    */
   quizScores?:
     | {
-        quiz: number | Quiz;
+        quiz: number | ContentItem;
         /**
          * Score achieved (percentage)
          */
@@ -1558,7 +1391,7 @@ export interface UserProgress {
    */
   lessonStates?:
     | {
-        lesson: number | Lesson;
+        lesson: number | ContentItem;
         progress?: number | null;
         /**
          * Last watched position (seconds)
@@ -1577,7 +1410,7 @@ export interface UserProgress {
         /**
          * Lesson the note is related to
          */
-        lesson: number | Lesson;
+        lesson: number | ContentItem;
         /**
          * Student note content
          */
@@ -1625,9 +1458,9 @@ export interface QuizAttempt {
    */
   user: number | User;
   /**
-   * Quiz that was attempted
+   * Content item (quiz) that was attempted
    */
-  quiz: number | Quiz;
+  quiz: number | ContentItem;
   /**
    * Which attempt this is for the user (1, 2, 3, etc.)
    */
@@ -1818,380 +1651,6 @@ export interface QuizAttempt {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "content-templates".
- */
-export interface ContentTemplate {
-  id: number;
-  /**
-   * Template name for easy identification
-   */
-  name: string;
-  /**
-   * Description of what this template is for
-   */
-  description?: string | null;
-  type:
-    | 'video-quiz'
-    | 'reading-exercise'
-    | 'interactive-demo'
-    | 'case-study'
-    | 'lab-exercise'
-    | 'discussion-forum'
-    | 'assignment'
-    | 'custom';
-  category?: ('general' | 'introduction' | 'core-content' | 'practice' | 'assessment' | 'review' | 'advanced') | null;
-  /**
-   * Content blocks that make up this template
-   */
-  contentBlocks: (
-    | {
-        /**
-         * Optional title for this text section
-         */
-        title?: string | null;
-        /**
-         * Rich text content
-         */
-        content: {
-          root: {
-            type: string;
-            children: {
-              type: string;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        };
-        style?: ('default' | 'highlight' | 'callout' | 'warning' | 'info' | 'success') | null;
-        id?: string | null;
-        blockName?: string | null;
-        blockType: 'text-block';
-      }
-    | {
-        /**
-         * Video title
-         */
-        title?: string | null;
-        videoProvider?: ('upload' | 'youtube' | 'vimeo' | 'mux') | null;
-        /**
-         * Upload video file
-         */
-        videoFile?: (number | null) | Media;
-        /**
-         * YouTube or Vimeo URL
-         */
-        videoUrl?: string | null;
-        /**
-         * Mux playback ID
-         */
-        muxPlaybackId?: string | null;
-        /**
-         * Video thumbnail image
-         */
-        thumbnail?: (number | null) | Media;
-        /**
-         * Video description or transcript
-         */
-        description?: {
-          root: {
-            type: string;
-            children: {
-              type: string;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        /**
-         * Video duration in minutes
-         */
-        duration?: number | null;
-        autoplay?: boolean | null;
-        showControls?: boolean | null;
-        id?: string | null;
-        blockName?: string | null;
-        blockType: 'video-block';
-      }
-    | {
-        /**
-         * Gallery title
-         */
-        title?: string | null;
-        images: {
-          image: number | Media;
-          /**
-           * Image caption
-           */
-          caption?: string | null;
-          /**
-           * Alt text for accessibility
-           */
-          alt?: string | null;
-          id?: string | null;
-        }[];
-        layout?: ('grid' | 'carousel' | 'masonry') | null;
-        id?: string | null;
-        blockName?: string | null;
-        blockType: 'image-gallery';
-      }
-    | {
-        /**
-         * Code snippet title
-         */
-        title?: string | null;
-        language?:
-          | (
-              | 'javascript'
-              | 'typescript'
-              | 'python'
-              | 'java'
-              | 'csharp'
-              | 'php'
-              | 'html'
-              | 'css'
-              | 'sql'
-              | 'json'
-              | 'other'
-            )
-          | null;
-        /**
-         * Code content
-         */
-        code: string;
-        /**
-         * Code explanation or notes
-         */
-        explanation?: {
-          root: {
-            type: string;
-            children: {
-              type: string;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        showLineNumbers?: boolean | null;
-        /**
-         * Comma-separated line numbers to highlight (e.g., 1,3,5-7)
-         */
-        highlightLines?: string | null;
-        id?: string | null;
-        blockName?: string | null;
-        blockType: 'code-snippet';
-      }
-    | {
-        /**
-         * Interactive element title
-         */
-        title?: string | null;
-        elementType: 'quiz' | 'poll' | 'survey' | 'simulation' | 'calculator' | 'drag-drop' | 'embedded-widget';
-        /**
-         * Select quiz to embed
-         */
-        quiz?: (number | null) | Quiz;
-        /**
-         * Embed code for external widget
-         */
-        embedCode?: string | null;
-        /**
-         * Configuration options for the interactive element
-         */
-        configuration?:
-          | {
-              [k: string]: unknown;
-            }
-          | unknown[]
-          | string
-          | number
-          | boolean
-          | null;
-        /**
-         * Instructions for using the interactive element
-         */
-        instructions?: {
-          root: {
-            type: string;
-            children: {
-              type: string;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        id?: string | null;
-        blockName?: string | null;
-        blockType: 'interactive-element';
-      }
-    | {
-        /**
-         * Section title
-         */
-        title?: string | null;
-        files: {
-          file: number | Media;
-          /**
-           * Display title for the file
-           */
-          title?: string | null;
-          /**
-           * File description
-           */
-          description?: string | null;
-          fileType?: ('pdf' | 'doc' | 'excel' | 'ppt' | 'image' | 'video' | 'audio' | 'archive' | 'other') | null;
-          id?: string | null;
-        }[];
-        /**
-         * Require user to be logged in to download
-         */
-        requiresLogin?: boolean | null;
-        id?: string | null;
-        blockName?: string | null;
-        blockType: 'download-files';
-      }
-    | {
-        /**
-         * Assignment title
-         */
-        title: string;
-        /**
-         * Assignment instructions
-         */
-        instructions: {
-          root: {
-            type: string;
-            children: {
-              type: string;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        };
-        /**
-         * Assignment due date
-         */
-        dueDate?: string | null;
-        /**
-         * Maximum points for this assignment
-         */
-        maxPoints?: number | null;
-        submissionType?: ('text' | 'file' | 'both') | null;
-        /**
-         * Allowed file types (e.g., .pdf, .docx, .txt)
-         */
-        allowedFileTypes?: string | null;
-        /**
-         * Maximum file size in MB
-         */
-        maxFileSize?: number | null;
-        /**
-         * Assignment rubric or grading criteria
-         */
-        rubric?: {
-          root: {
-            type: string;
-            children: {
-              type: string;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        id?: string | null;
-        blockName?: string | null;
-        blockType: 'assignment-block';
-      }
-  )[];
-  settings?: {
-    /**
-     * Estimated time to complete in minutes
-     */
-    estimatedDuration?: number | null;
-    difficulty?: ('beginner' | 'intermediate' | 'advanced') | null;
-    /**
-     * Prerequisites for using this template
-     */
-    prerequisites?:
-      | {
-          prerequisite: string;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Tags for categorizing this template
-     */
-    tags?:
-      | {
-          tag: string;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  metadata?: {
-    /**
-     * Template author
-     */
-    author?: (number | null) | User;
-    /**
-     * Template version
-     */
-    version?: string | null;
-    /**
-     * Last updated date
-     */
-    lastUpdated?: string | null;
-    /**
-     * Number of times this template has been used
-     */
-    usageCount?: number | null;
-    /**
-     * Template rating (1-5 stars)
-     */
-    rating?: number | null;
-  };
-  /**
-   * Whether this template is active and available for use
-   */
-  isActive?: boolean | null;
-  /**
-   * Whether this template is publicly available to all users
-   */
-  isPublic?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "enrollments".
  */
 export interface Enrollment {
@@ -2203,7 +1662,7 @@ export interface Enrollment {
   /**
    * Course the student is enrolled in
    */
-  course: number | Course;
+  course: number | Vinprovningar;
   status: 'active' | 'completed' | 'suspended' | 'cancelled' | 'expired' | 'pending';
   enrollmentType: 'paid' | 'free' | 'trial' | 'scholarship' | 'staff' | 'beta';
   /**
@@ -2284,9 +1743,9 @@ export interface Enrollment {
      */
     currentModule?: (number | null) | Module;
     /**
-     * Current lesson being studied
+     * Current content item being studied
      */
-    currentLesson?: (number | null) | Lesson;
+    currentLesson?: (number | null) | ContentItem;
     /**
      * When the course was completed
      */
@@ -2555,7 +2014,7 @@ export interface Transaction {
   /**
    * Related course for course purchases
    */
-  relatedCourse?: (number | null) | Course;
+  relatedCourse?: (number | null) | Vinprovningar;
   /**
    * Information from the payment processor
    */
@@ -2697,7 +2156,7 @@ export interface Subscription {
   /**
    * Courses included with this subscription
    */
-  coursesIncluded?: (number | Course)[] | null;
+  coursesIncluded?: (number | Vinprovningar)[] | null;
   /**
    * Discount percentage for course purchases
    */
@@ -2748,7 +2207,7 @@ export interface Order {
     /**
      * Course being purchased
      */
-    course: number | Course;
+    course: number | Vinprovningar;
     /**
      * Price paid for this course (in SEK)
      */
@@ -2853,7 +2312,7 @@ export interface Order {
 export interface CourseReview {
   id: number;
   title: string;
-  course: number | Course;
+  course: number | Vinprovningar;
   author: number | User;
   rating: number;
   content: {
@@ -3053,16 +2512,16 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
-        relationTo: 'courses';
-        value: number | Course;
+        relationTo: 'vinprovningar';
+        value: number | Vinprovningar;
       } | null)
     | ({
         relationTo: 'modules';
         value: number | Module;
       } | null)
     | ({
-        relationTo: 'lessons';
-        value: number | Lesson;
+        relationTo: 'content-items';
+        value: number | ContentItem;
       } | null)
     | ({
         relationTo: 'user-progress';
@@ -3073,16 +2532,8 @@ export interface PayloadLockedDocument {
         value: number | Question;
       } | null)
     | ({
-        relationTo: 'quizzes';
-        value: number | Quiz;
-      } | null)
-    | ({
         relationTo: 'quiz-attempts';
         value: number | QuizAttempt;
-      } | null)
-    | ({
-        relationTo: 'content-templates';
-        value: number | ContentTemplate;
       } | null)
     | ({
         relationTo: 'enrollments';
@@ -3201,7 +2652,6 @@ export interface PayloadMigration {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
-  uploadedBy?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -3337,9 +2787,9 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "courses_select".
+ * via the `definition` "vinprovningar_select".
  */
-export interface CoursesSelect<T extends boolean = true> {
+export interface VinprovningarSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   description?: T;
@@ -3359,10 +2809,14 @@ export interface CoursesSelect<T extends boolean = true> {
   price?: T;
   level?: T;
   duration?: T;
-  freeItemCount?: T;
   isFeatured?: T;
   instructor?: T;
-  modules?: T;
+  modules?:
+    | T
+    | {
+        module?: T;
+        id?: T;
+      };
   tags?:
     | T
     | {
@@ -3382,34 +2836,22 @@ export interface CoursesSelect<T extends boolean = true> {
 export interface ModulesSelect<T extends boolean = true> {
   title?: T;
   description?: T;
-  order?: T;
-  course?: T;
-  contents?:
+  contentItems?:
     | T
     | {
-        'lesson-item'?:
-          | T
-          | {
-              lesson?: T;
-              id?: T;
-              blockName?: T;
-            };
-        'quiz-item'?:
-          | T
-          | {
-              quiz?: T;
-              id?: T;
-              blockName?: T;
-            };
+        contentItem?: T;
+        isFree?: T;
+        id?: T;
       };
   updatedAt?: T;
   createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "lessons_select".
+ * via the `definition` "content-items_select".
  */
-export interface LessonsSelect<T extends boolean = true> {
+export interface ContentItemsSelect<T extends boolean = true> {
+  contentType?: T;
   title?: T;
   description?: T;
   content?: T;
@@ -3425,11 +2867,31 @@ export interface LessonsSelect<T extends boolean = true> {
       };
   videoUrl?: T;
   sourceVideo?: T;
-  module?: T;
-  order?: T;
   lessonType?: T;
-  hasQuiz?: T;
   answerKeyReview?: T;
+  questions?:
+    | T
+    | {
+        question?: T;
+        required?: T;
+        id?: T;
+      };
+  quizSettings?:
+    | T
+    | {
+        passingScore?: T;
+        randomizeQuestions?: T;
+        randomizeAnswers?: T;
+        showCorrectAnswers?: T;
+      };
+  analytics?:
+    | T
+    | {
+        totalAttempts?: T;
+        averageScore?: T;
+        passRate?: T;
+        averageTimeSpent?: T;
+      };
   status?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3512,6 +2974,7 @@ export interface QuestionsSelect<T extends boolean = true> {
         explanation?: T;
         id?: T;
       };
+  correctAnswerTrueFalse?: T;
   correctAnswer?: T;
   acceptableAnswers?:
     | T
@@ -3522,93 +2985,6 @@ export interface QuestionsSelect<T extends boolean = true> {
       };
   explanation?: T;
   points?: T;
-  difficulty?: T;
-  tags?:
-    | T
-    | {
-        tag?: T;
-        id?: T;
-      };
-  timeLimit?: T;
-  hints?:
-    | T
-    | {
-        hint?: T;
-        order?: T;
-        id?: T;
-      };
-  media?: T;
-  status?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "quizzes_select".
- */
-export interface QuizzesSelect<T extends boolean = true> {
-  title?: T;
-  description?: T;
-  course?: T;
-  module?: T;
-  lesson?: T;
-  questions?:
-    | T
-    | {
-        question?: T;
-        order?: T;
-        required?: T;
-        id?: T;
-      };
-  quizSettings?:
-    | T
-    | {
-        timeLimit?: T;
-        passingScore?: T;
-        maxAttempts?: T;
-        randomizeQuestions?: T;
-        randomizeAnswers?: T;
-        showCorrectAnswers?: T;
-        allowReview?: T;
-        allowBackNavigation?: T;
-      };
-  grading?:
-    | T
-    | {
-        gradingType?: T;
-        pointsDistribution?: T;
-        totalPoints?: T;
-      };
-  availability?:
-    | T
-    | {
-        availableFrom?: T;
-        availableUntil?: T;
-        prerequisites?:
-          | T
-          | {
-              type?: T;
-              item?: T;
-              minScore?: T;
-              id?: T;
-            };
-      };
-  feedback?:
-    | T
-    | {
-        passMessage?: T;
-        failMessage?: T;
-        generalFeedback?: T;
-      };
-  analytics?:
-    | T
-    | {
-        totalAttempts?: T;
-        averageScore?: T;
-        passRate?: T;
-        averageTimeSpent?: T;
-      };
-  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3668,147 +3044,6 @@ export interface QuizAttemptsSelect<T extends boolean = true> {
         flaggedForReview?: T;
         reviewNotes?: T;
       };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "content-templates_select".
- */
-export interface ContentTemplatesSelect<T extends boolean = true> {
-  name?: T;
-  description?: T;
-  type?: T;
-  category?: T;
-  contentBlocks?:
-    | T
-    | {
-        'text-block'?:
-          | T
-          | {
-              title?: T;
-              content?: T;
-              style?: T;
-              id?: T;
-              blockName?: T;
-            };
-        'video-block'?:
-          | T
-          | {
-              title?: T;
-              videoProvider?: T;
-              videoFile?: T;
-              videoUrl?: T;
-              muxPlaybackId?: T;
-              thumbnail?: T;
-              description?: T;
-              duration?: T;
-              autoplay?: T;
-              showControls?: T;
-              id?: T;
-              blockName?: T;
-            };
-        'image-gallery'?:
-          | T
-          | {
-              title?: T;
-              images?:
-                | T
-                | {
-                    image?: T;
-                    caption?: T;
-                    alt?: T;
-                    id?: T;
-                  };
-              layout?: T;
-              id?: T;
-              blockName?: T;
-            };
-        'code-snippet'?:
-          | T
-          | {
-              title?: T;
-              language?: T;
-              code?: T;
-              explanation?: T;
-              showLineNumbers?: T;
-              highlightLines?: T;
-              id?: T;
-              blockName?: T;
-            };
-        'interactive-element'?:
-          | T
-          | {
-              title?: T;
-              elementType?: T;
-              quiz?: T;
-              embedCode?: T;
-              configuration?: T;
-              instructions?: T;
-              id?: T;
-              blockName?: T;
-            };
-        'download-files'?:
-          | T
-          | {
-              title?: T;
-              files?:
-                | T
-                | {
-                    file?: T;
-                    title?: T;
-                    description?: T;
-                    fileType?: T;
-                    id?: T;
-                  };
-              requiresLogin?: T;
-              id?: T;
-              blockName?: T;
-            };
-        'assignment-block'?:
-          | T
-          | {
-              title?: T;
-              instructions?: T;
-              dueDate?: T;
-              maxPoints?: T;
-              submissionType?: T;
-              allowedFileTypes?: T;
-              maxFileSize?: T;
-              rubric?: T;
-              id?: T;
-              blockName?: T;
-            };
-      };
-  settings?:
-    | T
-    | {
-        estimatedDuration?: T;
-        difficulty?: T;
-        prerequisites?:
-          | T
-          | {
-              prerequisite?: T;
-              id?: T;
-            };
-        tags?:
-          | T
-          | {
-              tag?: T;
-              id?: T;
-            };
-      };
-  metadata?:
-    | T
-    | {
-        author?: T;
-        version?: T;
-        lastUpdated?: T;
-        usageCount?: T;
-        rating?: T;
-      };
-  isActive?: T;
-  isPublic?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -4093,8 +3328,8 @@ export interface UserWineListsSelect<T extends boolean = true> {
  * via the `definition` "reviews_select".
  */
 export interface ReviewsSelect<T extends boolean = true> {
+  title?: T;
   wine?: T;
-  lesson?: T;
   user?: T;
   sessionParticipant?: T;
   session?: T;
@@ -4421,7 +3656,7 @@ export interface CourseReferenceBlock {
   /**
    * Select a course to reference in this content
    */
-  course: number | Course;
+  course: number | Vinprovningar;
   /**
    * How this course reference should be displayed
    */

@@ -52,61 +52,156 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'video.asset.ready': {
         const asset = event.data
-        const lessonId = asset.passthrough
+        const passthrough = asset.passthrough
 
-        console.log('✅ Asset ready for lesson:', lessonId)
+        console.log('✅ Asset ready for passthrough:', passthrough)
 
-        if (!lessonId) {
-          console.error('❌ No lesson ID in passthrough')
-          return NextResponse.json({ message: 'No lesson ID provided' }, { status: 400 })
+        if (!passthrough) {
+          console.error('❌ No passthrough ID provided')
+          return NextResponse.json({ message: 'No passthrough ID provided' }, { status: 400 })
         }
 
         try {
-          // Update lesson with ready status and playback ID
-          await payload.update({
-            collection: 'lessons',
-            id: lessonId,
-            data: {
-              muxData: {
-                assetId: asset.id,
-                playbackId: asset.playback_ids?.[0]?.id,
-                status: 'ready',
-                duration: asset.duration,
-                aspectRatio: asset.aspect_ratio,
-              },
-            },
-          })
+          // Check if it's a vinprovning preview or a content item
+          if (passthrough.startsWith('vinprovning-preview-')) {
+            const vinprovningId = passthrough.replace('vinprovning-preview-', '')
+            console.log('📝 Updating vinprovning:', vinprovningId)
+            console.log('📊 Asset data:', JSON.stringify({
+              id: asset.id,
+              playback_ids: asset.playback_ids,
+              status: asset.status,
+              duration: asset.duration,
+              aspect_ratio: asset.aspect_ratio,
+            }, null, 2))
 
-          console.log('✅ Updated lesson with ready status:', lessonId)
+            // First, try to get the current document to see its state
+            try {
+              const currentDoc = await payload.findByID({
+                collection: 'vinprovningar',
+                id: String(vinprovningId),
+              })
+              console.log('📄 Current document state:', {
+                id: currentDoc.id,
+                _status: currentDoc._status,
+                previewMuxData: currentDoc.previewMuxData,
+              })
+            } catch (err) {
+              console.error('❌ Error fetching current document:', err)
+            }
+
+            // Update vinprovning with ready status and playback ID
+            // Try updating both draft and published versions
+            const updateData = {
+              previewMuxData: {
+                assetId: asset.id,
+                playbackId: asset.playback_ids?.[0]?.id || '',
+                status: 'ready',
+                duration: asset.duration || 0,
+                aspectRatio: asset.aspect_ratio || '16:9',
+              },
+            }
+
+            // Update published version
+            try {
+              const updated = await payload.update({
+                collection: 'vinprovningar',
+                id: String(vinprovningId),
+                data: updateData,
+                overrideAccess: true,
+                draft: false,
+              })
+              console.log('✅ Updated published vinprovning with ready status')
+              console.log('📊 Updated previewMuxData:', JSON.stringify(updated.previewMuxData, null, 2))
+            } catch (pubErr) {
+              console.error('❌ Error updating published version:', pubErr)
+            }
+
+            // Also update draft version if it exists
+            try {
+              const updatedDraft = await payload.update({
+                collection: 'vinprovningar',
+                id: String(vinprovningId),
+                data: updateData,
+                overrideAccess: true,
+                draft: true,
+              })
+              console.log('✅ Updated draft vinprovning with ready status')
+              console.log('📊 Updated draft previewMuxData:', JSON.stringify(updatedDraft.previewMuxData, null, 2))
+            } catch (draftErr) {
+              console.log('ℹ️  No draft version to update (or error):', draftErr instanceof Error ? draftErr.message : String(draftErr))
+            }
+          } else {
+            // Assume it's a content item ID (lessons/quizzes are now unified)
+            console.log('📝 Updating content item:', passthrough)
+
+            const updated = await payload.update({
+              collection: 'content-items',
+              id: passthrough,
+              data: {
+                muxData: {
+                  assetId: asset.id,
+                  playbackId: asset.playback_ids?.[0]?.id,
+                  status: 'ready',
+                  duration: asset.duration,
+                  aspectRatio: asset.aspect_ratio,
+                },
+              },
+              overrideAccess: true,
+            })
+
+            console.log('✅ Updated content item with ready status:', passthrough)
+            console.log('📊 Updated muxData:', JSON.stringify(updated.muxData, null, 2))
+          }
         } catch (error) {
-          console.error('❌ Error updating lesson:', error)
-          return NextResponse.json({ message: 'Error updating lesson' }, { status: 500 })
+          console.error('❌ Error updating document:', error)
+          if (error instanceof Error) {
+            console.error('❌ Error message:', error.message)
+            console.error('❌ Error stack:', error.stack)
+          }
+          return NextResponse.json({ message: 'Error updating document', error: String(error) }, { status: 500 })
         }
         break
       }
 
       case 'video.asset.errored': {
         const asset = event.data
-        const lessonId = asset.passthrough
+        const passthrough = asset.passthrough
 
-        console.log('❌ Asset errored for lesson:', lessonId)
+        console.log('❌ Asset errored for passthrough:', passthrough)
 
-        if (lessonId) {
+        if (passthrough) {
           try {
-            await payload.update({
-              collection: 'lessons',
-              id: lessonId,
-              data: {
-                muxData: {
-                  assetId: asset.id,
-                  status: 'errored',
+            if (passthrough.startsWith('vinprovning-preview-')) {
+              const vinprovningId = passthrough.replace('vinprovning-preview-', '')
+              await payload.update({
+                collection: 'vinprovningar',
+                id: vinprovningId,
+                data: {
+                  previewMuxData: {
+                    assetId: asset.id,
+                    status: 'errored',
+                  },
                 },
-              },
-            })
-
-            console.log('✅ Updated lesson with error status:', lessonId)
+                overrideAccess: true,
+              })
+              console.log('✅ Updated vinprovning with error status:', vinprovningId)
+            } else {
+              // Content item (lesson/quiz unified)
+              await payload.update({
+                collection: 'content-items',
+                id: passthrough,
+                data: {
+                  muxData: {
+                    assetId: asset.id,
+                    status: 'errored',
+                  },
+                },
+                overrideAccess: true,
+              })
+              console.log('✅ Updated content item with error status:', passthrough)
+            }
           } catch (error) {
-            console.error('❌ Error updating lesson with error status:', error)
+            console.error('❌ Error updating document with error status:', error)
           }
         }
         break

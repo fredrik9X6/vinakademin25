@@ -3,7 +3,6 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -14,8 +13,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
+import { StarRating } from '@/components/ui/star-rating'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/context/AuthContext'
 import ReviewComparison, { WineReview as ComparisonReview } from './ReviewComparison'
 import { Section, InputRow } from './WineReviewFormHelpers'
 
@@ -33,6 +34,8 @@ type ReviewDoc = {
   reviewText?: any
   wsetTasting?: any
   createdAt?: string
+  user?: number | { id: number }
+  sessionParticipant?: number | { id: number }
 }
 
 export function WineReviewForm({
@@ -42,7 +45,7 @@ export function WineReviewForm({
   onSubmit,
   wineIdProp,
 }: WineReviewFormProps) {
-  const [rating, setRating] = React.useState<number>(3)
+  const [rating, setRating] = React.useState<number>(0)
   const [notes, setNotes] = React.useState<string>('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [submittedReview, setSubmittedReview] = React.useState<ReviewDoc | null>(null)
@@ -83,51 +86,101 @@ export function WineReviewForm({
 
   const [quality, setQuality] = React.useState<string>('')
 
-  
+  // Get current user from auth context
+  const { user } = useAuth()
 
   const fetchAnswerKey = React.useCallback(async () => {
     try {
-      // depth=2 to resolve answerKeyReview.wine
-      const res = await fetch(`/api/lessons/${lessonId}?depth=2`, { credentials: 'include' })
+      // Fetch content-item (lesson) with depth=2 to resolve answerKeyReview.wine
+      const res = await fetch(`/api/content-items/${lessonId}?depth=2`, { credentials: 'include' })
       if (!res.ok) return
       const json = await res.json()
       const key = json?.answerKeyReview
       if (key) {
         setAnswerKey(key)
       }
-      // Prefer wine from answer key, fallback to assignedWine
+      // Prefer wine from answer key, fallback to assignedWine (if it exists)
       let derivedWineId: number | string | null = null
       const keyWine = key?.wine
       if (keyWine) {
         derivedWineId = typeof keyWine === 'object' ? keyWine.id : keyWine
-      } else if (json?.assignedWine) {
-        derivedWineId =
-          typeof json.assignedWine === 'object' ? json.assignedWine.id : json.assignedWine
       }
       if (derivedWineId) setWineId(derivedWineId)
     } catch {}
   }, [lessonId])
 
   const fetchLatestSubmission = React.useCallback(async () => {
+    if (!wineId) return // Can't fetch without wine ID
+    
+    // Only fetch if we have a user (authenticated) or participant ID (guest)
+    if (!user?.id && !participantId) return
+    
     try {
       const params = new URLSearchParams()
-      params.set('where[lesson][equals]', String(lessonId))
+      // Query by wine ID
+      params.set('wine', String(wineId))
+      
+      // Explicitly filter by current user ID if authenticated
+      if (user?.id) {
+        params.set('user', String(user.id))
+      }
+      
+      // If we have a session participant ID, also filter by that
+      // Note: The API route will need to handle sessionParticipant filtering
+      if (participantId && !user?.id) {
+        params.set('sessionParticipant', participantId)
+      }
+      
       params.set('sort', '-createdAt')
       params.set('limit', '5')
+      params.set('depth', '1') // Include wine relationship
+      
       const res = await fetch(`/api/reviews?${params.toString()}`, { credentials: 'include' })
       if (!res.ok) return
       const json = await res.json()
       const docs = json?.docs || []
-      setHistory(docs)
-      const latest = docs[0]
-      if (latest) setSubmittedReview(latest)
+      
+      // Additional client-side filtering for safety:
+      // Filter to only current user's reviews or current participant's reviews
+      const filteredDocs = docs.filter((doc: ReviewDoc) => {
+        // Check if review belongs to current user
+        if (user?.id) {
+          const reviewUserId = typeof doc.user === 'object' ? doc.user.id : doc.user
+          if (reviewUserId === user.id) return true
+        }
+        
+        // Check if review belongs to current session participant
+        if (participantId) {
+          const reviewParticipantId = typeof doc.sessionParticipant === 'object' 
+            ? doc.sessionParticipant.id 
+            : doc.sessionParticipant
+          if (String(reviewParticipantId) === participantId) return true
+        }
+        
+        return false
+      })
+      
+      setHistory(filteredDocs)
+      const latest = filteredDocs[0]
+      if (latest) {
+        setSubmittedReview(latest)
+      } else {
+        // Clear submitted review if no matching review found
+        setSubmittedReview(null)
+      }
     } catch {}
-  }, [lessonId])
+  }, [wineId, user?.id, participantId])
 
   React.useEffect(() => {
     fetchAnswerKey()
-    fetchLatestSubmission()
-  }, [fetchAnswerKey, fetchLatestSubmission])
+  }, [fetchAnswerKey])
+
+  // Fetch latest submission when wineId is available
+  React.useEffect(() => {
+    if (wineId) {
+      fetchLatestSubmission()
+    }
+  }, [wineId, fetchLatestSubmission])
 
   // Function to populate form with existing review data
   const populateFormWithReview = React.useCallback((review: ReviewDoc) => {
@@ -312,7 +365,9 @@ export function WineReviewForm({
     requiredPairs.forEach(([key, val]) => {
       if (!val) newErrors[key] = 'Detta fält är obligatoriskt'
     })
-    if (!(rating >= 1 && rating <= 5)) newErrors['rating'] = 'Betyg måste vara 1–5'
+    if (!rating || rating < 1 || rating > 5) {
+      newErrors['rating'] = 'Välj ett betyg mellan 1–5'
+    }
     if (!primaryAromas || primaryAromas.length === 0)
       newErrors['primaryAromas'] = 'Välj minst en primär arom'
     if (!primaryFlavours || primaryFlavours.length === 0)
@@ -337,7 +392,7 @@ export function WineReviewForm({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          lesson: lessonId,
+          // Note: lesson field removed - content items reference reviews, not the other way around
           wine: wineIdNum,
           rating,
           reviewText: notes,
@@ -525,20 +580,7 @@ export function WineReviewForm({
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Section title="Betyg">
-          <InputRow label="Betyg (1–5)" error={errors['rating']} attemptSubmit={attemptSubmit}>
-            <Input
-              id="rating"
-              type="number"
-              min={1}
-              max={5}
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-            />
-          </InputRow>
-        </Section>
-
+      <form onSubmit={handleSubmit} className="space-y-8">
         <Section title="Utseende">
           <InputRow
             label="Klarhet"
@@ -905,6 +947,23 @@ export function WineReviewForm({
                 ))}
               </SelectContent>
             </Select>
+          </InputRow>
+          <InputRow 
+            label="Betyg" 
+            error={errors['rating']} 
+            attemptSubmit={attemptSubmit}
+          >
+            <div className="p-4 bg-gradient-to-br from-orange-50/30 via-white to-orange-50/10 dark:from-orange-950/10 dark:via-background dark:to-orange-950/5 rounded-lg border border-orange-200 dark:border-orange-800">
+              <StarRating
+                value={rating}
+                onChange={setRating}
+                max={5}
+                size="lg"
+                showLabel={true}
+                error={attemptSubmit && errors['rating'] ? errors['rating'] : undefined}
+                aria-label="Välj betyg från 1 till 5"
+              />
+            </div>
           </InputRow>
           <InputRow label="Sammanfattning/Noteringar" attemptSubmit={attemptSubmit}>
             <Textarea

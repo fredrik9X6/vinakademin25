@@ -1,5 +1,8 @@
-import type { PayloadRequest } from 'payload'
+import type { Access, PayloadRequest } from 'payload'
 import type { User } from '../payload-types'
+
+// Use PayloadCMS v3 Access type for proper type safety
+// This ensures all access functions conform to PayloadCMS v3 API
 
 /**
  * Check if a user is enrolled in a course with active status
@@ -144,8 +147,9 @@ export const hasFreePreviewAccess = async (
 
 /**
  * Access control function for course content
+ * Uses PayloadCMS v3 Access type for proper type safety
  */
-export const courseContentAccess = async ({ req }: { req: PayloadRequest }) => {
+export const courseContentAccess: Access = async ({ req }) => {
   const { user } = req
 
   if (!user) {
@@ -164,8 +168,9 @@ export const courseContentAccess = async ({ req }: { req: PayloadRequest }) => {
 
 /**
  * Access control function for lessons
+ * Uses PayloadCMS v3 Access type for proper type safety
  */
-export const lessonAccess = async ({ req }: { req: PayloadRequest }) => {
+export const lessonAccess: Access = async ({ req }) => {
   const { user } = req
 
   if (!user) {
@@ -184,8 +189,9 @@ export const lessonAccess = async ({ req }: { req: PayloadRequest }) => {
 
 /**
  * Access control function for quizzes
+ * Uses PayloadCMS v3 Access type for proper type safety
  */
-export const quizAccess = async ({ req }: { req: PayloadRequest }) => {
+export const quizAccess: Access = async ({ req }) => {
   const { user } = req
 
   if (!user) {

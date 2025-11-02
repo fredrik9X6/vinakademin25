@@ -4,24 +4,27 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/context/AuthContext'
-import { Loader2, CreditCard } from 'lucide-react'
+import { Loader2, CreditCard, ShieldCheck, Lock, Sparkles } from 'lucide-react'
 import { formatPrice } from '@/lib/stripe'
 import type { Course } from '@/payload-types'
 
 interface SimpleCheckoutProps {
   course: Course
+  discountAmount?: number
   onError?: (error: string) => void
 }
 
-export function SimpleCheckout({ course, onError }: SimpleCheckoutProps) {
+export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCheckoutProps) {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>('')
 
+  const finalPrice = (course.price || 0) - discountAmount
+
   const handleCheckout = async () => {
     if (!user) {
-      setError('Du måste vara inloggad för att köpa kurser')
-      onError?.('Du måste vara inloggad för att köpa kurser')
+      setError('Du måste vara inloggad för att köpa vinprovningar')
+      onError?.('Du måste vara inloggad för att köpa vinprovningar')
       return
     }
 
@@ -70,52 +73,79 @@ export function SimpleCheckout({ course, onError }: SimpleCheckoutProps) {
         </Alert>
       )}
 
-      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 sm:p-4">
-        <div className="flex items-start sm:items-center justify-between mb-2 gap-2">
-          <span className="font-medium text-sm sm:text-base leading-tight">{course.title}</span>
-          <span className="font-bold text-lg sm:text-xl text-orange-500 whitespace-nowrap">
-            {formatPrice(course.price || 0)}
-          </span>
+      {/* Price Display - Single, Prominent */}
+      <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/20 dark:to-orange-900/10 rounded-lg p-4 border-2 border-orange-200 dark:border-orange-800/30">
+        <div className="flex items-baseline justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">Totalt att betala</p>
+            <div className="flex items-baseline gap-2">
+              {discountAmount > 0 && (
+                <span className="text-lg line-through text-muted-foreground">
+                  {formatPrice(course.price || 0)}
+                </span>
+              )}
+              <span className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                {formatPrice(finalPrice)}
+              </span>
+            </div>
+            {discountAmount > 0 && (
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                Du sparar {formatPrice(discountAmount)}!
+              </p>
+            )}
+          </div>
+          <Sparkles className="w-6 h-6 text-orange-500 opacity-60" />
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-          Engångsbetalning • Livstidsåtkomst • 30 dagars pengarna-tillbaka-garanti
-        </p>
       </div>
 
-      <Button onClick={handleCheckout} disabled={isLoading || !user} className="w-full" size="lg">
+      {/* Primary CTA Button */}
+      <Button
+        onClick={handleCheckout}
+        disabled={isLoading || !user}
+        className="w-full h-14 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+        size="lg"
+      >
         {isLoading ? (
           <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
             Skapar betalning...
           </>
         ) : (
           <>
-            <CreditCard className="w-4 h-4 mr-2" />
-            Köp nu för {formatPrice(course.price || 0)}
+            <CreditCard className="w-5 h-5 mr-2" />
+            Köp nu för {formatPrice(finalPrice)}
           </>
         )}
       </Button>
 
-      <div className="text-center space-y-2">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-          <span className="flex items-center">🔒 Säker betalning</span>
-          <span className="flex items-center">💳 Alla kort accepteras</span>
-          <span className="flex items-center">📱 Klarna tillgängligt</span>
+      {/* Trust Indicators */}
+      <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground pt-2">
+        <div className="flex items-center gap-1.5">
+          <Lock className="w-3.5 h-3.5" />
+          <span>Säker betalning</span>
         </div>
-
-        <p className="text-xs text-muted-foreground leading-relaxed px-2 sm:px-0">
-          Du kommer att omdirigeras till Stripe för säker betalning. Genom att fortsätta godkänner
-          du våra{' '}
-          <a href="/villkor" className="underline hover:no-underline">
-            användarvillkor
-          </a>{' '}
-          och{' '}
-          <a href="/integritet" className="underline hover:no-underline">
-            integritetspolicy
-          </a>
-          .
-        </p>
+        <span className="text-border">•</span>
+        <div className="flex items-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>30 dagars garanti</span>
+        </div>
+        <span className="text-border">•</span>
+        <span>Klarna tillgängligt</span>
       </div>
+
+      {/* Legal Text */}
+      <p className="text-xs text-muted-foreground text-center leading-relaxed px-2">
+        Du kommer att omdirigeras till Stripe för säker betalning. Genom att fortsätta godkänner
+        du våra{' '}
+        <a href="/villkor" className="underline hover:text-foreground transition-colors">
+          användarvillkor
+        </a>{' '}
+        och{' '}
+        <a href="/integritet" className="underline hover:text-foreground transition-colors">
+          integritetspolicy
+        </a>
+        .
+      </p>
     </div>
   )
 }

@@ -16,6 +16,8 @@ import {
   Lock,
   Wine,
 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+
 interface LessonProgress {
   lessonId: number
   isCompleted: boolean
@@ -86,6 +88,7 @@ export default function CourseTableOfContents({
   loading = false,
   hideMobileProgress = false,
 }: CourseTableOfContentsProps) {
+  const { user: authUser } = useAuth()
   const getLessonIcon = (lesson: CourseLesson) => {
     // Use lessonType if available, otherwise fall back to detecting from other fields
     const type =
@@ -218,7 +221,8 @@ export default function CourseTableOfContents({
                     const lesson = entry.lesson as CourseLesson
                     const isFree = lesson.isFree || false
                     const isActive = lesson.id === activeLessonId
-                    const canAccess = userHasAccess || isFree
+                    // Allow access if: user has purchased, OR (lesson is free AND user is authenticated)
+                    const canAccess = userHasAccess || (isFree && !!authUser)
                     const progress = getLessonProgress(lesson.id)
                     const isCompleted = progress?.isCompleted || false
 
@@ -274,7 +278,8 @@ export default function CourseTableOfContents({
                   const qIdNum = Number((quiz as any).id)
                   const isActiveQuiz = qIdNum === activeQuizId
                   const isQuizFree = (quiz as any).isFree || false
-                  const canAccessQuiz = userHasAccess || isQuizFree
+                  // Allow access if: user has purchased, OR (quiz is free AND user is authenticated)
+                  const canAccessQuiz = userHasAccess || (isQuizFree && !!authUser)
                   const isQuizCompleted = !!courseProgress?.completedQuizzes?.some(
                     (qid) => Number(qid) === qIdNum,
                   )

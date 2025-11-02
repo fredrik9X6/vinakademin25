@@ -24,6 +24,7 @@ export async function GET(
     const order = await payload.findByID({
       collection: 'orders',
       id: orderId,
+      depth: 0, // Don't populate relationships to get user ID directly
     })
 
     if (!order) {
@@ -31,7 +32,12 @@ export async function GET(
     }
 
     // Check if user owns this order or is admin
-    if (order.user !== user.id && user.role !== 'admin') {
+    // Handle both cases: user field as ID (number) or relationship object
+    const orderUserId = typeof order.user === 'object' && order.user !== null 
+      ? order.user.id 
+      : order.user
+    
+    if (orderUserId !== user.id && user.role !== 'admin') {
       return NextResponse.json({ error: 'Otillåtet' }, { status: 403 })
     }
 

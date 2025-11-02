@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 export const SessionParticipants: CollectionConfig = {
   slug: 'session-participants',
   admin: {
+    group: 'Sessions',
     useAsTitle: 'nickname',
     defaultColumns: ['nickname', 'session', 'joinedAt', 'isActive'],
     description: 'Participants in live course sessions',

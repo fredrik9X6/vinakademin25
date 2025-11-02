@@ -1,35 +1,31 @@
+import type { Access, PayloadRequest } from 'payload'
 import type { User } from '../payload-types'
 
-// Define a simple local type for the access arguments we use
-type SimpleAccessArgs = {
-  req: {
-    user?: User | null // Define the user property we need
-  }
-  id?: string | number // Add id for field-level access
-}
+// Use PayloadCMS v3 Access type for proper type safety
+// This ensures all access functions conform to PayloadCMS v3 API
 
-// Define common role-based predicates using the local type
-export const isAdmin = ({ req }: SimpleAccessArgs): boolean => {
-  const user = req.user // No need for `as User | null` anymore
+// Define common role-based predicates using PayloadCMS v3 Access type
+export const isAdmin = ({ req }: Parameters<Access>[0]): boolean => {
+  const user = req.user
   return Boolean(user?.role === 'admin')
 }
 
-export const isInstructor = ({ req }: SimpleAccessArgs): boolean => {
+export const isInstructor = ({ req }: Parameters<Access>[0]): boolean => {
   const user = req.user
   return Boolean(user?.role === 'instructor')
 }
 
-export const isSubscriber = ({ req }: SimpleAccessArgs): boolean => {
+export const isSubscriber = ({ req }: Parameters<Access>[0]): boolean => {
   const user = req.user
   return Boolean(user?.role === 'subscriber')
 }
 
-export const isActiveUser = ({ req }: SimpleAccessArgs): boolean => {
+export const isActiveUser = ({ req }: Parameters<Access>[0]): boolean => {
   const user = req.user
   return Boolean(user && user.accountStatus === 'active')
 }
 
-export const hasActiveSubscription = ({ req }: SimpleAccessArgs): boolean => {
+export const hasActiveSubscription = ({ req }: Parameters<Access>[0]): boolean => {
   const user = req.user
   return Boolean(
     user &&
@@ -39,21 +35,21 @@ export const hasActiveSubscription = ({ req }: SimpleAccessArgs): boolean => {
   )
 }
 
-export const isAdminOrInstructor = ({ req }: SimpleAccessArgs): boolean => {
+export const isAdminOrInstructor = ({ req }: Parameters<Access>[0]): boolean => {
   const user = req.user
   return Boolean(user && (user.role === 'admin' || user.role === 'instructor'))
 }
 
-// Common access patterns using the local type
-export const adminOnly = ({ req }: SimpleAccessArgs) => {
+// Common access patterns using PayloadCMS v3 Access type
+export const adminOnly: Access = ({ req }) => {
   return isAdmin({ req })
 }
 
-export const adminOrInstructorOnly = ({ req }: SimpleAccessArgs) => {
+export const adminOrInstructorOnly: Access = ({ req }) => {
   return isAdminOrInstructor({ req })
 }
 
-export const adminOrSelf = ({ req }: SimpleAccessArgs) => {
+export const adminOrSelf: Access = ({ req }) => {
   const user = req.user
 
   if (isAdmin({ req })) return true
@@ -68,7 +64,7 @@ export const adminOrSelf = ({ req }: SimpleAccessArgs) => {
     : false
 }
 
-export const subscribersAndAbove = ({ req }: SimpleAccessArgs) => {
+export const subscribersAndAbove: Access = ({ req }) => {
   const user = req.user
 
   if (user?.role === 'admin' || user?.role === 'instructor' || user?.role === 'subscriber') {
@@ -78,12 +74,31 @@ export const subscribersAndAbove = ({ req }: SimpleAccessArgs) => {
   return false
 }
 
-export const anyLoggedIn = ({ req }: SimpleAccessArgs) => {
+export const anyLoggedIn: Access = ({ req }) => {
   const user = req.user
   return Boolean(user)
 }
 
-export const activeSubscribersAndAbove = ({ req }: SimpleAccessArgs) => {
+// Detect Admin UI requests (Payload v3) to allow form-state building
+// Works for both Node/Express headers object and Web Fetch Headers
+export const isAdminUIRequest = (req: PayloadRequest): boolean => {
+  try {
+    const headers = req?.headers
+    if (!headers) return false
+    // Headers can be a plain object or a Fetch Headers instance
+    const getHeader = (name: string) => {
+      if (typeof headers.get === 'function') return headers.get(name)
+      const key = Object.keys(headers).find((k) => k.toLowerCase() === name.toLowerCase())
+      return key ? headers[key] : undefined
+    }
+    const fromHeader = getHeader('x-payload-admin')
+    return Boolean(fromHeader)
+  } catch {
+    return false
+  }
+}
+
+export const activeSubscribersAndAbove: Access = ({ req }) => {
   const user = req.user
 
   if (user?.role === 'admin' || user?.role === 'instructor') {
@@ -101,21 +116,22 @@ export const activeSubscribersAndAbove = ({ req }: SimpleAccessArgs) => {
   return false
 }
 
-// Field-level access control using the local type
-export const adminOrInstructorFieldLevel = ({ req }: SimpleAccessArgs) => {
+// Field-level access control - MUST return boolean only (not query constraints)
+// Field access in PayloadCMS v3 only supports boolean return values
+export const adminOrInstructorFieldLevel = ({ req }: Parameters<Access>[0]): boolean => {
   return isAdminOrInstructor({ req })
 }
 
-export const adminFieldLevel = ({ req }: SimpleAccessArgs) => {
+export const adminFieldLevel = ({ req }: Parameters<Access>[0]): boolean => {
   return isAdmin({ req })
 }
 
-export const selfFieldLevel = ({ req, id }: SimpleAccessArgs) => {
+export const selfFieldLevel = ({ req, id }: Parameters<Access>[0]): boolean => {
   const user = req.user
   // Ensure id is treated as a string/number compatible with user.id
   return Boolean(user && id && String(user.id) === String(id))
 }
 
-export const adminOrSelfFieldLevel = ({ req, id }: SimpleAccessArgs) => {
+export const adminOrSelfFieldLevel = ({ req, id }: Parameters<Access>[0]): boolean => {
   return isAdmin({ req }) || selfFieldLevel({ req, id })
 }
