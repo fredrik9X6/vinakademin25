@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { getSiteURL } from '../lib/site-url'
+import { getSiteURL, getCookieDomain } from '../lib/site-url'
 
 type User = {
   id: string
@@ -10,6 +10,23 @@ type User = {
 
 const SITE_URL = getSiteURL()
 
+// Build cookie config with conditional domain
+const cookieDomain = getCookieDomain()
+const cookieConfig: {
+  secure: boolean
+  sameSite: 'Lax' | 'Strict' | 'None'
+  domain?: string
+} = {
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'Lax', // Use 'Lax' for better security and Cloudflare compatibility (changed from 'None')
+  // Domain is omitted by default to work better with Cloudflare and proxies
+  // Set COOKIE_DOMAIN env var if you need cross-subdomain cookies (e.g., '.vinakademin.se')
+}
+
+if (cookieDomain) {
+  cookieConfig.domain = cookieDomain
+}
+
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
@@ -18,11 +35,7 @@ export const Users: CollectionConfig = {
     defaultColumns: ['email', 'firstName', 'lastName', 'role', 'subscriptionStatus'],
   },
   auth: {
-    cookies: {
-      secure: process.env.NODE_ENV === 'production', // false in dev (HTTP), true in prod (HTTPS)
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 'Lax' for dev (HTTP), 'None' for prod (if needed for cross-domain)
-      domain: process.env.NODE_ENV === 'production' ? '.vinakademin.se' : 'localhost',
-    },
+    cookies: cookieConfig,
     forgotPassword: {
       generateEmailHTML: (args) => {
         const { token, user } = args || {}
