@@ -16,23 +16,45 @@ type Args = {
 const serverFunction: ServerFunctionClient = async function (args) {
   'use server'
   try {
+    // Await config in case it's async (PayloadCMS 3.0 pattern)
+    const resolvedConfig = await config
     return handleServerFunctions({
       ...args,
-      config,
+      config: resolvedConfig,
       importMap,
     })
   } catch (error: any) {
-    // Log error but don't crash - let error boundary handle it
-    console.error('Server function error:', error)
+    // Log full error details for debugging
+    console.error('Server function error:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+      code: error?.code,
+    })
     // Re-throw to let error boundary catch it
     throw error
   }
 }
 
-const Layout = ({ children }: Args) => (
-  <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
-    {children}
-  </RootLayout>
-)
+const Layout = async ({ children }: Args) => {
+  try {
+    // Await config in case it's async (PayloadCMS 3.0 pattern)
+    const resolvedConfig = await config
+    return (
+      <RootLayout config={resolvedConfig} importMap={importMap} serverFunction={serverFunction}>
+        {children}
+      </RootLayout>
+    )
+  } catch (error: any) {
+    // Log full error details for debugging
+    console.error('Layout render error:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+      code: error?.code,
+    })
+    throw error
+  }
+}
 
 export default Layout

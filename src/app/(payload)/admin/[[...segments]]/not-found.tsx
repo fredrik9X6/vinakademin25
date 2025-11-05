@@ -15,10 +15,14 @@ type Args = {
   }>
 }
 
-export const generateMetadata = ({ params, searchParams }: Args): Promise<Metadata> =>
-  generatePageMetadata({ config, params, searchParams })
+export const generateMetadata = async ({ params, searchParams }: Args): Promise<Metadata> => {
+  const resolvedConfig = await config
+  return generatePageMetadata({ config: resolvedConfig, params, searchParams })
+}
 
-const NotFound = ({ params, searchParams }: Args) =>
-  NotFoundPage({ config, params, searchParams, importMap })
+const NotFound = async ({ params, searchParams }: Args) => {
+  const resolvedConfig = await config
+  return NotFoundPage({ config: resolvedConfig, params, searchParams, importMap })
+}
 
 export default NotFound

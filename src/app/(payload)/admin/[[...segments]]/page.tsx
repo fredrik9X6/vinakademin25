@@ -15,15 +15,33 @@ type Args = {
   }>
 }
 
-export const generateMetadata = ({ params, searchParams }: Args): Promise<Metadata> =>
-  generatePageMetadata({ config, params, searchParams })
-
-const Page = ({ params, searchParams }: Args) => {
+export const generateMetadata = async ({ params, searchParams }: Args): Promise<Metadata> => {
   try {
-    return RootPage({ config, params, searchParams, importMap })
+    const resolvedConfig = await config
+    return generatePageMetadata({ config: resolvedConfig, params, searchParams })
   } catch (error: any) {
-    // Log error for debugging
-    console.error('Admin page render error:', error)
+    console.error('generateMetadata error:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+    })
+    throw error
+  }
+}
+
+const Page = async ({ params, searchParams }: Args) => {
+  try {
+    // Await config in case it's async (PayloadCMS 3.0 pattern)
+    const resolvedConfig = await config
+    return RootPage({ config: resolvedConfig, params, searchParams, importMap })
+  } catch (error: any) {
+    // Log full error details for debugging
+    console.error('Admin page render error:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+      code: error?.code,
+    })
     // Re-throw to let error boundary catch it
     throw error
   }

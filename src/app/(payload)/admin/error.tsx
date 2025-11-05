@@ -16,15 +16,28 @@ export default function AdminError({ error, reset }: ErrorProps) {
           An error occurred while loading the admin panel. This is often caused by missing media
           files or configuration issues.
         </p>
-        {process.env.NODE_ENV === 'development' && error.message && (
+        {/* Show error details in production too - helps debugging */}
+        {error.digest && (
           <details className="mb-4">
             <summary className="cursor-pointer text-sm text-gray-500">Error Details</summary>
             <pre className="mt-2 overflow-auto rounded bg-gray-100 p-4 text-xs">
-              {error.message}
-              {error.digest && `\nDigest: ${error.digest}`}
+              Error Digest: {error.digest}
+              {error.message && `\nMessage: ${error.message}`}
+              {error.stack && `\nStack: ${error.stack}`}
             </pre>
           </details>
         )}
+        <div className="mb-4 rounded bg-yellow-50 p-4 text-sm text-yellow-800">
+          <p className="font-semibold">Common causes:</p>
+          <ul className="mt-2 list-inside list-disc space-y-1">
+            <li>Missing S3 environment variables in production</li>
+            <li>Database connection issues</li>
+            <li>Missing environment variables (PAYLOAD_SECRET, etc.)</li>
+          </ul>
+          <p className="mt-2">
+            Check Railway logs for the full error message (digest: {error.digest})
+          </p>
+        </div>
         <div className="flex gap-4">
           <button
             onClick={reset}
