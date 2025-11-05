@@ -16,11 +16,12 @@ type Args = {
 }
 
 export const generateMetadata = async ({ params, searchParams }: Args): Promise<Metadata> => {
-  const resolvedConfig = await config
-  return generatePageMetadata({ config: resolvedConfig, params, searchParams })
+  // generatePageMetadata expects Promise<SanitizedConfig>, not resolved config
+  return generatePageMetadata({ config, params, searchParams })
 }
 
 const NotFound = async ({ params, searchParams }: Args) => {
+  // RootPage expects resolved config
   const resolvedConfig = await config
   return NotFoundPage({ config: resolvedConfig, params, searchParams, importMap })
 }

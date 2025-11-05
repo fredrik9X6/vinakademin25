@@ -17,8 +17,8 @@ type Args = {
 
 export const generateMetadata = async ({ params, searchParams }: Args): Promise<Metadata> => {
   try {
-    const resolvedConfig = await config
-    return generatePageMetadata({ config: resolvedConfig, params, searchParams })
+    // generatePageMetadata expects Promise<SanitizedConfig>, not resolved config
+    return generatePageMetadata({ config, params, searchParams })
   } catch (error: any) {
     console.error('generateMetadata error:', {
       message: error?.message,
@@ -31,7 +31,7 @@ export const generateMetadata = async ({ params, searchParams }: Args): Promise<
 
 const Page = async ({ params, searchParams }: Args) => {
   try {
-    // Await config in case it's async (PayloadCMS 3.0 pattern)
+    // RootPage expects resolved config
     const resolvedConfig = await config
     return RootPage({ config: resolvedConfig, params, searchParams, importMap })
   } catch (error: any) {
