@@ -21,9 +21,8 @@ export const generateMetadata = async ({ params, searchParams }: Args): Promise<
 }
 
 const NotFound = async ({ params, searchParams }: Args) => {
-  // RootPage expects resolved config
-  const resolvedConfig = await config
-  return NotFoundPage({ config: resolvedConfig, params, searchParams, importMap })
+  // NotFoundPage expects Promise<SanitizedConfig>, not resolved config
+  return NotFoundPage({ config, params, searchParams, importMap })
 }
 
 export default NotFound

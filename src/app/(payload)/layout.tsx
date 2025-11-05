@@ -16,11 +16,10 @@ type Args = {
 const serverFunction: ServerFunctionClient = async function (args) {
   'use server'
   try {
-    // Await config in case it's async (PayloadCMS 3.0 pattern)
-    const resolvedConfig = await config
+    // handleServerFunctions expects Promise<SanitizedConfig>, not resolved config
     return handleServerFunctions({
       ...args,
-      config: resolvedConfig,
+      config,
       importMap,
     })
   } catch (error: any) {
@@ -38,10 +37,9 @@ const serverFunction: ServerFunctionClient = async function (args) {
 
 const Layout = async ({ children }: Args) => {
   try {
-    // Await config in case it's async (PayloadCMS 3.0 pattern)
-    const resolvedConfig = await config
+    // RootLayout expects Promise<SanitizedConfig>, not resolved config
     return (
-      <RootLayout config={resolvedConfig} importMap={importMap} serverFunction={serverFunction}>
+      <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
         {children}
       </RootLayout>
     )

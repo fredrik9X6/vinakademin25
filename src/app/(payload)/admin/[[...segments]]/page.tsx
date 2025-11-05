@@ -31,9 +31,8 @@ export const generateMetadata = async ({ params, searchParams }: Args): Promise<
 
 const Page = async ({ params, searchParams }: Args) => {
   try {
-    // RootPage expects resolved config
-    const resolvedConfig = await config
-    return RootPage({ config: resolvedConfig, params, searchParams, importMap })
+    // RootPage expects Promise<SanitizedConfig>, not resolved config
+    return RootPage({ config, params, searchParams, importMap })
   } catch (error: any) {
     // Log full error details for debugging
     console.error('Admin page render error:', {
