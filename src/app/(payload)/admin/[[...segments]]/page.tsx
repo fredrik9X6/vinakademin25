@@ -18,7 +18,15 @@ type Args = {
 export const generateMetadata = ({ params, searchParams }: Args): Promise<Metadata> =>
   generatePageMetadata({ config, params, searchParams })
 
-const Page = ({ params, searchParams }: Args) =>
-  RootPage({ config, params, searchParams, importMap })
+const Page = ({ params, searchParams }: Args) => {
+  try {
+    return RootPage({ config, params, searchParams, importMap })
+  } catch (error: any) {
+    // Log error for debugging
+    console.error('Admin page render error:', error)
+    // Re-throw to let error boundary catch it
+    throw error
+  }
+}
 
 export default Page
