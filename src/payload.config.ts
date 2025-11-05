@@ -44,6 +44,33 @@ const s3Enabled =
   !!process.env.S3_ACCESS_KEY_ID &&
   !!process.env.S3_SECRET_ACCESS_KEY
 
+// Always include S3 storage plugin in config so it's included in import map
+// This ensures the import map is generated even if S3 env vars aren't set during build
+// The plugin will gracefully handle missing credentials at runtime
+const s3StoragePlugin = s3Storage({
+  bucket: (process.env.S3_BUCKET as string) || 'placeholder',
+  collections: {
+    media: {
+      ...(process.env.S3_PREFIX ? { prefix: process.env.S3_PREFIX } : {}),
+      ...(process.env.S3_PUBLIC_URL
+        ? {
+            generateFileURL: ({ filename }: { filename: string }) =>
+              `${process.env.S3_PUBLIC_URL!.replace(/\/$/, '')}/${filename}`,
+          }
+        : {}),
+    },
+  },
+  config: {
+    region: (process.env.S3_REGION as string) || 'auto',
+    endpoint: process.env.S3_ENDPOINT,
+    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
+    credentials: {
+      accessKeyId: (process.env.S3_ACCESS_KEY_ID as string) || 'placeholder',
+      secretAccessKey: (process.env.S3_SECRET_ACCESS_KEY as string) || 'placeholder',
+    },
+  },
+})
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -141,32 +168,8 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    ...(s3Enabled
-      ? [
-          s3Storage({
-            bucket: process.env.S3_BUCKET as string,
-            collections: {
-              media: {
-                ...(process.env.S3_PREFIX ? { prefix: process.env.S3_PREFIX } : {}),
-                ...(process.env.S3_PUBLIC_URL
-                  ? {
-                      generateFileURL: ({ filename }: { filename: string }) =>
-                        `${process.env.S3_PUBLIC_URL!.replace(/\/$/, '')}/${filename}`,
-                    }
-                  : {}),
-              },
-            },
-            config: {
-              region: process.env.S3_REGION,
-              endpoint: process.env.S3_ENDPOINT,
-              forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
-              credentials: {
-                accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
-                secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
-              },
-            },
-          }),
-        ]
-      : []),
+    // Always include S3 storage plugin so it's in the import map
+    // This ensures import map generation works even if S3 env vars aren't set during build
+    s3StoragePlugin,
   ],
 })
