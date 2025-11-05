@@ -31,7 +31,7 @@ async function cleanupMissingMedia() {
       }
     } catch (error: any) {
       if (error?.name === 'NoSuchKey' || error?.code === 'NoSuchKey') {
-        brokenRecords.push(media.id)
+        brokenRecords.push(String(media.id)) // Convert id to string
         console.log(`✗ Broken media ${media.id}: ${media.filename}`)
       }
     }
