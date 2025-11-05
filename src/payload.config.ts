@@ -1,5 +1,3 @@
-
-
 import { s3Storage } from '@payloadcms/storage-s3'
 // storage-adapter-import-placeholder
 import { postgresAdapter } from '@payloadcms/db-postgres'
@@ -44,32 +42,54 @@ const s3Enabled =
   !!process.env.S3_ACCESS_KEY_ID &&
   !!process.env.S3_SECRET_ACCESS_KEY
 
+// Use different prefix for development vs production to avoid conflicts
+// This allows you to test file uploads in dev without affecting production
+const s3Prefix =
+  process.env.S3_PREFIX ||
+  (process.env.NODE_ENV === 'development' ? 'dev' : 'production')
+
 // Always include S3 storage plugin in config so it's included in import map
 // This ensures the import map is generated even if S3 env vars aren't set during build
 // The plugin will gracefully handle missing credentials at runtime
-const s3StoragePlugin = s3Storage({
-  bucket: (process.env.S3_BUCKET as string) || 'placeholder',
-  collections: {
-    media: {
-      ...(process.env.S3_PREFIX ? { prefix: process.env.S3_PREFIX } : {}),
-      ...(process.env.S3_PUBLIC_URL
-        ? {
-            generateFileURL: ({ filename }: { filename: string }) =>
-              `${process.env.S3_PUBLIC_URL!.replace(/\/$/, '')}/${filename}`,
-          }
-        : {}),
-    },
-  },
-  config: {
-    region: (process.env.S3_REGION as string) || 'auto',
-    endpoint: process.env.S3_ENDPOINT,
-    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
-    credentials: {
-      accessKeyId: (process.env.S3_ACCESS_KEY_ID as string) || 'placeholder',
-      secretAccessKey: (process.env.S3_SECRET_ACCESS_KEY as string) || 'placeholder',
-    },
-  },
-})
+// Only create the plugin if S3 is actually enabled, otherwise use a no-op config
+const s3StoragePlugin = s3Enabled
+  ? s3Storage({
+      bucket: process.env.S3_BUCKET as string,
+      collections: {
+        media: {
+          prefix: s3Prefix, // Use dev/production prefix to separate environments
+          ...(process.env.S3_PUBLIC_URL
+            ? {
+                generateFileURL: ({ filename }: { filename: string }) =>
+                  `${process.env.S3_PUBLIC_URL!.replace(/\/$/, '')}/${filename}`,
+              }
+            : {}),
+        },
+      },
+      config: {
+        region: process.env.S3_REGION,
+        endpoint: process.env.S3_ENDPOINT,
+        forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
+        },
+      },
+    })
+  : // When S3 is disabled, still include plugin for import map, but with minimal config
+    s3Storage({
+      bucket: 'placeholder',
+      collections: {
+        media: {},
+      },
+      config: {
+        region: 'auto',
+        credentials: {
+          accessKeyId: 'placeholder',
+          secretAccessKey: 'placeholder',
+        },
+      },
+    })
 
 export default buildConfig({
   admin: {
