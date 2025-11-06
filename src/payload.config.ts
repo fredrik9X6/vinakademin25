@@ -90,46 +90,17 @@ const s3StoragePlugin = s3Enabled
       },
     })
 
-// Log config initialization for debugging
-console.log('=== PAYLOAD CONFIG INITIALIZATION ===')
-console.log('NODE_ENV:', process.env.NODE_ENV)
-console.log('DATABASE_URI set:', !!process.env.DATABASE_URI)
-console.log('DATABASE_URL set:', !!process.env.DATABASE_URL)
-console.log('POSTGRES_URL set:', !!process.env.POSTGRES_URL)
-console.log('PAYLOAD_SECRET set:', !!process.env.PAYLOAD_SECRET)
-console.log('S3 enabled:', s3Enabled)
-console.log('S3 prefix:', s3Prefix)
-console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL)
-console.log('PAYLOAD_PUBLIC_SERVER_URL:', process.env.PAYLOAD_PUBLIC_SERVER_URL)
-console.log('=====================================')
-
+// Database connection string - use placeholder during build when env vars aren't available
 const databaseConnectionString =
   process.env.DATABASE_URI ||
   process.env.DATABASE_URL ||
   process.env.POSTGRES_URL ||
   process.env.POSTGRES_PRISMA_URL ||
   process.env.POSTGRES_URL_NON_POOLING ||
-  // Use placeholder for build time when env vars aren't available
   'postgresql://placeholder:placeholder@localhost:5432/placeholder'
 
-const isProductionBuild = process.env.NODE_ENV === undefined && !process.env.DATABASE_URI
-
-if (isProductionBuild) {
-  console.log('⚠️  Build mode detected: Using placeholder database connection')
-  console.log('⚠️  Database will be connected at runtime with actual credentials')
-} else {
-  console.log('✓ Database connection string found (length:', databaseConnectionString.length, ')')
-}
-
+// Payload secret - use placeholder during build
 const payloadSecret = process.env.PAYLOAD_SECRET || 'development-secret-change-in-production'
-
-if (!process.env.PAYLOAD_SECRET && !isProductionBuild) {
-  console.warn('⚠️  WARNING: Using default PAYLOAD_SECRET in development. Set PAYLOAD_SECRET in production!')
-} else if (process.env.PAYLOAD_SECRET) {
-  console.log('✓ PAYLOAD_SECRET found (length:', process.env.PAYLOAD_SECRET.length, ')')
-}
-
-console.log('✓ Starting buildConfig...')
 
 export default buildConfig({
   admin: {
@@ -161,11 +132,6 @@ export default buildConfig({
     //     },
     //   ],
     // },
-  },
-  // Log environment for debugging
-  onInit: async (payload) => {
-    console.log('✓ Payload initialized successfully')
-    console.log('✓ Collections:', Object.keys(payload.config.collections))
   },
   cors: [
     'http://localhost:3000',
@@ -232,5 +198,3 @@ export default buildConfig({
     s3StoragePlugin,
   ],
 })
-
-console.log('✓ Payload config built successfully')
