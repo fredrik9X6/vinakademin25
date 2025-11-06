@@ -45,8 +45,7 @@ const s3Enabled =
 // Use different prefix for development vs production to avoid conflicts
 // This allows you to test file uploads in dev without affecting production
 const s3Prefix =
-  process.env.S3_PREFIX ||
-  (process.env.NODE_ENV === 'development' ? 'dev' : 'production')
+  process.env.S3_PREFIX || (process.env.NODE_ENV === 'development' ? 'dev' : 'production')
 
 // Always include S3 storage plugin in config so it's included in import map
 // This ensures the import map is generated even if S3 env vars aren't set during build
@@ -91,6 +90,45 @@ const s3StoragePlugin = s3Enabled
       },
     })
 
+// Log config initialization for debugging
+console.log('=== PAYLOAD CONFIG INITIALIZATION ===')
+console.log('NODE_ENV:', process.env.NODE_ENV)
+console.log('DATABASE_URI set:', !!process.env.DATABASE_URI)
+console.log('DATABASE_URL set:', !!process.env.DATABASE_URL)
+console.log('POSTGRES_URL set:', !!process.env.POSTGRES_URL)
+console.log('PAYLOAD_SECRET set:', !!process.env.PAYLOAD_SECRET)
+console.log('S3 enabled:', s3Enabled)
+console.log('S3 prefix:', s3Prefix)
+console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL)
+console.log('PAYLOAD_PUBLIC_SERVER_URL:', process.env.PAYLOAD_PUBLIC_SERVER_URL)
+console.log('=====================================')
+
+const databaseConnectionString =
+  process.env.DATABASE_URI ||
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  ''
+
+if (!databaseConnectionString) {
+  console.error('❌ CRITICAL: No database connection string found!')
+  console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('DATABASE') || k.includes('POSTGRES')))
+  throw new Error(
+    'Database connection string is required. Please set DATABASE_URI, DATABASE_URL, or POSTGRES_URL environment variable.',
+  )
+}
+
+console.log('✓ Database connection string found (length:', databaseConnectionString.length, ')')
+
+if (!process.env.PAYLOAD_SECRET) {
+  console.error('❌ CRITICAL: PAYLOAD_SECRET not set!')
+  throw new Error('PAYLOAD_SECRET environment variable is required.')
+}
+
+console.log('✓ PAYLOAD_SECRET found (length:', process.env.PAYLOAD_SECRET.length, ')')
+console.log('✓ Starting buildConfig...')
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -121,6 +159,11 @@ export default buildConfig({
     //     },
     //   ],
     // },
+  },
+  // Log environment for debugging
+  onInit: async (payload) => {
+    console.log('✓ Payload initialized successfully')
+    console.log('✓ Collections:', Object.keys(payload.config.collections))
   },
   cors: [
     'http://localhost:3000',
@@ -177,13 +220,7 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString:
-        process.env.DATABASE_URI ||
-        process.env.DATABASE_URL ||
-        process.env.POSTGRES_URL ||
-        process.env.POSTGRES_PRISMA_URL ||
-        process.env.POSTGRES_URL_NON_POOLING ||
-        '',
+      connectionString: databaseConnectionString,
     },
   }),
   sharp,
@@ -193,3 +230,5 @@ export default buildConfig({
     s3StoragePlugin,
   ],
 })
+
+console.log('✓ Payload config built successfully')

@@ -78,5 +78,13 @@ export const WineList: Block = {
         description: 'Optional description or instructions for purchasing these wines',
       },
     },
+    {
+      name: 'shoppingListUrl',
+      type: 'text',
+      label: 'Shopping List URL',
+      admin: {
+        description: 'Link to a shopping list or basket where users can buy all the wines (e.g., Systembolaget shopping list)',
+      },
+    },
   ],
 }

@@ -175,6 +175,7 @@ export interface Media {
    * Optional caption text to display with the media
    */
   caption?: string | null;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -2652,6 +2653,7 @@ export interface PayloadMigration {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -3565,6 +3567,10 @@ export interface WineListBlock {
    * Optional description or instructions for purchasing these wines
    */
   description?: string | null;
+  /**
+   * Link to a shopping list or basket where users can buy all the wines (e.g., Systembolaget shopping list)
+   */
+  shoppingListUrl?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'wine-list';

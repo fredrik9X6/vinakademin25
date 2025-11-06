@@ -16,6 +16,7 @@ interface WineListBlockProps {
   showImages?: boolean
   showTotalPrice?: boolean
   description?: string
+  shoppingListUrl?: string
 }
 
 export function WineListBlock({
@@ -26,6 +27,7 @@ export function WineListBlock({
   showImages = true,
   showTotalPrice = true,
   description,
+  shoppingListUrl,
 }: WineListBlockProps) {
   // Format price with Swedish currency
   const formatPrice = (price: number) => {
@@ -143,6 +145,20 @@ export function WineListBlock({
               )
             })}
           </div>
+          {shoppingListUrl && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <Button
+                asChild
+                className="w-full sm:w-auto"
+              >
+                <a href={shoppingListUrl} target="_blank" rel="noopener noreferrer">
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Till Systembolaget
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     )
@@ -277,6 +293,21 @@ export function WineListBlock({
             )
           })}
         </div>
+
+        {shoppingListUrl && (
+          <div className="mt-8 flex justify-center">
+            <Button
+              asChild
+              size="lg"
+            >
+              <a href={shoppingListUrl} target="_blank" rel="noopener noreferrer">
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                Till Systembolaget
+                <ExternalLink className="ml-2 h-5 w-5" />
+              </a>
+            </Button>
+          </div>
+        )}
       </div>
     )
   }
@@ -454,6 +485,21 @@ export function WineListBlock({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {shoppingListUrl && (
+        <div className="mt-6 flex justify-center">
+          <Button
+            asChild
+            size="lg"
+          >
+            <a href={shoppingListUrl} target="_blank" rel="noopener noreferrer">
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              Till Systembolaget
+              <ExternalLink className="ml-2 h-5 w-5" />
+            </a>
+          </Button>
+        </div>
       )}
     </div>
   )

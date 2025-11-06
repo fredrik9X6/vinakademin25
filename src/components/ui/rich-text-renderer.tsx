@@ -131,6 +131,7 @@ export function RichTextRenderer({ content, className = '' }: RichTextProps) {
               showImages={fields.showImages}
               showTotalPrice={fields.showTotalPrice}
               description={fields.description}
+              shoppingListUrl={fields.shoppingListUrl}
             />
           </div>
         )
