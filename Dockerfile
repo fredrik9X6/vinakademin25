@@ -66,10 +66,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE 3000
+# Railway uses PORT env var (typically 8080), but EXPOSE needs a literal number
+# Railway will set PORT=8080 automatically, so expose that port
+EXPOSE 8080
 
-ENV PORT 3000
+# Use PORT env var if set, otherwise default to 8080 for Railway
+ENV PORT=8080
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
+# Use 0.0.0.0 to bind to all interfaces (required for Railway)
 CMD HOSTNAME="0.0.0.0" node server.js
