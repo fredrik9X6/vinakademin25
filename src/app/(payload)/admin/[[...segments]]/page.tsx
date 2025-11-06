@@ -34,12 +34,12 @@ export const generateMetadata = async ({ params, searchParams }: Args): Promise<
   try {
     logEnvironment()
     console.log('generateMetadata: Starting')
-    
+
     // Test if config can be awaited
     const resolvedConfig = await config
     console.log('generateMetadata: Config resolved successfully')
     console.log('generateMetadata: DB adapter:', resolvedConfig.db?.defaultIDType)
-    
+
     // generatePageMetadata expects Promise<SanitizedConfig>, not resolved config
     return generatePageMetadata({ config, params, searchParams })
   } catch (error: any) {
@@ -58,12 +58,12 @@ const Page = async ({ params, searchParams }: Args) => {
   try {
     logEnvironment()
     console.log('Page: Starting render')
-    
+
     // Test if config can be awaited
     const resolvedConfig = await config
     console.log('Page: Config resolved successfully')
     console.log('Page: Collections:', Object.keys(resolvedConfig.collections || {}))
-    
+
     // RootPage expects Promise<SanitizedConfig>, not resolved config
     console.log('Page: Calling RootPage')
     const result = await RootPage({ config, params, searchParams, importMap })
