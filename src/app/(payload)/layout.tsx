@@ -15,15 +15,36 @@ type Args = {
 
 const serverFunction: ServerFunctionClient = async function (args) {
   'use server'
-  return handleServerFunctions({
-    ...args,
-    config,
-    importMap,
-  })
+  try {
+    return await handleServerFunctions({
+      ...args,
+      config,
+      importMap,
+    })
+  } catch (error: any) {
+    console.error('❌ serverFunction error:', {
+      message: error?.message,
+      digest: error?.digest,
+      stack: error?.stack?.split('\n').slice(0, 3).join('\n'),
+    })
+    throw error
+  }
 }
 
 const Layout = async ({ children }: Args) => {
-  return RootLayout({ config, importMap, serverFunction, children })
+  try {
+    console.log('🔍 Admin layout render starting...')
+    const result = await RootLayout({ config, importMap, serverFunction, children })
+    console.log('✅ Admin layout render successful')
+    return result
+  } catch (error: any) {
+    console.error('❌ Admin layout error:', {
+      message: error?.message,
+      digest: error?.digest,
+      stack: error?.stack?.split('\n').slice(0, 5).join('\n'),
+    })
+    throw error
+  }
 }
 
 export default Layout

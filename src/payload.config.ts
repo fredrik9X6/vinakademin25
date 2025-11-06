@@ -102,6 +102,14 @@ const databaseConnectionString =
 // Payload secret - use placeholder during build
 const payloadSecret = process.env.PAYLOAD_SECRET || 'development-secret-change-in-production'
 
+// Log critical config values in production (only once at startup)
+if (process.env.NODE_ENV === 'production') {
+  console.log('🔍 Payload Config Check:')
+  console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? '✅ Set' : '❌ Missing')
+  console.log('  - PAYLOAD_SECRET:', process.env.PAYLOAD_SECRET ? '✅ Set' : '❌ Missing')
+  console.log('  - PAYLOAD_PUBLIC_SERVER_URL:', process.env.PAYLOAD_PUBLIC_SERVER_URL || '❌ Not set')
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,

@@ -16,11 +16,41 @@ type Args = {
 }
 
 export const generateMetadata = async ({ params, searchParams }: Args): Promise<Metadata> => {
-  return generatePageMetadata({ config, params, searchParams })
+  try {
+    return await generatePageMetadata({ config, params, searchParams })
+  } catch (error: any) {
+    console.error('❌ generateMetadata error:', {
+      message: error?.message,
+      digest: error?.digest,
+      name: error?.name,
+      stack: error?.stack?.split('\n').slice(0, 5).join('\n'),
+    })
+    throw error
+  }
 }
 
 const Page = async ({ params, searchParams }: Args) => {
-  return RootPage({ config, params, searchParams, importMap })
+  try {
+    console.log('🔍 Admin page render starting...')
+    const result = await RootPage({ config, params, searchParams, importMap })
+    console.log('✅ Admin page render successful')
+    return result
+  } catch (error: any) {
+    // Don't log NEXT_REDIRECT as error - it's expected
+    if (error?.message === 'NEXT_REDIRECT' || error?.digest?.includes('NEXT_REDIRECT')) {
+      console.log('🔀 Redirecting (expected):', error?.digest)
+      throw error
+    }
+    
+    console.error('❌ Admin page render error:', {
+      message: error?.message,
+      digest: error?.digest,
+      name: error?.name,
+      code: error?.code,
+      stack: error?.stack?.split('\n').slice(0, 5).join('\n'),
+    })
+    throw error
+  }
 }
 
 export default Page
