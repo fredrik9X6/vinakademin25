@@ -102,12 +102,26 @@ const databaseConnectionString =
 // Payload secret - use placeholder during build
 const payloadSecret = process.env.PAYLOAD_SECRET || 'development-secret-change-in-production'
 
+// Normalize PAYLOAD_PUBLIC_SERVER_URL to always include protocol
+// PayloadCMS requires a full URL with protocol, but Railway might not include it
+const normalizeServerURL = (url: string | undefined): string | undefined => {
+  if (!url) return undefined
+  // If it already has a protocol, return as-is
+  if (/^https?:\/\//i.test(url)) return url
+  // Otherwise, add https:// (Railway uses HTTPS)
+  return `https://${url}`
+}
+
+const payloadPublicServerURL = normalizeServerURL(process.env.PAYLOAD_PUBLIC_SERVER_URL)
+const nextPublicSiteURL = normalizeServerURL(process.env.NEXT_PUBLIC_SITE_URL)
+
 // Log critical config values in production (only once at startup)
 if (process.env.NODE_ENV === 'production') {
   console.log('🔍 Payload Config Check:')
   console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? '✅ Set' : '❌ Missing')
   console.log('  - PAYLOAD_SECRET:', process.env.PAYLOAD_SECRET ? '✅ Set' : '❌ Missing')
-  console.log('  - PAYLOAD_PUBLIC_SERVER_URL:', process.env.PAYLOAD_PUBLIC_SERVER_URL || '❌ Not set')
+  console.log('  - PAYLOAD_PUBLIC_SERVER_URL:', payloadPublicServerURL || '❌ Not set')
+  console.log('  - NEXT_PUBLIC_SITE_URL:', nextPublicSiteURL || '❌ Not set')
 }
 
 export default buildConfig({
@@ -146,16 +160,16 @@ export default buildConfig({
     'http://localhost:3002',
     'https://www.vinakademin.se',
     'https://vinakademin25-production.up.railway.app',
-    ...(process.env.PAYLOAD_PUBLIC_SERVER_URL ? [process.env.PAYLOAD_PUBLIC_SERVER_URL] : []),
-    ...(process.env.NEXT_PUBLIC_SITE_URL ? [process.env.NEXT_PUBLIC_SITE_URL] : []),
+    ...(payloadPublicServerURL ? [payloadPublicServerURL] : []),
+    ...(nextPublicSiteURL ? [nextPublicSiteURL] : []),
   ],
   csrf: [
     'http://localhost:3000',
     'http://localhost:3002',
     'https://www.vinakademin.se',
     'https://vinakademin25-production.up.railway.app',
-    ...(process.env.PAYLOAD_PUBLIC_SERVER_URL ? [process.env.PAYLOAD_PUBLIC_SERVER_URL] : []),
-    ...(process.env.NEXT_PUBLIC_SITE_URL ? [process.env.NEXT_PUBLIC_SITE_URL] : []),
+    ...(payloadPublicServerURL ? [payloadPublicServerURL] : []),
+    ...(nextPublicSiteURL ? [nextPublicSiteURL] : []),
   ],
   email: resendAdapter({
     defaultFromAddress: 'noreply@dineonline.se',
@@ -191,6 +205,9 @@ export default buildConfig({
   ],
   editor: lexicalEditor(),
   secret: payloadSecret,
+  // Set serverURL explicitly so PayloadCMS can generate proper URLs
+  // This fixes "Invalid URL" errors when PAYLOAD_PUBLIC_SERVER_URL lacks protocol
+  ...(payloadPublicServerURL ? { serverURL: payloadPublicServerURL } : {}),
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
