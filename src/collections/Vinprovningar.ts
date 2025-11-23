@@ -33,11 +33,11 @@ export const Vinprovningar: CollectionConfig = {
     },
   },
   access: {
-    // Bare minimum access control
-    read: ({ req }) => {
+    // Access control that handles both form building and authenticated operations
+    read: ({ req, id }) => {
       // Admin/instructor can read all
       if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
-      // Allow form building (no user context)
+      // Allow form building (no user context) - Access Operation or form state building
       if (!req.user) return true
       // Public can read published
       return {
@@ -45,15 +45,24 @@ export const Vinprovningar: CollectionConfig = {
       }
     },
     create: ({ req }) => {
-      // Allow form building (no user context)
+      // Allow form building (no user context) - Access Operation or form state building
       if (!req.user) return true
       return req.user?.role === 'admin' || req.user?.role === 'instructor'
     },
     // Allow update for form building - security handled in hooks
     update: () => true,
-    delete: ({ req }) => req.user?.role === 'admin',
+    delete: ({ req }) => {
+      // Only admins can delete, but allow Access Operation check (no user = false is OK)
+      return req.user?.role === 'admin' || false
+    },
     readVersions: ({ req }) => {
-      // Allow form building (no user context)
+      // Allow form building (no user context) - Access Operation or form state building
+      if (!req.user) return true
+      return req.user?.role === 'admin' || req.user?.role === 'instructor'
+    },
+    readDrafts: ({ req }) => {
+      // Allow form building (no user context) - Access Operation or form state building
+      // Required for draft publishing and form state building
       if (!req.user) return true
       return req.user?.role === 'admin' || req.user?.role === 'instructor'
     },
