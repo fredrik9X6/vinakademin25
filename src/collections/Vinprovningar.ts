@@ -79,6 +79,11 @@ export const Vinprovningar: CollectionConfig = {
           return data
         }
         
+        // Log publish operations for debugging
+        if (operation === 'update' && data._status === 'published') {
+          req.payload.logger.info(`📝 Publishing wine tasting: ${data.id || 'new'}`)
+        }
+        
         // If user exists, validate role
         if (req.user.role !== 'admin' && req.user.role !== 'instructor') {
           throw new Error('Only admins and instructors can save wine tastings')
