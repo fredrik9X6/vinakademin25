@@ -195,39 +195,42 @@ export const Vinprovningar: CollectionConfig = {
         // 3. Price/title/description changed (to update Stripe product)
         // Only sync when document is published (not draft) to avoid validation issues during editing
         if (doc.price && doc.price > 0 && doc._status === 'published') {
-          try {
-            // Check if we should sync
-            const shouldSync =
-              operation === 'create' ||
-              !doc.stripeProductId ||
-              !doc.stripePriceId ||
-              (operation === 'update' &&
-                previousDoc &&
-                (doc.price !== previousDoc.price ||
-                  doc.title !== previousDoc.title ||
-                  doc.description !== previousDoc.description))
+          // Check if we should sync
+          const shouldSync =
+            operation === 'create' ||
+            !doc.stripeProductId ||
+            !doc.stripePriceId ||
+            (operation === 'update' &&
+              previousDoc &&
+              (doc.price !== previousDoc.price ||
+                doc.title !== previousDoc.title ||
+                doc.description !== previousDoc.description))
 
-            if (shouldSync) {
-              payload.logger.info(`Syncing wine tasting ${doc.id} with Stripe...`)
-              payload.logger.info(`Wine tasting data: title="${doc.title}", price=${doc.price}`)
-              
-              // Pass doc directly to avoid race conditions with database reads
-              const { productId, priceId } = await syncCourseWithStripe(String(doc.id), doc)
-              payload.logger.info(`Wine tasting ${doc.id} synced with Stripe:`, {
-                productId,
-                priceId,
-              })
-
-              // Note: syncCourseWithStripe already updates the document with Stripe IDs
-              // No need to update again here to avoid double updates
-            }
-          } catch (error: any) {
-            payload.logger.error(`Error syncing wine tasting ${doc.id} with Stripe:`, error)
-            if (error instanceof Error) {
-              payload.logger.error(`Error message: ${error.message}`)
-              payload.logger.error(`Error stack: ${error.stack}`)
-            }
-            // Don't throw - allow wine tasting creation to continue even if Stripe sync fails
+          if (shouldSync) {
+            payload.logger.info(`Syncing wine tasting ${doc.id} with Stripe...`)
+            payload.logger.info(`Wine tasting data: title="${doc.title}", price=${doc.price}`)
+            
+            // IMPORTANT: Run Stripe sync asynchronously to avoid blocking the database transaction
+            // This prevents idle-in-transaction timeout errors with Neon/Postgres
+            // The sync will complete in the background after the main save finishes
+            const docId = String(doc.id)
+            const docData = { ...doc } // Clone doc data since it may be garbage collected
+            
+            setImmediate(async () => {
+              try {
+                const { productId, priceId } = await syncCourseWithStripe(docId, docData)
+                payload.logger.info(`Wine tasting ${docId} synced with Stripe:`, {
+                  productId,
+                  priceId,
+                })
+              } catch (error: any) {
+                payload.logger.error(`Error syncing wine tasting ${docId} with Stripe:`, error)
+                if (error instanceof Error) {
+                  payload.logger.error(`Error message: ${error.message}`)
+                  payload.logger.error(`Error stack: ${error.stack}`)
+                }
+              }
+            })
           }
         }
 

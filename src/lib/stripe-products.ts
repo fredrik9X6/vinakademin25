@@ -183,17 +183,44 @@ export async function syncCourseWithStripe(
   })
 
   // Update course in PayloadCMS with Stripe IDs
-  // Use overrideAccess to bypass access control and only update the Stripe fields
-  // Fetch fresh to avoid validation issues with incomplete module data
-  await payload.update({
-    collection: 'vinprovningar',
-    id: courseId,
-    data: {
-      stripeProductId: product.id,
-      stripePriceId: price.id,
-    },
-    overrideAccess: true, // Bypass access control since this is a system operation
-  })
+  // Use overrideAccess to bypass access control
+  // Fetch fresh document first, then update with merged data to avoid validation issues
+  try {
+    // First, fetch the complete document to ensure we have all required fields
+    const existingDoc = await payload.findByID({
+      collection: 'vinprovningar',
+      id: courseId,
+      overrideAccess: true,
+      depth: 0, // Don't populate relationships to avoid serialization issues
+    })
+
+    if (!existingDoc) {
+      console.error(`Could not find course ${courseId} to update Stripe IDs`)
+      return { productId: product.id, priceId: price.id }
+    }
+
+    // Update with the Stripe IDs
+    await payload.update({
+      collection: 'vinprovningar',
+      id: courseId,
+      data: {
+        stripeProductId: product.id,
+        stripePriceId: price.id,
+      },
+      overrideAccess: true,
+      // Don't use draft: true as we want to update the published version
+    })
+    
+    console.log(`Successfully updated course ${courseId} with Stripe IDs`)
+  } catch (updateError: any) {
+    // Log the error but don't throw - Stripe product/price were created successfully
+    // The IDs will be synced on next save, or can be manually added
+    console.error(`Failed to save Stripe IDs to course ${courseId}:`, updateError.message)
+    console.log(`Stripe Product ID: ${product.id}`)
+    console.log(`Stripe Price ID: ${price.id}`)
+    console.log('These IDs were created successfully in Stripe but could not be saved to the database.')
+    console.log('They will be synced on next course update, or can be manually added in the admin panel.')
+  }
 
   return {
     productId: product.id,
