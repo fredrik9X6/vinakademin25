@@ -5,10 +5,16 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider } from 'posthog-js/react'
 
+// Track if PostHog has been initialized
+let posthogInitialized = false
+
 // Initialize PostHog
 if (typeof window !== 'undefined') {
   const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
   const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.posthog.com'
+
+  console.log('[Analytics] PostHog Key present:', !!posthogKey)
+  console.log('[Analytics] PostHog Host:', posthogHost)
 
   if (posthogKey) {
     posthog.init(posthogKey, {
@@ -17,15 +23,23 @@ if (typeof window !== 'undefined') {
       capture_pageview: false,
       // Capture pageleaves for better session tracking
       capture_pageleave: true,
-      // Enable session recording (can be disabled if not needed)
+      // Enable session recording
       disable_session_recording: false,
-      // Respect Do Not Track
-      respect_dnt: true,
+      // Don't respect DNT for now (can enable later)
+      respect_dnt: false,
       // Persistence
       persistence: 'localStorage+cookie',
-      // Bootstrap with feature flags if needed
-      bootstrap: {},
+      // Debug mode in development
+      loaded: (posthog) => {
+        if (process.env.NODE_ENV === 'development') {
+          posthog.debug()
+        }
+        console.log('[Analytics] PostHog initialized successfully')
+        posthogInitialized = true
+      },
     })
+  } else {
+    console.warn('[Analytics] PostHog key not found - events will not be tracked')
   }
 }
 
@@ -124,12 +138,20 @@ export function trackEvent(
   eventName: string,
   properties?: Record<string, any>
 ) {
+  console.log('[Analytics] Tracking event:', eventName, properties)
+  
   // Track in PostHog
-  posthog.capture(eventName, properties)
+  if (posthogInitialized) {
+    posthog.capture(eventName, properties)
+    console.log('[Analytics] Event sent to PostHog')
+  } else {
+    console.warn('[Analytics] PostHog not initialized - event not sent')
+  }
 
   // Track in Google Analytics
   if (typeof window !== 'undefined' && (window as any).gtag) {
     ;(window as any).gtag('event', eventName, properties)
+    console.log('[Analytics] Event sent to Google Analytics')
   }
 }
 
