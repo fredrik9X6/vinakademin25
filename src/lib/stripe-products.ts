@@ -73,30 +73,58 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 
 /**
  * Sync a PayloadCMS course with Stripe product
+ * @param courseId - The ID of the course to sync
+ * @param courseData - Optional course data to use directly (avoids re-fetching from DB)
  */
-export async function syncCourseWithStripe(courseId: string): Promise<{
+export async function syncCourseWithStripe(
+  courseId: string,
+  courseData?: Partial<Vinprovningar>
+): Promise<{
   productId: string
   priceId: string
 }> {
   const payload = await getPayload({ config })
 
-  // Fetch course from PayloadCMS with overrideAccess to bypass access control
-  const course = (await payload.findByID({
-    collection: 'vinprovningar',
-    id: courseId,
-    overrideAccess: true, // Bypass access control
-  })) as Vinprovningar
+  let course: Vinprovningar
 
-  if (!course) {
-    throw new Error(`Course with ID ${courseId} not found`)
+  if (courseData?.title && courseData?.price !== undefined) {
+    // Use provided course data directly (avoids race conditions with DB)
+    course = courseData as Vinprovningar
+    console.log(`Using provided course data for Stripe sync: title="${course.title}"`)
+  } else {
+    // Fetch course from PayloadCMS with overrideAccess to bypass access control
+    // Use draft: false to ensure we get the published version with all fields
+    course = (await payload.findByID({
+      collection: 'vinprovningar',
+      id: courseId,
+      overrideAccess: true, // Bypass access control
+      draft: false, // Get the published version, not draft
+    })) as Vinprovningar
+
+    if (!course) {
+      throw new Error(`Course with ID ${courseId} not found`)
+    }
+
+    console.log(`Fetched course data for Stripe sync: title="${course.title}", id=${course.id}`)
   }
+
+  // Validate required fields before calling Stripe
+  if (!course.title || course.title.trim() === '') {
+    throw new Error(
+      `Cannot sync course ${courseId} with Stripe: title is required but was empty. ` +
+        `Please ensure the wine tasting has a title before publishing.`
+    )
+  }
+
+  const courseTitle = course.title.trim()
+  const courseDescription = course.description?.trim() || `Wine course: ${courseTitle}`
 
   // Create or update Stripe product
   const productData: any = {
-    name: course.title,
-    description: course.description || `Wine course: ${course.title}`,
+    name: courseTitle,
+    description: courseDescription,
     metadata: {
-      courseId: course.id,
+      courseId: String(courseId),
       type: 'course',
     },
   }
@@ -150,7 +178,7 @@ export async function syncCourseWithStripe(courseId: string): Promise<{
     unit_amount: priceAmount,
     currency: STRIPE_CONFIG.currency,
     metadata: {
-      courseId: course.id,
+      courseId: String(courseId),
     },
   })
 

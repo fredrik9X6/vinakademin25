@@ -86,6 +86,20 @@ interface CourseOverviewProps {
   sessionId?: string
 }
 
+/**
+ * Validates and returns a valid image URL, or null if invalid
+ * Handles cases where media files have corrupted or missing filenames
+ */
+function getValidImageUrl(url: string | undefined | null): string | null {
+  if (!url || typeof url !== 'string') return null
+  // Check for invalid filenames (just a dash, empty, or undefined in path)
+  if (url.includes('/-.') || url.endsWith('/-') || url.includes('undefined')) {
+    console.warn('Invalid image URL detected:', url)
+    return null
+  }
+  return url
+}
+
 export default function CourseOverview({
   course,
   userHasAccess = false,
@@ -273,7 +287,7 @@ export default function CourseOverview({
                       }}
                       streamType="on-demand"
                       className="w-full h-full"
-                      poster={course.featuredImage?.url ? course.featuredImage.url : undefined}
+                      poster={getValidImageUrl(course.featuredImage?.url) || undefined}
                       style={{
                         // Theme Mux Player to use brand orange accents
                         ['--media-accent-color' as any]: '#f97316', // orange-500
@@ -281,11 +295,11 @@ export default function CourseOverview({
                         ['--media-controls-background' as any]: 'rgba(0,0,0,0.4)',
                       }}
                     />
-                  ) : course.featuredImage?.url ? (
+                  ) : getValidImageUrl(course.featuredImage?.url) ? (
                     <div className="relative w-full h-full">
                       <Image
-                        src={course.featuredImage.url}
-                        alt={course.featuredImage.alt || course.title}
+                        src={getValidImageUrl(course.featuredImage?.url)!}
+                        alt={course.featuredImage?.alt || course.title}
                         fill
                         className="object-cover"
                       />
@@ -409,7 +423,7 @@ export default function CourseOverview({
                     }}
                     streamType="on-demand"
                     className="w-full h-full"
-                    poster={course.featuredImage?.url ? course.featuredImage.url : undefined}
+                    poster={getValidImageUrl(course.featuredImage?.url) || undefined}
                     style={{
                       // Theme Mux Player to use brand orange accents
                       ['--media-accent-color' as any]: '#f97316', // orange-500
@@ -418,11 +432,11 @@ export default function CourseOverview({
                     }}
                   />
                 </div>
-              ) : course.featuredImage?.url ? (
+              ) : getValidImageUrl(course.featuredImage?.url) ? (
                 <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
                   <Image
-                    src={course.featuredImage.url}
-                    alt={course.featuredImage.alt || course.title}
+                    src={getValidImageUrl(course.featuredImage?.url)!}
+                    alt={course.featuredImage?.alt || course.title}
                     fill
                     className="object-cover"
                   />

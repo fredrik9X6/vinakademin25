@@ -20,10 +20,19 @@ export function FeaturedCourseCard({ course }: FeaturedCourseCardProps) {
       `${instructor.firstName || ''} ${instructor.lastName || ''}`.replace(/\s+/g, ' ').trim()) ||
     instructor?.name ||
     'Okänd instruktör'
-  const featuredImageUrl =
-    typeof course.featuredImage === 'object' && course.featuredImage
-      ? (course.featuredImage as any).url
-      : null
+  // Validate and extract featured image URL
+  const getFeaturedImageUrl = () => {
+    if (typeof course.featuredImage !== 'object' || !course.featuredImage) {
+      return null
+    }
+    const url = (course.featuredImage as any).url
+    // Validate URL is not empty or invalid (e.g., '/api/media/file/-.png')
+    if (!url || typeof url !== 'string') return null
+    // Check for invalid filenames (just a dash or empty)
+    if (url.includes('/-.') || url.endsWith('/-') || url.includes('undefined')) return null
+    return url
+  }
+  const featuredImageUrl = getFeaturedImageUrl()
 
   const resolveMediaUrl = (media: any): string | null => {
     if (!media || typeof media !== 'object') return null

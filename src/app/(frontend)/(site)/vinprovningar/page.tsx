@@ -10,6 +10,19 @@ import { transformCourseWithModules } from '@/lib/course-utils-server'
 import { getTotalCourseItems, countFreeItems } from '@/lib/course-utils'
 import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
 
+/**
+ * Validates and returns a valid image URL, or null if invalid
+ */
+function getValidImageUrl(url: string | undefined | null): string | null {
+  if (!url || typeof url !== 'string') return null
+  // Check for invalid filenames (just a dash, empty, or undefined in path)
+  if (url.includes('/-.') || url.endsWith('/-') || url.includes('undefined')) {
+    console.warn('Invalid image URL detected:', url)
+    return null
+  }
+  return url
+}
+
 export default async function KurserPage() {
   const payload = await getPayload({ config })
 
@@ -82,7 +95,7 @@ export default async function KurserPage() {
                 const freeItems = countFreeItems(course.modules as any)
                 const thumbnailUrl =
                   typeof course.featuredImage === 'object' && course.featuredImage
-                    ? course.featuredImage.url
+                    ? getValidImageUrl((course.featuredImage as any).url)
                     : null
 
                 return (

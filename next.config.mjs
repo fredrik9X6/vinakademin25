@@ -8,6 +8,7 @@ const nextConfig = {
   output: 'standalone',
   images: {
     remotePatterns: [
+      // Local development
       {
         protocol: 'http',
         hostname: 'localhost',
@@ -19,6 +20,34 @@ const nextConfig = {
         hostname: 'localhost',
         port: '3000',
         pathname: '/api/media/**',
+      },
+      // Production - Railway
+      {
+        protocol: 'https',
+        hostname: '*.up.railway.app',
+        pathname: '/api/media/**',
+      },
+      // Production - Main domain
+      {
+        protocol: 'https',
+        hostname: 'www.vinakademin.se',
+        pathname: '/api/media/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'vinakademin.se',
+        pathname: '/api/media/**',
+      },
+      // S3/CDN - if using external storage
+      {
+        protocol: 'https',
+        hostname: '*.r2.cloudflarestorage.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.amazonaws.com',
+        pathname: '/**',
       },
     ],
     // Allow localhost in development

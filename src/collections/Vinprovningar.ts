@@ -209,8 +209,10 @@ export const Vinprovningar: CollectionConfig = {
 
             if (shouldSync) {
               payload.logger.info(`Syncing wine tasting ${doc.id} with Stripe...`)
+              payload.logger.info(`Wine tasting data: title="${doc.title}", price=${doc.price}`)
               
-              const { productId, priceId } = await syncCourseWithStripe(String(doc.id))
+              // Pass doc directly to avoid race conditions with database reads
+              const { productId, priceId } = await syncCourseWithStripe(String(doc.id), doc)
               payload.logger.info(`Wine tasting ${doc.id} synced with Stripe:`, {
                 productId,
                 priceId,
