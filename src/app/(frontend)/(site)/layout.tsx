@@ -5,6 +5,7 @@ import { DynamicSiteHeader } from '@/components/dynamic-site-header'
 import { Footer } from '@/components/ui/footer'
 import { SessionProvider } from '@/context/SessionContext'
 import { ActiveSessionBanner } from '@/components/course/ActiveSessionBanner'
+import { FeedbackButton } from '@/components/feedback'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <main className="min-w-0 overflow-x-hidden">{children}</main>
           <Footer />
         </SidebarInset>
+        <FeedbackButton />
       </SidebarProvider>
     </SessionProvider>
   )
