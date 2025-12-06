@@ -11,7 +11,7 @@ let posthogInitialized = false
 // Initialize PostHog
 if (typeof window !== 'undefined') {
   const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
-  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.posthog.com'
+  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com'
 
   console.log('[Analytics] PostHog Key present:', !!posthogKey)
   console.log('[Analytics] PostHog Host:', posthogHost)
