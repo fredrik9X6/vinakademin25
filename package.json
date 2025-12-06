@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "cross-env NODE_OPTIONS=--no-deprecation PAYLOAD_DROP_DATABASE=false npm run generate:importmap && cross-env NODE_OPTIONS=--no-deprecation PAYLOAD_DROP_DATABASE=false next build --no-turbopack --experimental-build-mode compile",
+    "build": "cross-env NODE_OPTIONS=--no-deprecation PAYLOAD_DROP_DATABASE=false npm run generate:importmap && cross-env NODE_OPTIONS=--no-deprecation PAYLOAD_DROP_DATABASE=false TURBOPACK=0 next build --experimental-build-mode compile",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
