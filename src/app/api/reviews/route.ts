@@ -155,12 +155,9 @@ export async function POST(request: NextRequest) {
       }
       
       // Convert rating to number (it's labeled as 'Betyg' in Swedish)
+      // Note: Validation is handled by PayloadCMS collection config (min/max)
       if (body.rating !== undefined) {
         body.rating = typeof body.rating === 'string' ? parseFloat(body.rating) : body.rating
-        // Ensure it's a valid number between 1-5
-        if (isNaN(body.rating) || body.rating < 1 || body.rating > 5) {
-          return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 })
-        }
       }
 
       // Handle create or update operation
