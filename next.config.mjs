@@ -6,6 +6,13 @@ const nextConfig = {
   // Temporarily disabled turbopack - may cause require() errors
   // turbopack: {},
   output: 'standalone',
+  
+  // Explicitly pass NEXT_PUBLIC env vars to ensure they're in the client bundle
+  env: {
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+  },
   images: {
     remotePatterns: [
       // Local development
