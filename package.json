@@ -98,6 +98,7 @@
     "ora": "^8.2.0",
     "payload": "3.33.0",
     "pg": "^8.16.3",
+    "posthog-js": "^1.302.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.55.0",

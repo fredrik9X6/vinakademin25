@@ -3,6 +3,7 @@ import React from 'react'
 import { Inter } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '@/context/AuthContext'
+import { AnalyticsProvider } from '@/components/analytics'
 import { Toaster } from '@/components/ui/sonner'
 
 const inter = Inter({
@@ -26,8 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>{children}</AuthProvider>
-          <Toaster />
+          <AnalyticsProvider>
+            <AuthProvider>{children}</AuthProvider>
+            <Toaster />
+          </AnalyticsProvider>
         </ThemeProvider>
       </body>
     </html>
