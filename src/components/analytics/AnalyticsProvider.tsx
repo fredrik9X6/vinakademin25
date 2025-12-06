@@ -8,17 +8,18 @@ import { PostHogProvider as PHProvider } from 'posthog-js/react'
 // Track if PostHog has been initialized
 let posthogInitialized = false
 
+// PostHog configuration - these are public keys, safe to commit
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || 'phc_NEwNtznBZqYk5R55Ghi41cWmUxQ1eN4laFk9J2kPRtk'
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com'
+
 // Initialize PostHog
 if (typeof window !== 'undefined') {
-  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
-  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com'
+  console.log('[Analytics] PostHog Key present:', !!POSTHOG_KEY)
+  console.log('[Analytics] PostHog Host:', POSTHOG_HOST)
 
-  console.log('[Analytics] PostHog Key present:', !!posthogKey)
-  console.log('[Analytics] PostHog Host:', posthogHost)
-
-  if (posthogKey) {
-    posthog.init(posthogKey, {
-      api_host: posthogHost,
+  if (POSTHOG_KEY) {
+    posthog.init(POSTHOG_KEY, {
+      api_host: POSTHOG_HOST,
       // Capture pageviews manually with Next.js router
       capture_pageview: false,
       // Capture pageleaves for better session tracking
@@ -43,12 +44,14 @@ if (typeof window !== 'undefined') {
   }
 }
 
+// Google Analytics configuration
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-HZNFBWXCPT'
+
 // Google Analytics pageview
 function gtagPageview(url: string) {
   if (typeof window !== 'undefined' && (window as any).gtag) {
-    const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-    if (measurementId) {
-      ;(window as any).gtag('config', measurementId, {
+    if (GA_MEASUREMENT_ID) {
+      ;(window as any).gtag('config', GA_MEASUREMENT_ID, {
         page_path: url,
       })
     }
@@ -84,9 +87,7 @@ function PageViewTracker() {
 
 // Google Analytics Script Component
 function GoogleAnalytics() {
-  const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-
-  if (!measurementId) {
+  if (!GA_MEASUREMENT_ID) {
     return null
   }
 
@@ -95,7 +96,7 @@ function GoogleAnalytics() {
       {/* Google Analytics Script */}
       <script
         async
-        src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
       />
       <script
         id="google-analytics"
@@ -104,7 +105,7 @@ function GoogleAnalytics() {
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${measurementId}', {
+            gtag('config', '${GA_MEASUREMENT_ID}', {
               page_path: window.location.pathname,
             });
           `,
@@ -164,13 +165,10 @@ export function identifyUser(
   posthog.identify(userId, traits)
 
   // GA4 user ID
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-    if (measurementId) {
-      ;(window as any).gtag('config', measurementId, {
-        user_id: userId,
-      })
-    }
+  if (typeof window !== 'undefined' && (window as any).gtag && GA_MEASUREMENT_ID) {
+    ;(window as any).gtag('config', GA_MEASUREMENT_ID, {
+      user_id: userId,
+    })
   }
 }
 
