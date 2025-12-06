@@ -43,6 +43,13 @@ ENV NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY
 ENV NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
 ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID
 
+# Debug: Print env vars during build (will show in Railway build logs)
+RUN echo "=== BUILD ENV DEBUG ===" && \
+    echo "NEXT_PUBLIC_POSTHOG_KEY is set: $([ -n \"$NEXT_PUBLIC_POSTHOG_KEY\" ] && echo 'YES' || echo 'NO')" && \
+    echo "NEXT_PUBLIC_POSTHOG_HOST: $NEXT_PUBLIC_POSTHOG_HOST" && \
+    echo "NEXT_PUBLIC_GA_MEASUREMENT_ID is set: $([ -n \"$NEXT_PUBLIC_GA_MEASUREMENT_ID\" ] && echo 'YES' || echo 'NO')" && \
+    echo "======================="
+
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \

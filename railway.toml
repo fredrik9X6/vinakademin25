@@ -1,0 +1,10 @@
+[build]
+# Pass environment variables as build arguments for Docker
+# This ensures NEXT_PUBLIC_* vars are available at build time
+dockerfilePath = "Dockerfile"
+
+[build.args]
+NEXT_PUBLIC_POSTHOG_KEY = "${{NEXT_PUBLIC_POSTHOG_KEY}}"
+NEXT_PUBLIC_POSTHOG_HOST = "${{NEXT_PUBLIC_POSTHOG_HOST}}"
+NEXT_PUBLIC_GA_MEASUREMENT_ID = "${{NEXT_PUBLIC_GA_MEASUREMENT_ID}}"
+
