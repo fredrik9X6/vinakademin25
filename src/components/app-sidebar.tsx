@@ -151,24 +151,24 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                 <Image
                   src="/brand/vinakademin_logomark.svg"
                   alt="Vinakademin"
-                  width={28}
-                  height={28}
+                  width={36}
+                  height={36}
                   className="group-data-[collapsible=icon]:block hidden shrink-0"
                 />
                 {/* Full logo lockup for expanded sidebar - CSS-based theme switching */}
                 <Image
                   src="/brand/vinakademin_logo_lockup_darkmode.svg"
                   alt="Vinakademin"
-                  width={160}
-                  height={32}
+                  width={180}
+                  height={36}
                   className="group-data-[collapsible=icon]:hidden hidden dark:block"
                   priority
                 />
                 <Image
                   src="/brand/Vinakademin_logo_lockup.svg"
                   alt="Vinakademin"
-                  width={160}
-                  height={32}
+                  width={180}
+                  height={36}
                   className="group-data-[collapsible=icon]:hidden block dark:hidden"
                   priority
                 />
