@@ -350,6 +350,9 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
           quiz={selectedQuiz}
           module={selectedModule}
           userHasAccess={effectiveUserAccess || (!!currentUser && isSelectedQuizFree)}
+          userPurchasedAccess={userHasAccess}
+          sessionId={sessionId || undefined}
+          isSessionParticipant={isSessionParticipant}
         />
       ) : (
         <CourseOverview

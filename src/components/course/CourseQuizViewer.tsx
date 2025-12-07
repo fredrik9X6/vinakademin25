@@ -32,12 +32,17 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb'
+import { useActiveSession } from '@/context/SessionContext'
 
 interface CourseQuizViewerProps {
   course: any
   module: any
   quiz: any
   userHasAccess?: boolean
+  sessionId?: string
+  isSessionParticipant?: boolean
+  // Separate prop for actual purchase status (for ToC display)
+  userPurchasedAccess?: boolean
 }
 
 export default function CourseQuizViewer({
@@ -45,19 +50,33 @@ export default function CourseQuizViewer({
   module,
   quiz,
   userHasAccess = false,
+  sessionId,
+  isSessionParticipant = false,
+  userPurchasedAccess = false,
 }: CourseQuizViewerProps) {
   const router = useRouter()
   const [isTocOpen, setIsTocOpen] = useState(false)
+  const { activeSession } = useActiveSession()
+
+  // Use session from props or from context (for persistent navigation)
+  const effectiveSessionId =
+    sessionId || (activeSession?.courseId === course.id ? activeSession.sessionId : null)
+
+  const buildUrl = (base: string) => {
+    return effectiveSessionId ? `${base}&session=${effectiveSessionId}` : base
+  }
 
   // Check if quiz is free - but authentication is still required
   const isQuizFree = quiz.isFree || false
-  const canAccessQuiz = userHasAccess || isQuizFree
+  // Allow access if: user has purchased, is session participant, OR quiz is free
+  const canAccessQuiz = userHasAccess || isSessionParticipant || isQuizFree
 
   const {
     progress: courseProgress,
     loading: progressLoading,
     fetchProgress,
-  } = useCourseProgress(course.id)
+    markQuizCompleted,
+  } = useCourseProgress(course.id, isSessionParticipant) // Pass isSessionParticipant for local progress tracking
 
   // Find the next lesson after this quiz within the same module
   const nextItem = useMemo(() => {
@@ -78,9 +97,9 @@ export default function CourseQuizViewer({
 
   const navigateToItem = (item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
-      router.push(`/vinprovningar/${course.slug || course.id}?lesson=${item.id}`)
+      router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?lesson=${item.id}`))
     } else {
-      router.push(`/vinprovningar/${course.slug || course.id}?quiz=${item.id}`)
+      router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?quiz=${item.id}`))
     }
   }
 
@@ -155,16 +174,23 @@ export default function CourseQuizViewer({
                 <QuizAttemptRunner
                   quiz={quiz}
                   onPassed={async () => {
-                    try {
-                      await fetchProgress()
-                    } catch {}
+                    // Mark quiz as completed for session participants (local storage)
+                    if (isSessionParticipant) {
+                      markQuizCompleted(quiz.id)
+                    } else {
+                      try {
+                        await fetchProgress()
+                      } catch {}
+                    }
                     // Prefer next lesson in same module; fallback to overview if none
                     if (nextItem && nextItem.type === 'lesson') {
                       router.push(
-                        `/vinprovningar/${course.slug || course.id}?lesson=${nextItem.id}`,
+                        buildUrl(`/vinprovningar/${course.slug || course.id}?lesson=${nextItem.id}`),
                       )
                     } else {
-                      const target = `/vinprovningar/${course.slug || course.id}?t=${Date.now()}`
+                      const target = buildUrl(
+                        `/vinprovningar/${course.slug || course.id}?t=${Date.now()}`,
+                      )
                       router.push(target)
                     }
                     try {
@@ -246,7 +272,7 @@ export default function CourseQuizViewer({
               <CourseTableOfContents
                 modules={course.modules as any}
                 courseProgress={courseProgress || undefined}
-                userHasAccess={userHasAccess}
+                userHasAccess={userPurchasedAccess || isSessionParticipant}
                 activeQuizId={quiz.id}
                 onItemClick={handleItemClick}
                 loading={progressLoading}
