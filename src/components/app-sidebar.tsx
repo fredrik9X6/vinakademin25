@@ -12,7 +12,6 @@ import {
   MonitorPlay,
   SettingsIcon,
   LogInIcon,
-  Sparkles,
   CalendarIcon,
   Bot,
   Mail,
@@ -24,6 +23,7 @@ import {
   PlusCircle,
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Switch } from '@/components/ui/switch'
@@ -145,10 +145,25 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
-              <Link href="/">
-                <Sparkles className="h-5 w-5 text-orange-300 dark:text-secondary" />
-                <span className="text-2xl font-heading">Vinakademin</span>
+            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5 h-auto">
+              <Link href="/" className="flex items-center gap-2">
+                {/* Logomark for collapsed sidebar */}
+                <Image
+                  src="/brand/vinakademin_logomark.svg"
+                  alt="Vinakademin"
+                  width={28}
+                  height={28}
+                  className="group-data-[collapsible=icon]:block hidden shrink-0"
+                />
+                {/* Full logo lockup for expanded sidebar */}
+                <Image
+                  src={theme === 'dark' ? '/brand/vinakademin_logo_lockup_darkmode.svg' : '/brand/Vinakademin_logo_lockup.svg'}
+                  alt="Vinakademin"
+                  width={160}
+                  height={32}
+                  className="group-data-[collapsible=icon]:hidden block"
+                  priority
+                />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
