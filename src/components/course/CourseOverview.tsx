@@ -116,12 +116,15 @@ export default function CourseOverview({
   const effectiveSessionId =
     sessionId || (activeSession?.courseId === course.id ? activeSession.sessionId : null)
 
-  const totalLessons = course.modules.reduce((total, module) => {
-    // Count items from module.contents if available, otherwise from lessons array
+  // Count ALL content items (lessons + quizzes) as "moment"
+  const totalMoment = course.modules.reduce((total, module) => {
+    // Count items from module.contents if available, otherwise from lessons + quizzes arrays
     if ((module as any).contents && Array.isArray((module as any).contents)) {
       return total + (module as any).contents.length
     }
-    return total + (module.lessons?.length || 0)
+    const lessonCount = module.lessons?.length || 0
+    const quizCount = ((module as any).quizzes as any[])?.length || 0
+    return total + lessonCount + quizCount
   }, 0)
 
   // Count free items (both lessons AND quizzes)
@@ -158,7 +161,7 @@ export default function CourseOverview({
       })
     })
 
-    return { videos, texts, wineReviews, quizzes, total: totalLessons }
+    return { videos, texts, wineReviews, quizzes, total: totalMoment }
   }
 
   const contentCounts = getContentCounts()
@@ -455,12 +458,14 @@ export default function CourseOverview({
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5 flex-shrink-0" />
-                  <span>{totalLessons} lektioner</span>
+                  <span>{totalMoment} moment</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Star className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span>{freeLessons} gratis moment</span>
-                </div>
+                {freeLessons > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Star className="w-5 h-5 text-primary flex-shrink-0" />
+                    <span>{freeLessons} gratis moment</span>
+                  </div>
+                )}
                 {course.instructor && (
                   <div className="flex items-center gap-2">
                     <User className="w-5 h-5 flex-shrink-0" />
