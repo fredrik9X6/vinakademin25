@@ -437,9 +437,11 @@ export function WineReviewForm({
         throw new Error(errorMessage)
       }
       const json = await res.json()
-      setSubmittedReview(json)
+      // Extract the review document from the response (API returns { success, doc })
+      const reviewDoc = json.doc || json
+      setSubmittedReview(reviewDoc)
       // Prepend to history list
-      setHistory((prev) => [json, ...prev])
+      setHistory((prev) => [reviewDoc, ...prev])
       toast.success('Din vinrecension har skickats')
       // Immediately show comparison
       await fetchAnswerKey()
