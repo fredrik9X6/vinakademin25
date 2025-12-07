@@ -50,7 +50,7 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
       // Custom labels for known routes
       let label = segment
       if (segment === 'kurser') {
-        label = 'Kurser'
+        label = 'Vinprovningar' // Legacy URL support
       } else if (segment === 'nyhetsbrev') {
         label = 'Nyhetsbrev'
       } else if (segment === 'artiklar') {
@@ -74,7 +74,7 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
       } else if (segment === 'success' && pathSegments[0] === 'checkout') {
         label = 'Betalning genomförd'
       } else if (i === 1 && pathSegments[0] === 'kurser') {
-        // This is a course slug - format it nicely
+        // This is a wine tasting slug (legacy URL) - format it nicely
         label = segment
           .split('-')
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

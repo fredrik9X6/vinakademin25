@@ -8,24 +8,24 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'Kontakta Oss | Vinakademin',
   description:
-    'Har du frågor om våra kurser eller vinprovningar? Kontakta Vinakademin via e-post så hjälper vi dig gärna.',
+    'Har du frågor om våra vinprovningar? Kontakta Vinakademin via e-post så hjälper vi dig gärna.',
 }
 
 const reasons = [
   {
     icon: BookOpen,
-    title: 'Kursfrågor',
-    description: 'Hjälp med kurser, inloggning eller tekniska problem',
+    title: 'Vinprovningar',
+    description: 'Hjälp med vinprovningar, inloggning eller tekniska problem',
   },
   {
     icon: Wine,
-    title: 'Vinprovningar',
-    description: 'Frågor om vinprovningar och bokningar',
+    title: 'Bokningar',
+    description: 'Frågor om bokningar och grupprovningar',
   },
   {
     icon: Users,
     title: 'Företag & Grupper',
-    description: 'Skräddarsydda kurser och event för företag',
+    description: 'Skräddarsydda vinprovningar och event för företag',
   },
   {
     icon: HelpCircle,
@@ -42,7 +42,7 @@ export default function ContactPage() {
         <div className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl font-medium tracking-tight mb-4">Kontakta oss</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Har du frågor om våra kurser, vinprovningar eller vill bara säga hej? Skicka oss ett
+            Har du frågor om våra vinprovningar eller vill bara säga hej? Skicka oss ett
             meddelande så återkommer vi inom 24 timmar.
           </p>
         </div>
@@ -121,7 +121,7 @@ export default function ContactPage() {
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Innan du kontaktar oss, kolla gärna in vår hjälpsida där vi samlar svar på de
-                  vanligaste frågorna om kurser, vinprovningar, betalning och mycket mer.
+                  vanligaste frågorna om vinprovningar, betalning och mycket mer.
                 </p>
                 <Button asChild className="w-full" variant="outline">
                   <Link href="/hjalp">
@@ -156,7 +156,7 @@ export default function ContactPage() {
                 <div className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 flex-shrink-0" />
                   <p className="text-muted-foreground">
-                    Alla våra kurser är digitala och tillgängliga direkt efter köp
+                    Alla våra vinprovningar är digitala och tillgängliga direkt efter köp
                   </p>
                 </div>
               </CardContent>

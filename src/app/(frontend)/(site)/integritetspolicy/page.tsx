@@ -101,7 +101,7 @@ export default function IntegritetspolicyPage() {
                     operativsystem
                   </li>
                   <li>
-                    <strong>Kursframsteg:</strong> Vilka lektioner du genomfört, quiz-resultat,
+                    <strong>Framsteg:</strong> Vilka moment du genomfört, quiz-resultat,
                     tidsåtgång
                   </li>
                   <li>

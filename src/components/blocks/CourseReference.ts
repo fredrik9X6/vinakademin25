@@ -85,7 +85,7 @@ export const CourseReference: Block = {
       name: 'callToAction',
       type: 'text',
       label: 'Call to Action',
-      defaultValue: 'Visa kurs',
+      defaultValue: 'Visa vinprovning',
       admin: {
         description: 'Text for the action button/link',
         condition: (data, siblingData) => siblingData.displayStyle !== 'link',

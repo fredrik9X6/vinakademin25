@@ -126,7 +126,7 @@ export default function CourseTableOfContents({
     return (
       <Card className="h-fit">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-semibold">Kursinnehåll</CardTitle>
+          <CardTitle className="text-lg font-semibold">Innehåll</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <div className="space-y-4">
@@ -153,7 +153,7 @@ export default function CourseTableOfContents({
     <Card className="h-fit">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Kursinnehåll</CardTitle>
+          <CardTitle className="text-lg font-semibold">Innehåll</CardTitle>
           {courseProgress && (
             <Badge
               variant="secondary"

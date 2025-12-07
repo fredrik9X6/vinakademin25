@@ -112,7 +112,7 @@ export default function CourseQuizViewer({
                 <BreadcrumbList>
                   <BreadcrumbItem>
                     <BreadcrumbLink href={`/vinprovningar/${course.slug || course.id}`}>
-                      Kurs
+                      Vinprovning
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />

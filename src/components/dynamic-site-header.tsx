@@ -8,7 +8,7 @@ export function DynamicSiteHeader() {
 
   const getPageTitle = (path: string) => {
     if (path.includes('/profil')) return 'Din Profil'
-    if (path.includes('/vinprovningar')) return 'Kurser'
+    if (path.includes('/vinprovningar')) return 'Vinprovningar'
     if (path.includes('/profil')) return 'Profil'
     return 'Vinakademin'
   }

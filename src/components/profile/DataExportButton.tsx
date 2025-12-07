@@ -77,7 +77,7 @@ export function DataExportButton({ userId }: DataExportButtonProps) {
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>Profiluppgifter och kontoinställningar</li>
             <li>Vinpreferenser och notifieringsinställningar</li>
-            <li>Kursregistreringar och framsteg</li>
+            <li>Vinprovningsregistreringar och framsteg</li>
             <li>Transaktioner och köphistorik</li>
             <li>Personliga vinlistor och betyg</li>
             <li>Alla interaktioner med plattformen</li>

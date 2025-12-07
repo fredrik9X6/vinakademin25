@@ -47,15 +47,15 @@ const defaultPlans = [
     id: 'basic',
     name: 'Basic',
     price: { amount: 99, currency: 'SEK', interval: 'month' as const },
-    features: ['Tillgång till grundkurser', 'Månadsvis nyhetsbrev', 'Community-forum'],
+    features: ['Tillgång till grundläggande vinprovningar', 'Månadsvis nyhetsbrev', 'Community-forum'],
   },
   {
     id: 'premium',
     name: 'Premium',
     price: { amount: 199, currency: 'SEK', interval: 'month' as const },
     features: [
-      'Alla grundkurser',
-      'Avancerade kurser',
+      'Alla grundläggande vinprovningar',
+      'Avancerade vinprovningar',
       'Live vinprovningar',
       'Personliga rekommendationer',
       'Prioritetssupport',
@@ -69,7 +69,7 @@ const defaultPlans = [
     features: [
       'Allt i Premium',
       'Företagsrabatter',
-      'Skräddarsydda kurser',
+      'Skräddarsydda vinprovningar',
       'Dedikerad support',
       'Team management',
     ],

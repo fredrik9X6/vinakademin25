@@ -46,7 +46,7 @@ export default function VillkorPage() {
             <CardContent className="space-y-4">
               <p className="text-base leading-7">
                 Vinakademin är en digital plattform för vinutbildning och vinprovningar. Vi erbjuder
-                kurser, artiklar, videoinnehåll och interaktiva verktyg för att hjälpa dig lära dig
+                vinprovningar, artiklar, videoinnehåll och interaktiva verktyg för att hjälpa dig lära dig
                 mer om vin.
               </p>
               <p className="text-base leading-7">

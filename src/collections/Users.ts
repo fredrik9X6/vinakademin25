@@ -224,7 +224,7 @@ export const Users: CollectionConfig = {
                             Vad händer sen?
                           </h3>
                           <ul style="margin: 0; padding-left: 20px; color: #3f3f46; font-size: 14px; line-height: 1.8;">
-                            <li>Utforska våra vinprovningar och kurser</li>
+                            <li>Utforska våra vinprovningar</li>
                             <li>Lär dig om vin på ett roligt sätt</li>
                             <li>Få tillgång till exklusivt innehåll</li>
                             <li>Delta i vår community av vinentusiaster</li>

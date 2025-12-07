@@ -228,8 +228,8 @@ export function NotificationPreferencesForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Kursframsteg</FormLabel>
-                    <FormDescription>Få meddelanden om dina framsteg i kurser.</FormDescription>
+                    <FormLabel className="text-base">Framsteg</FormLabel>
+                    <FormDescription>Få meddelanden om dina framsteg i vinprovningar.</FormDescription>
                   </div>
                   <FormControl>
                     <Switch
@@ -249,9 +249,9 @@ export function NotificationPreferencesForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Nya kurser</FormLabel>
+                    <FormLabel className="text-base">Nya vinprovningar</FormLabel>
                     <FormDescription>
-                      Få meddelanden om nya kurser som blir tillgängliga.
+                      Få meddelanden om nya vinprovningar som blir tillgängliga.
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -347,8 +347,8 @@ export function NotificationPreferencesForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Kurspåminnelser</FormLabel>
-                    <FormDescription>Påminnelser om att fortsätta med kurser.</FormDescription>
+                    <FormLabel className="text-base">Påminnelser</FormLabel>
+                    <FormDescription>Påminnelser om att fortsätta med vinprovningar.</FormDescription>
                   </div>
                   <FormControl>
                     <Switch

@@ -143,7 +143,7 @@ export function generateReceiptEmailHTML({
                     <tr>
                       <td align="center" style="padding: 0 0 32px;">
                         <a href="${courseUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(251, 145, 76, 0.3);">
-                          Börja kursen nu
+                          Börja vinprovningen nu
                         </a>
                       </td>
                     </tr>
@@ -155,7 +155,7 @@ export function generateReceiptEmailHTML({
                       Vad händer nu?
                     </h3>
                     <ul style="margin: 0; padding-left: 20px; color: #3f3f46; font-size: 14px; line-height: 1.8;">
-                      <li>Du har nu tillgång till hela kursen</li>
+                      <li>Du har nu tillgång till hela vinprovningen</li>
                       <li>Gå igenom modulerna i din egen takt</li>
                       <li>Titta på videor, läs material och gör quiz</li>
                       <li>Bli mer självsäker i din kunskap om vin</li>

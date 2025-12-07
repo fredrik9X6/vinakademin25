@@ -42,15 +42,15 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'wine_club_monthly',
     name: 'Vinprenumeration - Månadsvis',
-    description: 'Månadsvis vinprenumeration med kurater viner och exklusiva kurser',
+    description: 'Månadsvis vinprenumeration med kurater viner och exklusiva vinprovningar',
     price: 499, // SEK
     interval: 'month',
     features: [
       '2 kurerade viner per månad',
-      'Exklusiv tillgång till nya kurser',
+      'Exklusiv tillgång till nya vinprovningar',
       'Månatliga vinprovningar',
       'Personlig vinrådgivning',
-      'Medlemsrabatter på kurser',
+      'Medlemsrabatter på vinprovningar',
     ],
   },
   {
@@ -61,10 +61,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     interval: 'year',
     features: [
       '24 kurerade viner per år',
-      'Exklusiv tillgång till alla kurser',
+      'Exklusiv tillgång till alla vinprovningar',
       'Månatliga vinprovningar',
       'Personlig vinrådgivning',
-      '20% rabatt på alla kurser',
+      '20% rabatt på alla vinprovningar',
       'Exklusiva årliga events',
       '2 månader gratis',
     ],

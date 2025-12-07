@@ -231,7 +231,7 @@ export default function StartSessionButton({
                 </Alert>
 
                 <Button onClick={handleStartSession} size="lg" className="w-full">
-                  Starta kursen
+                  Starta vinprovningen
                 </Button>
               </div>
             </>

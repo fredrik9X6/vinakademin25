@@ -290,7 +290,7 @@ export default function AboutPage() {
                 <Button asChild size="lg">
                   <Link href="/vinprovningar">
                     <BookOpen className="mr-2 h-4 w-4" />
-                    Utforska våra kurser
+                    Utforska våra vinprovningar
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">

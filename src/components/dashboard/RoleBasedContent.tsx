@@ -15,7 +15,7 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
       {role === 'admin' && (
         <div className="bg-blue-50 p-4 rounded-lg">
           <h3 className="text-xl font-medium text-blue-800">Admin Dashboard</h3>
-          <p className="text-blue-600 mt-2">Här kan du hantera användare, kurser och mer.</p>
+          <p className="text-blue-600 mt-2">Här kan du hantera användare, vinprovningar och mer.</p>
           <div className="mt-4">
             <Link
               href="/admin"
@@ -30,14 +30,14 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
       {role === 'user' && (
         <div className="space-y-4">
           <div className="bg-purple-50 p-4 rounded-lg">
-            <h3 className="text-xl font-medium text-purple-800">Dina kurser</h3>
-            <p className="text-purple-600 mt-2">Du har inga pågående kurser.</p>
+            <h3 className="text-xl font-medium text-purple-800">Dina vinprovningar</h3>
+            <p className="text-purple-600 mt-2">Du har inga pågående vinprovningar.</p>
             <div className="mt-4">
               <Link
                 href="/vinprovningar"
                 className="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
               >
-                Utforska kurser
+                Utforska vinprovningar
               </Link>
             </div>
           </div>
@@ -47,14 +47,14 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
       {role === 'subscriber' && (
         <div className="space-y-4">
           <div className="bg-teal-50 p-4 rounded-lg">
-            <h3 className="text-xl font-medium text-teal-800">Dina kurser (Prenumerant)</h3>
-            <p className="text-teal-600 mt-2">Lista dina prenumerantkurser här.</p>
+            <h3 className="text-xl font-medium text-teal-800">Dina vinprovningar (Prenumerant)</h3>
+            <p className="text-teal-600 mt-2">Lista dina vinprovningar här.</p>
             <div className="mt-4">
               <Link
                 href="/profil?tab=kurser"
                 className="inline-block px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition"
               >
-                Mina Kursregistreringar
+                Mina vinprovningar
               </Link>
             </div>
           </div>
@@ -64,13 +64,13 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
       {role === 'instructor' && (
         <div className="bg-green-50 p-4 rounded-lg">
           <h3 className="text-xl font-medium text-green-800">Instruktörsverktyg</h3>
-          <p className="text-green-600 mt-2">Hantera dina kurser och studenter här.</p>
+          <p className="text-green-600 mt-2">Hantera dina vinprovningar och deltagare här.</p>
           <div className="mt-4">
             <Link
               href="/admin/vinprovningar"
               className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
             >
-              Hantera kurser
+              Hantera vinprovningar
             </Link>
           </div>
         </div>

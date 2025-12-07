@@ -158,7 +158,7 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
                 <div>
                   <p className="font-medium">Gå igenom materialet igen</p>
                   <p className="text-sm text-muted-foreground">
-                    Alla lektioner och quiz är fortfarande tillgängliga för dig
+                    Alla moment är fortfarande tillgängliga för dig
                   </p>
                 </div>
               </div>

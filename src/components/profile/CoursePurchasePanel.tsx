@@ -84,7 +84,7 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
     } catch (error) {
       console.error('Error loading course data:', error)
       toast.error('Fel vid laddning', {
-        description: 'Kunde inte ladda kursinformation.',
+        description: 'Kunde inte ladda information.',
       })
     } finally {
       setIsLoading(false)
@@ -111,7 +111,7 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
     } catch (error) {
       console.error('Error accessing course:', error)
       toast.error('Åtkomstfel', {
-        description: 'Kunde inte komma åt kursen.',
+        description: 'Kunde inte komma åt vinprovningen.',
       })
     } finally {
       setAccessingCourse(null)
@@ -136,7 +136,7 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
         window.URL.revokeObjectURL(url)
 
         toast.success('Certifikat nedladdat', {
-          description: 'Ditt kurscertifikat har laddats ner.',
+          description: 'Ditt certifikat har laddats ner.',
         })
       } else {
         throw new Error('Certificate download failed')

@@ -200,7 +200,7 @@ export default function CourseOverview({
     if (!canAccess) {
       const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
       router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
-      toast.info('Du behöver köpa kursen för att se detta innehåll')
+      toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
       return
     }
 
@@ -260,7 +260,7 @@ export default function CourseOverview({
       if (!canAccess) {
         const currentUrl = `/vinprovningar/${course.slug || course.id}?quiz=${item.id}`
         router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
-        toast.info('Du behöver köpa kursen för att se detta innehåll')
+        toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
         return
       }
 
@@ -517,7 +517,7 @@ export default function CourseOverview({
                 {/* Continue/Start Button - Always show for users with access or in session */}
                 <Button onClick={continueCourse} className="w-full" size="lg">
                   <Play className="w-5 h-5 mr-2" />
-                  {isSessionParticipant ? 'Starta kursen' : 'Fortsätt där du slutade'}
+                  {isSessionParticipant ? 'Starta vinprovningen' : 'Fortsätt där du slutade'}
                 </Button>
 
                 {/* Completion Page Button - Show when course is completed */}
