@@ -38,15 +38,28 @@ export const Reviews: CollectionConfig = {
         
         const user = req.user
         
-        // Enforce isTrusted field restriction
-        if (data && originalDoc && data.isTrusted !== undefined && data.isTrusted !== originalDoc?.isTrusted) {
-          if (user.role !== 'admin' && user.role !== 'instructor') {
-            throw new Error('Only admins and instructors can mark reviews as trusted')
+        // For CREATE operations: ensure isTrusted is false for non-admins
+        if (operation === 'create') {
+          if (data?.isTrusted === true && user.role !== 'admin' && user.role !== 'instructor') {
+            // Silently set to false instead of throwing error
+            data.isTrusted = false
           }
+          return data
         }
         
-        // Only enforce ownership for updates (not creates)
-        if (operation !== 'update') return data
+        // For UPDATE operations only:
+        // Enforce isTrusted field restriction - only check if value is actually changing
+        if (operation === 'update' && originalDoc && data?.isTrusted !== undefined) {
+          const wasTrue = originalDoc.isTrusted === true
+          const willBeTrue = data.isTrusted === true
+          
+          // Only restrict if trying to change the value
+          if (wasTrue !== willBeTrue) {
+            if (user.role !== 'admin' && user.role !== 'instructor') {
+              throw new Error('Only admins and instructors can mark reviews as trusted')
+            }
+          }
+        }
         
         // Admins and instructors can update any review
         if (user.role === 'admin' || user.role === 'instructor') {
