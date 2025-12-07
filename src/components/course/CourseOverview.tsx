@@ -360,7 +360,7 @@ export default function CourseOverview({
                         featuredImage: course.featuredImage as any,
                         level:
                           (course.level as 'beginner' | 'intermediate' | 'advanced') || 'beginner',
-                        duration: totalLessons,
+                        duration: totalMoment,
                         instructor: course.instructor as any,
                         updatedAt: new Date().toISOString(),
                         createdAt: new Date().toISOString(),
