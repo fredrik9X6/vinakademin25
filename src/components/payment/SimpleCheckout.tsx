@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/context/AuthContext'
-import { Loader2, CreditCard, ShieldCheck, Lock, Sparkles } from 'lucide-react'
+import { Loader2, CreditCard, ShieldCheck, Lock } from 'lucide-react'
 import { formatPrice } from '@/lib/stripe'
 import type { Vinprovningar } from '@/payload-types'
 
@@ -73,9 +73,9 @@ export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCh
         </Alert>
       )}
 
-      {/* Price Display - Single, Prominent */}
-      <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/20 dark:to-orange-900/10 rounded-lg p-4 border-2 border-orange-200 dark:border-orange-800/30">
-        <div className="flex items-baseline justify-between gap-4">
+      {/* Price Display - Clean, Elegant */}
+      <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground mb-1">Totalt att betala</p>
             <div className="flex items-baseline gap-2">
@@ -84,17 +84,19 @@ export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCh
                   {formatPrice(course.price || 0)}
                 </span>
               )}
-              <span className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+              <span className="text-3xl font-bold text-foreground">
                 {formatPrice(finalPrice)}
               </span>
             </div>
             {discountAmount > 0 && (
-              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
                 Du sparar {formatPrice(discountAmount)}!
               </p>
             )}
           </div>
-          <Sparkles className="w-6 h-6 text-orange-500 opacity-60" />
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 dark:bg-primary/20">
+            <CreditCard className="w-6 h-6 text-primary" />
+          </div>
         </div>
       </div>
 
