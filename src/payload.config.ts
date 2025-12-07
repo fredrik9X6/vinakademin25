@@ -172,7 +172,7 @@ export default buildConfig({
     ...(nextPublicSiteURL ? [nextPublicSiteURL] : []),
   ],
   email: resendAdapter({
-    defaultFromAddress: 'noreply@dineonline.se',
+    defaultFromAddress: 'noreply@updates.vinakademin.se',
     defaultFromName: 'Vinakademin',
     apiKey: process.env.RESEND_API_KEY || '',
   }),
