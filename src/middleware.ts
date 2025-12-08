@@ -27,6 +27,14 @@ const protectedPaths = [
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
   const pathname = url.pathname
+  const hostname = request.headers.get('host') || ''
+
+  // Redirect apex domain (vinakademin.se) to www subdomain (www.vinakademin.se)
+  if (hostname === 'vinakademin.se') {
+    const redirectUrl = new URL(request.url)
+    redirectUrl.host = 'www.vinakademin.se'
+    return NextResponse.redirect(redirectUrl, 301)
+  }
 
   // Skip middleware for API routes, static files, and public routes
   // Ensure public paths match renamed routes
