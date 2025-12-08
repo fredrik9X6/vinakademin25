@@ -93,7 +93,7 @@ export default function AboutPage() {
           <h1 className="text-3xl md:text-4xl font-medium tracking-tight mb-4">Om Vinakademin</h1>
           <p className="text-xl text-muted-foreground">
             Vi gör vinkunskap enkelt, opretentiöst och roligt – genom att smaka, uppleva och dela
-            vår passion.
+            vårt intresse för vin.
           </p>
         </div>
 
@@ -146,14 +146,14 @@ export default function AboutPage() {
                   <p>
                     Så vi bestämde oss för att skapa det vi saknade: en plats där vinkunskap är
                     enkelt och opretentiöst. Där du kan lära dig genom att faktiskt smaka och
-                    uppleva – utan pretentioner eller krångel.
+                    uppleva, det ska vara enkelt och roligt.
                   </p>
                   <p>
-                    De senaste tre åren har vi delat vår passion via Instagram och TikTok, skapat
-                    hundratals videos, och lärt oss mer om vin varje dag. Men tanken har alltid
-                    varit densamma: göra vinkunskap tillgängligt genom att smaka. Vinprovningar blir
-                    det självklara svaret – men hur kan vi göra dem bättre? Roligare, enklare, mer
-                    tillgängliga. Det är det vi löser med Vinakademin.
+                    De senaste tre åren har vi delat vårt vinintresse via Instagram och TikTok,
+                    skapat hundratals videos, och lärt oss mer om vin varje dag. Men tanken har
+                    alltid varit densamma: göra vinkunskap tillgängligt genom att smaka och uppleva.
+                    Vinprovningar blir det självklara svaret – men hur kan vi göra dem bättre?
+                    Roligare, enklare, mer tillgängliga. Det är det vi löser med Vinakademin.
                   </p>
                 </div>
               </CardContent>
@@ -229,7 +229,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto mb-16">
           <div className="text-center space-y-3 mb-12">
             <h2 className="text-3xl font-medium tracking-tight">Grundarna</h2>
-            <p className="text-lg text-muted-foreground">Möt personerna bakom Vinakademin</p>
+            <p className="text-lg text-muted-foreground">Bakom (och framför) kulisserna</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
@@ -240,12 +240,13 @@ export default function AboutPage() {
                   <Users className="h-12 w-12 text-orange-500/50" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">[Grundare 1 Namn]</h3>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">Medgrundare & VD</p>
+                  <h3 className="text-xl font-semibold">Fredrik Gustafson</h3>
+                  <p className="text-sm text-orange-600 dark:text-orange-400">Bakom kulisserna</p>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  [Beskrivning av grundare 1 - bakgrund, passion för vin, roll på Vinakademin, och
-                  vad hen brinner mest för.]
+                  Med intresse för video, teknik och vin skapar Fredrik allt som behövs för att
+                  Vinakademin ska fungera. Ibland dyker han upp i videos, men mestadels är han bakom
+                  kameran.
                 </p>
               </CardContent>
             </Card>
@@ -257,12 +258,12 @@ export default function AboutPage() {
                   <Users className="h-12 w-12 text-orange-500/50" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">[Grundare 2 Namn]</h3>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">Medgrundare & COO</p>
+                  <h3 className="text-xl font-semibold">Max Eriksson</h3>
+                  <p className="text-sm text-orange-600 dark:text-orange-400">Framför kameran</p>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  [Beskrivning av grundare 2 - bakgrund, passion för vin, roll på Vinakademin, och
-                  vad hen brinner mest för.]
+                  Med ett stort intresse för vin och författande skapar Max videos, artiklar,
+                  vinprovningar och mer eller mindre allt innehåll som Vinakademin producerar.
                 </p>
               </CardContent>
             </Card>
@@ -280,9 +281,9 @@ export default function AboutPage() {
                 <h2 className="text-2xl md:text-3xl font-medium tracking-tight">Vår vision</h2>
                 <p className="text-lg leading-relaxed text-muted-foreground">
                   Vi vill göra vinkunskap enkelt och opretentiöst för alla. En plats där du lär dig
-                  genom att smaka, uppleva och utforska – utan krångel eller pretentioner.
-                  Vinprovningar ska vara roliga, tillgängliga och minnesvärd. Vinakademin ska vara
-                  den självklara platsen för alla som vill upptäcka vinvärlden på riktigt.
+                  genom att smaka, uppleva och utforska vinets värld. Vinprovningar ska vara roliga,
+                  tillgängliga och minnesvärda. Vinakademin ska vara den självklara platsen för alla
+                  som vill upptäcka vinvärlden och lära sig mer om vin.
                 </p>
               </div>
               <Separator className="my-6" />
