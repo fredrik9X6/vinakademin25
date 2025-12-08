@@ -114,7 +114,7 @@ export function ActiveSessionBanner() {
             <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLeaveSession}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Lämna session
             </AlertDialogAction>
