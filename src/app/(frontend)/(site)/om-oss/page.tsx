@@ -98,10 +98,10 @@ export default function AboutPage() {
         </div>
 
         {/* Hero Image Placeholder */}
-        <div className="relative rounded-lg overflow-hidden mb-16 aspect-[21/9] bg-gradient-to-br from-orange-100 to-orange-50 dark:from-amber-900/20 dark:to-amber-950/10">
+        <div className="relative rounded-lg overflow-hidden mb-16 aspect-[21/9] bg-gradient-to-br from-orange-100 to-orange-50 dark:from-muted/50 dark:to-muted/20">
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center space-y-3">
-              <Wine className="h-16 w-16 mx-auto text-orange-500/50 dark:text-amber-500/50" />
+              <Wine className="h-16 w-16 mx-auto text-orange-500/50" />
               <p className="text-sm text-muted-foreground">
                 Plats för hero-bild av grundarna / team
               </p>
@@ -114,7 +114,7 @@ export default function AboutPage() {
           {stats.map((stat) => (
             <Card key={stat.label}>
               <CardContent className="p-6 text-center">
-                <div className="text-3xl md:text-4xl font-bold text-orange-600 dark:text-amber-400 mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-orange-600 dark:text-orange-400 mb-2">
                   {stat.number}
                 </div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
@@ -134,9 +134,9 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <Card className="border-orange-200 dark:border-amber-800/50">
+            <Card>
               <CardContent className="p-8 md:p-12">
-                <Quote className="h-8 w-8 text-orange-500/50 dark:text-amber-500/50 mb-6" />
+                <Quote className="h-8 w-8 text-orange-500/50 mb-6" />
                 <div className="space-y-6 text-lg leading-relaxed">
                   <p>
                     Vi fastnade för vin och hur mycket bättre det smakar när man förstår vad man
@@ -172,10 +172,10 @@ export default function AboutPage() {
             {milestones.map((milestone, index) => (
               <div key={milestone.year} className="relative">
                 {index < milestones.length - 1 && (
-                  <div className="absolute left-[19px] top-12 bottom-0 w-0.5 bg-orange-200 dark:bg-amber-800/50 -mb-8" />
+                  <div className="absolute left-[19px] top-12 bottom-0 w-0.5 bg-orange-200 dark:bg-border -mb-8" />
                 )}
                 <div className="flex gap-6 items-start">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-100 dark:bg-amber-900/30 border-2 border-orange-500 dark:border-amber-500 flex items-center justify-center font-bold text-sm text-orange-600 dark:text-amber-400">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-100 dark:bg-muted border-2 border-orange-500 flex items-center justify-center font-bold text-sm text-orange-600 dark:text-orange-400">
                     {milestone.year.slice(-2)}
                   </div>
                   <Card className="flex-1">
@@ -210,8 +210,8 @@ export default function AboutPage() {
             {values.map((value) => (
               <Card key={value.title} className="text-center">
                 <CardContent className="p-6 space-y-4">
-                  <div className="inline-flex p-3 rounded-lg bg-orange-100 dark:bg-amber-900/30">
-                    <value.icon className="h-6 w-6 text-orange-600 dark:text-amber-400" />
+                  <div className="inline-flex p-3 rounded-lg bg-orange-100 dark:bg-muted">
+                    <value.icon className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-semibold">{value.title}</h3>
@@ -236,12 +236,12 @@ export default function AboutPage() {
             {/* Founder 1 */}
             <Card>
               <CardContent className="p-8 text-center space-y-4">
-                <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-orange-100 to-orange-50 dark:from-amber-900/20 dark:to-amber-950/10 flex items-center justify-center">
-                  <Users className="h-12 w-12 text-orange-500/50 dark:text-amber-500/50" />
+                <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-orange-100 to-orange-50 dark:from-muted dark:to-muted/50 flex items-center justify-center">
+                  <Users className="h-12 w-12 text-orange-500/50" />
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-semibold">[Grundare 1 Namn]</h3>
-                  <p className="text-sm text-orange-600 dark:text-amber-400">Medgrundare & VD</p>
+                  <p className="text-sm text-orange-600 dark:text-orange-400">Medgrundare & VD</p>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   [Beskrivning av grundare 1 - bakgrund, passion för vin, roll på Vinakademin, och
@@ -253,12 +253,12 @@ export default function AboutPage() {
             {/* Founder 2 */}
             <Card>
               <CardContent className="p-8 text-center space-y-4">
-                <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-orange-100 to-orange-50 dark:from-amber-900/20 dark:to-amber-950/10 flex items-center justify-center">
-                  <Users className="h-12 w-12 text-orange-500/50 dark:text-amber-500/50" />
+                <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-orange-100 to-orange-50 dark:from-muted dark:to-muted/50 flex items-center justify-center">
+                  <Users className="h-12 w-12 text-orange-500/50" />
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-semibold">[Grundare 2 Namn]</h3>
-                  <p className="text-sm text-orange-600 dark:text-amber-400">Medgrundare & COO</p>
+                  <p className="text-sm text-orange-600 dark:text-orange-400">Medgrundare & COO</p>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   [Beskrivning av grundare 2 - bakgrund, passion för vin, roll på Vinakademin, och
@@ -271,10 +271,10 @@ export default function AboutPage() {
 
         {/* Vision */}
         <div className="max-w-3xl mx-auto mb-16">
-          <Card className="border-2 border-orange-200 dark:border-amber-800/50 bg-gradient-to-br from-orange-50/50 to-transparent dark:from-amber-900/10">
+          <Card className="border-2 border-orange-200 dark:border-border bg-gradient-to-br from-orange-50/50 to-transparent dark:from-muted/30">
             <CardContent className="p-8 md:p-12 text-center space-y-6">
-              <div className="inline-flex p-4 rounded-full bg-orange-100 dark:bg-amber-900/30">
-                <Sparkles className="h-8 w-8 text-orange-600 dark:text-amber-400" />
+              <div className="inline-flex p-4 rounded-full bg-orange-100 dark:bg-muted">
+                <Sparkles className="h-8 w-8 text-orange-600 dark:text-orange-400" />
               </div>
               <div className="space-y-4">
                 <h2 className="text-2xl md:text-3xl font-medium tracking-tight">Vår vision</h2>
