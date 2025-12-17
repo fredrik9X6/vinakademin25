@@ -9,7 +9,7 @@ import {
   User,
   ArrowRight,
   Star,
-  // Play, // Commented out - used in video section
+  Play,
   Users,
   Wine,
   ShoppingCart,
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-// import MuxPlayer from '@mux/mux-player-react' // Commented out - used in video section
+import MuxPlayer from '@mux/mux-player-react'
 import { transformCourseWithModules } from '@/lib/course-utils-server'
 import { NewsletterSignupBlock } from '@/components/blocks/NewsletterSignupBlock'
 import { NeuralHeroWithBanner } from '@/components/home/NeuralHeroWithBanner'
@@ -361,35 +361,55 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="max-w-3xl mx-auto">
-            {/* Video Section - Commented out for now
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              <div className="order-first lg:order-first">
-                <div className="relative group">
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-transparent bg-gradient-to-br from-[#FDBA75] via-[#FB914C] to-[#FDBA75] p-[2px]">
-                    <div className="bg-background rounded-2xl overflow-hidden">
-                      <div className="aspect-video bg-gradient-to-br from-muted to-muted/50 relative">
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#FDBA75]/10 to-[#FB914C]/10">
-                          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 cursor-pointer">
-                            <Play className="w-8 h-8 text-white ml-1" />
-                          </div>
-                          <div className="text-center space-y-2">
-                            <p className="font-semibold text-lg">Vi är Fredrik & Max</p>
-                            <p className="text-sm text-muted-foreground px-4">
-                              Låt oss berätta om vår vision för Vinakademin
-                            </p>
-                          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left Side - Video */}
+            <div className="order-first lg:order-first">
+              <div className="relative group">
+                {/* Video Container with Orange Border Gradient */}
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-transparent bg-gradient-to-br from-[#FDBA75] via-[#FB914C] to-[#FDBA75] p-[2px]">
+                  <div className="bg-background rounded-2xl overflow-hidden">
+                    <div className="aspect-video bg-gradient-to-br from-muted to-muted/50 relative">
+                      {/* Video Placeholder - Replace with actual video URL */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#FDBA75]/10 to-[#FB914C]/10">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 cursor-pointer">
+                          <Play className="w-8 h-8 text-white ml-1" />
+                        </div>
+                        <div className="text-center space-y-2">
+                          <p className="font-semibold text-lg">Vi är Fredrik & Max</p>
+                          <p className="text-sm text-muted-foreground px-4">
+                            Låt oss berätta om vår vision för Vinakademin
+                          </p>
                         </div>
                       </div>
+                      {/* 
+                        Replace the placeholder above with actual video:
+                        <video 
+                          controls 
+                          className="w-full h-full"
+                          poster="/path-to-poster.jpg"
+                        >
+                          <source src="/path-to-video.mp4" type="video/mp4" />
+                        </video>
+                        
+                        Or use YouTube/Vimeo embed:
+                        <iframe
+                          className="w-full h-full"
+                          src="https://www.youtube.com/embed/VIDEO_ID"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      */}
                     </div>
                   </div>
-                  <div className="absolute -top-6 -right-6 w-24 h-24 bg-[#FDBA75]/20 rounded-full blur-2xl -z-10" />
-                  <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-[#FB914C]/20 rounded-full blur-2xl -z-10" />
                 </div>
-              </div>
-            */}
 
-            {/* Content */}
+                {/* Decorative elements around video */}
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-[#FDBA75]/20 rounded-full blur-2xl -z-10" />
+                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-[#FB914C]/20 rounded-full blur-2xl -z-10" />
+              </div>
+            </div>
+
+            {/* Right Side - Content */}
             <div className="space-y-8">
               {/* Mission Statement */}
               <div className="relative">
@@ -440,7 +460,6 @@ export default async function HomePage() {
                 </Link>
               </div>
             </div>
-            {/* End of video section comment */}
           </div>
         </div>
       </section>
