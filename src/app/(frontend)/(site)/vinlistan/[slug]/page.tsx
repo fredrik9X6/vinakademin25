@@ -392,7 +392,9 @@ export default async function WineDetailPage({ params }: PageProps) {
               const palate = wset.palate || {}
               const conclusion = wset.conclusion || {}
               const reviewer = r.user && typeof r.user === 'object' ? r.user : null
-              const isOwn = Boolean(user?.id && reviewer?.id && String(reviewer.id) === String(user.id))
+              const isOwn = Boolean(
+                user?.id && reviewer?.id && String(reviewer.id) === String(user.id),
+              )
               const reviewerName = r.isTrusted
                 ? 'Vinakademin'
                 : isOwn
