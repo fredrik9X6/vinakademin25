@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { headers } from 'next/headers'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
@@ -42,6 +43,7 @@ async function fetchWineBySlug(slug: string) {
     depth: 1 as any,
     limit: 1,
     sort: '-rating',
+    overrideAccess: false,
   } as any)
   const review = reviews.docs?.[0] || null
   return { wine, review }
@@ -95,21 +97,74 @@ export default async function WineDetailPage({ params }: PageProps) {
 
   const payload = await getPayload({ config })
 
-  // Fetch all reviews for this wine
-  const allReviewsRes = await payload.find({
+  // Fetch only:
+  // - Vinakademins verifierade (trusted) recensioner
+  // - Den inloggade användarens egna recensioner
+  const headersList = await headers()
+  const cookieString = headersList.get('cookie') || ''
+  const { user } = await payload.auth({
+    headers: new Headers({
+      Cookie: cookieString,
+    }),
+  })
+
+  const trustedReviewsRes = await payload.find({
     collection: 'reviews',
-    where: { wine: { equals: wine.id } },
+    where: {
+      and: [{ isTrusted: { equals: true } }, { wine: { equals: wine.id } }],
+    },
     sort: '-createdAt',
     depth: 1 as any,
-    limit: 50,
+    limit: 10,
+    overrideAccess: false,
+    req: {
+      headers: new Headers({
+        Cookie: cookieString,
+      }),
+      user,
+      payload,
+    } as any,
   } as any)
-  const allReviews = (allReviewsRes.docs || []).slice().sort((a: any, b: any) => {
-    // Trusted first, then newest first
-    const ta = a.isTrusted ? 1 : 0
-    const tb = b.isTrusted ? 1 : 0
-    if (tb - ta !== 0) return tb - ta
-    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-  })
+
+  const myReviewsRes = user?.id
+    ? await payload.find({
+        collection: 'reviews',
+        where: {
+          and: [{ wine: { equals: wine.id } }, { user: { equals: Number(user.id) } }],
+        },
+        sort: '-createdAt',
+        depth: 1 as any,
+        limit: 10,
+        overrideAccess: false,
+        req: {
+          headers: new Headers({
+            Cookie: cookieString,
+          }),
+          user,
+          payload,
+        } as any,
+      } as any)
+    : { docs: [] }
+
+  const visibleReviewsRaw = [
+    ...(trustedReviewsRes.docs || []),
+    ...((myReviewsRes as any).docs || []),
+  ]
+  const seen = new Set<string>()
+  const visibleReviews = visibleReviewsRaw
+    .filter((r: any) => {
+      const id = String(r?.id)
+      if (!id || seen.has(id)) return false
+      seen.add(id)
+      return true
+    })
+    .slice()
+    .sort((a: any, b: any) => {
+      const ta = a.isTrusted ? 1 : 0
+      const tb = b.isTrusted ? 1 : 0
+      if (tb - ta !== 0) return tb - ta
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    })
 
   // Fetch related wines by region or grapes
   const grapeIds: number[] = Array.isArray(wine.grapes)
@@ -326,27 +381,33 @@ export default async function WineDetailPage({ params }: PageProps) {
       {/* Reviews */}
       <div className="mt-8">
         <h2 className="text-xl font-medium mb-4">Recensioner</h2>
-        {allReviews.length === 0 ? (
+        {visibleReviews.length === 0 ? (
           <div className="text-sm text-muted-foreground">Inga recensioner ännu.</div>
         ) : (
           <Accordion type="single" collapsible className="w-full">
-            {allReviews.map((r: any) => {
+            {visibleReviews.map((r: any) => {
               const wset = r.wsetTasting || {}
               const appearance = wset.appearance || {}
               const nose = wset.nose || {}
               const palate = wset.palate || {}
               const conclusion = wset.conclusion || {}
               const reviewer = r.user && typeof r.user === 'object' ? r.user : null
-              const reviewerName = reviewer
-                ? [reviewer.firstName, reviewer.lastName].filter(Boolean).join(' ') ||
-                  reviewer.email ||
-                  'Okänd'
-                : 'Okänd'
+              const isOwn = Boolean(user?.id && reviewer?.id && String(reviewer.id) === String(user.id))
+              const reviewerName = r.isTrusted
+                ? 'Vinakademin'
+                : isOwn
+                  ? 'Du'
+                  : reviewer
+                    ? [reviewer.firstName, reviewer.lastName].filter(Boolean).join(' ') ||
+                      reviewer.email ||
+                      'Okänd'
+                    : 'Okänd'
               return (
                 <AccordionItem key={r.id} value={String(r.id)}>
                   <AccordionTrigger>
                     <div className="flex items-center gap-2">
                       {r.isTrusted ? <Badge variant="secondary">Verifierad</Badge> : null}
+                      {isOwn && !r.isTrusted ? <Badge variant="outline">Du</Badge> : null}
                       <span className="font-medium">{reviewerName}</span>
                       <span className="text-muted-foreground">• {r.rating ?? '—'}/5</span>
                       <span className="text-muted-foreground">

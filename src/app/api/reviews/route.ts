@@ -33,26 +33,27 @@ export async function POST(request: NextRequest) {
     const referer = request.headers.get('referer') || ''
     const isFromAdminUI = referer.includes('/admin')
     const { searchParams } = new URL(request.url)
-    
+
     // PayloadCMS admin requests often have specific query params or patterns
-    const hasPayloadQueryParams = searchParams.has('depth') || 
-                                   searchParams.has('locale') || 
-                                   searchParams.has('fallback-locale') ||
-                                   searchParams.has('where') ||
-                                   searchParams.has('limit') ||
-                                   searchParams.has('sort')
+    const hasPayloadQueryParams =
+      searchParams.has('depth') ||
+      searchParams.has('locale') ||
+      searchParams.has('fallback-locale') ||
+      searchParams.has('where') ||
+      searchParams.has('limit') ||
+      searchParams.has('sort')
 
     // If it's an admin request, handle it using PayloadCMS's native methods
     if (isAdminRequest || isFromAdminUI || hasPayloadQueryParams) {
       console.log('🔄 [REVIEWS API] Handling admin request with PayloadCMS methods')
-      
+
       // Extract query params for PayloadCMS find operations
       const depth = searchParams.get('depth') ? parseInt(searchParams.get('depth') || '0') : 0
       const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit') || '10') : 10
       const page = searchParams.get('page') ? parseInt(searchParams.get('page') || '1') : 1
       const sort = searchParams.get('sort') || '-createdAt'
       const whereParam = searchParams.get('where')
-      
+
       let where: any = {}
       if (whereParam) {
         try {
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       const contentType = request.headers.get('content-type') || ''
       let body: any = {}
       let isRelationshipFetch = false
-      
+
       try {
         if (contentType.includes('application/json')) {
           const bodyText = await request.text()
@@ -74,7 +75,8 @@ export async function POST(request: NextRequest) {
             body = JSON.parse(bodyText)
             console.log('📦 [REVIEWS API] Parsed JSON body:', JSON.stringify(body, null, 2))
             // Check if body has actual data (not just empty object)
-            isRelationshipFetch = Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
+            isRelationshipFetch =
+              Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
           } else {
             isRelationshipFetch = true
           }
@@ -85,7 +87,8 @@ export async function POST(request: NextRequest) {
           if (payloadField) {
             body = JSON.parse(payloadField)
             console.log('📦 [REVIEWS API] Parsed _payload field:', JSON.stringify(body, null, 2))
-            isRelationshipFetch = Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
+            isRelationshipFetch =
+              Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
           } else {
             // Extract all form fields
             const formEntries: Record<string, any> = {}
@@ -94,7 +97,8 @@ export async function POST(request: NextRequest) {
             }
             body = formEntries
             console.log('📦 [REVIEWS API] Parsed FormData entries:', JSON.stringify(body, null, 2))
-            isRelationshipFetch = Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
+            isRelationshipFetch =
+              Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
           }
         } else {
           const bodyText = await request.text()
@@ -103,7 +107,8 @@ export async function POST(request: NextRequest) {
             try {
               body = JSON.parse(bodyText)
               console.log('📦 [REVIEWS API] Parsed body from text:', JSON.stringify(body, null, 2))
-              isRelationshipFetch = Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
+              isRelationshipFetch =
+                Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
             } catch {
               isRelationshipFetch = true
             }
@@ -128,32 +133,44 @@ export async function POST(request: NextRequest) {
           depth,
           sort,
         })
-        
+
         return NextResponse.json(result)
       }
 
       // Otherwise, this is a create/update operation
-      console.log('📦 [REVIEWS API] Full body before transformation:', JSON.stringify(body, null, 2))
+      console.log(
+        '📦 [REVIEWS API] Full body before transformation:',
+        JSON.stringify(body, null, 2),
+      )
 
       // Transform data for PayloadCMS admin requests
       // Relationship fields come as strings or objects, need to convert to number IDs
       if (body.wine) {
-        body.wine = typeof body.wine === 'string' ? parseInt(body.wine) : 
-                    typeof body.wine === 'object' && body.wine?.id ? parseInt(body.wine.id) : 
-                    body.wine
+        body.wine =
+          typeof body.wine === 'string'
+            ? parseInt(body.wine)
+            : typeof body.wine === 'object' && body.wine?.id
+              ? parseInt(body.wine.id)
+              : body.wine
       }
       // Note: lesson field removed - content items reference reviews, not the other way around
       if (body.session) {
-        body.session = typeof body.session === 'string' ? parseInt(body.session) : 
-                       typeof body.session === 'object' && body.session?.id ? parseInt(body.session.id) : 
-                       body.session || null
+        body.session =
+          typeof body.session === 'string'
+            ? parseInt(body.session)
+            : typeof body.session === 'object' && body.session?.id
+              ? parseInt(body.session.id)
+              : body.session || null
       }
       if (body.sessionParticipant) {
-        body.sessionParticipant = typeof body.sessionParticipant === 'string' ? parseInt(body.sessionParticipant) : 
-                                   typeof body.sessionParticipant === 'object' && body.sessionParticipant?.id ? parseInt(body.sessionParticipant.id) : 
-                                   body.sessionParticipant || null
+        body.sessionParticipant =
+          typeof body.sessionParticipant === 'string'
+            ? parseInt(body.sessionParticipant)
+            : typeof body.sessionParticipant === 'object' && body.sessionParticipant?.id
+              ? parseInt(body.sessionParticipant.id)
+              : body.sessionParticipant || null
       }
-      
+
       // Convert rating to number (it's labeled as 'Betyg' in Swedish)
       // Note: Validation is handled by PayloadCMS collection config (min/max)
       if (body.rating !== undefined) {
@@ -171,7 +188,7 @@ export async function POST(request: NextRequest) {
           data: body,
           depth,
         })
-        
+
         return NextResponse.json({ doc: result })
       } else {
         // Create new review
@@ -182,7 +199,7 @@ export async function POST(request: NextRequest) {
           data: body,
           depth,
         })
-        
+
         return NextResponse.json({ doc: result })
       }
     }
@@ -200,13 +217,16 @@ export async function POST(request: NextRequest) {
     try {
       if (contentType.includes('application/json')) {
         body = await request.json()
-      } else if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
+      } else if (
+        contentType.includes('application/x-www-form-urlencoded') ||
+        contentType.includes('multipart/form-data')
+      ) {
         const formData = await request.formData()
         body = Object.fromEntries(formData.entries())
       } else {
         // Try to read as text first
         const bodyText = await request.text()
-        
+
         if (!bodyText || bodyText.trim() === '') {
           // Empty body - check query params
           console.log('⚠️ [REVIEWS API] Empty request body, checking query params')
@@ -240,7 +260,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ [REVIEWS API] Error parsing request body:', parseError)
       console.error('❌ [REVIEWS API] Content-Type:', contentType)
       console.error('❌ [REVIEWS API] Request URL:', request.url)
-      
+
       // If parsing fails, try to get data from query params as fallback
       const { searchParams } = new URL(request.url)
       if (searchParams.toString()) {
@@ -265,29 +285,34 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!body.wine) {
-      console.log('⚠️ [REVIEWS API] Missing required fields - this might be a relationship fetch request')
+      console.log(
+        '⚠️ [REVIEWS API] Missing required fields - this might be a relationship fetch request',
+      )
       // PayloadCMS relationship fields may send POST requests with empty bodies when fetching options
       // Return empty result instead of error to avoid breaking the admin UI
       const { searchParams } = new URL(request.url)
       console.log('⚠️ [REVIEWS API] Query params:', searchParams.toString())
       console.log('⚠️ [REVIEWS API] This appears to be a relationship fetch request')
       // Return a proper PayloadCMS-formatted response for relationship fetching
-      return NextResponse.json({
-        docs: [],
-        totalDocs: 0,
-        limit: 0,
-        totalPages: 0,
-        page: 1,
-        hasPrevPage: false,
-        hasNextPage: false,
-        prevPage: null,
-        nextPage: null,
-      }, { status: 200 })
+      return NextResponse.json(
+        {
+          docs: [],
+          totalDocs: 0,
+          limit: 0,
+          totalPages: 0,
+          page: 1,
+          hasPrevPage: false,
+          hasNextPage: false,
+          prevPage: null,
+          nextPage: null,
+        },
+        { status: 200 },
+      )
     }
 
     // Ensure numeric values are properly converted
     const wineId = body.wine ? Number(body.wine) : undefined
-    
+
     if (!wineId || isNaN(wineId)) {
       return NextResponse.json(
         {
@@ -301,10 +326,7 @@ export async function POST(request: NextRequest) {
     // Check if a review already exists for this user/wine combination
     // Note: Removed lesson field - content items reference reviews, not the other way around
     const whereConditions: any = {
-      and: [
-        { user: { equals: user.id } },
-        { wine: { equals: wineId } },
-      ],
+      and: [{ user: { equals: user.id } }, { wine: { equals: wineId } }],
     }
 
     // If this is a session review, also match the session
@@ -414,8 +436,15 @@ export async function GET(request: NextRequest) {
       where.wine = { equals: Number(searchParams.get('wine')) }
     }
 
+    // Safety default:
+    // - If authenticated and no explicit user filter, default to current user.
+    // - If not authenticated, default to trusted reviews only.
     if (searchParams.get('user')) {
       where.user = { equals: Number(searchParams.get('user')) }
+    } else if (user?.id) {
+      where.user = { equals: Number(user.id) }
+    } else {
+      where.isTrusted = { equals: true }
     }
 
     if (searchParams.get('session')) {
@@ -438,6 +467,7 @@ export async function GET(request: NextRequest) {
       page,
       sort,
       depth,
+      overrideAccess: false,
       req: {
         ...request,
         user, // Pass user for access control

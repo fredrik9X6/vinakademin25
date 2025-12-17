@@ -204,7 +204,9 @@ export function UserReviewsPanel() {
         <div>
           <h4 className="text-sm font-medium">Dina vinrecensioner</h4>
           <p className="text-xs text-muted-foreground">
-            {reviews.length === 0 ? 'Du har inte skrivit några recensioner ännu.' : `${reviews.length} recensioner`}
+            {reviews.length === 0
+              ? 'Du har inte skrivit några recensioner ännu.'
+              : `${reviews.length} recensioner`}
           </p>
         </div>
 
@@ -239,7 +241,10 @@ export function UserReviewsPanel() {
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {gridItems.map((r) => (
-            <WineGridCard key={String((typeof r.wine === 'object' && r.wine?.id) || r.id)} review={r} />
+            <WineGridCard
+              key={String((typeof r.wine === 'object' && r.wine?.id) || r.id)}
+              review={r}
+            />
           ))}
         </div>
       ) : (
