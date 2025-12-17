@@ -356,11 +356,9 @@ export function WineReviewForm({
     setAttemptSubmit(true)
 
     const newErrors: Record<string, string> = {}
-    const requiredPairs: Array<[string, string]> = 
+    const requiredPairs: Array<[string, string]> =
       mode === 'simple'
-        ? [
-            ['rating', String(rating || '')],
-          ]
+        ? [['rating', String(rating || '')]]
         : [
             ['appearanceClarity', appearanceClarity],
             ['appearanceIntensity', appearanceIntensity],
@@ -375,23 +373,23 @@ export function WineReviewForm({
             ['palateFinish', palateFinish],
             ['quality', quality],
           ]
-    
+
     requiredPairs.forEach(([key, val]) => {
       if (!val) newErrors[key] = 'Detta fält är obligatoriskt'
     })
-    
+
     if (!rating || rating < 1 || rating > 5) {
       newErrors['rating'] = 'Välj ett betyg mellan 1–5'
     }
-    
+
     if (mode === 'simple') {
-        if (!primaryAromas || primaryAromas.length === 0)
-            newErrors['primaryAromas'] = 'Välj minst en arom'
+      if (!primaryAromas || primaryAromas.length === 0)
+        newErrors['primaryAromas'] = 'Välj minst en arom'
     } else {
-        if (!primaryAromas || primaryAromas.length === 0)
-            newErrors['primaryAromas'] = 'Välj minst en primär arom'
-        if (!primaryFlavours || primaryFlavours.length === 0)
-            newErrors['primaryFlavours'] = 'Välj minst en primär smak'
+      if (!primaryAromas || primaryAromas.length === 0)
+        newErrors['primaryAromas'] = 'Välj minst en primär arom'
+      if (!primaryFlavours || primaryFlavours.length === 0)
+        newErrors['primaryFlavours'] = 'Välj minst en primär smak'
     }
     if (!wineId) newErrors['wine'] = 'Inget vin kopplat till denna lektion'
 

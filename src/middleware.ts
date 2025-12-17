@@ -4,11 +4,6 @@ import { NextRequest, NextResponse } from 'next/server'
 // Default role upon registration is now 'user' (set in AuthContext)
 const protectedPaths = [
   // Removed legacy /mina-sidor; use /profil instead
-  // Temporarily comment out admin protection to allow first user setup
-  // {
-  //   path: '/admin', // Keep as is, matches Payload default
-  //   roles: ['admin'],
-  // },
   {
     path: '/instruktor', // Assuming Swedish name for /instructor
     roles: ['admin', 'instructor'],
@@ -28,6 +23,52 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
   const pathname = url.pathname
 
+  // ---------------------------------------------------------------------------
+  // Admin gate (Payload Admin UI lives under /admin)
+  // - Allow unauthenticated users to reach /admin so Payload can show its login UI
+  // - But if a user IS authenticated, they must be an admin to access /admin*
+  // ---------------------------------------------------------------------------
+  if (pathname.startsWith('/admin')) {
+    const payloadToken = request.cookies.get('payload-token')
+
+    // No session yet -> allow Payload Admin to render its login screen.
+    if (!payloadToken) {
+      return NextResponse.next()
+    }
+
+    try {
+      const meURL = new URL('/api/users/me', request.url)
+      const cookieHeader = request.headers.get('cookie') ?? ''
+
+      const meRes = await fetch(meURL, {
+        headers: {
+          cookie: cookieHeader,
+        },
+      })
+
+      // If token is invalid/expired, let Payload Admin handle showing login.
+      if (!meRes.ok) {
+        return NextResponse.next()
+      }
+
+      const json = (await meRes.json().catch(() => null)) as any
+      const role = json?.user?.role
+
+      if (role !== 'admin') {
+        // Logged in, but not an admin -> deny access to admin UI
+        url.pathname = '/profil'
+        url.searchParams.set('from', pathname)
+        return NextResponse.redirect(url)
+      }
+
+      return NextResponse.next()
+    } catch {
+      // Fail open to avoid bricking admin UI due to transient issues.
+      // Payload will still enforce access control on APIs.
+      return NextResponse.next()
+    }
+  }
+
   // Skip middleware for API routes, static files, and public routes
   // Ensure public paths match renamed routes
   if (
@@ -43,8 +84,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/verifiera-epost' ||
     pathname === '/verifiera-epost-meddelande' || // Added the verification message page
     pathname === '/vinprovningar' || // Allow public access to courses listing page
-    (pathname.startsWith('/vinprovningar/') && !url.searchParams.has('lesson')) || // Allow public access to course landing pages, but not lessons
-    pathname.startsWith('/admin') // Temporarily allow admin access for first user setup
+    (pathname.startsWith('/vinprovningar/') && !url.searchParams.has('lesson')) // Allow public access to course landing pages, but not lessons
   ) {
     return NextResponse.next()
   }
