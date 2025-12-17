@@ -295,12 +295,11 @@ export default function ReviewComparison({
               <CardDescription className="flex items-center gap-1.5">
                 {review.buyAgain ? (
                   <>
-                    <span className="text-green-600 dark:text-green-400 font-bold">✓</span> Skulle
-                    köpa igen
-                  </>
-                ) : (
-                  <>
-                    <span className="text-red-500 font-bold">✕</span> Skulle inte köpa igen
+                    <span className="text-green-600 dark:text-green-400 font-bold">✓</span> Hade köpt igen
+                </>
+              ) : (
+                <>
+                  <span className="text-red-500 font-bold">✕</span> Hade inte köpt igen
                   </>
                 )}
               </CardDescription>

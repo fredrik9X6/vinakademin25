@@ -261,7 +261,7 @@ export const Reviews: CollectionConfig = {
     {
       name: 'buyAgain',
       type: 'checkbox',
-      label: 'Skulle jag köpa det igen?',
+      label: 'Jag hade köpt detta vin igen',
       defaultValue: false,
       admin: { description: 'Whether the user would buy this wine again' },
     },

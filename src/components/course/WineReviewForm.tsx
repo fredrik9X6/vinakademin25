@@ -1141,7 +1141,7 @@ export function WineReviewForm({
               htmlFor="buyAgain"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
             >
-              Jag skulle köpa det här vinet igen
+              Jag hade köpt detta vin igen
             </label>
           </div>
           <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
