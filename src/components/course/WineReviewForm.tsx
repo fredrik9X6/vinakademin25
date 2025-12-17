@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { StarRating } from '@/components/ui/star-rating'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
@@ -33,6 +35,7 @@ type ReviewDoc = {
   rating?: number
   reviewText?: any
   wsetTasting?: any
+  buyAgain?: boolean
   createdAt?: string
   user?: number | { id: number }
   sessionParticipant?: number | { id: number }
@@ -46,8 +49,10 @@ export function WineReviewForm({
   wineIdProp,
 }: WineReviewFormProps) {
   const [rating, setRating] = React.useState<number>(0)
+  const [buyAgain, setBuyAgain] = React.useState<boolean>(false)
   const [notes, setNotes] = React.useState<string>('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [mode, setMode] = React.useState<'simple' | 'advanced'>('advanced')
   const [submittedReview, setSubmittedReview] = React.useState<ReviewDoc | null>(null)
   const [answerKey, setAnswerKey] = React.useState<ReviewDoc | null>(null)
   const [history, setHistory] = React.useState<ReviewDoc[]>([])
@@ -111,35 +116,35 @@ export function WineReviewForm({
 
   const fetchLatestSubmission = React.useCallback(async () => {
     if (!wineId) return // Can't fetch without wine ID
-    
+
     // Only fetch if we have a user (authenticated) or participant ID (guest)
     if (!user?.id && !participantId) return
-    
+
     try {
       const params = new URLSearchParams()
       // Query by wine ID
       params.set('wine', String(wineId))
-      
+
       // Explicitly filter by current user ID if authenticated
       if (user?.id) {
         params.set('user', String(user.id))
       }
-      
+
       // If we have a session participant ID, also filter by that
       // Note: The API route will need to handle sessionParticipant filtering
       if (participantId && !user?.id) {
         params.set('sessionParticipant', participantId)
       }
-      
+
       params.set('sort', '-createdAt')
       params.set('limit', '5')
       params.set('depth', '1') // Include wine relationship
-      
+
       const res = await fetch(`/api/reviews?${params.toString()}`, { credentials: 'include' })
       if (!res.ok) return
       const json = await res.json()
       const docs = json?.docs || []
-      
+
       // Additional client-side filtering for safety:
       // Filter to only current user's reviews or current participant's reviews
       const filteredDocs = docs.filter((doc: ReviewDoc) => {
@@ -148,18 +153,19 @@ export function WineReviewForm({
           const reviewUserId = typeof doc.user === 'object' ? doc.user.id : doc.user
           if (reviewUserId === user.id) return true
         }
-        
+
         // Check if review belongs to current session participant
         if (participantId) {
-          const reviewParticipantId = typeof doc.sessionParticipant === 'object' 
-            ? doc.sessionParticipant.id 
-            : doc.sessionParticipant
+          const reviewParticipantId =
+            typeof doc.sessionParticipant === 'object'
+              ? doc.sessionParticipant.id
+              : doc.sessionParticipant
           if (String(reviewParticipantId) === participantId) return true
         }
-        
+
         return false
       })
-      
+
       setHistory(filteredDocs)
       const latest = filteredDocs[0]
       if (latest) {
@@ -188,6 +194,7 @@ export function WineReviewForm({
 
     // Basic fields
     if (review.rating) setRating(review.rating)
+    setBuyAgain(!!review.buyAgain)
     if (typeof review.reviewText === 'string') setNotes(review.reviewText)
 
     // WSET fields
@@ -257,6 +264,7 @@ export function WineReviewForm({
         participantName: options.label,
         isVerified: options.isVerified ?? false,
         rating: (review as any).rating,
+        buyAgain: review.buyAgain,
         clarity: appearance.clarity,
         brightness: appearance.intensity,
         color: appearance.color,
@@ -395,6 +403,7 @@ export function WineReviewForm({
           // Note: lesson field removed - content items reference reviews, not the other way around
           wine: wineIdNum,
           rating,
+          buyAgain,
           reviewText: notes,
           session: sessionIdNum || undefined,
           sessionParticipant: participantIdNum || undefined,
@@ -583,403 +592,559 @@ export function WineReviewForm({
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-8">
-        <Section title="Utseende">
-          <InputRow
-            label="Klarhet"
-            error={errors['appearanceClarity']}
-            attemptSubmit={attemptSubmit}
-          >
-            <Select value={appearanceClarity} onValueChange={setAppearanceClarity}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Välj" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Klar">Klar</SelectItem>
-                <SelectItem value="Oklar">Oklar</SelectItem>
-              </SelectContent>
-            </Select>
-          </InputRow>
-          <InputRow
-            label="Intensitet"
-            error={errors['appearanceIntensity']}
-            attemptSubmit={attemptSubmit}
-          >
-            <Select value={appearanceIntensity} onValueChange={setAppearanceIntensity}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Välj" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Blek">Blek</SelectItem>
-                <SelectItem value="Mellan">Mellan</SelectItem>
-                <SelectItem value="Djup">Djup</SelectItem>
-              </SelectContent>
-            </Select>
-          </InputRow>
-          <InputRow label="Färg" error={errors['appearanceColor']} attemptSubmit={attemptSubmit}>
-            <Select value={appearanceColor} onValueChange={setAppearanceColor}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Välj" />
-              </SelectTrigger>
-              <SelectContent>
-                {[
-                  'Citrongul',
-                  'Guld',
-                  'Bärnstensfärgad',
-                  'Rosa',
-                  'Rosa-orange',
-                  'Orange',
-                  'Lila',
-                  'Rubinröd',
-                  'Granatröd',
-                  'Läderfärgad',
-                ].map((o) => (
-                  <SelectItem key={o} value={o}>
-                    {o}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </InputRow>
-        </Section>
+        <Tabs
+          value={mode}
+          onValueChange={(v) => setMode(v as 'simple' | 'advanced')}
+          className="w-full"
+        >
+          <div className="flex justify-center mb-6">
+            <TabsList>
+              <TabsTrigger value="simple">Enkel</TabsTrigger>
+              <TabsTrigger value="advanced">Avancerad</TabsTrigger>
+            </TabsList>
+          </div>
 
-        <Section title="Doft">
-          <InputRow
-            label="Intensitet"
-            error={errors['noseIntensity']}
-            attemptSubmit={attemptSubmit}
-          >
-            <Select value={noseIntensity} onValueChange={setNoseIntensity}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Välj" />
-              </SelectTrigger>
-              <SelectContent>
-                {['Låg', 'Mellan', 'Hög'].map((o) => (
-                  <SelectItem key={o} value={o}>
-                    {o}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </InputRow>
-          <InputRow
-            label="Primära aromer"
-            error={errors['primaryAromas']}
-            attemptSubmit={attemptSubmit}
-          >
-            <MultiSelect
-              options={[
-                'Jordgubbe',
-                'Päron',
-                'Persika',
-                'Apelsin',
-                'Citron',
-                'Äpple',
-                'Krusbär',
-                'Grapefrukt',
-                'Druva',
-                'Lime',
-                'Aprikos',
-                'Banan',
-                'Nektarin',
-                'Litchi',
-                'Mango',
-                'Passionsfrukt',
-                'Melon',
-                'Ananas',
-                'Tranbär',
-                'Röda vinbär',
-                'Hallon',
-                'Röda körsbär',
-                'Svarta vinbär',
-                'Björnbär',
-                'Mörka körsbär',
-                'Blåbär',
-                'Mörka plommon',
-                'Röda plommon',
-                'Blomma',
-                'Ros',
-                'Viol',
-                'Grön paprika',
-                'Gräs',
-                'Tomatblad',
-                'Sparris',
-                'Eukalyptus',
-                'Mynta',
-                'Fänkål',
-                'Dill',
-                'Torkade örter',
-                'Svart- & Vitpeppar',
-                'Lakrits',
-                'Omogen frukt',
-                'Mogen frukt',
-                'Blöta stenar',
-              ].map((v) => ({ label: v, value: v }))}
-              value={primaryAromas}
-              onValueChange={setPrimaryAromas}
-              placeholder="Välj aromer"
-              className="w-full"
-            />
-          </InputRow>
-          <InputRow label="Sekundära aromer" attemptSubmit={attemptSubmit}>
-            <MultiSelect
-              options={[
-                'Vanilj',
-                'Ceder',
-                'Kex',
-                'Bröd',
-                'Bröddeg',
-                'yoghurt',
-                'Grädde',
-                'Smör',
-                'Ost',
-                'Kokosnöt',
-                'Förkolnat trä',
-                'Rök',
-                'Godis',
-                'Bakverk',
-                'Rostat bröd',
-                'Kryddnejlika',
-                'Kanel',
-                'Muskot',
-                'Ingefära',
-                'Kokt frukt',
-                'Kaffe',
-              ].map((v) => ({ label: v, value: v }))}
-              value={secondaryAromas}
-              onValueChange={setSecondaryAromas}
-              placeholder="Välj aromer"
-              className="w-full"
-            />
-          </InputRow>
-          <InputRow label="Tertiära aromer" attemptSubmit={attemptSubmit}>
-            <MultiSelect
-              options={[
-                'Choklad',
-                'Läder',
-                'Kola',
-                'Jord',
-                'Svamp',
-                'Kött',
-                'Tobak',
-                'Blöta löv',
-                'Skogsbotten',
-                'Apelsinmarmelad',
-                'Bensin',
-                'Mandel',
-                'Hasselnöt',
-                'Honung',
-                'Torkad frukt',
-              ].map((v) => ({ label: v, value: v }))}
-              value={tertiaryAromas}
-              onValueChange={setTertiaryAromas}
-              placeholder="Välj aromer"
-              className="w-full"
-            />
-          </InputRow>
-        </Section>
+          <TabsContent value="simple" className="space-y-6">
+            <Section title="Bedömning">
+              <InputRow
+                label="Aromer"
+                error={errors['primaryAromas']}
+                attemptSubmit={attemptSubmit}
+              >
+                <MultiSelect
+                  options={[
+                    'Jordgubbe',
+                    'Päron',
+                    'Persika',
+                    'Apelsin',
+                    'Citron',
+                    'Äpple',
+                    'Krusbär',
+                    'Grapefrukt',
+                    'Druva',
+                    'Lime',
+                    'Aprikos',
+                    'Banan',
+                    'Nektarin',
+                    'Litchi',
+                    'Mango',
+                    'Passionsfrukt',
+                    'Melon',
+                    'Ananas',
+                    'Tranbär',
+                    'Röda vinbär',
+                    'Hallon',
+                    'Röda körsbär',
+                    'Svarta vinbär',
+                    'Björnbär',
+                    'Mörka körsbär',
+                    'Blåbär',
+                    'Mörka plommon',
+                    'Röda plommon',
+                    'Blomma',
+                    'Ros',
+                    'Viol',
+                    'Grön paprika',
+                    'Gräs',
+                    'Tomatblad',
+                    'Sparris',
+                    'Eukalyptus',
+                    'Mynta',
+                    'Fänkål',
+                    'Dill',
+                    'Torkade örter',
+                    'Svart- & Vitpeppar',
+                    'Lakrits',
+                    'Omogen frukt',
+                    'Mogen frukt',
+                    'Blöta stenar',
+                  ].map((v) => ({ label: v, value: v }))}
+                  value={primaryAromas}
+                  onValueChange={setPrimaryAromas}
+                  placeholder="Välj aromer"
+                  className="w-full"
+                />
+              </InputRow>
+              <InputRow label="Sötma" attemptSubmit={attemptSubmit}>
+                <Select value={palateSweetness} onValueChange={setPalateSweetness}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['Torr', 'Halvtorr', 'Mellan', 'Söt'].map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </InputRow>
+              <InputRow label="Syra" attemptSubmit={attemptSubmit}>
+                <Select value={palateAcidity} onValueChange={setPalateAcidity}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['Låg', 'Mellan', 'Hög'].map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </InputRow>
+              <InputRow label="Betyg" error={errors['rating']} attemptSubmit={attemptSubmit}>
+                <div className="p-4 bg-gradient-to-br from-orange-50/30 via-white to-orange-50/10 dark:from-orange-950/10 dark:via-background dark:to-orange-950/5 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <StarRating
+                    value={rating}
+                    onChange={setRating}
+                    max={5}
+                    size="lg"
+                    showLabel={true}
+                    error={attemptSubmit && errors['rating'] ? errors['rating'] : undefined}
+                    aria-label="Välj betyg från 1 till 5"
+                  />
+                </div>
+              </InputRow>
+              <InputRow label="Noteringar" attemptSubmit={attemptSubmit}>
+                <Textarea
+                  rows={4}
+                  placeholder="Dina tankar om vinet..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </InputRow>
+            </Section>
+          </TabsContent>
 
-        <Section title="Smak">
-          {(
-            [
-              ['Sötma', palateSweetness, setPalateSweetness, ['Torr', 'Halvtorr', 'Mellan', 'Söt']],
-              ['Syra', palateAcidity, setPalateAcidity, ['Låg', 'Mellan', 'Hög']],
-              ['Tannin', palateTannin, setPalateTannin, ['Låg', 'Mellan', 'Hög']],
-              ['Alkohol', palateAlcohol, setPalateAlcohol, ['Låg', 'Mellan', 'Hög']],
-              ['Fyllighet', palateBody, setPalateBody, ['Lätt', 'Mellan', 'Fyllig']],
-              ['Smakintensitet', palateIntensity, setPalateIntensity, ['Låg', 'Medium', 'Uttalad']],
-            ] as any[]
-          ).map(([label, val, setter, opts]) => (
-            <InputRow key={label as string} label={label as string}>
-              <Select value={val as string} onValueChange={setter as any}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Välj" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(opts as string[]).map((o) => (
-                    <SelectItem key={o} value={o}>
-                      {o}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </InputRow>
-          ))}
-          <InputRow
-            label="Primära smaker"
-            error={errors['primaryFlavours']}
-            attemptSubmit={attemptSubmit}
-          >
-            <MultiSelect
-              options={[
-                'Jordgubbe',
-                'Päron',
-                'Persika',
-                'Apelsin',
-                'Citron',
-                'Äpple',
-                'Krusbär',
-                'Grapefrukt',
-                'Druva',
-                'Lime',
-                'Aprikos',
-                'Banan',
-                'Nektarin',
-                'Litchi',
-                'Mango',
-                'Passionsfrukt',
-                'Melon',
-                'Ananas',
-                'Tranbär',
-                'Röda vinbär',
-                'Hallon',
-                'Röda körsbär',
-                'Svarta vinbär',
-                'Björnbär',
-                'Mörka körsbär',
-                'Blåbär',
-                'Mörka plommon',
-                'Röda plommon',
-                'Blomma',
-                'Ros',
-                'Viol',
-                'Grön paprika',
-                'Gräs',
-                'Tomatblad',
-                'Sparris',
-                'Eukalyptus',
-                'Mynta',
-                'Fänkål',
-                'Dill',
-                'Torkade örter',
-                'Svart- & Vitpeppar',
-                'Lakrits',
-                'Omogen frukt',
-                'Mogen frukt',
-                'Blöta stenar',
-              ].map((v) => ({ label: v, value: v }))}
-              value={primaryFlavours}
-              onValueChange={setPrimaryFlavours}
-              placeholder="Välj smaker"
-              className="w-full"
-            />
-          </InputRow>
-          <InputRow label="Sekundära smaker" attemptSubmit={attemptSubmit}>
-            <MultiSelect
-              options={[
-                'Vanilj',
-                'Ceder',
-                'Kex',
-                'Bröd',
-                'Bröddeg',
-                'yoghurt',
-                'Grädde',
-                'Smör',
-                'Ost',
-                'Kokosnöt',
-                'Förkolnat trä',
-                'Rök',
-                'Godis',
-                'Bakverk',
-                'Rostat bröd',
-                'Kryddnejlika',
-                'Kanel',
-                'Muskot',
-                'Ingefära',
-                'Kokt frukt',
-                'Kaffe',
-              ].map((v) => ({ label: v, value: v }))}
-              value={secondaryFlavours}
-              onValueChange={setSecondaryFlavours}
-              placeholder="Välj smaker"
-              className="w-full"
-            />
-          </InputRow>
-          <InputRow label="Tertiära smaker" attemptSubmit={attemptSubmit}>
-            <MultiSelect
-              options={[
-                'Choklad',
-                'Läder',
-                'Kola',
-                'Jord',
-                'Svamp',
-                'Kött',
-                'Tobak',
-                'Blöta löv',
-                'Skogsbotten',
-                'Apelsinmarmelad',
-                'Bensin',
-                'Mandel',
-                'Hasselnöt',
-                'Honung',
-                'Torkad frukt',
-              ].map((v) => ({ label: v, value: v }))}
-              value={tertiaryFlavours}
-              onValueChange={setTertiaryFlavours}
-              placeholder="Välj smaker"
-              className="w-full"
-            />
-          </InputRow>
-          <InputRow label="Eftersmak" error={errors['palateFinish']} attemptSubmit={attemptSubmit}>
-            <Select value={palateFinish} onValueChange={setPalateFinish}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Välj" />
-              </SelectTrigger>
-              <SelectContent>
-                {['Kort', 'Mellan', 'Lång'].map((o) => (
-                  <SelectItem key={o} value={o}>
-                    {o}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </InputRow>
-        </Section>
+          <TabsContent value="advanced" className="space-y-8">
+            <Section title="Utseende">
+              <InputRow
+                label="Klarhet"
+                error={errors['appearanceClarity']}
+                attemptSubmit={attemptSubmit}
+              >
+                <Select value={appearanceClarity} onValueChange={setAppearanceClarity}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Klar">Klar</SelectItem>
+                    <SelectItem value="Oklar">Oklar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </InputRow>
+              <InputRow
+                label="Intensitet"
+                error={errors['appearanceIntensity']}
+                attemptSubmit={attemptSubmit}
+              >
+                <Select value={appearanceIntensity} onValueChange={setAppearanceIntensity}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Blek">Blek</SelectItem>
+                    <SelectItem value="Mellan">Mellan</SelectItem>
+                    <SelectItem value="Djup">Djup</SelectItem>
+                  </SelectContent>
+                </Select>
+              </InputRow>
+              <InputRow
+                label="Färg"
+                error={errors['appearanceColor']}
+                attemptSubmit={attemptSubmit}
+              >
+                <Select value={appearanceColor} onValueChange={setAppearanceColor}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[
+                      'Citrongul',
+                      'Guld',
+                      'Bärnstensfärgad',
+                      'Rosa',
+                      'Rosa-orange',
+                      'Orange',
+                      'Lila',
+                      'Rubinröd',
+                      'Granatröd',
+                      'Läderfärgad',
+                    ].map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </InputRow>
+            </Section>
 
-        <Section title="Slutsats">
-          <InputRow label="Kvalitet" error={errors['quality']} attemptSubmit={attemptSubmit}>
-            <Select value={quality} onValueChange={setQuality}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Välj" />
-              </SelectTrigger>
-              <SelectContent>
-                {['Dålig', 'Acceptabel', 'Bra', 'Mycket bra', 'Enastående'].map((o) => (
-                  <SelectItem key={o} value={o}>
-                    {o}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </InputRow>
-          <InputRow 
-            label="Betyg" 
-            error={errors['rating']} 
-            attemptSubmit={attemptSubmit}
-          >
-            <div className="p-4 bg-gradient-to-br from-orange-50/30 via-white to-orange-50/10 dark:from-orange-950/10 dark:via-background dark:to-orange-950/5 rounded-lg border border-orange-200 dark:border-orange-800">
-              <StarRating
-                value={rating}
-                onChange={setRating}
-                max={5}
-                size="lg"
-                showLabel={true}
-                error={attemptSubmit && errors['rating'] ? errors['rating'] : undefined}
-                aria-label="Välj betyg från 1 till 5"
-              />
-            </div>
-          </InputRow>
-          <InputRow label="Sammanfattning/Noteringar" attemptSubmit={attemptSubmit}>
-            <Textarea
-              id="notes"
-              rows={6}
-              placeholder="Beskriv doft, smak, struktur, slutsats..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </InputRow>
-        </Section>
+            <Section title="Doft">
+              <InputRow
+                label="Intensitet"
+                error={errors['noseIntensity']}
+                attemptSubmit={attemptSubmit}
+              >
+                <Select value={noseIntensity} onValueChange={setNoseIntensity}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['Låg', 'Mellan', 'Hög'].map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </InputRow>
+              <InputRow
+                label="Primära aromer"
+                error={errors['primaryAromas']}
+                attemptSubmit={attemptSubmit}
+              >
+                <MultiSelect
+                  options={[
+                    'Jordgubbe',
+                    'Päron',
+                    'Persika',
+                    'Apelsin',
+                    'Citron',
+                    'Äpple',
+                    'Krusbär',
+                    'Grapefrukt',
+                    'Druva',
+                    'Lime',
+                    'Aprikos',
+                    'Banan',
+                    'Nektarin',
+                    'Litchi',
+                    'Mango',
+                    'Passionsfrukt',
+                    'Melon',
+                    'Ananas',
+                    'Tranbär',
+                    'Röda vinbär',
+                    'Hallon',
+                    'Röda körsbär',
+                    'Svarta vinbär',
+                    'Björnbär',
+                    'Mörka körsbär',
+                    'Blåbär',
+                    'Mörka plommon',
+                    'Röda plommon',
+                    'Blomma',
+                    'Ros',
+                    'Viol',
+                    'Grön paprika',
+                    'Gräs',
+                    'Tomatblad',
+                    'Sparris',
+                    'Eukalyptus',
+                    'Mynta',
+                    'Fänkål',
+                    'Dill',
+                    'Torkade örter',
+                    'Svart- & Vitpeppar',
+                    'Lakrits',
+                    'Omogen frukt',
+                    'Mogen frukt',
+                    'Blöta stenar',
+                  ].map((v) => ({ label: v, value: v }))}
+                  value={primaryAromas}
+                  onValueChange={setPrimaryAromas}
+                  placeholder="Välj aromer"
+                  className="w-full"
+                />
+              </InputRow>
+              <InputRow label="Sekundära aromer" attemptSubmit={attemptSubmit}>
+                <MultiSelect
+                  options={[
+                    'Vanilj',
+                    'Ceder',
+                    'Kex',
+                    'Bröd',
+                    'Bröddeg',
+                    'yoghurt',
+                    'Grädde',
+                    'Smör',
+                    'Ost',
+                    'Kokosnöt',
+                    'Förkolnat trä',
+                    'Rök',
+                    'Godis',
+                    'Bakverk',
+                    'Rostat bröd',
+                    'Kryddnejlika',
+                    'Kanel',
+                    'Muskot',
+                    'Ingefära',
+                    'Kokt frukt',
+                    'Kaffe',
+                  ].map((v) => ({ label: v, value: v }))}
+                  value={secondaryAromas}
+                  onValueChange={setSecondaryAromas}
+                  placeholder="Välj aromer"
+                  className="w-full"
+                />
+              </InputRow>
+              <InputRow label="Tertiära aromer" attemptSubmit={attemptSubmit}>
+                <MultiSelect
+                  options={[
+                    'Choklad',
+                    'Läder',
+                    'Kola',
+                    'Jord',
+                    'Svamp',
+                    'Kött',
+                    'Tobak',
+                    'Blöta löv',
+                    'Skogsbotten',
+                    'Apelsinmarmelad',
+                    'Bensin',
+                    'Mandel',
+                    'Hasselnöt',
+                    'Honung',
+                    'Torkad frukt',
+                  ].map((v) => ({ label: v, value: v }))}
+                  value={tertiaryAromas}
+                  onValueChange={setTertiaryAromas}
+                  placeholder="Välj aromer"
+                  className="w-full"
+                />
+              </InputRow>
+            </Section>
+
+            <Section title="Smak">
+              {(
+                [
+                  [
+                    'Sötma',
+                    palateSweetness,
+                    setPalateSweetness,
+                    ['Torr', 'Halvtorr', 'Mellan', 'Söt'],
+                  ],
+                  ['Syra', palateAcidity, setPalateAcidity, ['Låg', 'Mellan', 'Hög']],
+                  ['Tannin', palateTannin, setPalateTannin, ['Låg', 'Mellan', 'Hög']],
+                  ['Alkohol', palateAlcohol, setPalateAlcohol, ['Låg', 'Mellan', 'Hög']],
+                  ['Fyllighet', palateBody, setPalateBody, ['Lätt', 'Mellan', 'Fyllig']],
+                  [
+                    'Smakintensitet',
+                    palateIntensity,
+                    setPalateIntensity,
+                    ['Låg', 'Medium', 'Uttalad'],
+                  ],
+                ] as any[]
+              ).map(([label, val, setter, opts]) => (
+                <InputRow key={label as string} label={label as string}>
+                  <Select value={val as string} onValueChange={setter as any}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Välj" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(opts as string[]).map((o) => (
+                        <SelectItem key={o} value={o}>
+                          {o}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </InputRow>
+              ))}
+              <InputRow
+                label="Primära smaker"
+                error={errors['primaryFlavours']}
+                attemptSubmit={attemptSubmit}
+              >
+                <MultiSelect
+                  options={[
+                    'Jordgubbe',
+                    'Päron',
+                    'Persika',
+                    'Apelsin',
+                    'Citron',
+                    'Äpple',
+                    'Krusbär',
+                    'Grapefrukt',
+                    'Druva',
+                    'Lime',
+                    'Aprikos',
+                    'Banan',
+                    'Nektarin',
+                    'Litchi',
+                    'Mango',
+                    'Passionsfrukt',
+                    'Melon',
+                    'Ananas',
+                    'Tranbär',
+                    'Röda vinbär',
+                    'Hallon',
+                    'Röda körsbär',
+                    'Svarta vinbär',
+                    'Björnbär',
+                    'Mörka körsbär',
+                    'Blåbär',
+                    'Mörka plommon',
+                    'Röda plommon',
+                    'Blomma',
+                    'Ros',
+                    'Viol',
+                    'Grön paprika',
+                    'Gräs',
+                    'Tomatblad',
+                    'Sparris',
+                    'Eukalyptus',
+                    'Mynta',
+                    'Fänkål',
+                    'Dill',
+                    'Torkade örter',
+                    'Svart- & Vitpeppar',
+                    'Lakrits',
+                    'Omogen frukt',
+                    'Mogen frukt',
+                    'Blöta stenar',
+                  ].map((v) => ({ label: v, value: v }))}
+                  value={primaryFlavours}
+                  onValueChange={setPrimaryFlavours}
+                  placeholder="Välj smaker"
+                  className="w-full"
+                />
+              </InputRow>
+              <InputRow label="Sekundära smaker" attemptSubmit={attemptSubmit}>
+                <MultiSelect
+                  options={[
+                    'Vanilj',
+                    'Ceder',
+                    'Kex',
+                    'Bröd',
+                    'Bröddeg',
+                    'yoghurt',
+                    'Grädde',
+                    'Smör',
+                    'Ost',
+                    'Kokosnöt',
+                    'Förkolnat trä',
+                    'Rök',
+                    'Godis',
+                    'Bakverk',
+                    'Rostat bröd',
+                    'Kryddnejlika',
+                    'Kanel',
+                    'Muskot',
+                    'Ingefära',
+                    'Kokt frukt',
+                    'Kaffe',
+                  ].map((v) => ({ label: v, value: v }))}
+                  value={secondaryFlavours}
+                  onValueChange={setSecondaryFlavours}
+                  placeholder="Välj smaker"
+                  className="w-full"
+                />
+              </InputRow>
+              <InputRow label="Tertiära smaker" attemptSubmit={attemptSubmit}>
+                <MultiSelect
+                  options={[
+                    'Choklad',
+                    'Läder',
+                    'Kola',
+                    'Jord',
+                    'Svamp',
+                    'Kött',
+                    'Tobak',
+                    'Blöta löv',
+                    'Skogsbotten',
+                    'Apelsinmarmelad',
+                    'Bensin',
+                    'Mandel',
+                    'Hasselnöt',
+                    'Honung',
+                    'Torkad frukt',
+                  ].map((v) => ({ label: v, value: v }))}
+                  value={tertiaryFlavours}
+                  onValueChange={setTertiaryFlavours}
+                  placeholder="Välj smaker"
+                  className="w-full"
+                />
+              </InputRow>
+              <InputRow
+                label="Eftersmak"
+                error={errors['palateFinish']}
+                attemptSubmit={attemptSubmit}
+              >
+                <Select value={palateFinish} onValueChange={setPalateFinish}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['Kort', 'Mellan', 'Lång'].map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </InputRow>
+            </Section>
+
+            <Section title="Slutsats">
+              <InputRow label="Kvalitet" error={errors['quality']} attemptSubmit={attemptSubmit}>
+                <Select value={quality} onValueChange={setQuality}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['Dålig', 'Acceptabel', 'Bra', 'Mycket bra', 'Enastående'].map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </InputRow>
+              <InputRow label="Betyg" error={errors['rating']} attemptSubmit={attemptSubmit}>
+                <div className="p-4 bg-gradient-to-br from-orange-50/30 via-white to-orange-50/10 dark:from-orange-950/10 dark:via-background dark:to-orange-950/5 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <StarRating
+                    value={rating}
+                    onChange={setRating}
+                    max={5}
+                    size="lg"
+                    showLabel={true}
+                    error={attemptSubmit && errors['rating'] ? errors['rating'] : undefined}
+                    aria-label="Välj betyg från 1 till 5"
+                  />
+                </div>
+              </InputRow>
+              <InputRow label="Sammanfattning/Noteringar" attemptSubmit={attemptSubmit}>
+                <Textarea
+                  id="notes"
+                  rows={6}
+                  placeholder="Beskriv doft, smak, struktur, slutsats..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </InputRow>
+            </Section>
+          </TabsContent>
+        </Tabs>
+
         <Separator />
-        <div className="flex items-center justify-end gap-2">
-          <Button type="submit" disabled={isSubmitting}>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-2 p-4 bg-muted/30 rounded-lg w-full md:w-auto">
+            <Checkbox
+              id="buyAgain"
+              checked={buyAgain}
+              onCheckedChange={(checked) => setBuyAgain(checked as boolean)}
+            />
+            <label
+              htmlFor="buyAgain"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Jag skulle köpa det här vinet igen
+            </label>
+          </div>
+          <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
             {isSubmitting ? 'Skickar...' : 'Skicka in'}
           </Button>
         </div>

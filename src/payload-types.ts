@@ -769,6 +769,10 @@ export interface Review {
    */
   rating: number;
   /**
+   * Whether the user would buy this wine again
+   */
+  buyAgain?: boolean | null;
+  /**
    * User review text
    */
   reviewText?: {
@@ -3338,6 +3342,7 @@ export interface ReviewsSelect<T extends boolean = true> {
   createdBy?: T;
   updatedBy?: T;
   rating?: T;
+  buyAgain?: T;
   reviewText?: T;
   isTrusted?: T;
   wsetTasting?:
