@@ -47,15 +47,9 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
 
     const fetchTitle = async () => {
       try {
-        const url = new URL('/api/payload/blog-posts', window.location.origin)
-        url.searchParams.set('where[slug][equals]', slug)
-        url.searchParams.set('limit', '1')
-        url.searchParams.set('depth', '0')
-
-        // Support Payload draft preview (admin-only)
-        if (searchParams.get('preview') === 'true') {
-          url.searchParams.set('draft', 'true')
-        }
+        const url = new URL('/api/blog-posts/title', window.location.origin)
+        url.searchParams.set('slug', slug)
+        url.searchParams.set('preview', searchParams.get('preview') === 'true' ? 'true' : 'false')
 
         const res = await fetch(url.toString(), {
           credentials: 'include',
@@ -66,7 +60,7 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
           return
         }
         const json = (await res.json().catch(() => null)) as any
-        const title = json?.docs?.[0]?.title
+        const title = json?.title
         setArticleTitle(typeof title === 'string' && title.trim() ? title : null)
       } catch (err) {
         if ((err as any)?.name === 'AbortError') return
