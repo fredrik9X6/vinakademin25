@@ -428,13 +428,16 @@ export async function GET(request: NextRequest) {
 
     const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : 10
     const page = searchParams.get('page') ? Number(searchParams.get('page')) : 1
+    const depth = searchParams.get('depth') ? Number(searchParams.get('depth')) : 2
+    const sort = searchParams.get('sort') || '-createdAt'
 
     const reviews = await payload.find({
       collection: 'reviews',
       where: Object.keys(where).length > 0 ? where : undefined,
       limit,
       page,
-      sort: '-createdAt',
+      sort,
+      depth,
       req: {
         ...request,
         user, // Pass user for access control

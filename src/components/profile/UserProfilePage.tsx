@@ -16,6 +16,7 @@ import { NotificationPreferencesForm } from './NotificationPreferencesForm'
 import { PaymentHistory } from './PaymentHistory'
 import { DataExportButton } from './DataExportButton'
 import { CoursePurchasePanel } from './CoursePurchasePanel'
+import { UserReviewsPanel } from './UserReviewsPanel'
 
 export function UserProfilePage() {
   const searchParams = useSearchParams()
@@ -33,6 +34,7 @@ export function UserProfilePage() {
     data: 'data',
     settings: 'installningar',
     courses: 'vinprovningar',
+    reviews: 'recensioner',
   }
 
   // Handle tab change and update URL
@@ -59,6 +61,9 @@ export function UserProfilePage() {
       case 'kurser':
       case 'vinprovningar':
         return 'courses'
+      case 'recensioner':
+      case 'recension':
+        return 'reviews'
       case 'uppgifter':
       default:
         return 'details'
@@ -230,6 +235,12 @@ export function UserProfilePage() {
             className="flex-shrink-0 h-9 px-4 mx-1 text-sm font-medium text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 rounded-md whitespace-nowrap transition-all duration-200"
           >
             Mina Vinprovningar
+          </TabsTrigger>
+          <TabsTrigger
+            value="reviews"
+            className="flex-shrink-0 h-9 px-4 mx-1 text-sm font-medium text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 rounded-md whitespace-nowrap transition-all duration-200"
+          >
+            Recensioner
           </TabsTrigger>
         </TabsList>
 
@@ -419,6 +430,26 @@ export function UserProfilePage() {
                   window.location.href = `/vinprovningar/${courseSlug}`
                 }}
               />
+            </div>
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="reviews" className="space-y-12">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            className="space-y-12"
+          >
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium">Recensioner</h3>
+                <p className="text-sm text-muted-foreground">
+                  Se alla dina vinrecensioner. Växla mellan rutnät och lista.
+                </p>
+              </div>
+              <Separator />
+              <UserReviewsPanel />
             </div>
           </motion.div>
         </TabsContent>
