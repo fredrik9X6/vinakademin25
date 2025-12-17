@@ -383,8 +383,8 @@ export function WineReviewForm({
     }
 
     if (mode === 'simple') {
-      if (!primaryAromas || primaryAromas.length === 0)
-        newErrors['primaryAromas'] = 'Välj minst en arom'
+      if (!primaryFlavours || primaryFlavours.length === 0)
+        newErrors['primaryFlavours'] = 'Välj minst en primär smak'
     } else {
       if (!primaryAromas || primaryAromas.length === 0)
         newErrors['primaryAromas'] = 'Välj minst en primär arom'
@@ -618,8 +618,8 @@ export function WineReviewForm({
           <TabsContent value="simple" className="space-y-6">
             <Section title="Bedömning">
               <InputRow
-                label="Aromer"
-                error={errors['primaryAromas']}
+                label="Primära smaker"
+                error={errors['primaryFlavours']}
                 attemptSubmit={attemptSubmit}
               >
                 <MultiSelect
@@ -670,9 +670,9 @@ export function WineReviewForm({
                     'Mogen frukt',
                     'Blöta stenar',
                   ].map((v) => ({ label: v, value: v }))}
-                  value={primaryAromas}
-                  onValueChange={setPrimaryAromas}
-                  placeholder="Välj aromer"
+                  value={primaryFlavours}
+                  onValueChange={setPrimaryFlavours}
+                  placeholder="Välj smaker"
                   className="w-full"
                 />
               </InputRow>
