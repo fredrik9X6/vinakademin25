@@ -76,9 +76,9 @@ export function BlogPostCard({ post, showAuthor = true, size = 'medium' }: BlogP
 
   return (
     <Link href={`/artiklar/${post.slug}`} className="group">
-      <Card className={`${classes.card} transition-all duration-200 hover:shadow-lg border-border`}>
+      <Card className={`${classes.card} flex flex-col transition-all duration-200 hover:shadow-lg border-border`}>
         {post.featuredImage && typeof post.featuredImage === 'object' && post.featuredImage.url && (
-          <div className={`${classes.image} overflow-hidden rounded-t-lg`}>
+          <div className={`${classes.image} overflow-hidden rounded-t-lg shrink-0`}>
             <img
               src={post.featuredImage.url}
               alt={post.featuredImage.alt || ''}
@@ -132,7 +132,7 @@ export function BlogPostCard({ post, showAuthor = true, size = 'medium' }: BlogP
 
         {/* Author */}
         {showAuthor && (
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 mt-auto">
             <div className="flex items-center gap-2 pt-3 border-t border-border">
               <Avatar className={classes.avatar}>
                 <AvatarImage src={authorAvatar} alt={authorName} />
