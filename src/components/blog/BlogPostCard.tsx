@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Clock } from 'lucide-react'
-import { calculateReadingTimeFromExcerpt } from '@/lib/reading-time'
+import { calculateReadingTime, calculateReadingTimeFromExcerpt } from '@/lib/reading-time'
 import type { BlogPost } from '@/payload-types'
 
 interface BlogPostCardProps {
@@ -13,7 +13,9 @@ interface BlogPostCardProps {
 }
 
 export function BlogPostCard({ post, showAuthor = true, size = 'medium' }: BlogPostCardProps) {
-  const readingTime = calculateReadingTimeFromExcerpt(post.excerpt || '')
+  const readingTime = post.content
+    ? calculateReadingTime(post.content)
+    : calculateReadingTimeFromExcerpt(post.excerpt || '')
 
   // Get author info
   const getAuthorName = () => {
