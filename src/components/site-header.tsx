@@ -28,6 +28,56 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
+  const [articleTitle, setArticleTitle] = React.useState<string | null>(null)
+
+  // Fetch the real blog post title for /artiklar/[slug] so breadcrumbs don't
+  // display a reconstructed slug.
+  React.useEffect(() => {
+    const pathSegments = pathname.split('/').filter(Boolean)
+    const isDirectBlogPost =
+      pathSegments[0] === 'artiklar' && pathSegments.length === 2 && pathSegments[1]
+
+    if (!isDirectBlogPost) {
+      setArticleTitle(null)
+      return
+    }
+
+    const slug = pathSegments[1]
+    const controller = new AbortController()
+
+    const fetchTitle = async () => {
+      try {
+        const url = new URL('/api/payload/blog-posts', window.location.origin)
+        url.searchParams.set('where[slug][equals]', slug)
+        url.searchParams.set('limit', '1')
+        url.searchParams.set('depth', '0')
+
+        // Support Payload draft preview (admin-only)
+        if (searchParams.get('preview') === 'true') {
+          url.searchParams.set('draft', 'true')
+        }
+
+        const res = await fetch(url.toString(), {
+          credentials: 'include',
+          signal: controller.signal,
+        })
+        if (!res.ok) {
+          setArticleTitle(null)
+          return
+        }
+        const json = (await res.json().catch(() => null)) as any
+        const title = json?.docs?.[0]?.title
+        setArticleTitle(typeof title === 'string' && title.trim() ? title : null)
+      } catch (err) {
+        if ((err as any)?.name === 'AbortError') return
+        setArticleTitle(null)
+      }
+    }
+
+    fetchTitle()
+    return () => controller.abort()
+  }, [pathname, searchParams])
+
   // Generate breadcrumb items based on the current path
   const generateBreadcrumbs = () => {
     const pathSegments = pathname.split('/').filter(Boolean)
@@ -87,10 +137,13 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
           .join(' ')
       } else if (i === 1 && pathSegments[0] === 'artiklar') {
         // For direct article slugs, format them nicely
-        label = segment
-          .split('-')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ')
+        label =
+          isLast && articleTitle
+            ? articleTitle
+            : segment
+                .split('-')
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ')
       } else if (i === 1 && pathSegments[0] === 'vinlistan') {
         // This is a wine slug - format it nicely by replacing dashes with spaces and capitalizing
         label = segment
