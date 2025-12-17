@@ -704,6 +704,20 @@ export function WineReviewForm({
                   </SelectContent>
                 </Select>
               </InputRow>
+              <InputRow label="Fyllighet" attemptSubmit={attemptSubmit}>
+                <Select value={palateBody} onValueChange={setPalateBody}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['Lätt', 'Mellan', 'Fyllig'].map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </InputRow>
               <InputRow label="Betyg" error={errors['rating']} attemptSubmit={attemptSubmit}>
                 <div className="p-4 bg-gradient-to-br from-orange-50/30 via-white to-orange-50/10 dark:from-orange-950/10 dark:via-background dark:to-orange-950/5 rounded-lg border border-orange-200 dark:border-orange-800">
                   <StarRating
