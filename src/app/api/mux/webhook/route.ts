@@ -1,219 +1,278 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@/payload.config'
-import crypto from 'crypto'
+import mux from '@/lib/mux'
 
 export async function POST(req: NextRequest) {
-  console.log('🔔 Webhook received')
+  console.log('🔔 Mux webhook received')
 
   const webhookSecret = process.env.MUX_WEBHOOK_SIGNING_SECRET
 
   if (!webhookSecret) {
-    console.error('❌ Mux webhook secret is not configured.')
-    return NextResponse.json({ message: 'Webhook secret not configured.' }, { status: 500 })
+    console.error('❌ MUX_WEBHOOK_SIGNING_SECRET is not configured')
+    return NextResponse.json({ message: 'Webhook secret not configured' }, { status: 500 })
+  }
+
+  if (!mux) {
+    console.error('❌ Mux client is not configured')
+    return NextResponse.json({ message: 'Mux not configured' }, { status: 500 })
   }
 
   try {
     const body = await req.text()
-    const signature = req.headers.get('mux-signature')
 
-    console.log('📝 Webhook body length:', body.length)
-    console.log('🔐 Webhook signature:', signature)
+    // Convert NextRequest headers to a plain object for the Mux SDK
+    const headers: Record<string, string> = {}
+    req.headers.forEach((value, key) => {
+      headers[key] = value
+    })
 
-    // Temporarily disable signature verification for testing
-    // TODO: Re-enable after confirming webhook works
-    /*
-    if (signature) {
-      const expectedSignature = crypto
-        .createHmac('sha256', webhookSecret)
-        .update(body, 'utf8')
-        .digest('hex')
-      
-      // Mux signature format: t=timestamp,v1=signature
-      const parts = signature.split(',')
-      const signaturePart = parts.find(part => part.startsWith('v1='))
-      const providedSignature = signaturePart?.replace('v1=', '')
-      
-      if (expectedSignature !== providedSignature) {
-        console.error('❌ Webhook signature verification failed')
-        console.error('Expected:', expectedSignature)
-        console.error('Provided:', providedSignature)
-        return NextResponse.json({ message: 'Invalid signature' }, { status: 401 })
-      }
+    // Verify signature and parse event using the Mux SDK
+    // This properly validates the t=timestamp,v1=signature format
+    let event: ReturnType<typeof mux.webhooks.unwrap>
+    try {
+      event = mux.webhooks.unwrap(body, headers, webhookSecret)
+    } catch (err) {
+      console.error('❌ Webhook signature verification failed:', err)
+      return NextResponse.json({ message: 'Invalid signature' }, { status: 401 })
     }
-    */
 
-    const event = JSON.parse(body)
-    console.log('📦 Webhook event:', event.type, event.data?.id)
+    console.log('📦 Verified webhook event:', event.type, (event.data as any)?.id)
 
     const payload = await getPayload({ config: configPromise })
 
-    // Handle different Mux event types
     switch (event.type) {
       case 'video.asset.ready': {
-        const asset = event.data
-        const passthrough = asset.passthrough
-
-        console.log('✅ Asset ready for passthrough:', passthrough)
+        const asset = event.data as any
+        const passthrough = asset.passthrough as string | undefined
 
         if (!passthrough) {
-          console.error('❌ No passthrough ID provided')
-          return NextResponse.json({ message: 'No passthrough ID provided' }, { status: 400 })
+          console.log('ℹ️ Asset ready but no passthrough — skipping')
+          break
         }
 
-        try {
-          // Check if it's a vinprovning preview or a content item
-          if (passthrough.startsWith('vinprovning-preview-')) {
-            const vinprovningId = passthrough.replace('vinprovning-preview-', '')
-            console.log('📝 Updating vinprovning:', vinprovningId)
-            console.log('📊 Asset data:', JSON.stringify({
-              id: asset.id,
-              playback_ids: asset.playback_ids,
-              status: asset.status,
-              duration: asset.duration,
-              aspect_ratio: asset.aspect_ratio,
-            }, null, 2))
+        console.log('✅ Asset ready:', passthrough)
 
-            // First, try to get the current document to see its state
-            try {
-              const currentDoc = await payload.findByID({
-                collection: 'vinprovningar',
-                id: String(vinprovningId),
-              })
-              console.log('📄 Current document state:', {
-                id: currentDoc.id,
-                _status: currentDoc._status,
-                previewMuxData: currentDoc.previewMuxData,
-              })
-            } catch (err) {
-              console.error('❌ Error fetching current document:', err)
-            }
-
-            // Update vinprovning with ready status and playback ID
-            // Try updating both draft and published versions
-            const updateData = {
-              previewMuxData: {
-                assetId: asset.id,
-                playbackId: asset.playback_ids?.[0]?.id || '',
-                status: 'ready' as 'ready' | 'preparing' | 'errored',
-                duration: asset.duration || 0,
-                aspectRatio: asset.aspect_ratio || '16:9',
-              },
-            }
-
-            // Update published version
-            try {
-              const updated = await payload.update({
-                collection: 'vinprovningar',
-                id: String(vinprovningId),
-                data: updateData,
-                overrideAccess: true,
-                draft: false,
-              })
-              console.log('✅ Updated published vinprovning with ready status')
-              console.log('📊 Updated previewMuxData:', JSON.stringify(updated.previewMuxData, null, 2))
-            } catch (pubErr) {
-              console.error('❌ Error updating published version:', pubErr)
-            }
-
-            // Also update draft version if it exists
-            try {
-              const updatedDraft = await payload.update({
-                collection: 'vinprovningar',
-                id: String(vinprovningId),
-                data: updateData,
-                overrideAccess: true,
-                draft: true,
-              })
-              console.log('✅ Updated draft vinprovning with ready status')
-              console.log('📊 Updated draft previewMuxData:', JSON.stringify(updatedDraft.previewMuxData, null, 2))
-            } catch (draftErr) {
-              console.log('ℹ️  No draft version to update (or error):', draftErr instanceof Error ? draftErr.message : String(draftErr))
-            }
-          } else {
-            // Assume it's a content item ID (lessons/quizzes are now unified)
-            console.log('📝 Updating content item:', passthrough)
-
-            const updated = await payload.update({
-              collection: 'content-items',
-              id: passthrough,
-              data: {
-                muxData: {
-                  assetId: asset.id,
-                  playbackId: asset.playback_ids?.[0]?.id,
-                  status: 'ready',
-                  duration: asset.duration,
-                  aspectRatio: asset.aspect_ratio,
-                },
-              },
-              overrideAccess: true,
-            })
-
-            console.log('✅ Updated content item with ready status:', passthrough)
-            console.log('📊 Updated muxData:', JSON.stringify(updated.muxData, null, 2))
-          }
-        } catch (error) {
-          console.error('❌ Error updating document:', error)
-          if (error instanceof Error) {
-            console.error('❌ Error message:', error.message)
-            console.error('❌ Error stack:', error.stack)
-          }
-          return NextResponse.json({ message: 'Error updating document', error: String(error) }, { status: 500 })
+        if (passthrough.startsWith('vinprovning-preview-')) {
+          await updateVinprovningMuxData(payload, passthrough, {
+            assetId: asset.id,
+            playbackId: asset.playback_ids?.[0]?.id || '',
+            status: 'ready' as const,
+            duration: asset.duration || 0,
+            aspectRatio: asset.aspect_ratio || '16:9',
+            errorMessage: '',
+          })
+        } else {
+          await updateContentItemMuxData(payload, passthrough, {
+            assetId: asset.id,
+            playbackId: asset.playback_ids?.[0]?.id || '',
+            status: 'ready' as const,
+            duration: asset.duration || 0,
+            aspectRatio: asset.aspect_ratio || '16:9',
+            errorMessage: '',
+          })
         }
         break
       }
 
       case 'video.asset.errored': {
-        const asset = event.data
-        const passthrough = asset.passthrough
+        const asset = event.data as any
+        const passthrough = asset.passthrough as string | undefined
 
-        console.log('❌ Asset errored for passthrough:', passthrough)
+        if (!passthrough) break
 
+        // Extract error message from Mux
+        const errorMsg =
+          asset.errors?.messages?.join('; ') ||
+          asset.errors?.type ||
+          'Video processing failed'
+
+        console.log('❌ Asset errored:', passthrough, errorMsg)
+
+        if (passthrough.startsWith('vinprovning-preview-')) {
+          await updateVinprovningMuxData(payload, passthrough, {
+            assetId: asset.id,
+            status: 'errored' as const,
+            errorMessage: errorMsg,
+          })
+        } else {
+          await updateContentItemMuxData(payload, passthrough, {
+            assetId: asset.id,
+            status: 'errored' as const,
+            errorMessage: errorMsg,
+          })
+        }
+        break
+      }
+
+      case 'video.upload.asset_created': {
+        // Direct Upload completed — asset was created and is now processing
+        const data = event.data as any
+        const assetId = data.asset_id
+        const passthrough = data.new_asset_settings?.passthrough as string | undefined
+
+        if (!passthrough || !assetId) break
+
+        console.log('📤 Upload completed, asset created:', passthrough, assetId)
+
+        if (passthrough.startsWith('vinprovning-preview-')) {
+          await updateVinprovningMuxData(payload, passthrough, {
+            assetId,
+            status: 'preparing' as const,
+          })
+        } else {
+          await updateContentItemMuxData(payload, passthrough, {
+            assetId,
+            status: 'preparing' as const,
+          })
+        }
+        break
+      }
+
+      case 'video.upload.errored': {
+        const data = event.data as any
+        const passthrough = data.new_asset_settings?.passthrough as string | undefined
+
+        if (!passthrough) break
+
+        const errorMsg = 'Video upload failed — please try again'
+        console.log('❌ Upload errored:', passthrough)
+
+        if (passthrough.startsWith('vinprovning-preview-')) {
+          await updateVinprovningMuxData(payload, passthrough, {
+            status: 'errored' as const,
+            errorMessage: errorMsg,
+          })
+        } else {
+          await updateContentItemMuxData(payload, passthrough, {
+            status: 'errored' as const,
+            errorMessage: errorMsg,
+          })
+        }
+        break
+      }
+
+      case 'video.upload.cancelled': {
+        const data = event.data as any
+        const passthrough = data.new_asset_settings?.passthrough as string | undefined
         if (passthrough) {
-          try {
-            if (passthrough.startsWith('vinprovning-preview-')) {
-              const vinprovningId = passthrough.replace('vinprovning-preview-', '')
-              await payload.update({
-                collection: 'vinprovningar',
-                id: vinprovningId,
-                data: {
-                  previewMuxData: {
-                    assetId: asset.id,
-                    status: 'errored',
-                  },
-                },
-                overrideAccess: true,
-              })
-              console.log('✅ Updated vinprovning with error status:', vinprovningId)
-            } else {
-              // Content item (lesson/quiz unified)
-              await payload.update({
-                collection: 'content-items',
-                id: passthrough,
-                data: {
-                  muxData: {
-                    assetId: asset.id,
-                    status: 'errored',
-                  },
-                },
-                overrideAccess: true,
-              })
-              console.log('✅ Updated content item with error status:', passthrough)
-            }
-          } catch (error) {
-            console.error('❌ Error updating document with error status:', error)
-          }
+          console.log('ℹ️ Upload cancelled:', passthrough)
         }
         break
       }
 
       default:
-        console.log('ℹ️  Unhandled webhook event type:', event.type)
+        console.log('ℹ️ Unhandled webhook event:', event.type)
     }
 
     return NextResponse.json({ message: 'Webhook processed successfully' })
   } catch (error) {
     console.error('❌ Webhook processing error:', error)
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// ---------- helpers ----------
+
+type MuxDataUpdate = {
+  assetId?: string
+  playbackId?: string
+  status?: 'preparing' | 'ready' | 'errored'
+  duration?: number
+  aspectRatio?: string
+  errorMessage?: string
+}
+
+async function updateVinprovningMuxData(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  passthrough: string,
+  data: MuxDataUpdate,
+) {
+  const vinprovningId = passthrough.replace('vinprovning-preview-', '')
+
+  try {
+    // Idempotency: check current state before updating
+    const current = await payload.findByID({
+      collection: 'vinprovningar',
+      id: String(vinprovningId),
+      overrideAccess: true,
+    })
+
+    const currentMux = current.previewMuxData as MuxDataUpdate | undefined
+    if (
+      currentMux?.assetId === data.assetId &&
+      currentMux?.status === data.status &&
+      (data.status !== 'ready' || currentMux?.playbackId === data.playbackId)
+    ) {
+      console.log('ℹ️ Vinprovning already up to date — skipping')
+      return
+    }
+
+    const updatePayload = { previewMuxData: data }
+
+    // Update published version
+    try {
+      await payload.update({
+        collection: 'vinprovningar',
+        id: String(vinprovningId),
+        data: updatePayload,
+        overrideAccess: true,
+        draft: false,
+      })
+      console.log('✅ Updated published vinprovning:', vinprovningId)
+    } catch (err) {
+      console.error('❌ Error updating published vinprovning:', err)
+    }
+
+    // Also update draft version if it exists
+    try {
+      await payload.update({
+        collection: 'vinprovningar',
+        id: String(vinprovningId),
+        data: updatePayload,
+        overrideAccess: true,
+        draft: true,
+      })
+      console.log('✅ Updated draft vinprovning:', vinprovningId)
+    } catch {
+      // Draft may not exist — that's fine
+    }
+  } catch (error) {
+    console.error('❌ Error updating vinprovning:', vinprovningId, error)
+  }
+}
+
+async function updateContentItemMuxData(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  contentItemId: string,
+  data: MuxDataUpdate,
+) {
+  try {
+    // Idempotency: check current state before updating
+    const current = await payload.findByID({
+      collection: 'content-items',
+      id: contentItemId,
+      overrideAccess: true,
+    })
+
+    const currentMux = current.muxData as MuxDataUpdate | undefined
+    if (
+      currentMux?.assetId === data.assetId &&
+      currentMux?.status === data.status &&
+      (data.status !== 'ready' || currentMux?.playbackId === data.playbackId)
+    ) {
+      console.log('ℹ️ Content item already up to date — skipping')
+      return
+    }
+
+    await payload.update({
+      collection: 'content-items',
+      id: contentItemId,
+      data: { muxData: data },
+      overrideAccess: true,
+    })
+    console.log('✅ Updated content item:', contentItemId)
+  } catch (error) {
+    console.error('❌ Error updating content item:', contentItemId, error)
   }
 }

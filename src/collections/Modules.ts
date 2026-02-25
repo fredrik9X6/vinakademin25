@@ -10,9 +10,15 @@ export const Modules: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: () => true,
-    update: () => true,
-    delete: () => true,
+    create: ({ req }) => {
+      if (!req.user) return true // form building
+      return req.user.role === 'admin' || req.user.role === 'instructor'
+    },
+    update: ({ req }) => {
+      if (!req.user) return true // form building
+      return req.user.role === 'admin' || req.user.role === 'instructor'
+    },
+    delete: ({ req }) => req.user?.role === 'admin' || false,
   },
   fields: [
     {

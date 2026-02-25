@@ -31,6 +31,31 @@ export const uploadVideoToMux = async (videoUrl: string, lessonId: string) => {
   }
 }
 
+export const createDirectUpload = async (passthrough: string, corsOrigin: string) => {
+  if (!mux) {
+    throw new Error(
+      'Mux is not configured. Please set MUX_TOKEN_ID and MUX_TOKEN_SECRET environment variables.',
+    )
+  }
+
+  try {
+    const upload = await mux.video.uploads.create({
+      cors_origin: corsOrigin,
+      new_asset_settings: {
+        playback_policies: ['public'],
+        encoding_tier: 'smart',
+        passthrough,
+      },
+      timeout: 3600,
+    })
+
+    return upload
+  } catch (error) {
+    console.error('Error creating Mux direct upload:', error)
+    throw error
+  }
+}
+
 export const deleteAssetFromMux = async (assetId: string) => {
   if (!mux) {
     throw new Error(

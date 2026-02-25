@@ -38,6 +38,9 @@ importers:
       '@mux/mux-player-react':
         specifier: ^3.5.1
         version: 3.5.1(@types/react-dom@19.1.2(@types/react@19.1.0))(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@mux/mux-uploader-react':
+        specifier: ^1.4.1
+        version: 1.4.1(@types/react-dom@19.1.2(@types/react@19.1.0))(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@payloadcms/db-postgres':
         specifier: 3.33.0
         version: 3.33.0(@types/react@19.1.0)(kysely@0.27.6)(payload@3.33.0(graphql@16.10.0)(typescript@5.7.3))(react@19.1.0)
@@ -1697,11 +1700,30 @@ packages:
   '@mux/mux-player@3.5.1':
     resolution: {integrity: sha512-PSi3mPb4LrEh4i3xUdodaEvMrbbpKbL2yaewRjsqBr3PFb+hd/Dp1KtyaAnXaBCHl09hDURUSrqYpg1cZvwDiQ==}
 
+  '@mux/mux-uploader-react@1.4.1':
+    resolution: {integrity: sha512-D5tXivE8k+DJSbUq+8Wp4G9IsyocJQOZdZPOrpoxor2Alcwo/fJ/+gHkNNPsltx6yv1eQ0O5FWTCKSiIOkxy5w==}
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^17.0.0-0 || ^18 || ^18.0.0-0 || ^19 || ^19.0.0-0
+      '@types/react-dom': '*'
+      react: ^17.0.2 || ^17.0.0-0 || ^18 || ^18.0.0-0 || ^19 || ^19.0.0-0
+      react-dom: ^17.0.2 || ^17.0.2-0 || ^18 || ^18.0.0-0 || ^19 || ^19.0.0-0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+
+  '@mux/mux-uploader@1.4.1':
+    resolution: {integrity: sha512-7ZOrXuv6iODhAcGkj0OI8FINGOF4EKXm4bB4vnQhqgwjP4BsKZr5qFvg78e8oHR3CEA7fNZobk/x4Qtnr4Fnhg==}
+
   '@mux/mux-video@0.26.1':
     resolution: {integrity: sha512-gkMdBAgNlB4+krANZHkQFzYWjWeNsJz69y1/hnPtmNQnpvW+O7oc71OffcZrbblyibSxWMQ6MQpYmBVjXlp6sA==}
 
   '@mux/playback-core@0.30.1':
     resolution: {integrity: sha512-rnO1NE9xHDyzbAkmE6ygJYcD7cyyMt7xXqWTykxlceaoSXLjUqgp42HDio7Lcidto4x/O4FIa7ztjV2aCBCXgQ==}
+
+  '@mux/upchunk@3.5.0':
+    resolution: {integrity: sha512-D+TtvlujlZQjh5I+vFzJ31h5E1uVpEaLdR8M3BNaCFbVLnFMZs8J/L/fYSUyVGnyHT/yDtPHn/IHKdo3G6oSjA==}
 
   '@napi-rs/wasm-runtime@0.2.8':
     resolution: {integrity: sha512-OBlgKdX7gin7OIq4fadsjpg+cp2ZphvAIKucHsNfTdJiqdOmOEwQd/bHi0VwNrcw5xpBJyUw6cK/QilCqy1BSg==}
@@ -4022,6 +4044,9 @@ packages:
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
 
+  dom-walk@0.1.2:
+    resolution: {integrity: sha512-6QvTW9mrGeIegrFXdtQi9pk7O/nSK6lSdXW2eqUspN5LWD7UTji2Fqw5V2YLjBpHEoU9Xl/eUWNpDeZvoyOv2w==}
+
   dotenv@16.5.0:
     resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
     engines: {node: '>=12'}
@@ -4361,6 +4386,10 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
+  event-target-shim@6.0.2:
+    resolution: {integrity: sha512-8q3LsZjRezbFZ2PN+uP+Q7pnHUMmAOziU2vA2OwoFaKIXxlxl38IylhSSgUorWu/rf4er67w0ikBqjBFk/pomA==}
+    engines: {node: '>=10.13.0'}
+
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
 
@@ -4663,6 +4692,9 @@ packages:
     resolution: {integrity: sha512-5lsx1NUDHtSjfg0eHlmYvZKv8/nVqX4ckFbM+FrGcQ+04KWcWFo9P5MxPZYSzUvyzmdTbI7Eix8Q4IbELDqzKg==}
     engines: {node: '>=0.10.0'}
 
+  global@4.4.0:
+    resolution: {integrity: sha512-wv/LAoHdRE3BeTGz53FAamhGlPLhlssK45usmGFThIi4XqnBmjKQ16u+RNbP7WvigRZDxUsM0J3gcQ5yicaL0w==}
+
   globals@11.12.0:
     resolution: {integrity: sha512-WOBp/EEGUiIsJSp7wcv/y6MO+lV9UoncWqxuFfm8eBwzWNgyfBd6Gz+IeKQ9jCmyhoH99g15M3T+QaVHFjizVA==}
     engines: {node: '>=4'}
@@ -4900,6 +4932,9 @@ packages:
   is-fullwidth-code-point@3.0.0:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
+
+  is-function@1.0.2:
+    resolution: {integrity: sha512-lw7DUp0aWXYg+CBCN+JKkcE0Q2RayZnSvnZBlwgxHBQhqt5pZNVy4Ri7H9GmmXkdu7LUthszM+Tor1u/2iBcpQ==}
 
   is-generator-function@1.1.0:
     resolution: {integrity: sha512-nPUB5km40q9e8UfN/Zc24eLlzdSf9OfKByBw9CIdw4H1giPMeA0OIJvbchsCu4npfI2QcMVBsGEBHKZ7wLTWmQ==}
@@ -5366,6 +5401,9 @@ packages:
     resolution: {integrity: sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ==}
     engines: {node: '>=10'}
 
+  min-document@2.19.2:
+    resolution: {integrity: sha512-8S5I8db/uZN8r9HSLFVWPdJCvYOejMcEC82VIzNUc6Zkklf/d1gg2psfE79/vyhWOj4+J8MtwmoOz3TmvaGu5A==}
+
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
 
@@ -5615,6 +5653,9 @@ packages:
 
   parse-entities@4.0.2:
     resolution: {integrity: sha512-GG2AQYWoLgL877gQIKeRPGO1xF9+eG1ujIb5soS5gPvLQ1y2o8FL90w2QWNdf9I361Mpp7726c+lj3U0qK1uGw==}
+
+  parse-headers@2.0.6:
+    resolution: {integrity: sha512-Tz11t3uKztEW5FEVZnj1ox8GKblWn+PvHY9TmJV5Mll2uHEwRdR/5Li1OlXoECjLYkApdhWy44ocONwXLiKO5A==}
 
   parse-json@5.2.0:
     resolution: {integrity: sha512-ayCKvm/phCGxOkYRSCM82iDwct8/EonSEgCSxWxD7ve6jHggsFl4fZVQBPRNgQoKiuV/odhFrGzQXZwbifC8Rg==}
@@ -5906,6 +5947,10 @@ packages:
 
   process-warning@4.0.1:
     resolution: {integrity: sha512-3c2LzQ3rY9d0hc1emcsHhfT9Jwz0cChib/QN89oME2R451w5fy3f0afAhERFZAwrbDU43wk12d0ORBpDVME50Q==}
+
+  process@0.11.10:
+    resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
+    engines: {node: '>= 0.6.0'}
 
   promise-worker-transferable@1.0.4:
     resolution: {integrity: sha512-bN+0ehEnrXfxV2ZQvU2PetO0n4gqBD4ulq3MI1WOPLgr7/Mg9yRQkX5+0v1vagr74ZTsl7XtzlaYDo2EuCeYJw==}
@@ -6911,6 +6956,9 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  xhr@2.6.0:
+    resolution: {integrity: sha512-/eCGLb5rxjx5e3mF1A7s+pLlR6CGyqWN91fv1JgER5mVWg1MZmlhBvy9kjcsOdRk8RrIujotWyJamfyrp+WIcA==}
 
   xss@1.0.15:
     resolution: {integrity: sha512-FVdlVVC67WOIPvfOwhoMETV72f6GbW7aOabBC3WxN/oUdoEMDyLz4OgRv5/gck2ZeNqEQu+Tb0kloovXOfpYVg==}
@@ -8896,6 +8944,20 @@ snapshots:
     transitivePeerDependencies:
       - react
 
+  '@mux/mux-uploader-react@1.4.1(@types/react-dom@19.1.2(@types/react@19.1.0))(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      '@mux/mux-uploader': 1.4.1
+      prop-types: 15.8.1
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+    optionalDependencies:
+      '@types/react': 19.1.0
+      '@types/react-dom': 19.1.2(@types/react@19.1.0)
+
+  '@mux/mux-uploader@1.4.1':
+    dependencies:
+      '@mux/upchunk': 3.5.0
+
   '@mux/mux-video@0.26.1':
     dependencies:
       '@mux/mux-data-google-ima': 0.2.8
@@ -8908,6 +8970,11 @@ snapshots:
     dependencies:
       hls.js: 1.6.7
       mux-embed: 5.11.0
+
+  '@mux/upchunk@3.5.0':
+    dependencies:
+      event-target-shim: 6.0.2
+      xhr: 2.6.0
 
   '@napi-rs/wasm-runtime@0.2.8':
     dependencies:
@@ -11625,6 +11692,8 @@ snapshots:
       '@babel/runtime': 7.27.0
       csstype: 3.1.3
 
+  dom-walk@0.1.2: {}
+
   dotenv@16.5.0: {}
 
   draco3d@1.5.7: {}
@@ -12082,6 +12151,8 @@ snapshots:
 
   event-target-shim@5.0.1: {}
 
+  event-target-shim@6.0.2: {}
+
   eventemitter3@4.0.7: {}
 
   events@3.3.0: {}
@@ -12488,6 +12559,11 @@ snapshots:
       is-windows: 1.0.2
       which: 1.3.1
 
+  global@4.4.0:
+    dependencies:
+      min-document: 2.19.2
+      process: 0.11.10
+
   globals@11.12.0: {}
 
   globals@14.0.0: {}
@@ -12700,6 +12776,8 @@ snapshots:
       call-bound: 1.0.4
 
   is-fullwidth-code-point@3.0.0: {}
+
+  is-function@1.0.2: {}
 
   is-generator-function@1.1.0:
     dependencies:
@@ -13269,6 +13347,10 @@ snapshots:
 
   mimic-response@3.1.0: {}
 
+  min-document@2.19.2:
+    dependencies:
+      dom-walk: 0.1.2
+
   minimatch@3.1.2:
     dependencies:
       brace-expansion: 1.1.11
@@ -13510,6 +13592,8 @@ snapshots:
       is-alphanumerical: 2.0.1
       is-decimal: 2.0.1
       is-hexadecimal: 2.0.1
+
+  parse-headers@2.0.6: {}
 
   parse-json@5.2.0:
     dependencies:
@@ -13817,6 +13901,8 @@ snapshots:
   prismjs@1.30.0: {}
 
   process-warning@4.0.1: {}
+
+  process@0.11.10: {}
 
   promise-worker-transferable@1.0.4:
     dependencies:
@@ -15041,6 +15127,13 @@ snapshots:
   wrappy@1.0.2: {}
 
   ws@8.18.1: {}
+
+  xhr@2.6.0:
+    dependencies:
+      global: 4.4.0
+      is-function: 1.0.2
+      parse-headers: 2.0.6
+      xtend: 4.0.2
 
   xss@1.0.15:
     dependencies:

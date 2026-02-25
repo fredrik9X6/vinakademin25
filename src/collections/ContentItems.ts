@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { uploadVideoToMux, deleteAssetFromMux } from '../lib/mux'
+import { deleteAssetFromMux } from '../lib/mux'
 
 export const ContentItems: CollectionConfig = {
   slug: 'content-items',
@@ -16,16 +16,14 @@ export const ContentItems: CollectionConfig = {
   access: {
     read: () => true,
     create: ({ req }) => {
-      // Allow form building (no user context) for inline creation
-      if (!req.user) return true
-      return !!req.user
+      if (!req.user) return true // form building
+      return req.user.role === 'admin' || req.user.role === 'instructor'
     },
     update: ({ req }) => {
-      // Allow form building (no user context)
-      if (!req.user) return true
-      return !!req.user
+      if (!req.user) return true // form building
+      return req.user.role === 'admin' || req.user.role === 'instructor'
     },
-    delete: ({ req: { user } }) => !!user,
+    delete: ({ req }) => req.user?.role === 'admin' || req.user?.role === 'instructor' || false,
   },
   fields: [
     {
@@ -131,7 +129,27 @@ export const ContentItems: CollectionConfig = {
             readOnly: true,
           },
         },
+        {
+          name: 'errorMessage',
+          type: 'text',
+          admin: {
+            description: 'Error details if video processing failed',
+            readOnly: true,
+            condition: (_data, siblingData) => siblingData?.status === 'errored',
+          },
+        },
       ],
+    },
+    // Mux Direct Upload UI field
+    {
+      name: 'muxUploader',
+      type: 'ui',
+      admin: {
+        condition: (data) => data.contentType === 'lesson' && data.videoProvider === 'mux',
+        components: {
+          Field: '/components/admin/MuxDirectUploadField.tsx#MuxDirectUploadField',
+        },
+      },
     },
     {
       name: 'videoUrl',
@@ -142,13 +160,13 @@ export const ContentItems: CollectionConfig = {
         description: 'YouTube/Vimeo URL or embed code',
       },
     },
+    // Keep sourceVideo for backward compatibility with existing S3-based videos
     {
       name: 'sourceVideo',
       type: 'upload',
       relationTo: 'media',
       admin: {
-        condition: (data) => data.contentType === 'lesson' && data.videoProvider === 'mux',
-        description: 'Upload a video file to process with Mux',
+        condition: () => false, // Hidden — use Mux Direct Upload instead
       },
     },
     {
@@ -180,8 +198,6 @@ export const ContentItems: CollectionConfig = {
       },
       filterOptions: ({ data }: { data: any }) => {
         try {
-          // Only show trusted reviews (answer keys) for selection
-          // Content items reference reviews, not the other way around
           return { isTrusted: { equals: true } } as any
         } catch {
           return {} as any
@@ -320,122 +336,20 @@ export const ContentItems: CollectionConfig = {
     },
   ],
   hooks: {
-    afterChange: [
-      async ({ doc, req, operation, previousDoc }) => {
-        const { payload } = req
-
-        // Handle Mux video upload for lessons
-        if (
-          doc.contentType === 'lesson' &&
-          doc.videoProvider === 'mux' &&
-          doc.sourceVideo &&
-          // Only upload on create, or on update when sourceVideo actually changed
-          (operation === 'create' ||
-            (operation === 'update' &&
-              previousDoc &&
-              doc.sourceVideo !== previousDoc.sourceVideo)) &&
-          // And only if we have not already created a Mux asset for this item
-          !(doc.muxData && (doc.muxData as any).assetId)
-        ) {
-          try {
-            payload.logger.info(`Processing Mux upload for content item ${doc.id}`)
-
-            // Get the uploaded media file
-            const media = await payload.findByID({
-              collection: 'media',
-              id: doc.sourceVideo,
-            })
-
-            payload.logger.info(`Found media file:`, {
-              id: media?.id,
-              filename: media?.filename,
-              url: media?.url,
-            })
-
-            if (media?.url) {
-              // For development, use ngrok URL so Mux can download the file
-              const baseUrl =
-                process.env.NODE_ENV === 'production'
-                  ? process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'
-                  : process.env.NGROK_URL || 'http://localhost:3000'
-
-              const fileUrl = media.url.startsWith('http') ? media.url : `${baseUrl}${media.url}`
-
-              payload.logger.info(`Uploading to Mux with URL: ${fileUrl}`)
-
-              // Upload to Mux
-              const asset = await uploadVideoToMux(fileUrl, String(doc.id))
-
-              payload.logger.info(`Mux asset created:`, {
-                id: asset.id,
-                status: asset.status,
-                playback_ids: asset.playback_ids,
-              })
-
-              // Update the content item with Mux asset info
-              await payload.update({
-                collection: 'content-items',
-                id: String(doc.id),
-                data: {
-                  muxData: {
-                    assetId: asset.id,
-                    playbackId: Array.isArray(asset.playback_ids)
-                      ? asset.playback_ids[0]?.id
-                      : undefined,
-                    status: 'preparing',
-                  },
-                },
-              })
-
-              payload.logger.info(`Updated content item ${doc.id} with Mux data`)
-            } else {
-              payload.logger.error(`No URL found for media file ${doc.sourceVideo}`)
-            }
-          } catch (error) {
-            // Prevent failing the save; just log the error and continue so the item still saves
-            payload.logger.error(`Error uploading to Mux for content item ${doc.id}:`, error)
-            try {
-              const errObj =
-                error && typeof error === 'object'
-                  ? JSON.parse(JSON.stringify(error as any))
-                  : { value: String(error) }
-              payload.logger.error('Error (serialized):', errObj)
-            } catch {}
-            if (error instanceof Error) {
-              payload.logger.error(`Error details:`, {
-                name: error.name,
-                message: error.message,
-                stack: error.stack,
-              })
-            }
-          }
-        }
-
-        return doc
-      },
-    ],
-    beforeDelete: [
-      async ({ req, id }) => {
+    afterDelete: [
+      async ({ doc, req }) => {
         const { payload } = req
 
         try {
-          // Get the content item to check if it has Mux data
-          const item = await payload.findByID({
-            collection: 'content-items',
-            id,
-          })
-
-          // Delete from Mux if it exists
-          if (item.contentType === 'lesson' && item.muxData?.assetId) {
-            await deleteAssetFromMux(item.muxData.assetId)
-            payload.logger.info(`Deleted Mux asset for content item ${id}`)
+          if (doc.contentType === 'lesson' && doc.muxData?.assetId) {
+            await deleteAssetFromMux(doc.muxData.assetId)
+            payload.logger.info(`Deleted Mux asset for content item ${doc.id}`)
           }
         } catch (error) {
-          payload.logger.error(`Error deleting Mux asset for content item ${id}:`, error)
+          payload.logger.error(`Error deleting Mux asset for content item ${doc.id}:`, error)
         }
       },
     ],
   },
   timestamps: true,
 }
-

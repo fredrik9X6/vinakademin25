@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
-import { uploadVideoToMux, deleteAssetFromMux } from '../lib/mux'
+import { deleteAssetFromMux } from '../lib/mux'
 import { syncCourseWithStripe } from '../lib/stripe-products'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { BlocksFeature } from '@payloadcms/richtext-lexical'
@@ -97,96 +97,11 @@ export const Vinprovningar: CollectionConfig = {
       async ({ doc, req, operation, previousDoc }) => {
         // Always return doc first - PayloadCMS needs this for form state
         if (!doc) return doc
-        
+
         const { payload } = req
 
-        // Handle Mux preview video upload
-        if (
-          doc.previewVideoProvider === 'mux' &&
-          doc.previewSourceVideo &&
-          // Only upload on create, or on update when previewSourceVideo actually changed
-          (operation === 'create' ||
-            (operation === 'update' &&
-              previousDoc &&
-              doc.previewSourceVideo !== previousDoc.previewSourceVideo)) &&
-          // And only if we have not already created a Mux asset for this wine tasting
-          !(doc.previewMuxData && (doc.previewMuxData as any).assetId)
-        ) {
-          try {
-            payload.logger.info(`Processing Mux preview video upload for wine tasting ${doc.id}`)
-
-            // Get the media ID - handle both string ID and populated object
-            const mediaId = typeof doc.previewSourceVideo === 'object' && doc.previewSourceVideo !== null
-              ? doc.previewSourceVideo.id || (doc.previewSourceVideo as any).id
-              : doc.previewSourceVideo
-
-            if (!mediaId) {
-              payload.logger.error(`No media ID found in previewSourceVideo`)
-              return doc
-            }
-
-            // Get the uploaded media file
-            const media = await payload.findByID({
-              collection: 'media',
-              id: String(mediaId),
-            })
-
-            payload.logger.info(`Found media file:`, {
-              id: media?.id,
-              filename: media?.filename,
-              url: media?.url,
-            })
-
-            if (media?.url) {
-              // For development, use ngrok URL so Mux can download the file
-              const baseUrl =
-                process.env.NODE_ENV === 'production'
-                  ? process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'
-                  : process.env.NGROK_URL || 'http://localhost:3000'
-
-              const fileUrl = media.url.startsWith('http') ? media.url : `${baseUrl}${media.url}`
-
-              payload.logger.info(`Uploading preview video to Mux with URL: ${fileUrl}`)
-
-              // Upload to Mux
-              const asset = await uploadVideoToMux(fileUrl, `vinprovning-preview-${doc.id}`)
-
-              payload.logger.info(`Mux preview asset created:`, {
-                id: asset.id,
-                status: asset.status,
-                playback_ids: asset.playback_ids,
-              })
-
-              // Update the wine tasting with Mux asset info
-              await payload.update({
-                collection: 'vinprovningar',
-                id: String(doc.id),
-                data: {
-                  previewMuxData: {
-                    assetId: asset.id,
-                    playbackId: asset.playback_ids?.[0]?.id || '',
-                    status: asset.status as 'preparing' | 'ready' | 'errored',
-                    duration: asset.duration || 0,
-                    aspectRatio: asset.aspect_ratio || '16:9',
-                  },
-                },
-                overrideAccess: true,
-                draft: doc._status === 'draft', // Preserve draft status
-              })
-
-              payload.logger.info(`Wine tasting ${doc.id} updated with Mux preview data`)
-            }
-          } catch (error: any) {
-            payload.logger.error(`Error processing Mux preview video for wine tasting ${doc.id}:`, error)
-            // Log full error details for debugging
-            if (error instanceof Error) {
-              payload.logger.error(`Error message: ${error.message}`)
-              payload.logger.error(`Error stack: ${error.stack}`)
-            } else {
-              payload.logger.error(`Error details:`, JSON.stringify(error, null, 2))
-            }
-          }
-        }
+        // Mux preview video upload is now handled via Mux Direct Uploads (client-side)
+        // The webhook at /api/mux/webhook handles updating previewMuxData when processing completes
 
         // Sync with Stripe when wine tasting is created or updated with a price
         // Sync happens when:
@@ -376,15 +291,35 @@ export const Vinprovningar: CollectionConfig = {
             readOnly: true,
           },
         },
+        {
+          name: 'errorMessage',
+          type: 'text',
+          admin: {
+            description: 'Error details if video processing failed',
+            readOnly: true,
+            condition: (_data, siblingData) => siblingData?.status === 'errored',
+          },
+        },
       ],
     },
+    // Mux Direct Upload UI field for preview video
+    {
+      name: 'previewMuxUploader',
+      type: 'ui',
+      admin: {
+        condition: (data) => data.previewVideoProvider === 'mux',
+        components: {
+          Field: '/components/admin/MuxDirectUploadField.tsx#MuxDirectUploadField',
+        },
+      },
+    },
+    // Keep previewSourceVideo for backward compatibility but hide from admin
     {
       name: 'previewSourceVideo',
       type: 'upload',
       relationTo: 'media',
       admin: {
-        condition: (data) => data.previewVideoProvider === 'mux',
-        description: 'Upload a preview video file to process with Mux',
+        condition: () => false, // Hidden — use Mux Direct Upload instead
       },
     },
     {

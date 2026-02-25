@@ -8,20 +8,15 @@ export const Media: CollectionConfig = {
     description: 'Media files such as images, videos, and documents',
   },
   access: {
-    // Anyone can read media files
     read: () => true,
-    // Allow form state building by returning true for form context
     create: ({ req }) => {
-      // Admins and instructors can always create
-      if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
-      // Allow any logged-in user to create
-      if (req.user) return true
-      // Allow form building when no user context (happens during admin UI initialization)
-      return true
+      if (!req.user) return true // form building
+      return req.user.role === 'admin' || req.user.role === 'instructor'
     },
-    // Allow form building - security handled in hooks
-    update: () => true,
-    // Only admins can delete media
+    update: ({ req }) => {
+      if (!req.user) return true // form building
+      return req.user.role === 'admin' || req.user.role === 'instructor'
+    },
     delete: adminOnly,
   },
   upload: {
