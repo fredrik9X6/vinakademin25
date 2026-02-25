@@ -32,12 +32,12 @@ export const Reviews: CollectionConfig = {
       async ({ req, operation, data, originalDoc }) => {
         // Always return data early if form building (no user context)
         if (!req.user) return data
-
+        
         // Only validate actual operations
         if (operation !== 'update' && operation !== 'create') return data
-
+        
         const user = req.user
-
+        
         // For CREATE operations: ensure isTrusted is false for non-admins
         if (operation === 'create') {
           if (data?.isTrusted === true && user.role !== 'admin' && user.role !== 'instructor') {
@@ -46,13 +46,13 @@ export const Reviews: CollectionConfig = {
           }
           return data
         }
-
+        
         // For UPDATE operations only:
         // Enforce isTrusted field restriction - only check if value is actually changing
         if (operation === 'update' && originalDoc && data?.isTrusted !== undefined) {
           const wasTrue = originalDoc.isTrusted === true
           const willBeTrue = data.isTrusted === true
-
+          
           // Only restrict if trying to change the value
           if (wasTrue !== willBeTrue) {
             if (user.role !== 'admin' && user.role !== 'instructor') {
@@ -60,17 +60,17 @@ export const Reviews: CollectionConfig = {
             }
           }
         }
-
+        
         // Admins and instructors can update any review
         if (user.role === 'admin' || user.role === 'instructor') {
           return data
         }
-
+        
         // Users can only update their own reviews
         if (originalDoc && String(user.id) === String(originalDoc.user)) {
           return data
         }
-
+        
         throw new Error('You can only update your own reviews')
       },
       withCreatedByUpdatedBy,
@@ -84,7 +84,7 @@ export const Reviews: CollectionConfig = {
       // Generate title from wine name and rating
       async ({ data, req, operation }) => {
         if (!data) return data
-
+        
         // Generate title from wine name and rating
         if (data.wine) {
           try {
@@ -95,7 +95,7 @@ export const Reviews: CollectionConfig = {
                 id: typeof wineId === 'string' ? parseInt(wineId) : wineId,
                 depth: 0,
               })
-
+              
               if (wine?.name) {
                 const rating = data.rating
                 const stars = rating && typeof rating === 'number' ? '★'.repeat(rating) : ''
@@ -112,7 +112,7 @@ export const Reviews: CollectionConfig = {
           // If no wine but we have an ID, use fallback
           data.title = `Review #${data.id}`
         }
-
+        
         return data
       },
     ],
@@ -128,7 +128,7 @@ export const Reviews: CollectionConfig = {
                 id: typeof wineId === 'string' ? parseInt(wineId) : wineId,
                 depth: 0,
               })
-
+              
               if (wine?.name) {
                 const rating = doc.rating
                 const stars = rating && typeof rating === 'number' ? '★'.repeat(rating) : ''
@@ -168,7 +168,7 @@ export const Reviews: CollectionConfig = {
                     id: typeof wineId === 'string' ? parseInt(wineId) : wineId,
                     depth: 0,
                   })
-
+                  
                   if (wine?.name) {
                     const rating = data.rating
                     const stars = rating && typeof rating === 'number' ? '★'.repeat(rating) : ''
@@ -180,7 +180,7 @@ export const Reviews: CollectionConfig = {
                 console.error('Error generating review title:', error)
               }
             }
-
+            
             // Return existing title or fallback
             return data?.title || `Review #${data?.id || 'New'}`
           },
@@ -257,13 +257,6 @@ export const Reviews: CollectionConfig = {
       max: 5,
       required: true,
       admin: { description: 'User rating from 1-5' },
-    },
-    {
-      name: 'buyAgain',
-      type: 'checkbox',
-      label: 'Jag hade köpt detta vin igen',
-      defaultValue: false,
-      admin: { description: 'Whether the user would buy this wine again' },
     },
     {
       name: 'reviewText',

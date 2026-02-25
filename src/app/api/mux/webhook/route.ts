@@ -60,7 +60,6 @@ export async function POST(req: NextRequest) {
             status: 'ready' as const,
             duration: asset.duration || 0,
             aspectRatio: asset.aspect_ratio || '16:9',
-            errorMessage: '',
           })
         } else {
           await updateContentItemMuxData(payload, passthrough, {
@@ -69,7 +68,6 @@ export async function POST(req: NextRequest) {
             status: 'ready' as const,
             duration: asset.duration || 0,
             aspectRatio: asset.aspect_ratio || '16:9',
-            errorMessage: '',
           })
         }
         break
@@ -81,7 +79,6 @@ export async function POST(req: NextRequest) {
 
         if (!passthrough) break
 
-        // Extract error message from Mux
         const errorMsg =
           asset.errors?.messages?.join('; ') ||
           asset.errors?.type ||
@@ -93,13 +90,11 @@ export async function POST(req: NextRequest) {
           await updateVinprovningMuxData(payload, passthrough, {
             assetId: asset.id,
             status: 'errored' as const,
-            errorMessage: errorMsg,
           })
         } else {
           await updateContentItemMuxData(payload, passthrough, {
             assetId: asset.id,
             status: 'errored' as const,
-            errorMessage: errorMsg,
           })
         }
         break
@@ -135,18 +130,15 @@ export async function POST(req: NextRequest) {
 
         if (!passthrough) break
 
-        const errorMsg = 'Video upload failed — please try again'
         console.log('❌ Upload errored:', passthrough)
 
         if (passthrough.startsWith('vinprovning-preview-')) {
           await updateVinprovningMuxData(payload, passthrough, {
             status: 'errored' as const,
-            errorMessage: errorMsg,
           })
         } else {
           await updateContentItemMuxData(payload, passthrough, {
             status: 'errored' as const,
-            errorMessage: errorMsg,
           })
         }
         break
@@ -180,7 +172,6 @@ type MuxDataUpdate = {
   status?: 'preparing' | 'ready' | 'errored'
   duration?: number
   aspectRatio?: string
-  errorMessage?: string
 }
 
 async function updateVinprovningMuxData(

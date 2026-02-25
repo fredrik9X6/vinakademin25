@@ -129,15 +129,6 @@ export const ContentItems: CollectionConfig = {
             readOnly: true,
           },
         },
-        {
-          name: 'errorMessage',
-          type: 'text',
-          admin: {
-            description: 'Error details if video processing failed',
-            readOnly: true,
-            condition: (_data, siblingData) => siblingData?.status === 'errored',
-          },
-        },
       ],
     },
     // Mux Direct Upload UI field
