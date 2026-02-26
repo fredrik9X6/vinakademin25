@@ -270,7 +270,6 @@ export const Vinprovningar: CollectionConfig = {
             { label: 'Ready', value: 'ready' },
             { label: 'Errored', value: 'errored' },
           ],
-          defaultValue: 'preparing',
           admin: {
             readOnly: true,
           },

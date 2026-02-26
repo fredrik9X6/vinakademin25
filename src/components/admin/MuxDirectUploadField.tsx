@@ -32,15 +32,16 @@ export const MuxDirectUploadField: React.FC<{
   // Derive initial state from existing muxData
   useEffect(() => {
     const status = statusField.value
+    const hasAsset = Boolean(assetIdField.value)
     if (status === 'ready' && playbackIdField.value) {
       setUploadStatus('ready')
-    } else if (status === 'preparing') {
+    } else if (status === 'preparing' && hasAsset) {
       setUploadStatus('processing')
-    } else if (status === 'errored') {
+    } else if (status === 'errored' && hasAsset) {
       setUploadStatus('errored')
       setErrorMessage('Video processing failed')
     }
-  }, [statusField.value, playbackIdField.value])
+  }, [statusField.value, playbackIdField.value, assetIdField.value])
 
   // Poll for status when processing
   useEffect(() => {
