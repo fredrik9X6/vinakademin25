@@ -1,11 +1,41 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '../ui/badge'
 import { Card, CardContent } from '../ui/card'
 import { ExternalLink, Wine as WineIcon } from 'lucide-react'
 import type { Wine, Media } from '../../payload-types'
+
+/** Resolve a media field that might be a populated object or just an ID */
+function useResolvedImageUrl(image: Media | number | string | null | undefined): string | null {
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(() => {
+    if (!image) return null
+    if (typeof image === 'object' && image.url) return image.url
+    return null
+  })
+
+  useEffect(() => {
+    if (!image) return
+    if (typeof image === 'object' && image.url) {
+      setResolvedUrl(image.url)
+      return
+    }
+    // image is an ID (number or string) — fetch the media record
+    const mediaId = typeof image === 'number' ? image : parseInt(String(image), 10)
+    if (isNaN(mediaId)) return
+
+    fetch(`/api/media/${mediaId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.url) setResolvedUrl(data.url)
+      })
+      .catch(() => {})
+  }, [image])
+
+  return resolvedUrl
+}
 
 interface WineReferenceBlockData {
   wine: Wine
@@ -55,7 +85,7 @@ export function WineReferenceBlock({
       }
 
   const displayText = customText || wine.name
-  const wineImage = wine.image as Media | null
+  const imageUrl = useResolvedImageUrl(wine.image as Media | number | null)
 
   // Format price with Swedish currency
   const formatPrice = (price: number) => {
@@ -116,9 +146,9 @@ export function WineReferenceBlock({
             {/* Clean image container matching card background */}
             {showDetails?.showImage && (
               <div className="relative w-28 h-36 flex-shrink-0 flex items-center justify-center">
-                {wineImage ? (
+                {imageUrl ? (
                   <Image
-                    src={typeof wineImage === 'object' ? wineImage.url || '' : wineImage}
+                    src={imageUrl}
                     alt={wine.name}
                     fill
                     className="object-contain p-3"

@@ -34,7 +34,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     where: {
       and: [{ slug: { equals: resolvedParams.slug } }, { _status: { equals: 'published' } }],
     },
-    depth: 1, // Populate featuredImage and instructor
+    depth: 2, // Populate featuredImage, instructor, and nested block relationships (wine.image etc.)
     limit: 1,
   })
 

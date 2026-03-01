@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '../ui/badge'
@@ -7,6 +8,52 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Wine as WineIcon, ShoppingCart, ExternalLink, Sparkles } from 'lucide-react'
 import { Button } from '../ui/button'
 import type { Wine, Media } from '../../payload-types'
+
+/** Resolve image URLs for a list of wines, fetching media records when needed */
+function useResolvedWineImages(wines: Wine[]): Record<number | string, string> {
+  const [imageUrls, setImageUrls] = useState<Record<number | string, string>>(() => {
+    const initial: Record<number | string, string> = {}
+    for (const wine of wines) {
+      if (wine.image && typeof wine.image === 'object' && (wine.image as Media).url) {
+        initial[wine.id] = (wine.image as Media).url!
+      }
+    }
+    return initial
+  })
+
+  useEffect(() => {
+    const unresolvedIds: { wineId: number | string; mediaId: number }[] = []
+    for (const wine of wines) {
+      if (!wine.image) continue
+      if (typeof wine.image === 'object' && (wine.image as Media).url) continue
+      const mediaId = typeof wine.image === 'number' ? wine.image : parseInt(String(wine.image), 10)
+      if (!isNaN(mediaId)) {
+        unresolvedIds.push({ wineId: wine.id, mediaId })
+      }
+    }
+    if (unresolvedIds.length === 0) return
+
+    // Fetch all unresolved media records in parallel
+    Promise.all(
+      unresolvedIds.map(({ wineId, mediaId }) =>
+        fetch(`/api/media/${mediaId}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => ({ wineId, url: data?.url || null }))
+          .catch(() => ({ wineId, url: null })),
+      ),
+    ).then((results) => {
+      setImageUrls((prev) => {
+        const updated = { ...prev }
+        for (const { wineId, url } of results) {
+          if (url) updated[wineId] = url
+        }
+        return updated
+      })
+    })
+  }, [wines])
+
+  return imageUrls
+}
 
 interface WineListBlockProps {
   title?: string
@@ -38,6 +85,9 @@ export function WineListBlock({
       maximumFractionDigits: 0,
     }).format(price)
   }
+
+  // Resolve image URLs (handles both populated Media objects and bare IDs)
+  const resolvedImages = useResolvedWineImages(wines)
 
   // Calculate total price
   const totalPrice = wines.reduce((sum, wine) => sum + (wine.price || 0), 0)
@@ -200,7 +250,7 @@ export function WineListBlock({
         {/* Wine Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {wines.map((wine) => {
-            const wineImage = wine.image as Media | null
+            const wineImageUrl = resolvedImages[wine.id] || null
             const wineHref = getWineLink(wine)
             const isExternal = isExternalLink(wine)
             const LinkComponent = isExternal ? 'a' : Link
@@ -222,9 +272,9 @@ export function WineListBlock({
                 <CardContent className="p-0">
                   {showImages && (
                     <div className="relative w-full h-56 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden">
-                      {wineImage ? (
+                      {wineImageUrl ? (
                         <Image
-                          src={typeof wineImage === 'object' ? wineImage.url || '' : wineImage}
+                          src={wineImageUrl}
                           alt={wine.name}
                           fill
                           className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
@@ -333,7 +383,7 @@ export function WineListBlock({
       {/* Wine List */}
       <div className="space-y-4">
         {wines.map((wine, index) => {
-          const wineImage = wine.image as Media | null
+          const wineImageUrl = resolvedImages[wine.id] || null
           const wineHref = getWineLink(wine)
           const isExternal = isExternalLink(wine)
           const LinkComponent = isExternal ? 'a' : Link
@@ -356,9 +406,9 @@ export function WineListBlock({
                 <div className="flex flex-col sm:flex-row gap-0">
                   {showImages && (
                     <div className="relative w-full sm:w-32 lg:w-40 h-48 sm:h-auto bg-gradient-to-br from-muted/50 to-muted/30 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                      {wineImage ? (
+                      {wineImageUrl ? (
                         <Image
-                          src={typeof wineImage === 'object' ? wineImage.url || '' : wineImage}
+                          src={wineImageUrl}
                           alt={wine.name}
                           fill
                           className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
