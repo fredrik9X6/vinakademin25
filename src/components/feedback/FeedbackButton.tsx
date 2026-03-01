@@ -27,9 +27,11 @@ export function FeedbackButton({ position = 'bottom-right' }: FeedbackButtonProp
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // On mobile (below md): position above the bottom tab bar (h-16 + safe area)
+  // On desktop (md+): normal bottom-4 positioning
   const positionClasses = {
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
+    'bottom-right': 'bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:bottom-4',
+    'bottom-left': 'bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 md:bottom-4',
   }
 
   const handleSubmit = async () => {

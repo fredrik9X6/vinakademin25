@@ -407,7 +407,7 @@ export default function Hero({
   )
 
   return (
-    <section ref={sectionRef} className="relative h-screen w-screen overflow-hidden bg-background">
+    <section ref={sectionRef} className="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
       <ShaderBackground />
 
       {/* Decorative orange accents */}
