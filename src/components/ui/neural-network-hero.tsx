@@ -416,9 +416,9 @@ export default function Hero({
         <div className="absolute bottom-1/4 left-10 w-72 h-72 bg-[#FB914C]/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative mx-auto flex max-w-7xl flex-col items-start gap-7 px-6 pb-24 pt-36 sm:gap-9 sm:pt-44 md:px-10 lg:px-16 z-10">
-        {/* Removed badge section as per request */}
-        <div ref={badgeRef} className="opacity-0 h-0" aria-hidden="true" />
+      <div className="relative mx-auto flex max-w-7xl flex-col items-start gap-7 px-6 pb-24 pt-20 sm:gap-9 sm:pt-28 md:px-10 lg:px-16 z-10">
+        {/* Hidden badge ref — kept for GSAP timeline compatibility */}
+        <div ref={badgeRef} className="hidden" aria-hidden="true" />
 
         <h1
           ref={headerRef}

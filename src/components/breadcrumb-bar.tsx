@@ -40,11 +40,17 @@ export function BreadcrumbBar() {
   // Resolved title for the detail page slug
   const [resolvedTitle, setResolvedTitle] = React.useState<string | null>(null)
 
-  // Hide on homepage
-  if (pathname === '/') return null
+  const isHomepage = pathname === '/'
 
   // Fetch the real title for detail pages
+  // IMPORTANT: This hook must always run (React rules of hooks) — the
+  // homepage early-return is handled AFTER all hooks.
   React.useEffect(() => {
+    if (isHomepage) {
+      setResolvedTitle(null)
+      return
+    }
+
     const pathSegments = pathname.split('/').filter(Boolean)
     const section = pathSegments[0]
     const slug = pathSegments[1]
@@ -84,7 +90,10 @@ export function BreadcrumbBar() {
 
     fetchTitle()
     return () => controller.abort()
-  }, [pathname, searchParams])
+  }, [pathname, searchParams, isHomepage])
+
+  // Hide on homepage — AFTER all hooks have been called
+  if (isHomepage) return null
 
   // Format a slug into a display label
   const formatSlug = (slug: string) =>
@@ -101,7 +110,7 @@ export function BreadcrumbBar() {
     breadcrumbs.push({
       label: 'Hem',
       href: '/',
-      isCurrentPage: pathname === '/' && !searchParams.get('lesson'),
+      isCurrentPage: false,
     })
 
     let currentPath = ''
