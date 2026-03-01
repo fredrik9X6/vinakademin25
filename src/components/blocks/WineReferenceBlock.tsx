@@ -40,7 +40,7 @@ export function WineReferenceBlock({
 }: WineReferenceBlockProps) {
   // Use Systembolaget URL if available, otherwise fall back to internal link
   const externalUrl = wine.systembolagetUrl
-  const internalUrl = `/wines/${wine.slug}`
+  const internalUrl = `/vinlistan/${wine.slug}`
   const href = externalUrl || internalUrl
   const isExternal = !!externalUrl
 

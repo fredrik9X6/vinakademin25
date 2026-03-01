@@ -190,6 +190,19 @@ export default async function WineDetailPage({ params }: PageProps) {
   } as any)
   const relatedWines = relatedRes.docs || []
 
+  // Fetch vinprovningar that reference this wine
+  const vinRes = await payload.find({
+    collection: 'vinprovningar',
+    where: { _status: { equals: 'published' } },
+    depth: 2 as any,
+    limit: 100,
+  } as any)
+  const allVinprovningar = vinRes.docs || []
+  const relatedVinprovningar = allVinprovningar.filter((v: any) => {
+    const json = JSON.stringify(v.fullDescription || {})
+    return json.includes(wineIdStr) || json.includes(wineSlugStr)
+  })
+
   // Fetch blog posts where this wine is referenced in content blocks
   const postsRes = await payload.find({
     collection: 'blog-posts',
@@ -306,8 +319,22 @@ export default async function WineDetailPage({ params }: PageProps) {
           </div>
           <div className="text-sm text-muted-foreground">
             {wine.winery}
-            {wine.region?.name ? ` · ${wine.region.name}` : ''}
-            {wine.country?.name ? `, ${wine.country.name}` : ''}
+            {wine.region?.name ? (
+              <>
+                {' · '}
+                <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                  {wine.region.name}
+                </Link>
+              </>
+            ) : null}
+            {wine.country?.name ? (
+              <>
+                {', '}
+                <Link href={`/lander/${wine.country.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                  {wine.country.name}
+                </Link>
+              </>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
@@ -541,6 +568,27 @@ export default async function WineDetailPage({ params }: PageProps) {
           </Accordion>
         )}
       </div>
+
+      {/* Vinprovningar referencing this wine */}
+      {relatedVinprovningar.length > 0 ? (
+        <div className="mt-10">
+          <h2 className="text-xl font-medium mb-4">Vinprovningar med detta vin</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {relatedVinprovningar.map((v: any) => (
+              <Link
+                key={v.id}
+                href={`/vinprovningar/${v.slug}`}
+                className="block p-4 rounded-lg border border-border/50 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-all"
+              >
+                <h3 className="font-semibold">{v.title}</h3>
+                {v.description && (
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{v.description}</p>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {/* Blog posts referencing this wine */}
       {blogPosts.length > 0 ? (

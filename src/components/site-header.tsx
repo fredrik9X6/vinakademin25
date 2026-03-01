@@ -24,53 +24,78 @@ interface BreadcrumbItem {
   isCurrentPage: boolean
 }
 
+// Route config: section → { label, apiPath for slug resolution }
+const ROUTE_CONFIG: Record<string, { label: string; titleApi?: string }> = {
+  vinprovningar: { label: 'Vinprovningar', titleApi: '/api/vinprovningar/title' },
+  kurser: { label: 'Vinprovningar', titleApi: '/api/vinprovningar/title' },
+  artiklar: { label: 'Artiklar', titleApi: '/api/blog-posts/title' },
+  vinlistan: { label: 'Vinlistan', titleApi: '/api/wines/title' },
+  regioner: { label: 'Regioner', titleApi: '/api/regions/title' },
+  lander: { label: 'Länder', titleApi: '/api/countries/title' },
+  nyhetsbrev: { label: 'Nyhetsbrev' },
+  'om-oss': { label: 'Om oss' },
+  'mina-sidor': { label: 'Mina sidor' },
+  profil: { label: 'Profil' },
+  checkout: { label: 'Kassa' },
+}
+
 export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const [articleTitle, setArticleTitle] = React.useState<string | null>(null)
+  // Resolved title for the detail page slug (e.g., the wine tasting name)
+  const [resolvedTitle, setResolvedTitle] = React.useState<string | null>(null)
 
-  // Fetch the real blog post title for /artiklar/[slug] so breadcrumbs don't
-  // display a reconstructed slug.
+  // Fetch the real title for detail pages so breadcrumbs don't display a formatted slug
   React.useEffect(() => {
     const pathSegments = pathname.split('/').filter(Boolean)
-    const isDirectBlogPost =
-      pathSegments[0] === 'artiklar' && pathSegments.length === 2 && pathSegments[1]
+    const section = pathSegments[0]
+    const slug = pathSegments[1]
 
-    if (!isDirectBlogPost) {
-      setArticleTitle(null)
+    // Only fetch when on a detail page (section/slug) with a configured API
+    const config = section ? ROUTE_CONFIG[section] : undefined
+    if (!config?.titleApi || !slug || pathSegments.length !== 2) {
+      setResolvedTitle(null)
       return
     }
 
-    const slug = pathSegments[1]
     const controller = new AbortController()
 
     const fetchTitle = async () => {
       try {
-        const url = new URL('/api/blog-posts/title', window.location.origin)
+        const url = new URL(config.titleApi!, window.location.origin)
         url.searchParams.set('slug', slug)
-        url.searchParams.set('preview', searchParams.get('preview') === 'true' ? 'true' : 'false')
+        if (searchParams.get('preview') === 'true') {
+          url.searchParams.set('preview', 'true')
+        }
 
         const res = await fetch(url.toString(), {
           credentials: 'include',
           signal: controller.signal,
         })
         if (!res.ok) {
-          setArticleTitle(null)
+          setResolvedTitle(null)
           return
         }
         const json = (await res.json().catch(() => null)) as any
         const title = json?.title
-        setArticleTitle(typeof title === 'string' && title.trim() ? title : null)
+        setResolvedTitle(typeof title === 'string' && title.trim() ? title : null)
       } catch (err) {
         if ((err as any)?.name === 'AbortError') return
-        setArticleTitle(null)
+        setResolvedTitle(null)
       }
     }
 
     fetchTitle()
     return () => controller.abort()
   }, [pathname, searchParams])
+
+  // Format a slug into a display label (fallback when API title not yet loaded)
+  const formatSlug = (slug: string) =>
+    slug
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
 
   // Generate breadcrumb items based on the current path
   const generateBreadcrumbs = () => {
@@ -91,72 +116,34 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
       currentPath += `/${segment}`
       const isLast = i === pathSegments.length - 1
 
-      // Custom labels for known routes
       let label = segment
-      if (segment === 'kurser') {
-        label = 'Vinprovningar' // Legacy URL support
-      } else if (segment === 'nyhetsbrev') {
-        label = 'Nyhetsbrev'
-      } else if (segment === 'artiklar') {
-        label = 'Artiklar'
-      } else if (segment === 'vinlistan') {
-        label = 'Vinlistan'
-      } else if (segment === 'om-oss') {
-        label = 'Om oss'
-      } else if (segment === 'kategori' && pathSegments[0] === 'artiklar') {
+
+      // First segment: use route config label
+      if (i === 0 && ROUTE_CONFIG[segment]) {
+        label = ROUTE_CONFIG[segment].label
+      }
+      // Nested known labels
+      else if (segment === 'kategori' && pathSegments[0] === 'artiklar') {
         label = 'Kategori'
       } else if (segment === 'tagg' && pathSegments[0] === 'artiklar') {
         label = 'Tagg'
-      } else if (segment === 'mina-sidor') {
-        label = 'Mina sidor'
-      } else if (segment === 'vinprovningar') {
-        label = 'Vinprovningar'
-      } else if (segment === 'profil') {
-        label = 'Profil'
-      } else if (segment === 'checkout') {
-        label = 'Kassa'
       } else if (segment === 'success' && pathSegments[0] === 'checkout') {
         label = 'Betalning genomförd'
-      } else if (i === 1 && pathSegments[0] === 'kurser') {
-        // This is a wine tasting slug (legacy URL) - format it nicely
-        label = segment
-          .split('-')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ')
-      } else if (i === 1 && pathSegments[0] === 'vinprovningar') {
-        // This is a wine tasting slug - format it nicely
-        label = segment
-          .split('-')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ')
-      } else if (i === 1 && pathSegments[0] === 'artiklar') {
-        // For direct article slugs, format them nicely
-        label =
-          isLast && articleTitle
-            ? articleTitle
-            : segment
-                .split('-')
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ')
-      } else if (i === 1 && pathSegments[0] === 'vinlistan') {
-        // This is a wine slug - format it nicely by replacing dashes with spaces and capitalizing
-        label = segment
-          .replace(/-/g, ' ')
-          .split(' ')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ')
-      } else if (
+      }
+      // Detail page slug (second segment): use resolved title or formatted slug
+      else if (i === 1 && ROUTE_CONFIG[pathSegments[0]]) {
+        label = isLast && resolvedTitle ? resolvedTitle : formatSlug(segment)
+      }
+      // Category/tag archive slugs
+      else if (
         i === 2 &&
         pathSegments[0] === 'artiklar' &&
         (pathSegments[1] === 'kategori' || pathSegments[1] === 'tagg')
       ) {
-        // For category/tag archive pages, format the slug nicely
-        label = segment
-          .split('-')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ')
-      } else {
-        // Capitalize first letter for unknown segments
+        label = formatSlug(segment)
+      }
+      // Unknown segments: capitalize first letter
+      else {
         label = segment.charAt(0).toUpperCase() + segment.slice(1)
       }
 
@@ -171,23 +158,17 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
 
     // Handle lesson parameter
     const lessonId = searchParams.get('lesson')
-    if (lessonId && pathSegments[0] === 'kurser' && pathSegments[1]) {
+    if (
+      lessonId &&
+      (pathSegments[0] === 'kurser' || pathSegments[0] === 'vinprovningar') &&
+      pathSegments[1]
+    ) {
       breadcrumbs.push({
         label: `Lektion ${lessonId}`,
         href: `${pathname}?lesson=${lessonId}`,
         isCurrentPage: true,
       })
       // Update the course breadcrumb to not be current page
-      if (breadcrumbs.length > 2) {
-        breadcrumbs[breadcrumbs.length - 2].isCurrentPage = false
-      }
-    } else if (lessonId && pathSegments[0] === 'vinprovningar' && pathSegments[1]) {
-      breadcrumbs.push({
-        label: `Lektion ${lessonId}`,
-        href: `${pathname}?lesson=${lessonId}`,
-        isCurrentPage: true,
-      })
-      // Update the wine tasting breadcrumb to not be current page
       if (breadcrumbs.length > 2) {
         breadcrumbs[breadcrumbs.length - 2].isCurrentPage = false
       }

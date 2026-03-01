@@ -46,6 +46,33 @@ export const Regions: CollectionConfig = {
       admin: { description: 'Name of the region' },
     },
     {
+      name: 'slug',
+      type: 'text',
+      required: true,
+      unique: true,
+      label: 'Slug',
+      admin: {
+        description: 'URL-friendly version of the name (auto-generated)',
+        position: 'sidebar',
+      },
+      hooks: {
+        beforeValidate: [
+          ({ data }) => {
+            if (data?.name && !data.slug) {
+              return data.name
+                .toLowerCase()
+                .replace(/[åä]/g, 'a')
+                .replace(/[ö]/g, 'o')
+                .replace(/[éè]/g, 'e')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '')
+            }
+            return data?.slug
+          },
+        ],
+      },
+    },
+    {
       name: 'country',
       type: 'relationship',
       relationTo: 'countries',
@@ -79,7 +106,7 @@ export const Regions: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'textarea',
+      type: 'richText',
       label: 'Description',
       admin: { description: 'Optional description or notes about this region' },
     },

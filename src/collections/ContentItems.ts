@@ -1,5 +1,15 @@
 import type { CollectionConfig } from 'payload'
 import { deleteAssetFromMux } from '../lib/mux'
+import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { BlocksFeature } from '@payloadcms/richtext-lexical'
+import {
+  WineReference,
+  WineList,
+  RegionReference,
+  CountryReference,
+  NewsletterSignup,
+  CourseReference,
+} from '../components/blocks'
 
 export const ContentItems: CollectionConfig = {
   slug: 'content-items',
@@ -48,6 +58,14 @@ export const ContentItems: CollectionConfig = {
     {
       name: 'description',
       type: 'richText',
+      editor: lexicalEditor({
+        features: ({ rootFeatures }) => [
+          ...rootFeatures,
+          BlocksFeature({
+            blocks: [WineReference, WineList, RegionReference, CountryReference, NewsletterSignup, CourseReference],
+          }),
+        ],
+      }),
       admin: {
         condition: (data) => data.contentType === 'lesson',
         description: 'Lesson description',
@@ -57,6 +75,14 @@ export const ContentItems: CollectionConfig = {
     {
       name: 'content',
       type: 'richText',
+      editor: lexicalEditor({
+        features: ({ rootFeatures }) => [
+          ...rootFeatures,
+          BlocksFeature({
+            blocks: [WineReference, WineList, RegionReference, CountryReference, NewsletterSignup, CourseReference],
+          }),
+        ],
+      }),
       admin: {
         condition: (data) => data.contentType === 'lesson',
         description: 'Lesson content',

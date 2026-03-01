@@ -3,7 +3,7 @@ import { anyLoggedIn, adminOnly } from '../lib/access'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { BlocksFeature, UploadFeature } from '@payloadcms/richtext-lexical'
-import { WineReference, NewsletterSignup, CourseReference } from '../components/blocks'
+import { WineReference, WineList, NewsletterSignup, CourseReference, RegionReference, CountryReference } from '../components/blocks'
 
 export const BlogPosts: CollectionConfig = {
   slug: 'blog-posts',
@@ -74,7 +74,7 @@ export const BlogPosts: CollectionConfig = {
         features: ({ rootFeatures }) => [
           ...rootFeatures,
           BlocksFeature({
-            blocks: [WineReference, NewsletterSignup, CourseReference],
+            blocks: [WineReference, WineList, NewsletterSignup, CourseReference, RegionReference, CountryReference],
           }),
           UploadFeature({
             collections: {

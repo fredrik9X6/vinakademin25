@@ -4,7 +4,7 @@ import { deleteAssetFromMux } from '../lib/mux'
 import { syncCourseWithStripe } from '../lib/stripe-products'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { BlocksFeature } from '@payloadcms/richtext-lexical'
-import { WineReference, WineList, NewsletterSignup } from '../components/blocks'
+import { WineReference, WineList, NewsletterSignup, CourseReference, RegionReference, CountryReference } from '../components/blocks'
 
 export const Vinprovningar: CollectionConfig = {
   slug: 'vinprovningar',
@@ -208,7 +208,7 @@ export const Vinprovningar: CollectionConfig = {
         features: ({ rootFeatures }) => [
           ...rootFeatures,
           BlocksFeature({
-            blocks: [WineList, WineReference, NewsletterSignup],
+            blocks: [WineList, WineReference, NewsletterSignup, CourseReference, RegionReference, CountryReference],
           }),
         ],
       }),

@@ -5,6 +5,8 @@ import { WineReferenceBlock } from '../blocks/WineReferenceBlock'
 import { WineListBlock } from '../blocks/WineListBlock'
 import { NewsletterSignupBlock } from '../blocks/NewsletterSignupBlock'
 import { CourseReferenceBlock } from '../blocks/CourseReferenceBlock'
+import { RegionReferenceBlock } from '../blocks/RegionReferenceBlock'
+import { CountryReferenceBlock } from '../blocks/CountryReferenceBlock'
 
 interface RichTextProps {
   content: any // Using any for now since PayloadCMS 3 Lexical format varies
@@ -165,6 +167,30 @@ export function RichTextRenderer({ content, className = '' }: RichTextProps) {
               callToAction={fields.callToAction}
               caption={fields.caption}
               openInNewTab={fields.openInNewTab}
+            />
+          </div>
+        )
+      }
+
+      if (blockType === 'region-reference') {
+        return (
+          <div key={index} className="my-6">
+            <RegionReferenceBlock
+              region={fields.region}
+              displayStyle={fields.displayStyle || 'inline'}
+              customText={fields.customText}
+            />
+          </div>
+        )
+      }
+
+      if (blockType === 'country-reference') {
+        return (
+          <div key={index} className="my-6">
+            <CountryReferenceBlock
+              country={fields.country}
+              displayStyle={fields.displayStyle || 'inline'}
+              customText={fields.customText}
             />
           </div>
         )
