@@ -17,6 +17,16 @@ import {
   Clock,
   Trophy,
 } from 'lucide-react'
+import {
+  transformEnrollmentData,
+  getLevelText,
+  getLevelColor,
+  getAccessStatusText,
+  getAccessStatusColor,
+  formatDate,
+  formatPrice,
+  type TransformedCourse,
+} from '@/lib/course-enrollment-utils'
 
 // Types for course purchases and progress
 interface PurchasedCourse {
@@ -48,36 +58,8 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
       if (coursesResponse.ok) {
         const coursesData = await coursesResponse.json()
 
-        // Transform enrollment data to flat structure for component
-        const transformedCourses = (coursesData.data || []).map((enrollment: any) => {
-          const course = enrollment.course || {}
-          const progress = enrollment.progress || {}
-
-          return {
-            // Course fields at top level
-            id: course.id,
-            slug: course.slug,
-            title: course.title,
-            shortDescription: course.description || course.shortDescription || '',
-            level: course.level || 'beginner',
-            featuredImage: course.featuredImage,
-            instructor: course.instructor || { firstName: '', lastName: 'Vinakademin' },
-            purchaseDate: enrollment.enrolledAt || enrollment.createdAt,
-            price: course.price || 0,
-            access: enrollment.status === 'active' ? 'active' : 'pending',
-            // Progress at top level
-            progress: {
-              percentage: progress.progressPercentage || 0,
-              completedLessons: Array.isArray(progress.completedLessons)
-                ? progress.completedLessons.length
-                : progress.completedLessons || 0,
-              totalLessons: course.totalLessons || 0,
-              lastAccessed: progress.lastAccessedAt,
-              completed: progress.status === 'completed',
-              certificateAvailable: progress.status === 'completed',
-            },
-          }
-        })
+        // Transform enrollment data using shared utilities
+        const transformedCourses = (coursesData.data || []).map(transformEnrollmentData)
 
         setPurchasedCourses(transformedCourses)
       }
@@ -146,70 +128,6 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
       toast.error('Nedladdningsfel', {
         description: 'Kunde inte ladda ner certifikatet.',
       })
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('sv-SE')
-  }
-
-  const formatPrice = (amount: number) => {
-    return `${amount} SEK`
-  }
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'bg-green-100 text-green-800'
-      case 'intermediate':
-        return 'bg-blue-100 text-blue-800'
-      case 'advanced':
-        return 'bg-orange-100 text-orange-800'
-      case 'expert':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getLevelText = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'Nybörjare'
-      case 'intermediate':
-        return 'Fortsättning'
-      case 'advanced':
-        return 'Avancerad'
-      case 'expert':
-        return 'Expert'
-      default:
-        return level
-    }
-  }
-
-  const getAccessStatusColor = (access: string) => {
-    switch (access) {
-      case 'active':
-        return 'bg-green-100 text-green-800'
-      case 'expired':
-        return 'bg-red-100 text-red-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getAccessStatusText = (access: string) => {
-    switch (access) {
-      case 'active':
-        return 'Aktiv'
-      case 'expired':
-        return 'Utgången'
-      case 'pending':
-        return 'Väntande'
-      default:
-        return access
     }
   }
 

@@ -15,7 +15,6 @@ import { WinePreferencesForm } from './WinePreferencesForm'
 import { NotificationPreferencesForm } from './NotificationPreferencesForm'
 import { PaymentHistory } from './PaymentHistory'
 import { DataExportButton } from './DataExportButton'
-import { CoursePurchasePanel } from './CoursePurchasePanel'
 import { UserReviewsPanel } from './UserReviewsPanel'
 
 export function UserProfilePage() {
@@ -413,23 +412,26 @@ export function UserProfilePage() {
             transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
             className="space-y-12"
           >
-            {/* Course Purchase Management Section */}
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium">Mina Vinprovningar</h3>
                 <p className="text-sm text-muted-foreground">
-                  Hantera dina köpta vinprovningar, framsteg och köphistorik.
+                  Se dina kopta vinprovningar och framsteg.
                 </p>
               </div>
               <Separator />
 
-              <CoursePurchasePanel
-                userId={String(user.id)}
-                onCourseAccess={(courseSlug) => {
-                  // Navigate to course using the proper slug
-                  window.location.href = `/vinprovningar/${courseSlug}`
-                }}
-              />
+              <div className="rounded-lg border bg-card p-6 text-center space-y-4">
+                <p className="text-muted-foreground">
+                  Dina vinprovningar har fatt en egen sida med battre oversikt.
+                </p>
+                <a
+                  href="/mina-provningar"
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#FB914C] to-[#FDBA75] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
+                >
+                  Ga till Mina Provningar
+                </a>
+              </div>
             </div>
           </motion.div>
         </TabsContent>

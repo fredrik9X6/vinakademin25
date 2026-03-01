@@ -2,8 +2,6 @@
 
 import { usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Separator } from '@/components/ui/separator'
-import { SidebarTrigger } from '@/components/ui/sidebar'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -14,45 +12,43 @@ import {
 } from '@/components/ui/breadcrumb'
 import React from 'react'
 
-interface SiteHeaderProps {
-  title?: string
-}
-
-interface BreadcrumbItem {
+interface BreadcrumbEntry {
   label: string
   href: string
   isCurrentPage: boolean
 }
 
-// Route config: section → { label, apiPath for slug resolution }
+// Route config: section -> { label, apiPath for slug resolution }
 const ROUTE_CONFIG: Record<string, { label: string; titleApi?: string }> = {
   vinprovningar: { label: 'Vinprovningar', titleApi: '/api/vinprovningar/title' },
   kurser: { label: 'Vinprovningar', titleApi: '/api/vinprovningar/title' },
   artiklar: { label: 'Artiklar', titleApi: '/api/blog-posts/title' },
   vinlistan: { label: 'Vinlistan', titleApi: '/api/wines/title' },
   regioner: { label: 'Regioner', titleApi: '/api/regions/title' },
-  lander: { label: 'Länder', titleApi: '/api/countries/title' },
+  lander: { label: 'Lander', titleApi: '/api/countries/title' },
   nyhetsbrev: { label: 'Nyhetsbrev' },
   'om-oss': { label: 'Om oss' },
-  'mina-sidor': { label: 'Mina sidor' },
+  'mina-provningar': { label: 'Mina Provningar' },
   profil: { label: 'Profil' },
   checkout: { label: 'Kassa' },
 }
 
-export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
+export function BreadcrumbBar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  // Resolved title for the detail page slug (e.g., the wine tasting name)
+  // Resolved title for the detail page slug
   const [resolvedTitle, setResolvedTitle] = React.useState<string | null>(null)
 
-  // Fetch the real title for detail pages so breadcrumbs don't display a formatted slug
+  // Hide on homepage
+  if (pathname === '/') return null
+
+  // Fetch the real title for detail pages
   React.useEffect(() => {
     const pathSegments = pathname.split('/').filter(Boolean)
     const section = pathSegments[0]
     const slug = pathSegments[1]
 
-    // Only fetch when on a detail page (section/slug) with a configured API
     const config = section ? ROUTE_CONFIG[section] : undefined
     if (!config?.titleApi || !slug || pathSegments.length !== 2) {
       setResolvedTitle(null)
@@ -90,7 +86,7 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
     return () => controller.abort()
   }, [pathname, searchParams])
 
-  // Format a slug into a display label (fallback when API title not yet loaded)
+  // Format a slug into a display label
   const formatSlug = (slug: string) =>
     slug
       .split('-')
@@ -100,16 +96,14 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
   // Generate breadcrumb items based on the current path
   const generateBreadcrumbs = () => {
     const pathSegments = pathname.split('/').filter(Boolean)
-    const breadcrumbs: BreadcrumbItem[] = []
+    const breadcrumbs: BreadcrumbEntry[] = []
 
-    // Always start with home
     breadcrumbs.push({
       label: 'Hem',
       href: '/',
       isCurrentPage: pathname === '/' && !searchParams.get('lesson'),
     })
 
-    // Build breadcrumbs from path segments
     let currentPath = ''
     for (let i = 0; i < pathSegments.length; i++) {
       const segment = pathSegments[i]
@@ -118,32 +112,23 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
 
       let label = segment
 
-      // First segment: use route config label
       if (i === 0 && ROUTE_CONFIG[segment]) {
         label = ROUTE_CONFIG[segment].label
-      }
-      // Nested known labels
-      else if (segment === 'kategori' && pathSegments[0] === 'artiklar') {
+      } else if (segment === 'kategori' && pathSegments[0] === 'artiklar') {
         label = 'Kategori'
       } else if (segment === 'tagg' && pathSegments[0] === 'artiklar') {
         label = 'Tagg'
       } else if (segment === 'success' && pathSegments[0] === 'checkout') {
-        label = 'Betalning genomförd'
-      }
-      // Detail page slug (second segment): use resolved title or formatted slug
-      else if (i === 1 && ROUTE_CONFIG[pathSegments[0]]) {
+        label = 'Betalning genomford'
+      } else if (i === 1 && ROUTE_CONFIG[pathSegments[0]]) {
         label = isLast && resolvedTitle ? resolvedTitle : formatSlug(segment)
-      }
-      // Category/tag archive slugs
-      else if (
+      } else if (
         i === 2 &&
         pathSegments[0] === 'artiklar' &&
         (pathSegments[1] === 'kategori' || pathSegments[1] === 'tagg')
       ) {
         label = formatSlug(segment)
-      }
-      // Unknown segments: capitalize first letter
-      else {
+      } else {
         label = segment.charAt(0).toUpperCase() + segment.slice(1)
       }
 
@@ -168,7 +153,6 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
         href: `${pathname}?lesson=${lessonId}`,
         isCurrentPage: true,
       })
-      // Update the course breadcrumb to not be current page
       if (breadcrumbs.length > 2) {
         breadcrumbs[breadcrumbs.length - 2].isCurrentPage = false
       }
@@ -180,24 +164,22 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
   const breadcrumbs = generateBreadcrumbs()
 
   return (
-    <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-0 transition-[width,height] ease-linear">
-      <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
-
-        {/* Breadcrumbs */}
+    <div className="border-b bg-background">
+      <div className="mx-auto max-w-7xl flex h-10 items-center px-4 lg:px-6">
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((crumb, index) => (
               <React.Fragment key={crumb.href}>
                 <BreadcrumbItem>
                   {crumb.isCurrentPage ? (
-                    <BreadcrumbPage className="text-foreground font-medium">
+                    <BreadcrumbPage className="text-foreground font-medium text-sm">
                       {crumb.label}
                     </BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink asChild>
-                      <Link href={crumb.href}>{crumb.label}</Link>
+                      <Link href={crumb.href} className="text-sm">
+                        {crumb.label}
+                      </Link>
                     </BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
@@ -207,6 +189,6 @@ export function SiteHeader({ title: _title = 'Vinakademin' }: SiteHeaderProps) {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-    </header>
+    </div>
   )
 }

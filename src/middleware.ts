@@ -16,6 +16,10 @@ const protectedPaths = [
     path: '/profil', // Renamed from /profile
     roles: ['admin', 'instructor', 'subscriber', 'user'],
   },
+  {
+    path: '/mina-provningar',
+    roles: ['admin', 'instructor', 'subscriber', 'user'],
+  },
 ]
 
 // Middleware function to protect routes
