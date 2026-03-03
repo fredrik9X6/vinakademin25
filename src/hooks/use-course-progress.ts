@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 
 interface LessonProgress {
@@ -130,13 +130,23 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
     }
   }, [courseId, isGuestMode, localCompletedLessons, localCompletedQuizzes])
 
+  // Track which lessons have already shown completion toast to prevent spam
+  const completionToastShownRef = useRef(new Set<number>())
+
   // Update lesson completion
   const updateLessonProgress = useCallback(
     async (lessonId: number, isCompleted: boolean, videoProgress?: number) => {
       if (!courseId) return
 
+      // Check if we already showed a completion toast for this lesson
+      const alreadyNotified = completionToastShownRef.current.has(lessonId)
+      const shouldShowToast = isCompleted && !alreadyNotified
+
       // For guest/session participants, use local storage
       if (isGuestMode) {
+        // Skip if already completed locally and trying to complete again
+        if (isCompleted && localCompletedLessons.has(lessonId)) return
+
         setLocalCompletedLessons((prev) => {
           const newSet = new Set(prev)
           if (isCompleted) {
@@ -167,9 +177,19 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
           }
         })
 
-        if (isCompleted) {
+        if (shouldShowToast) {
+          completionToastShownRef.current.add(lessonId)
           toast.success('Moment markerat som slutfört!')
         }
+        if (!isCompleted) {
+          completionToastShownRef.current.delete(lessonId)
+        }
+        return
+      }
+
+      // Skip API call if already completed and trying to auto-complete again
+      const existingProgress = progress?.lessonProgress.find((p) => p.lessonId === lessonId)
+      if (isCompleted && existingProgress?.isCompleted && videoProgress !== undefined) {
         return
       }
 
@@ -214,9 +234,13 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
           }
         })
 
-        // Show success message
-        if (isCompleted) {
+        // Show success message only once per lesson
+        if (shouldShowToast) {
+          completionToastShownRef.current.add(lessonId)
           toast.success('Moment markerat som slutfört!')
+        }
+        if (!isCompleted) {
+          completionToastShownRef.current.delete(lessonId)
         }
       } catch (err) {
         console.error('Error updating lesson progress:', err)
@@ -226,7 +250,7 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
         }
       }
     },
-    [courseId, isGuestMode, localCompletedQuizzes, saveLocalProgress],
+    [courseId, isGuestMode, localCompletedQuizzes, saveLocalProgress, progress, localCompletedLessons],
   )
 
   // Mark lesson as completed

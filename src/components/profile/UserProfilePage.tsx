@@ -21,7 +21,7 @@ export function UserProfilePage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const tabParam = searchParams.get('tab')
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, checkAuth } = useAuth()
   const [notificationPreferences, setNotificationPreferences] = React.useState<any>(null)
 
   // Map tab values to Swedish URL parameters
@@ -32,7 +32,6 @@ export function UserProfilePage() {
     payments: 'betalningar',
     data: 'data',
     settings: 'installningar',
-    courses: 'vinprovningar',
     reviews: 'recensioner',
   }
 
@@ -59,7 +58,7 @@ export function UserProfilePage() {
         return 'data'
       case 'kurser':
       case 'vinprovningar':
-        return 'courses'
+        return 'details' // Redirect old tab to details since courses moved to /mina-provningar
       case 'recensioner':
       case 'recension':
         return 'reviews'
@@ -230,12 +229,6 @@ export function UserProfilePage() {
             Kontoinställningar
           </TabsTrigger>
           <TabsTrigger
-            value="courses"
-            className="flex-shrink-0 h-9 px-4 mx-1 text-sm font-medium text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 rounded-md whitespace-nowrap transition-all duration-200"
-          >
-            Mina Vinprovningar
-          </TabsTrigger>
-          <TabsTrigger
             value="reviews"
             className="flex-shrink-0 h-9 px-4 mx-1 text-sm font-medium text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 rounded-md whitespace-nowrap transition-all duration-200"
           >
@@ -270,6 +263,7 @@ export function UserProfilePage() {
                       email: user.email,
                       bio: user.bio || '',
                     }}
+                    onSuccess={() => checkAuth()}
                   />
                 </div>
                 <div className="space-y-6">
@@ -401,37 +395,6 @@ export function UserProfilePage() {
               </div>
               <Separator />
               <AccountSettingsForm userId={String(user.id)} userEmail={user.email} />
-            </div>
-          </motion.div>
-        </TabsContent>
-
-        <TabsContent value="courses" className="space-y-12">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-            className="space-y-12"
-          >
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium">Mina Vinprovningar</h3>
-                <p className="text-sm text-muted-foreground">
-                  Se dina kopta vinprovningar och framsteg.
-                </p>
-              </div>
-              <Separator />
-
-              <div className="rounded-lg border bg-card p-6 text-center space-y-4">
-                <p className="text-muted-foreground">
-                  Dina vinprovningar har fatt en egen sida med battre oversikt.
-                </p>
-                <a
-                  href="/mina-provningar"
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#FB914C] to-[#FDBA75] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
-                >
-                  Ga till Mina Provningar
-                </a>
-              </div>
             </div>
           </motion.div>
         </TabsContent>

@@ -14,6 +14,8 @@ import {
   BookOpen,
   Menu,
   X,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Progress } from '@/components/ui/progress'
@@ -56,6 +58,7 @@ export default function CourseQuizViewer({
 }: CourseQuizViewerProps) {
   const router = useRouter()
   const [isTocOpen, setIsTocOpen] = useState(false)
+  const [theaterMode, setTheaterMode] = useState(false)
   const { activeSession } = useActiveSession()
 
   // Use session from props or from context (for persistent navigation)
@@ -121,10 +124,10 @@ export default function CourseQuizViewer({
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className={`mx-auto px-4 sm:px-6 lg:px-8 py-8 ${theaterMode ? 'max-w-full' : 'max-w-7xl'}`}>
+        <div className={`grid grid-cols-1 gap-8 ${theaterMode ? '' : 'lg:grid-cols-3'}`}>
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
+          <div className={`space-y-6 order-2 lg:order-1 ${theaterMode ? '' : 'lg:col-span-2'}`}>
             {/* Breadcrumbs and Title */}
             <div className="space-y-4">
               <Breadcrumb>
@@ -163,6 +166,33 @@ export default function CourseQuizViewer({
                   </div>
                   <h1 className="text-3xl font-bold">{quiz.title}</h1>
                 </div>
+                {/* Desktop navigation */}
+                <div className="hidden md:flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setTheaterMode(!theaterMode)}
+                    title={theaterMode ? 'Visa innehållsförteckning' : 'Teatervy'}
+                  >
+                    {theaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPrev}
+                    disabled={currentItemIndex === 0}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" /> Föregående
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={goToNext}
+                    disabled={currentItemIndex === allItems.length - 1}
+                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                  >
+                    Nästa <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
               </div>
 
               {/* end breadcrumbs/title wrapper */}
@@ -172,6 +202,7 @@ export default function CourseQuizViewer({
             {canAccessQuiz ? (
               <div className="space-y-6">
                 <QuizAttemptRunner
+                  key={quiz.id}
                   quiz={quiz}
                   onPassed={async () => {
                     // Mark quiz as completed for session participants (local storage)
@@ -219,8 +250,8 @@ export default function CourseQuizViewer({
             )}
           </div>
 
-          {/* Table of Contents Sidebar - Desktop always visible, Mobile collapsible */}
-          <div className="space-y-6 order-1 lg:order-2">
+          {/* Table of Contents Sidebar - Desktop always visible (unless theater mode), Mobile collapsible */}
+          <div className={`space-y-6 order-1 lg:order-2 ${theaterMode ? 'hidden' : ''}`}>
             {/* Mobile TOC Header - Always Visible */}
             <Card className="lg:hidden">
               <CardContent className="p-0">
@@ -300,11 +331,10 @@ export default function CourseQuizViewer({
             {currentItemIndex + 1} / {allItems.length}
           </div>
           <Button
-            variant="default"
             size="lg"
             onClick={goToNext}
             disabled={currentItemIndex === allItems.length - 1}
-            className="flex-1"
+            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
           >
             <span className="hidden xs:inline">Nästa</span>
             <ChevronRight className="w-5 h-5 ml-1" />

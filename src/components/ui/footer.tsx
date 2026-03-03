@@ -1,7 +1,10 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
-import { Instagram, Linkedin, Music2 } from 'lucide-react'
+import { Instagram, Linkedin, Music2, CheckCircle, Loader2 } from 'lucide-react'
+import { useState } from 'react'
 
 const socialLinks = [
   { icon: Instagram, href: 'https://www.instagram.com/vinakademin.se/', label: 'Instagram' },
@@ -27,6 +30,69 @@ const resourcesLinks = [
   { label: 'Integritetspolicy', href: '/integritetspolicy' },
   { label: 'Cookies', href: '/cookies' },
 ]
+
+function FooterNewsletter() {
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [message, setMessage] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email || !email.includes('@')) return
+
+    setStatus('loading')
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        setStatus('success')
+        setMessage('Tack! Du prenumererar nu på vårt nyhetsbrev.')
+        setEmail('')
+      } else {
+        setStatus('error')
+        setMessage(data.error || 'Något gick fel. Försök igen.')
+      }
+    } catch {
+      setStatus('error')
+      setMessage('Något gick fel. Försök igen.')
+    }
+  }
+
+  if (status === 'success') {
+    return (
+      <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+        <CheckCircle className="h-5 w-5 flex-shrink-0" />
+        <span>{message}</span>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit} className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-stretch min-w-0">
+        <Input
+          type="email"
+          placeholder="Din e-postadress"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="h-12 w-full min-w-0 text-base sm:h-10 sm:flex-1 sm:text-sm"
+          disabled={status === 'loading'}
+        />
+        <Button type="submit" className="h-12 w-full sm:h-10 sm:w-auto" variant="secondary" disabled={status === 'loading'}>
+          {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Prenumerera'}
+        </Button>
+      </form>
+      {status === 'error' && message && (
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{message}</p>
+      )}
+    </div>
+  )
+}
 
 export function Footer() {
   return (
@@ -88,16 +154,7 @@ export function Footer() {
           <div className="min-w-0 lg:col-span-2">
             <h3 className="text-sm font-semibold text-foreground">Följ oss & Nyhetsbrev</h3>
             <div className="mt-4">
-              <form className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-stretch min-w-0">
-                <Input
-                  type="email"
-                  placeholder="Din e-postadress"
-                  className="h-12 w-full min-w-0 text-base sm:h-10 sm:flex-1 sm:text-sm"
-                />
-                <Button type="submit" className="h-12 w-full sm:h-10 sm:w-auto" variant="secondary">
-                  Prenumerera
-                </Button>
-              </form>
+              <FooterNewsletter />
               <div className="mt-6 flex flex-wrap justify-center gap-4 sm:justify-start">
                 {socialLinks.map((social) => {
                   const Icon = social.icon

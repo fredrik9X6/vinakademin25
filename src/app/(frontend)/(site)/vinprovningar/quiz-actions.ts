@@ -494,3 +494,37 @@ export async function submitQuizAttempt(
 
   return { score, passed }
 }
+
+export async function getLastQuizAttempt(quizId: number | string) {
+  const payload = await getPayload({ config })
+  const user = await getUser()
+  if (!user) return null
+
+  const attempts = await payload.find({
+    collection: 'quiz-attempts',
+    where: {
+      and: [
+        { user: { equals: String(user.id) } },
+        { quiz: { equals: String(quizId) } },
+        { status: { equals: 'completed' } },
+      ],
+    },
+    sort: '-completedAt',
+    limit: 1,
+    depth: 2,
+  })
+
+  if (attempts.docs.length === 0) return null
+
+  const attempt = attempts.docs[0] as any
+  return {
+    score: attempt.scoring?.score ?? 0,
+    passed: attempt.scoring?.passed ?? false,
+    completedAt: attempt.completedAt,
+    answers: (attempt.answers || []).map((a: any) => ({
+      questionId: typeof a.question === 'object' ? a.question.id : a.question,
+      answer: a.answer?.value,
+      isCorrect: a.isCorrect,
+    })),
+  }
+}

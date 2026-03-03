@@ -19,8 +19,10 @@ import {
   FileText,
   Menu,
   X,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import MuxPlayer from '@mux/mux-player-react'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
@@ -117,6 +119,31 @@ export default function LessonViewer({
 
   const [isTocOpen, setIsTocOpen] = useState(false)
   const [showReviewComparison, setShowReviewComparison] = useState(false)
+  const [theaterMode, setTheaterMode] = useState(false)
+
+  // Debounce auto-complete to prevent toast spam
+  const hasAutoCompletedRef = useRef(false)
+  const lastProgressUpdateRef = useRef(0)
+
+  const handleTimeUpdate = useCallback((e: any) => {
+    try {
+      const el = e?.target as HTMLMediaElement
+      if (!el?.currentTime || !el?.duration) return
+      const pct = Math.round((el.currentTime / el.duration) * 100)
+
+      // Throttle progress updates to every 5 seconds
+      const now = Date.now()
+      if (now - lastProgressUpdateRef.current < 5000) return
+      lastProgressUpdateRef.current = now
+
+      if (pct >= 90 && !hasAutoCompletedRef.current) {
+        hasAutoCompletedRef.current = true
+        updateLessonProgress(lesson.id, true, pct)
+      } else if (pct < 90) {
+        updateLessonProgress(lesson.id, false, pct)
+      }
+    } catch {}
+  }, [lesson.id, updateLessonProgress])
 
   // Use session from props or from context (for persistent navigation)
   const effectiveSessionId =
@@ -175,10 +202,10 @@ export default function LessonViewer({
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className={`mx-auto px-4 sm:px-6 lg:px-8 py-8 ${theaterMode ? 'max-w-full' : 'max-w-7xl'}`}>
+        <div className={`grid grid-cols-1 gap-8 ${theaterMode ? '' : 'lg:grid-cols-3'}`}>
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
+          <div className={`space-y-6 order-2 lg:order-1 ${theaterMode ? '' : 'lg:col-span-2'}`}>
             {/* Video Player or Content Area */}
             {canAccessLesson ? (
               <Card>
@@ -201,16 +228,14 @@ export default function LessonViewer({
                           ['--media-focus-ring-color' as any]: '#f97316',
                           ['--media-controls-background' as any]: 'rgba(0,0,0,0.4)',
                         }}
-                        onTimeUpdate={(e: any) => {
-                          try {
-                            const el = e?.target as HTMLMediaElement
-                            if (!el?.currentTime || !el?.duration) return
-                            const pct = Math.round((el.currentTime / el.duration) * 100)
-                            updateLessonProgress(lesson.id, pct >= 90, pct)
-                          } catch {}
-                        }}
+                        defaultShowRemainingTime
+                        renditionOrder="desc"
+                        onTimeUpdate={handleTimeUpdate}
                         onEnded={() => {
-                          markLessonCompleted(lesson.id)
+                          if (!hasAutoCompletedRef.current) {
+                            hasAutoCompletedRef.current = true
+                            markLessonCompleted(lesson.id)
+                          }
                           updateLessonProgress(lesson.id, true, 100)
                         }}
                       />
@@ -270,6 +295,14 @@ export default function LessonViewer({
               {/* Desktop navigation */}
               <div className="hidden md:flex items-center gap-2">
                 <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTheaterMode(!theaterMode)}
+                  title={theaterMode ? 'Visa innehållsförteckning' : 'Teatervy'}
+                >
+                  {theaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </Button>
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={goToPrevLesson}
@@ -278,10 +311,10 @@ export default function LessonViewer({
                   <ChevronLeft className="w-4 h-4 mr-1" /> Föregående
                 </Button>
                 <Button
-                  variant="default"
                   size="sm"
                   onClick={goToNextLesson}
                   disabled={currentItemIndex === allItems.length - 1}
+                  className="bg-orange-500 hover:bg-orange-600 text-white"
                 >
                   Nästa <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -382,8 +415,8 @@ export default function LessonViewer({
             )}
           </div>
 
-          {/* Table of Contents Sidebar - Desktop always visible, Mobile collapsible */}
-          <div className="space-y-6 order-1 lg:order-2">
+          {/* Table of Contents Sidebar - Desktop always visible (unless theater mode), Mobile collapsible */}
+          <div className={`space-y-6 order-1 lg:order-2 ${theaterMode ? 'hidden' : ''}`}>
             {/* Mobile TOC Header - Always Visible */}
             <Card className="lg:hidden">
               <CardContent className="p-0">
@@ -487,11 +520,10 @@ export default function LessonViewer({
             {currentItemIndex + 1} / {allItems.length}
           </div>
           <Button
-            variant="default"
             size="lg"
             onClick={goToNextLesson}
             disabled={currentItemIndex === allItems.length - 1}
-            className="flex-1"
+            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
           >
             <span className="hidden xs:inline">Nästa</span>
             <ChevronRight className="w-5 h-5 ml-1" />
