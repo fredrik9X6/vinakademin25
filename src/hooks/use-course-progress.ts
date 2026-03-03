@@ -193,6 +193,14 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
         return
       }
 
+      // Mark toast as shown BEFORE the async call to prevent race conditions
+      if (shouldShowToast) {
+        completionToastShownRef.current.add(lessonId)
+      }
+      if (!isCompleted) {
+        completionToastShownRef.current.delete(lessonId)
+      }
+
       try {
         const response = await fetch('/api/progress', {
           method: 'POST',
@@ -209,15 +217,17 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
 
         if (!response.ok) {
           if (response.status === 401) {
-            // Silently skip for unauthenticated users (guest mode)
             return
+          }
+          // Rollback toast ref on failure
+          if (shouldShowToast) {
+            completionToastShownRef.current.delete(lessonId)
           }
           throw new Error('Failed to update progress')
         }
 
         const data = await response.json()
 
-        // Update local state
         setProgress((prev) => {
           if (!prev) return null
 
@@ -234,13 +244,8 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
           }
         })
 
-        // Show success message only once per lesson
         if (shouldShowToast) {
-          completionToastShownRef.current.add(lessonId)
           toast.success('Moment markerat som slutfört!')
-        }
-        if (!isCompleted) {
-          completionToastShownRef.current.delete(lessonId)
         }
       } catch (err) {
         console.error('Error updating lesson progress:', err)

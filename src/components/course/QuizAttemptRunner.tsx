@@ -15,6 +15,7 @@ import {
   RotateCcw,
   ArrowRight,
   Sparkles,
+  ChevronRight,
 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import {
@@ -27,9 +28,10 @@ import {
 interface QuizAttemptRunnerProps {
   quiz: any
   onPassed?: (quizId: number) => void
+  onNavigateNext?: () => void
 }
 
-export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerProps) {
+export default function QuizAttemptRunner({ quiz, onPassed, onNavigateNext }: QuizAttemptRunnerProps) {
   // Base questions from quiz
   const baseQuestions = useMemo<any[]>(() => {
     if (!Array.isArray(quiz.questions)) return []
@@ -89,8 +91,22 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
   } | null>(null)
   const [loadingLastAttempt, setLoadingLastAttempt] = useState(true)
 
-  // Fetch start info and last attempt on mount
+  // Reset all state when quiz.id changes (handles navigation between quizzes)
   useEffect(() => {
+    setCurrentIndex(0)
+    setMode('idle')
+    setAnswersMap({})
+    setSelected(null)
+    setShowFeedback(null)
+    setAttemptId(null)
+    setSubmitting(false)
+    setResult(null)
+    setLastAttempt(null)
+    setStartError(null)
+    setStartInfo(null)
+    setLoadingLastAttempt(true)
+    setQuestions(applyRandomization(baseQuestions))
+
     let cancelled = false
     ;(async () => {
       try {
@@ -114,10 +130,15 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
     return () => { cancelled = true }
   }, [quiz.id])
 
-  // Initialize questions when baseQuestions change
+  // Initialize questions when baseQuestions change (but not on quiz.id change, handled above)
+  const prevQuizIdRef = React.useRef(quiz.id)
   useEffect(() => {
+    if (prevQuizIdRef.current !== quiz.id) {
+      prevQuizIdRef.current = quiz.id
+      return
+    }
     setQuestions(applyRandomization(baseQuestions))
-  }, [baseQuestions, applyRandomization])
+  }, [baseQuestions, applyRandomization, quiz.id])
 
   const startAttempt = async () => {
     try {
@@ -234,6 +255,10 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
       const { score, passed } = await submitQuizAttempt(attemptId, ordered, quiz.id)
       setResult({ score, passed })
       setMode('done')
+
+      if (passed) {
+        onPassed?.(Number(quiz.id))
+      }
     } catch (error) {
       console.error('Error submitting quiz:', error)
     } finally {
@@ -590,14 +615,16 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
                       <RotateCcw className="mr-2 h-4 w-4" />
                       Gör om quizet
                     </Button>
-                    <Button
-                      onClick={() => onPassed?.(Number(quiz.id))}
-                      className="w-full sm:w-auto bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white shadow-lg shadow-green-600/30 dark:shadow-none"
-                      size="lg"
-                    >
-                      Fortsätt till nästa lektion
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    {onNavigateNext && (
+                      <Button
+                        onClick={onNavigateNext}
+                        className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/30"
+                        size="lg"
+                      >
+                        Nästa
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -669,9 +696,125 @@ export default function QuizAttemptRunner({ quiz, onPassed }: QuizAttemptRunnerP
                 </CardContent>
               </Card>
             )}
+
+            {/* Question-by-question summary */}
+            {(lastAttempt?.answers || Object.keys(answersMap).length > 0) && (
+              <QuestionSummary
+                questions={baseQuestions}
+                answers={lastAttempt?.answers}
+                answersMap={answersMap}
+                evaluateAnswer={evaluateAnswer}
+              />
+            )}
           </div>
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function QuestionSummary({
+  questions,
+  answers,
+  answersMap,
+  evaluateAnswer,
+}: {
+  questions: any[]
+  answers?: Array<{ questionId: number; answer: any; isCorrect: boolean }>
+  answersMap: Record<string, any>
+  evaluateAnswer: (q: any, value: any) => { correct: boolean; feedbackText?: string }
+}) {
+  const [expanded, setExpanded] = React.useState(false)
+
+  const questionResults = React.useMemo(() => {
+    return questions.map((q) => {
+      const qId = String(q.id)
+      if (answers) {
+        const a = answers.find((ans) => String(ans.questionId) === qId)
+        return { question: q, isCorrect: a?.isCorrect ?? false, userAnswer: a?.answer }
+      }
+      const userAnswer = answersMap[qId]
+      if (userAnswer == null) return { question: q, isCorrect: false, userAnswer: undefined }
+      const { correct } = evaluateAnswer(q, userAnswer)
+      return { question: q, isCorrect: correct, userAnswer }
+    })
+  }, [questions, answers, answersMap, evaluateAnswer])
+
+  return (
+    <div className="mt-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-center gap-2 text-muted-foreground"
+      >
+        {expanded ? 'Dölj frågorna' : 'Visa dina svar'}
+        <ChevronRight className={cn('h-4 w-4 transition-transform', expanded && 'rotate-90')} />
+      </Button>
+
+      {expanded && (
+        <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          {questionResults.map(({ question: q, isCorrect, userAnswer }, idx) => {
+            const correctOption = q.type === 'multiple-choice'
+              ? (q.options || []).find((o: any) => o.isCorrect)?.text
+              : q.type === 'true-false'
+                ? (String(q.correctAnswerTrueFalse ?? q.correctAnswer).toLowerCase() === 'true' ? 'Sant' : 'Falskt')
+                : q.correctAnswer || (q.acceptableAnswers || [])[0]?.answer
+
+            return (
+              <div
+                key={q.id}
+                className={cn(
+                  'rounded-lg border p-4 text-sm',
+                  isCorrect
+                    ? 'border-green-200 bg-green-50/50 dark:border-green-800/40 dark:bg-green-900/20'
+                    : 'border-red-200 bg-red-50/50 dark:border-red-800/40 dark:bg-red-900/20',
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    'flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5',
+                    isCorrect ? 'bg-green-500' : 'bg-red-500',
+                  )}>
+                    {isCorrect
+                      ? <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                      : <X className="h-3 w-3 text-white" strokeWidth={3} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-foreground">
+                      {idx + 1}. {q.title}
+                    </div>
+                    {userAnswer != null && (
+                      <div className={cn(
+                        'mt-1',
+                        isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400',
+                      )}>
+                        Ditt svar: {q.type === 'true-false' ? (String(userAnswer).toLowerCase() === 'true' ? 'Sant' : 'Falskt') : String(userAnswer)}
+                      </div>
+                    )}
+                    {!isCorrect && correctOption && (
+                      <div className="mt-1 text-green-700 dark:text-green-400">
+                        Rätt svar: {correctOption}
+                      </div>
+                    )}
+                    {q.explanation && (
+                      <div className="mt-2 rounded-md border border-gray-200 dark:border-zinc-600 bg-white/80 dark:bg-zinc-800/60 p-2.5">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                          <Lightbulb className="h-3 w-3 text-amber-500" />
+                          Förklaring
+                        </div>
+                        <div className="prose prose-sm max-w-none dark:prose-invert text-gray-700 dark:text-gray-200">
+                          <RichTextRenderer content={q.explanation} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }

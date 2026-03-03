@@ -172,23 +172,22 @@ export default function CourseQuizViewer({
                     variant="ghost"
                     size="sm"
                     onClick={() => setTheaterMode(!theaterMode)}
-                    title={theaterMode ? 'Visa innehållsförteckning' : 'Teatervy'}
+                    className="gap-1.5 text-muted-foreground"
                   >
                     {theaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    <span className="text-xs">{theaterMode ? 'Visa meny' : 'Teaterläge'}</span>
                   </Button>
                   <Button
                     variant="outline"
-                    size="sm"
                     onClick={goToPrev}
                     disabled={currentItemIndex === 0}
                   >
                     <ChevronLeft className="w-4 h-4 mr-1" /> Föregående
                   </Button>
                   <Button
-                    size="sm"
                     onClick={goToNext}
                     disabled={currentItemIndex === allItems.length - 1}
-                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                    className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/25"
                   >
                     Nästa <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
@@ -205,7 +204,6 @@ export default function CourseQuizViewer({
                   key={quiz.id}
                   quiz={quiz}
                   onPassed={async () => {
-                    // Mark quiz as completed for session participants (local storage)
                     if (isSessionParticipant) {
                       markQuizCompleted(quiz.id)
                     } else {
@@ -213,22 +211,8 @@ export default function CourseQuizViewer({
                         await fetchProgress()
                       } catch {}
                     }
-                    // Prefer next lesson in same module; fallback to overview if none
-                    if (nextItem && nextItem.type === 'lesson') {
-                      router.push(
-                        buildUrl(`/vinprovningar/${course.slug || course.id}?lesson=${nextItem.id}`),
-                      )
-                    } else {
-                      const target = buildUrl(
-                        `/vinprovningar/${course.slug || course.id}?t=${Date.now()}`,
-                      )
-                      router.push(target)
-                    }
-                    try {
-                      // @ts-ignore
-                      router.refresh?.()
-                    } catch {}
                   }}
+                  onNavigateNext={() => goToNext()}
                 />
               </div>
             ) : (

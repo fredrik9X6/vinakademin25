@@ -58,7 +58,7 @@ export function UserProfilePage() {
         return 'data'
       case 'kurser':
       case 'vinprovningar':
-        return 'details' // Redirect old tab to details since courses moved to /mina-provningar
+        return 'details'
       case 'recensioner':
       case 'recension':
         return 'reviews'
@@ -67,6 +67,13 @@ export function UserProfilePage() {
         return 'details'
     }
   }
+
+  // Redirect old vinprovningar/kurser tab to the new Mina Provningar page
+  React.useEffect(() => {
+    if (tabParam === 'vinprovningar' || tabParam === 'kurser') {
+      router.replace('/mina-provningar')
+    }
+  }, [tabParam, router])
 
   // Load notification preferences when user is available
   React.useEffect(() => {

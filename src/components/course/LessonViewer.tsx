@@ -223,18 +223,17 @@ export default function LessonViewer({
                         streamType="on-demand"
                         className="w-full h-full"
                         style={{
-                          // Theme Mux Player to use brand orange accents
-                          ['--media-accent-color' as any]: '#f97316', // orange-500
+                          ['--media-accent-color' as any]: '#f97316',
                           ['--media-focus-ring-color' as any]: '#f97316',
                           ['--media-controls-background' as any]: 'rgba(0,0,0,0.4)',
                         }}
                         defaultShowRemainingTime
                         renditionOrder="desc"
+                        {...{ qualitySelector: true } as any}
                         onTimeUpdate={handleTimeUpdate}
                         onEnded={() => {
                           if (!hasAutoCompletedRef.current) {
                             hasAutoCompletedRef.current = true
-                            markLessonCompleted(lesson.id)
                           }
                           updateLessonProgress(lesson.id, true, 100)
                         }}
@@ -298,23 +297,22 @@ export default function LessonViewer({
                   variant="ghost"
                   size="sm"
                   onClick={() => setTheaterMode(!theaterMode)}
-                  title={theaterMode ? 'Visa innehållsförteckning' : 'Teatervy'}
+                  className="gap-1.5 text-muted-foreground"
                 >
                   {theaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  <span className="text-xs">{theaterMode ? 'Visa meny' : 'Teaterläge'}</span>
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
                   onClick={goToPrevLesson}
                   disabled={currentItemIndex === 0}
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" /> Föregående
                 </Button>
                 <Button
-                  size="sm"
                   onClick={goToNextLesson}
                   disabled={currentItemIndex === allItems.length - 1}
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                  className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/25"
                 >
                   Nästa <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>

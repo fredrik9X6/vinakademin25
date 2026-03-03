@@ -36,9 +36,12 @@ function FooterNewsletter() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email || !email.includes('@')) return
+  const handleSubmit = async () => {
+    if (!email || !email.includes('@')) {
+      setStatus('error')
+      setMessage('Ange en giltig e-postadress.')
+      return
+    }
 
     setStatus('loading')
     try {
@@ -74,19 +77,20 @@ function FooterNewsletter() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-stretch min-w-0">
+      <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-stretch min-w-0">
         <Input
           type="email"
           placeholder="Din e-postadress"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmit() } }}
           className="h-12 w-full min-w-0 text-base sm:h-10 sm:flex-1 sm:text-sm"
           disabled={status === 'loading'}
         />
-        <Button type="submit" className="h-12 w-full sm:h-10 sm:w-auto" variant="secondary" disabled={status === 'loading'}>
+        <Button type="button" className="h-12 w-full sm:h-10 sm:w-auto" variant="secondary" disabled={status === 'loading'} onClick={handleSubmit}>
           {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Prenumerera'}
         </Button>
-      </form>
+      </div>
       {status === 'error' && message && (
         <p className="mt-2 text-sm text-red-600 dark:text-red-400">{message}</p>
       )}

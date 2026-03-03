@@ -216,6 +216,7 @@ export default function CourseViewer({
                         }}
                         streamType="on-demand"
                         className="w-full h-full"
+                        {...{ qualitySelector: true } as any}
                       />
                     ) : currentLesson.lesson.videoProvider === 'youtube' &&
                       currentLesson.lesson.videoUrl ? (
