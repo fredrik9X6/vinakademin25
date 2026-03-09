@@ -50,9 +50,12 @@ export const Wines: CollectionConfig = {
       hooks: {
         beforeValidate: [
           ({ data }) => {
-            if (data?.name && !data.slug) {
-              return data.name
+            const source = data?.slug || data?.name
+            if (source) {
+              return String(source)
                 .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/(^-|-$)/g, '')
             }

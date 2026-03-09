@@ -21,22 +21,58 @@ type PageProps = {
   params: Promise<{ slug: string }>
 }
 
+const decodeSlug = (value: string): string => {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+const normalizeSlug = (value: string): string =>
+  decodeSlug(String(value || ''))
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+
 async function fetchWineBySlug(slug: string) {
   const payload = await getPayload({ config })
-  const numericSlug = Number(slug)
+  const decodedSlug = decodeSlug(slug)
+  const numericSlug = Number(decodedSlug)
   const hasNumericSlug = Number.isFinite(numericSlug) && !Number.isNaN(numericSlug)
+  const slugCandidates = Array.from(
+    new Set(
+      [slug, decodedSlug, slug.toLowerCase(), decodedSlug.toLowerCase()].filter(
+        (candidate) => Boolean(candidate && candidate.trim()),
+      ),
+    ),
+  )
   const res = await payload.find({
     collection: 'wines',
     where: {
       or: [
-        { slug: { equals: slug } },
+        ...slugCandidates.map((candidate) => ({ slug: { equals: candidate } })),
         ...(hasNumericSlug ? [{ id: { equals: numericSlug } }] : []),
       ],
     },
     depth: 2 as any,
     limit: 1,
   } as any)
-  const wine = res.docs?.[0]
+  let wine: any | null = res.docs?.[0] ?? null
+  if (!wine && !hasNumericSlug) {
+    const normalizedRequestedSlug = normalizeSlug(decodedSlug)
+    const fallbackRes = await payload.find({
+      collection: 'wines',
+      depth: 2 as any,
+      limit: 2000,
+    } as any)
+    wine =
+      (fallbackRes.docs || []).find(
+        (doc: any) => doc?.slug && normalizeSlug(String(doc.slug)) === normalizedRequestedSlug,
+      ) || null
+  }
   if (!wine) return null
 
   // Load a trusted review if exists for rating display
