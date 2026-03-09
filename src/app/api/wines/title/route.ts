@@ -16,14 +16,22 @@ export async function GET(request: NextRequest) {
     const payload = await getPayload({ config })
     const { searchParams } = new URL(request.url)
 
-    const slug = (searchParams.get('slug') || '').trim()
-    if (!slug) {
+    const slugParam = (searchParams.get('slug') || '').trim()
+    if (!slugParam) {
       return NextResponse.json({ title: null }, { status: 400 })
     }
 
+    const numericId = Number(slugParam)
+    const isNumericId = Number.isFinite(numericId) && !Number.isNaN(numericId)
+
     const res = await payload.find({
       collection: 'wines',
-      where: { slug: { equals: slug } },
+      where: {
+        or: [
+          { slug: { equals: slugParam } },
+          ...(isNumericId ? [{ id: { equals: numericId } }] : []),
+        ],
+      },
       limit: 1,
       depth: 0,
     })

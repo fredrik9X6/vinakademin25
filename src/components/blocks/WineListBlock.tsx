@@ -92,15 +92,8 @@ export function WineListBlock({
   // Calculate total price
   const totalPrice = wines.reduce((sum, wine) => sum + (wine.price || 0), 0)
 
-  // Helper function to get wine link
-  const getWineLink = (wine: Wine) => {
-    const externalUrl = wine.systembolagetUrl
-    const internalUrl = `/vinlistan/${wine.slug}`
-    return externalUrl || internalUrl
-  }
-
-  // Helper function to check if wine link is external
-  const isExternalLink = (wine: Wine) => !!wine.systembolagetUrl
+  // Wines in rich text should link to internal wine pages
+  const getWineLink = (wine: Wine) => `/vinlistan/${wine.slug || wine.id}`
 
   if (displayStyle === 'compact') {
     return (
@@ -132,22 +125,11 @@ export function WineListBlock({
           <div className="space-y-1.5">
             {wines.map((wine, index) => {
               const wineHref = getWineLink(wine)
-              const isExternal = isExternalLink(wine)
-              const LinkComponent = isExternal ? 'a' : Link
-              const linkProps = isExternal
-                ? {
-                    href: wineHref,
-                    target: '_blank',
-                    rel: 'noopener noreferrer',
-                  }
-                : {
-                    href: wineHref,
-                  }
 
               return (
-                <LinkComponent
+                <Link
                   key={wine.id}
-                  {...linkProps}
+                  href={wineHref}
                   className="group flex items-center justify-between gap-3 p-2.5 rounded-md border border-border/30 bg-background/50 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-transparent dark:hover:from-orange-950/20 dark:hover:to-transparent hover:border-orange-300/50 dark:hover:border-orange-700/50 transition-all duration-150"
                 >
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -186,12 +168,9 @@ export function WineListBlock({
                       <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
                         {formatPrice(wine.price)}
                       </span>
-                      {isExternal && (
-                        <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors opacity-0 group-hover:opacity-100" />
-                      )}
                     </div>
                   )}
-                </LinkComponent>
+                </Link>
               )
             })}
           </div>
@@ -252,17 +231,6 @@ export function WineListBlock({
           {wines.map((wine) => {
             const wineImageUrl = resolvedImages[wine.id] || null
             const wineHref = getWineLink(wine)
-            const isExternal = isExternalLink(wine)
-            const LinkComponent = isExternal ? 'a' : Link
-            const linkProps = isExternal
-              ? {
-                  href: wineHref,
-                  target: '_blank',
-                  rel: 'noopener noreferrer',
-                }
-              : {
-                  href: wineHref,
-                }
 
             return (
               <Card
@@ -293,15 +261,12 @@ export function WineListBlock({
                   )}
                   <div className="p-5 space-y-3">
                     <div>
-                      <LinkComponent
-                        {...linkProps}
+                      <Link
+                        href={wineHref}
                         className="font-bold text-lg text-foreground hover:text-orange-600 dark:hover:text-orange-400 transition-colors line-clamp-2 block mb-2"
                       >
                         {wine.name}
-                        {isExternal && (
-                          <ExternalLink className="inline h-3.5 w-3.5 ml-1 align-text-top opacity-0 group-hover:opacity-100 transition-opacity" />
-                        )}
-                      </LinkComponent>
+                      </Link>
                       {wine.winery && (
                         <p className="text-sm font-medium text-muted-foreground line-clamp-1">
                           {wine.winery}
@@ -326,15 +291,9 @@ export function WineListBlock({
                         asChild
                         className="border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-300 dark:hover:border-orange-700"
                       >
-                        {isExternal ? (
-                          <a href={wineHref} target="_blank" rel="noopener noreferrer">
-                            Visa <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                          </a>
-                        ) : (
-                          <Link href={wineHref}>
-                            Visa <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                          </Link>
-                        )}
+                        <Link href={wineHref}>
+                          Visa <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                        </Link>
                       </Button>
                     </div>
                   </div>
@@ -385,17 +344,6 @@ export function WineListBlock({
         {wines.map((wine, index) => {
           const wineImageUrl = resolvedImages[wine.id] || null
           const wineHref = getWineLink(wine)
-          const isExternal = isExternalLink(wine)
-          const LinkComponent = isExternal ? 'a' : Link
-          const linkProps = isExternal
-            ? {
-                href: wineHref,
-                target: '_blank',
-                rel: 'noopener noreferrer',
-              }
-            : {
-                href: wineHref,
-              }
 
           return (
             <Card
@@ -434,15 +382,12 @@ export function WineListBlock({
                             >
                               #{index + 1}
                             </Badge>
-                            <LinkComponent
-                              {...linkProps}
+                            <Link
+                              href={wineHref}
                               className="text-xl md:text-2xl font-bold text-foreground hover:text-orange-600 dark:hover:text-orange-400 transition-colors line-clamp-2"
                             >
                               {wine.name}
-                              {isExternal && (
-                                <ExternalLink className="inline h-4 w-4 ml-1 align-text-top opacity-0 group-hover:opacity-100 transition-opacity" />
-                              )}
-                            </LinkComponent>
+                            </Link>
                           </div>
                           {wine.winery && (
                             <p className="text-base font-semibold text-muted-foreground mb-3">
@@ -493,17 +438,10 @@ export function WineListBlock({
                       asChild
                       className="w-full sm:w-auto border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-300 dark:hover:border-orange-700 hover:text-orange-600 dark:hover:text-orange-400"
                     >
-                      {isExternal ? (
-                        <a href={wineHref} target="_blank" rel="noopener noreferrer">
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Visa vin
-                        </a>
-                      ) : (
-                        <Link href={wineHref}>
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Visa vin
-                        </Link>
-                      )}
+                      <Link href={wineHref}>
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Visa vin
+                      </Link>
                     </Button>
                   </div>
                 </div>

@@ -23,10 +23,15 @@ type PageProps = {
 
 async function fetchWineBySlug(slug: string) {
   const payload = await getPayload({ config })
+  const numericSlug = Number(slug)
+  const hasNumericSlug = Number.isFinite(numericSlug) && !Number.isNaN(numericSlug)
   const res = await payload.find({
     collection: 'wines',
     where: {
-      or: [{ slug: { equals: slug } }, { id: { equals: slug } }],
+      or: [
+        { slug: { equals: slug } },
+        ...(hasNumericSlug ? [{ id: { equals: numericSlug } }] : []),
+      ],
     },
     depth: 2 as any,
     limit: 1,
@@ -166,6 +171,9 @@ export default async function WineDetailPage({ params }: PageProps) {
       return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     })
 
+  const wineIdStr = String(wine.id)
+  const wineSlugStr = String(wine.slug || '')
+
   // Fetch related wines by region or grapes
   const grapeIds: number[] = Array.isArray(wine.grapes)
     ? (wine.grapes as any[])
@@ -212,8 +220,6 @@ export default async function WineDetailPage({ params }: PageProps) {
     limit: 100,
   } as any)
   const blogPostsAll = postsRes.docs || []
-  const wineIdStr = String(wine.id)
-  const wineSlugStr = String(wine.slug || '')
   const referencesWine = (content: any): boolean => {
     if (!content || typeof content !== 'object') return false
     const stack: any[] = [content]
