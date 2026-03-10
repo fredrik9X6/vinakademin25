@@ -362,106 +362,105 @@ export default async function WineDetailPage({ params }: PageProps) {
         ) : null}
       </div>
 
-      <div className="relative group mb-8">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FDBA75] via-[#FB914C] to-[#FDBA75] rounded-2xl opacity-40 blur group-hover:opacity-60 transition duration-500" />
-        <Card className="relative rounded-2xl overflow-hidden">
-          <CardContent className="p-0">
-            <div className="flex flex-col sm:flex-row gap-0">
-              {/* Wine bottle image */}
-              <div className="flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20 sm:w-44 lg:w-52 flex-shrink-0 py-8 px-4">
-                <div className="relative h-64 w-28 sm:h-72 sm:w-32">
-                  {wine.image?.url ? (
-                    <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
+      <Card className="mb-8 overflow-hidden">
+        <CardContent className="p-0">
+          {/* Mobile: stacked. Tablet (md): image left, content right side-by-side. */}
+          <div className="flex flex-col md:flex-row">
+            {/* Wine bottle image */}
+            <div className="flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20 md:w-52 lg:w-60 flex-shrink-0 py-8 px-6">
+              <div className="relative h-56 w-24 sm:h-64 sm:w-28 md:h-72 md:w-32">
+                {wine.image?.url ? (
+                  <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
+                ) : null}
+              </div>
+            </div>
+
+            {/* Main content */}
+            <div className="flex-1 p-5 sm:p-6 md:p-8 flex flex-col gap-5 min-w-0">
+              {/* Header */}
+              <div>
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words">
+                    {wine.name}{wine.vintage ? <span className="text-muted-foreground font-normal"> · {wine.vintage}</span> : ''}
+                  </h1>
+                  {Number(wine.price) ? (
+                    <div className="text-xl font-bold text-[#FB914C]">
+                      {formatPrice(Number(wine.price))}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {wine.winery}
+                  {wine.region?.name ? (
+                    <>
+                      {' · '}
+                      <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                        {wine.region.name}
+                      </Link>
+                    </>
+                  ) : null}
+                  {wine.country?.name ? (
+                    <>
+                      {', '}
+                      <Link href={`/lander/${wine.country.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                        {wine.country.name}
+                      </Link>
+                    </>
                   ) : null}
                 </div>
               </div>
 
-              {/* Main content */}
-              <div className="flex-1 p-5 sm:p-7 flex flex-col gap-5">
-                {/* Header */}
+              {/* Badges */}
+              <div className="flex flex-wrap gap-2">
+                {review ? (
+                  <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30">
+                    Verifierad recension
+                  </Badge>
+                ) : null}
+                {review?.rating ? (
+                  <Badge variant="secondary">
+                    Betyg: {review.rating}/5
+                  </Badge>
+                ) : null}
+              </div>
+
+              {/* Details grid — 2 cols on mobile/tablet, 3 on desktop */}
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words">
-                      {wine.name}{wine.vintage ? <span className="text-muted-foreground font-normal"> · {wine.vintage}</span> : ''}
-                    </h1>
-                    {Number(wine.price) ? (
-                      <div className="text-xl font-bold text-[#FB914C]">
-                        {formatPrice(Number(wine.price))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {wine.winery}
-                    {wine.region?.name ? (
-                      <>
-                        {' · '}
-                        <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
-                          {wine.region.name}
-                        </Link>
-                      </>
-                    ) : null}
-                    {wine.country?.name ? (
-                      <>
-                        {', '}
-                        <Link href={`/lander/${wine.country.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
-                          {wine.country.name}
-                        </Link>
-                      </>
-                    ) : null}
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Druvor</div>
+                  <div className="text-sm font-medium">
+                    {Array.isArray(wine.grapes) && (wine.grapes as any[]).length > 0
+                      ? (wine.grapes as any[])
+                          .map((g: any) => (typeof g === 'object' ? g.name : g))
+                          .join(', ')
+                      : '—'}
                   </div>
                 </div>
-
-                {/* Badges */}
-                <div className="flex flex-wrap gap-2">
-                  {review ? (
-                    <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30">
-                      Verifierad recension
-                    </Badge>
-                  ) : null}
-                  {review?.rating ? (
-                    <Badge variant="secondary">
-                      Betyg: {review.rating}/5
-                    </Badge>
-                  ) : null}
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Alkohol</div>
+                  <div className="text-sm font-medium">{wine.alcohol ? `${wine.alcohol}%` : '—'}</div>
                 </div>
-
-                {/* Details grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {wine.region?.name ? (
                   <div>
-                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Druvor</div>
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Region</div>
                     <div className="text-sm font-medium">
-                      {Array.isArray(wine.grapes) && (wine.grapes as any[]).length > 0
-                        ? (wine.grapes as any[])
-                            .map((g: any) => (typeof g === 'object' ? g.name : g))
-                            .join(', ')
-                        : '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Alkohol</div>
-                    <div className="text-sm font-medium">{wine.alcohol ? `${wine.alcohol}%` : '—'}</div>
-                  </div>
-                  {wine.region?.name ? (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Region</div>
-                      <div className="text-sm font-medium">
-                        <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors hover:underline underline-offset-2">
-                          {wine.region.name}
-                        </Link>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* Description */}
-                {wine.description?.root ? (
-                  <div className="border-t border-border/50 pt-4">
-                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Beskrivning</div>
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <RichTextRenderer content={wine.description} />
+                      <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors hover:underline underline-offset-2">
+                        {wine.region.name}
+                      </Link>
                     </div>
                   </div>
                 ) : null}
+              </div>
+
+              {/* Description */}
+              {wine.description?.root ? (
+                <div className="border-t border-border/50 pt-4">
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Beskrivning</div>
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <RichTextRenderer content={wine.description} />
+                  </div>
+                </div>
+              ) : null}
 
                 {/* Systembolaget link */}
                 {wine.systembolagetUrl && wine.systembolagetUrl.trim() ? (
@@ -485,7 +484,6 @@ export default async function WineDetailPage({ params }: PageProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
 
       {/* Reviews */}
       <div className="mt-8">
