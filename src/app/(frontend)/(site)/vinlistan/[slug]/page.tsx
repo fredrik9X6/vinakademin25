@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { headers } from 'next/headers'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 import {
   Accordion,
@@ -13,7 +14,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Clock, ArrowRight, CalendarDays, Sparkles } from 'lucide-react'
 import type { Metadata } from 'next'
 import { BlogPostCard } from '@/components/blog'
 
@@ -339,113 +340,152 @@ export default async function WineDetailPage({ params }: PageProps) {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(price)
 
+  const lastUpdated = wine.updatedAt
+    ? new Date(wine.updatedAt).toLocaleDateString('sv-SE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : null
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <Link href="/vinlistan" className="text-sm text-muted-foreground hover:underline">
           ← Tillbaka till Vinlistan
         </Link>
+        {lastUpdated ? (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CalendarDays className="h-3.5 w-3.5" />
+            <span>Senaste uppdaterad: {lastUpdated}</span>
+          </div>
+        ) : null}
       </div>
 
-      <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <CardTitle className="text-2xl font-semibold break-words">
-              {wine.name} {wine.vintage ? `· ${wine.vintage}` : ''}
-            </CardTitle>
-            {Number(wine.price) ? (
-              <div className="text-base sm:text-lg font-semibold text-primary">
-                {formatPrice(Number(wine.price))}
+      <div className="relative group mb-8">
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FDBA75] via-[#FB914C] to-[#FDBA75] rounded-2xl opacity-40 blur group-hover:opacity-60 transition duration-500" />
+        <Card className="relative rounded-2xl overflow-hidden">
+          <CardContent className="p-0">
+            <div className="flex flex-col sm:flex-row gap-0">
+              {/* Wine bottle image */}
+              <div className="flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20 sm:w-44 lg:w-52 flex-shrink-0 py-8 px-4">
+                <div className="relative h-64 w-28 sm:h-72 sm:w-32">
+                  {wine.image?.url ? (
+                    <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
+                  ) : null}
+                </div>
               </div>
-            ) : null}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {wine.winery}
-            {wine.region?.name ? (
-              <>
-                {' · '}
-                <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
-                  {wine.region.name}
-                </Link>
-              </>
-            ) : null}
-            {wine.country?.name ? (
-              <>
-                {', '}
-                <Link href={`/lander/${wine.country.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
-                  {wine.country.name}
-                </Link>
-              </>
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row gap-6">
-            <div className="relative h-56 w-28 sm:h-72 sm:w-40 mx-auto sm:mx-0 rounded-md overflow-hidden bg-transparent">
-              {wine.image?.url ? (
-                <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
-              ) : null}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="grid gap-6 lg:grid-cols-2">
+
+              {/* Main content */}
+              <div className="flex-1 p-5 sm:p-7 flex flex-col gap-5">
+                {/* Header */}
                 <div>
-                  <div className="mb-3">
-                    <div className="text-sm">Druvor</div>
-                    <div className="text-sm text-muted-foreground">
-                      {Array.isArray(wine.grapes)
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words">
+                      {wine.name}{wine.vintage ? <span className="text-muted-foreground font-normal"> · {wine.vintage}</span> : ''}
+                    </h1>
+                    {Number(wine.price) ? (
+                      <div className="text-xl font-bold text-[#FB914C]">
+                        {formatPrice(Number(wine.price))}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {wine.winery}
+                    {wine.region?.name ? (
+                      <>
+                        {' · '}
+                        <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                          {wine.region.name}
+                        </Link>
+                      </>
+                    ) : null}
+                    {wine.country?.name ? (
+                      <>
+                        {', '}
+                        <Link href={`/lander/${wine.country.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                          {wine.country.name}
+                        </Link>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2">
+                  {review ? (
+                    <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30">
+                      Verifierad recension
+                    </Badge>
+                  ) : null}
+                  {review?.rating ? (
+                    <Badge variant="secondary">
+                      Betyg: {review.rating}/5
+                    </Badge>
+                  ) : null}
+                </div>
+
+                {/* Details grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Druvor</div>
+                    <div className="text-sm font-medium">
+                      {Array.isArray(wine.grapes) && (wine.grapes as any[]).length > 0
                         ? (wine.grapes as any[])
                             .map((g: any) => (typeof g === 'object' ? g.name : g))
                             .join(', ')
                         : '—'}
                     </div>
                   </div>
-                  <div className="mb-3">
-                    <div className="text-sm">Alkohol</div>
-                    <div className="text-sm text-muted-foreground">
-                      {wine.alcohol ? `${wine.alcohol}%` : '—'}
-                    </div>
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Alkohol</div>
+                    <div className="text-sm font-medium">{wine.alcohol ? `${wine.alcohol}%` : '—'}</div>
                   </div>
-                  <div className="mb-3">
-                    <div className="text-sm">Betyg</div>
-                    <div className="text-sm text-muted-foreground">{review?.rating ?? '—'}/5</div>
-                  </div>
-                  {review ? (
-                    <div className="mt-4">
-                      <Badge variant="secondary">Verifierad</Badge>
+                  {wine.region?.name ? (
+                    <div>
+                      <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Region</div>
+                      <div className="text-sm font-medium">
+                        <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors hover:underline underline-offset-2">
+                          {wine.region.name}
+                        </Link>
+                      </div>
                     </div>
                   ) : null}
                 </div>
+
+                {/* Description */}
                 {wine.description?.root ? (
-                  <div>
-                    <div className="text-sm font-medium mb-1">Beskrivning</div>
-                    <div className="prose prose-sm dark:prose-invert">
+                  <div className="border-t border-border/50 pt-4">
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Beskrivning</div>
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
                       <RichTextRenderer content={wine.description} />
                     </div>
                   </div>
                 ) : null}
+
+                {/* Systembolaget link */}
+                {wine.systembolagetUrl && wine.systembolagetUrl.trim() ? (
+                  <div>
+                    <a
+                      href={
+                        wine.systembolagetUrl.startsWith('http')
+                          ? wine.systembolagetUrl
+                          : `https://${wine.systembolagetUrl}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-[#FB914C] hover:underline underline-offset-2"
+                    >
+                      Köp på Systembolaget
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                ) : null}
               </div>
             </div>
-          </div>
-          {/* Description moved into right column on desktop */}
-          {wine.systembolagetUrl && wine.systembolagetUrl.trim() ? (
-            <div className="mt-3">
-              <a
-                href={
-                  wine.systembolagetUrl.startsWith('http')
-                    ? wine.systembolagetUrl
-                    : `https://${wine.systembolagetUrl}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-              >
-                Länk till Systembolaget
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Reviews */}
       <div className="mt-8">
@@ -614,19 +654,74 @@ export default async function WineDetailPage({ params }: PageProps) {
       {/* Vinprovningar referencing this wine */}
       {relatedVinprovningar.length > 0 ? (
         <div className="mt-10">
-          <h2 className="text-xl font-medium mb-4">Vinprovningar med detta vin</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#FDBA75]/10 to-[#FB914C]/10 border border-[#FDBA75]/20 mb-4">
+              <Sparkles className="h-4 w-4 text-[#FB914C]" />
+              <span className="text-sm font-medium text-[#FB914C]">Vinprovningar med detta vin</span>
+            </div>
+          </div>
+          <div className="space-y-4">
             {relatedVinprovningar.map((v: any) => (
-              <Link
-                key={v.id}
-                href={`/vinprovningar/${v.slug}`}
-                className="block p-4 rounded-lg border border-border/50 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-all"
-              >
-                <h3 className="font-semibold">{v.title}</h3>
-                {v.description && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{v.description}</p>
-                )}
-              </Link>
+              <div key={v.id} className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FDBA75] via-[#FB914C] to-[#FDBA75] rounded-2xl opacity-50 blur group-hover:opacity-80 transition duration-500" />
+                <div className="relative bg-card rounded-2xl overflow-hidden border border-border">
+                  <div className="flex flex-col sm:flex-row gap-0">
+                    {v.featuredImage?.url ? (
+                      <div className="relative h-48 sm:h-auto sm:w-56 flex-shrink-0">
+                        <Image
+                          src={v.featuredImage.url}
+                          alt={v.title}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent sm:bg-gradient-to-r" />
+                      </div>
+                    ) : null}
+                    <div className="flex-1 p-6 sm:p-8 flex flex-col justify-between gap-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          {v.level ? (
+                            <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30">
+                              {v.level === 'beginner'
+                                ? 'Nybörjare'
+                                : v.level === 'intermediate'
+                                  ? 'Fortsättning'
+                                  : 'Avancerad'}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                          {v.title}
+                        </h3>
+                        {v.description ? (
+                          <p className="text-muted-foreground leading-relaxed line-clamp-3">
+                            {v.description}
+                          </p>
+                        ) : null}
+                        {v.duration ? (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>{v.duration}h</span>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="pt-2 border-t border-border flex items-center justify-between gap-4">
+                        {Number(v.price) > 0 ? (
+                          <span className="text-2xl font-bold bg-gradient-to-r from-[#FB914C] to-[#FDBA75] bg-clip-text text-transparent">
+                            {formatPrice(Number(v.price))}
+                          </span>
+                        ) : null}
+                        <Link href={`/vinprovningar/${v.slug}`}>
+                          <Button className="bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white border-0 shadow-lg shadow-[#FB914C]/20 group/btn transition-all duration-300">
+                            Läs mer
+                            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>

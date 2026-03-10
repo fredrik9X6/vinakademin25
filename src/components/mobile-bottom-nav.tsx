@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Wine, Newspaper, User } from 'lucide-react'
+import { Home, Wine, Newspaper, User, List } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 
 const TABS = [
   { label: 'Hem', href: '/', icon: Home, matchExact: true },
   { label: 'Provningar', href: '/vinprovningar', icon: Wine },
+  { label: 'Vinlistan', href: '/vinlistan', icon: List },
   { label: 'Artiklar', href: '/artiklar', icon: Newspaper },
   { label: 'Mitt konto', href: '/mina-provningar', hrefLoggedOut: '/logga-in', icon: User },
 ]

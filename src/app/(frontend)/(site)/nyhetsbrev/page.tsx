@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { NewsletterSignupBlock } from '@/components/blocks/NewsletterSignupBlock'
 import { Card, CardContent } from '@/components/ui/card'
-import { Mail, Clock, Star, Users, ChevronRight } from 'lucide-react'
+import { Clock, Star, Users, Wine, UtensilsCrossed, Quote } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Nyhetsbrev - Vinakademin',
@@ -102,8 +102,10 @@ export default function NewsletterPage() {
             </h2>
 
             <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <ChevronRight className="h-6 w-6 text-secondary mt-1 flex-shrink-0" />
+              <div className="flex items-start gap-5">
+                <div className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20 border border-orange-200/50 dark:border-orange-800/50">
+                  <Wine className="h-6 w-6 text-[#FB914C]" />
+                </div>
                 <div>
                   <h3 className="text-lg font-medium text-foreground mb-2">
                     3 viner vi älskar just nu
@@ -115,8 +117,10 @@ export default function NewsletterPage() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <ChevronRight className="h-6 w-6 text-secondary mt-1 flex-shrink-0" />
+              <div className="flex items-start gap-5">
+                <div className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20 border border-orange-200/50 dark:border-orange-800/50">
+                  <UtensilsCrossed className="h-6 w-6 text-[#FB914C]" />
+                </div>
                 <div>
                   <h3 className="text-lg font-medium text-foreground mb-2">Mat- och vinkombos</h3>
                   <p className="text-muted-foreground">
@@ -126,8 +130,10 @@ export default function NewsletterPage() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <ChevronRight className="h-6 w-6 text-secondary mt-1 flex-shrink-0" />
+              <div className="flex items-start gap-5">
+                <div className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20 border border-orange-200/50 dark:border-orange-800/50">
+                  <Quote className="h-6 w-6 text-[#FB914C]" />
+                </div>
                 <div>
                   <h3 className="text-lg font-medium text-foreground mb-2">
                     Roligt citat & extra godbitar

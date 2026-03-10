@@ -29,6 +29,7 @@ import {
 
 const NAV_LINKS = [
   { label: 'Vinprovningar', href: '/vinprovningar' },
+  { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },
   { label: 'Om oss', href: '/om-oss' },
 ]
