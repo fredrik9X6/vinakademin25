@@ -3,7 +3,7 @@
  *
  * Meant to be run as a Railway Cron service:
  *   Start command: npx tsx scripts/send-review-emails.ts
- *   Cron schedule: 0 */6 * * *  (every 6 hours)
+ *   Cron schedule: 0 *\/6 * * *  (every 6 hours)
  *
  * Uses Payload's local API directly — no HTTP server needed.
  */
