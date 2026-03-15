@@ -34,6 +34,7 @@ import { SessionParticipantsDisplay } from './SessionParticipantsDisplay'
 import { useActiveSession } from '@/context/SessionContext'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 import { useAuth } from '@/context/AuthContext'
+import { CourseReviewsSection } from './CourseReviewsSection'
 
 interface CourseOverviewProps {
   course: {
@@ -507,6 +508,9 @@ export default function CourseOverview({
               onItemClick={handleItemClick}
               loading={progressLoading}
             />
+
+            {/* Reviews Section */}
+            <CourseReviewsSection courseId={course.id} />
           </div>
 
           {/* Sidebar */}

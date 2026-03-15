@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload'
+import crypto from 'crypto'
 
 export const CourseReviews: CollectionConfig = {
   slug: 'course-reviews',
@@ -8,37 +9,35 @@ export const CourseReviews: CollectionConfig = {
   },
   admin: {
     group: 'Users & Progress',
-    defaultColumns: ['title', 'course', 'author', 'rating', 'status', 'createdAt'],
+    defaultColumns: ['course', 'author', 'rating', 'status', 'createdAt'],
     useAsTitle: 'title',
   },
   access: {
-    read: () => true, // Public reviews
-    create: ({ req }: any) => Boolean(req.user), // Only authenticated users can create reviews
+    read: () => true,
+    create: ({ req }: any) => Boolean(req.user),
     update: ({ req, doc }: any) => {
       if (req.user?.role === 'admin') return true
       if (!doc || !req.user) return false
       return req.user?.id === doc.author
     },
-    delete: ({ req, doc }: any) => {
-      if (req.user?.role === 'admin') return true
-      if (!doc || !req.user) return false
-      return req.user?.id === doc.author
-    },
+    delete: ({ req }: any) => req.user?.role === 'admin',
   },
   fields: [
     {
       name: 'title',
       type: 'text',
       label: 'Review Title',
-      required: true,
-      maxLength: 100,
+      admin: {
+        readOnly: true,
+        description: 'Auto-generated from course name and rating',
+      },
     },
     {
       name: 'course',
       type: 'relationship',
       relationTo: 'vinprovningar',
       required: true,
-      label: 'Course',
+      label: 'Vinprovning',
       index: true,
     },
     {
@@ -46,52 +45,23 @@ export const CourseReviews: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       required: true,
-      label: 'Author',
+      label: 'Författare',
       index: true,
     },
     {
       name: 'rating',
       type: 'number',
-      label: 'Rating (1-5)',
+      label: 'Betyg (1-5)',
       required: true,
       min: 1,
       max: 5,
-      validate: (value: any) => {
-        if (value < 1 || value > 5) {
-          return 'Rating must be between 1 and 5'
-        }
-        return true
-      },
     },
     {
       name: 'content',
-      type: 'richText',
-      label: 'Review Content',
+      type: 'textarea',
+      label: 'Recension',
       required: true,
-    },
-    {
-      name: 'pros',
-      type: 'array',
-      label: 'Pros',
-      fields: [
-        {
-          name: 'point',
-          type: 'text',
-          required: true,
-        },
-      ],
-    },
-    {
-      name: 'cons',
-      type: 'array',
-      label: 'Cons',
-      fields: [
-        {
-          name: 'point',
-          type: 'text',
-          required: true,
-        },
-      ],
+      maxLength: 2000,
     },
     {
       name: 'status',
@@ -100,106 +70,68 @@ export const CourseReviews: CollectionConfig = {
       options: [
         { label: 'Published', value: 'published' },
         { label: 'Pending', value: 'pending' },
-        { label: 'Rejected', value: 'rejected' },
       ],
-      defaultValue: 'pending',
+      defaultValue: 'published',
       required: true,
     },
     {
       name: 'isVerifiedPurchase',
       type: 'checkbox',
-      label: 'Verified Purchase',
+      label: 'Verifierat köp',
       defaultValue: false,
     },
     {
-      name: 'completionStatus',
-      type: 'select',
-      label: 'Course Completion Status',
-      options: [
-        { label: 'Not Started', value: 'not_started' },
-        { label: 'In Progress', value: 'in_progress' },
-        { label: 'Completed', value: 'completed' },
-      ],
-      defaultValue: 'not_started',
-    },
-    {
-      name: 'helpfulVotes',
-      type: 'number',
-      label: 'Helpful Votes',
-      defaultValue: 0,
-      min: 0,
-    },
-    {
-      name: 'totalVotes',
-      type: 'number',
-      label: 'Total Votes',
-      defaultValue: 0,
-      min: 0,
-    },
-    {
-      name: 'moderatorNotes',
-      type: 'textarea',
-      label: 'Moderator Notes',
+      name: 'reviewToken',
+      type: 'text',
+      label: 'Review Token',
       admin: {
-        condition: ({ req }: any) => req.user?.role === 'admin',
+        description: 'Token from review request email (used to verify the review link)',
+        readOnly: true,
+        position: 'sidebar',
       },
-    },
-    {
-      name: 'metadata',
-      type: 'group',
-      label: 'Metadata',
-      fields: [
-        {
-          name: 'deviceType',
-          type: 'select',
-          label: 'Device Type',
-          options: [
-            { label: 'Desktop', value: 'desktop' },
-            { label: 'Mobile', value: 'mobile' },
-            { label: 'Tablet', value: 'tablet' },
-          ],
-        },
-        {
-          name: 'userAgent',
-          type: 'text',
-          label: 'User Agent',
-        },
-        {
-          name: 'location',
-          type: 'text',
-          label: 'Location',
-        },
-      ],
+      index: true,
     },
   ],
   hooks: {
     beforeChange: [
       ({ req, data }: any) => {
-        // Ensure data and req exist
-        if (!data) {
-          return data
-        }
-
-        // Auto-set author if not provided
+        if (!data) return data
         if (!data.author && req?.user) {
           data.author = req.user.id
         }
         return data
       },
     ],
-    afterChange: [
-      async ({ req, doc, operation }: any) => {
-        // Ensure doc exists before accessing properties
-        if (!doc) {
-          return
+    beforeValidate: [
+      async ({ data, req, operation }: any) => {
+        if (!data) return data
+
+        // Auto-generate title from course name and rating
+        if (data.course && (operation === 'create' || operation === 'update')) {
+          try {
+            const courseId = typeof data.course === 'object' ? data.course.id : data.course
+            if (courseId && req.payload) {
+              const course = await req.payload.findByID({
+                collection: 'vinprovningar',
+                id: courseId,
+                depth: 0,
+              })
+              if (course?.title) {
+                const stars = data.rating ? '★'.repeat(data.rating) : ''
+                data.title = `${course.title} - ${stars}`
+              }
+            }
+          } catch {
+            // Keep existing title
+          }
         }
 
-        // Update course average rating when review is created/updated
-        if (operation === 'create' || operation === 'update') {
-          // This would typically trigger a background job to recalculate course ratings
-          // For now, we'll just log it
-          console.log(`Review ${operation} for course ${doc.course}`)
+        // Generate review token if not present
+        if (operation === 'create' && !data.reviewToken) {
+          data.reviewToken = crypto.randomBytes(32).toString('hex')
         }
+
+        return data
       },
     ],
   },

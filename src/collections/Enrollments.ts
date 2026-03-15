@@ -344,6 +344,39 @@ export const Enrollments: CollectionConfig = {
       ],
     },
     {
+      name: 'reviewTracking',
+      type: 'group',
+      admin: {
+        description: 'Review request tracking',
+      },
+      fields: [
+        {
+          name: 'reviewThresholdReachedAt',
+          type: 'date',
+          admin: {
+            description: 'When the user reached the 70% completion threshold',
+            readOnly: true,
+          },
+        },
+        {
+          name: 'reviewEmailSentAt',
+          type: 'date',
+          admin: {
+            description: 'When the review request email was sent',
+            readOnly: true,
+          },
+        },
+        {
+          name: 'reviewEmailToken',
+          type: 'text',
+          admin: {
+            description: 'Token for the review request email link',
+            readOnly: true,
+          },
+        },
+      ],
+    },
+    {
       name: 'notes',
       type: 'group',
       admin: {
@@ -449,6 +482,18 @@ export const Enrollments: CollectionConfig = {
         // Auto-expire if past expiration date
         if (data.expiresAt && new Date(data.expiresAt) < new Date() && data.status === 'active') {
           data.status = 'expired'
+        }
+
+        // Mark review threshold reached when progress hits 70%
+        const completionPct = data.progress?.completionPercentage || 0
+        if (
+          completionPct >= 70 &&
+          !data.reviewTracking?.reviewThresholdReachedAt
+        ) {
+          if (!data.reviewTracking) {
+            data.reviewTracking = {}
+          }
+          data.reviewTracking.reviewThresholdReachedAt = new Date().toISOString()
         }
 
         return data
