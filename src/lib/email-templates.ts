@@ -2,6 +2,118 @@ import { getSiteURL } from './site-url'
 
 const SITE_URL = getSiteURL()
 
+// ─── Review Request Email ───────────────────────────────────────────────────
+
+interface ReviewRequestEmailData {
+  firstName?: string
+  courseTitle: string
+  courseSlug: string
+  reviewToken: string
+}
+
+export function generateReviewRequestEmailHTML({
+  firstName,
+  courseTitle,
+  courseSlug,
+  reviewToken,
+}: ReviewRequestEmailData): string {
+  const reviewUrl = `${SITE_URL}/vinprovningar/${courseSlug}/recension?token=${reviewToken}`
+
+  return `
+    <!DOCTYPE html>
+    <html lang="sv">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Berätta vad du tyckte - ${courseTitle} - Vinakademin</title>
+      <!--[if mso]>
+      <style type="text/css">
+        body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
+      </style>
+      <![endif]-->
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f5f5f5;">
+        <tr>
+          <td align="center" style="padding: 40px 20px;">
+            <!-- Main Container -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+
+              <!-- Header with Logo -->
+              <tr>
+                <td align="center" style="padding: 48px 40px 32px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); border-radius: 12px 12px 0 0;">
+                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
+                    Vinakademin
+                  </h1>
+                </td>
+              </tr>
+
+              <!-- Content -->
+              <tr>
+                <td style="padding: 40px 40px 32px;">
+                  <h2 style="margin: 0 0 16px; color: #18181b; font-size: 24px; font-weight: 600; line-height: 1.3;">
+                    Hur var vinprovningen?
+                  </h2>
+
+                  <p style="margin: 0 0 24px; color: #3f3f46; font-size: 16px; line-height: 1.6;">
+                    Hej${firstName ? ` ${firstName}` : ''},
+                  </p>
+
+                  <p style="margin: 0 0 24px; color: #3f3f46; font-size: 16px; line-height: 1.6;">
+                    Vi hoppas att du har njutit av <strong>${courseTitle}</strong>! Din upplevelse betyder mycket f&ouml;r oss och f&ouml;r andra som &ouml;verv&auml;ger att prova vinprovningen.
+                  </p>
+
+                  <p style="margin: 0 0 32px; color: #3f3f46; font-size: 16px; line-height: 1.6;">
+                    Skulle du vilja dela med dig av vad du tyckte? Det tar bara en minut.
+                  </p>
+
+                  <!-- CTA Button -->
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr>
+                      <td align="center" style="padding: 0 0 32px;">
+                        <a href="${reviewUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(251, 145, 76, 0.3);">
+                          Skriv en recension
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Stars illustration -->
+                  <div style="text-align: center; padding: 16px 0 32px;">
+                    <span style="font-size: 32px; letter-spacing: 4px; color: #FB914C;">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                  </div>
+
+                  <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.6;">
+                    Tack f&ouml;r att du &auml;r en del av Vinakademin! Om du har n&aring;gra fr&aring;gor, h&ouml;r av dig till oss p&aring; <a href="mailto:hej@vinakademin.se" style="color: #FB914C; text-decoration: none;">hej@vinakademin.se</a>.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 32px 40px; border-top: 1px solid #e5e5e5;">
+                  <p style="margin: 0 0 12px; color: #71717a; font-size: 14px; line-height: 1.6; text-align: center;">
+                    Sk&aring;l!<br>
+                    <strong style="color: #FB914C;">Vinakademin-teamet</strong>
+                  </p>
+                  <p style="margin: 0; color: #a1a1aa; font-size: 12px; line-height: 1.5; text-align: center;">
+                    &copy; ${new Date().getFullYear()} Vinakademin. Alla r&auml;ttigheter f&ouml;rbeh&aring;llna.<br>
+                    <a href="${SITE_URL}" style="color: #FB914C; text-decoration: none;">www.vinakademin.se</a>
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `
+}
+
+// ─── Receipt Email ──────────────────────────────────────────────────────────
+
 interface ReceiptEmailData {
   firstName?: string
   courseTitle: string

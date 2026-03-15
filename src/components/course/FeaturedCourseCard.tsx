@@ -3,14 +3,15 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { BookOpen, Clock, ArrowRight, Sparkles, Play } from 'lucide-react'
+import { BookOpen, Clock, ArrowRight, Sparkles, Play, Star } from 'lucide-react'
 import { getTotalCourseItems, countFreeItems } from '@/lib/course-utils'
 
 interface FeaturedCourseCardProps {
   course: any
+  reviewData?: { averageRating: number; totalReviews: number }
 }
 
-export function FeaturedCourseCard({ course }: FeaturedCourseCardProps) {
+export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardProps) {
   const totalItems = getTotalCourseItems(course.modules as any)
   const freeItems = countFreeItems(course.modules as any)
   const instructor =
@@ -111,6 +112,27 @@ export function FeaturedCourseCard({ course }: FeaturedCourseCardProps) {
                     </Badge>
                     <div className="h-1 w-1 rounded-full bg-[#FB914C]/40" />
                     <span className="text-sm text-muted-foreground">Populärast just nu</span>
+                    {reviewData && (
+                      <>
+                        <div className="h-1 w-1 rounded-full bg-[#FB914C]/40" />
+                        <div className="flex items-center gap-1">
+                          <div className="flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                className={`h-3.5 w-3.5 ${
+                                  s <= Math.round(reviewData.averageRating)
+                                    ? 'fill-[#FB914C] text-[#FB914C]'
+                                    : 'text-muted-foreground/20'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-sm font-medium">{reviewData.averageRating}</span>
+                          <span className="text-sm text-muted-foreground">({reviewData.totalReviews})</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Title & Description */}
