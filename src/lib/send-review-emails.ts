@@ -3,6 +3,24 @@ import config from '@/payload.config'
 import crypto from 'crypto'
 import { generateReviewRequestEmailHTML } from './email-templates'
 
+const isMissingReviewTrackingColumnError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') {
+    return false
+  }
+
+  const maybePgError = error as { code?: string; message?: string }
+  if (maybePgError.code !== '42703') {
+    return false
+  }
+
+  const message = maybePgError.message || ''
+  return (
+    message.includes('review_tracking_review_threshold_reached_at') ||
+    message.includes('review_tracking_review_email_sent_at') ||
+    message.includes('review_tracking_review_email_token')
+  )
+}
+
 /**
  * Core logic for sending review request emails.
  * Finds enrollments where the user reached 70% completion 24+ hours ago
@@ -22,21 +40,38 @@ export async function sendPendingReviewEmails() {
   // 2. reviewThresholdReachedAt is older than 24 hours
   // 3. reviewEmailSentAt is NOT set (email not yet sent)
   // 4. Enrollment is active or completed
-  const enrollments = await payload.find({
-    collection: 'enrollments',
-    where: {
-      and: [
-        { 'reviewTracking.reviewThresholdReachedAt': { exists: true } },
-        { 'reviewTracking.reviewThresholdReachedAt': { less_than: twentyFourHoursAgo } },
-        { 'reviewTracking.reviewEmailSentAt': { exists: false } },
-        {
-          or: [{ status: { equals: 'active' } }, { status: { equals: 'completed' } }],
-        },
-      ],
-    },
-    depth: 2,
-    limit: 50,
-  })
+  let enrollments
+  try {
+    enrollments = await payload.find({
+      collection: 'enrollments',
+      where: {
+        and: [
+          { 'reviewTracking.reviewThresholdReachedAt': { exists: true } },
+          { 'reviewTracking.reviewThresholdReachedAt': { less_than: twentyFourHoursAgo } },
+          { 'reviewTracking.reviewEmailSentAt': { exists: false } },
+          {
+            or: [{ status: { equals: 'active' } }, { status: { equals: 'completed' } }],
+          },
+        ],
+      },
+      depth: 2,
+      limit: 50,
+    })
+  } catch (error) {
+    if (isMissingReviewTrackingColumnError(error)) {
+      payload.logger.warn(
+        'Review email cron skipped: enrollments.reviewTracking columns are missing in the database. Run Payload/DB migrations before enabling this cron.',
+      )
+      return {
+        processed: 0,
+        sent: 0,
+        errors: 0,
+        skipped: true,
+      }
+    }
+
+    throw error
+  }
 
   let sentCount = 0
   let errorCount = 0
