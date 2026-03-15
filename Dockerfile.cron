@@ -1,0 +1,36 @@
+# Lightweight image for Railway Cron jobs.
+# Runs standalone scripts using Payload's local API (no web server).
+#
+# Railway service config:
+#   Dockerfile path: Dockerfile.cron
+#   Start command:   npx tsx scripts/send-review-emails.ts
+#   Cron schedule:   0 */6 * * *
+
+FROM node:22.12.0-alpine AS base
+
+ARG PNPM_VERSION=9.12.3
+
+FROM base AS deps
+ARG PNPM_VERSION
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate && pnpm install --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json tsconfig.json ./
+COPY src ./src
+COPY scripts ./scripts
+
+CMD ["npx", "tsx", "scripts/send-review-emails.ts"]
