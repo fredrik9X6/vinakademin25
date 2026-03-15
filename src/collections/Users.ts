@@ -37,6 +37,9 @@ export const Users: CollectionConfig = {
   auth: {
     cookies: cookieConfig,
     forgotPassword: {
+      generateEmailSubject: () => {
+        return 'Återställ ditt lösenord - Vinakademin'
+      },
       generateEmailHTML: (args) => {
         const { token, user } = args || {}
         const firstName = (user as any)?.firstName || ''
@@ -144,6 +147,9 @@ export const Users: CollectionConfig = {
       },
     },
     verify: {
+      generateEmailSubject: () => {
+        return 'Verifiera din e-postadress - Vinakademin'
+      },
       generateEmailHTML: (args) => {
         const { token, user } = args || {}
         const firstName = (user as any)?.firstName || ''

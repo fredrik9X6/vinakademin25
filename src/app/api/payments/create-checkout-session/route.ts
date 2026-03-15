@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'payment',
+      allow_promotion_codes: true,
       success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/vinprovningar/${course.slug}?checkout=cancelled`,
       metadata: {

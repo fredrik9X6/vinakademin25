@@ -130,6 +130,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return translations[message] || message
   }
 
+  const getRegistrationErrorMessage = (errorItem: any): string => {
+    const message = String(errorItem?.message || '')
+    const field = String(errorItem?.field || '')
+    const normalizedMessage = message.toLowerCase()
+    const normalizedField = field.toLowerCase()
+
+    const isEmailAlreadyTaken =
+      normalizedField === 'email' &&
+      (normalizedMessage.includes('already exists') ||
+        normalizedMessage.includes('duplicate') ||
+        normalizedMessage.includes('unique'))
+
+    if (isEmailAlreadyTaken) {
+      return 'En användare med denna e-postadress finns redan.'
+    }
+
+    const translatedMessage = translateErrorMessage(message || 'Okänt fel')
+
+    if (field && message) {
+      const fieldTranslations: Record<string, string> = {
+        email: 'E-post',
+        password: 'Lösenord',
+        firstName: 'Förnamn',
+        lastName: 'Efternamn',
+      }
+      const fieldName = fieldTranslations[field] || field
+      return `${fieldName}: ${translatedMessage}`
+    }
+
+    return translatedMessage
+  }
+
   // Login function using PayloadCMS 3 native endpoint
   const loginUser = async (credentials: { email: string; password: string }): Promise<boolean> => {
     setIsLoading(true)
@@ -269,24 +301,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (data.errors && Array.isArray(data.errors)) {
           // PayloadCMS native error format: { "errors": [{ "message": "...", "field": "..." }] }
-          const errorMessages = data.errors.map((e: any) => {
-            const translatedMessage = translateErrorMessage(e.message || 'Okänt fel')
-            if (e.field && e.message) {
-              // Format field-specific errors in Swedish
-              const fieldTranslations: Record<string, string> = {
-                email: 'E-post',
-                password: 'Lösenord',
-                firstName: 'Förnamn',
-                lastName: 'Efternamn',
-              }
-              const fieldName = fieldTranslations[e.field] || e.field
-              return `${fieldName}: ${translatedMessage}`
-            }
-            return translatedMessage
-          })
+          const errorMessages = data.errors.map((e: any) => getRegistrationErrorMessage(e))
           errorMessage = errorMessages.join(', ')
         } else if (data.message) {
-          errorMessage = translateErrorMessage(data.message)
+          const normalizedMessage = String(data.message).toLowerCase()
+          if (
+            normalizedMessage.includes('email') &&
+            (normalizedMessage.includes('already exists') ||
+              normalizedMessage.includes('duplicate') ||
+              normalizedMessage.includes('unique'))
+          ) {
+            errorMessage = 'En användare med denna e-postadress finns redan.'
+          } else {
+            errorMessage = translateErrorMessage(data.message)
+          }
         }
 
         console.log('AuthContext: Registration failed with error:', errorMessage)
