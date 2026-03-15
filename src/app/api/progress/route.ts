@@ -494,12 +494,48 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Check if progress crossed the 70% review threshold
+    // and mark it on the enrollment record for the cron to pick up
+    const roundedProgress = Math.round(progressPercentage)
+    if (roundedProgress >= 70) {
+      try {
+        const enrollmentResult = await payload.find({
+          collection: 'enrollments',
+          where: {
+            and: [
+              { user: { equals: user.id } },
+              { course: { equals: courseIdInt } },
+              { 'reviewTracking.reviewThresholdReachedAt': { exists: false } },
+            ],
+          },
+          limit: 1,
+        })
+
+        if (enrollmentResult.docs.length > 0) {
+          const enrollment = enrollmentResult.docs[0]
+          await payload.update({
+            collection: 'enrollments',
+            id: enrollment.id,
+            data: {
+              reviewTracking: {
+                ...(enrollment as any).reviewTracking,
+                reviewThresholdReachedAt: new Date().toISOString(),
+              },
+            } as any,
+          })
+        }
+      } catch (err) {
+        // Non-critical: log but don't fail the progress update
+        console.error('Error updating review threshold on enrollment:', err)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       progress: {
         totalLessons: totalCount,
         completedLessons: completedCount,
-        progressPercentage: Math.round(progressPercentage),
+        progressPercentage: roundedProgress,
         status,
       },
     })

@@ -17,7 +17,8 @@
     "generate": "node scripts/dev.js generate",
     "parse-prd": "node scripts/dev.js parse-prd",
     "sync-stripe": "cross-env NODE_OPTIONS=--no-deprecation node -r tsx scripts/sync-courses-with-stripe.js",
-    "cleanup-media": "cross-env NODE_OPTIONS=--no-deprecation node -r tsx scripts/cleanup-missing-media.ts"
+    "cleanup-media": "cross-env NODE_OPTIONS=--no-deprecation node -r tsx scripts/cleanup-missing-media.ts",
+    "send-review-emails": "npx tsx scripts/send-review-emails.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

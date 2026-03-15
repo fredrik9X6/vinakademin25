@@ -41,6 +41,36 @@ export default async function KurserPage() {
     }),
   )
 
+  // Fetch review averages for all courses
+  const allCourseIds = coursesWithModules.map((c) => c.id)
+  const reviewsResult = await payload.find({
+    collection: 'course-reviews',
+    where: {
+      and: [
+        { course: { in: allCourseIds } },
+        { status: { equals: 'published' } },
+      ],
+    },
+    limit: 1000,
+    depth: 0,
+  })
+
+  // Build a map of courseId -> { averageRating, totalReviews }
+  const courseReviewMap = new Map<number, { averageRating: number; totalReviews: number }>()
+  const reviewsByCourse = new Map<number, number[]>()
+  for (const review of reviewsResult.docs) {
+    const courseId = typeof review.course === 'object' ? (review.course as any).id : review.course
+    if (!reviewsByCourse.has(courseId)) reviewsByCourse.set(courseId, [])
+    if (review.rating != null) reviewsByCourse.get(courseId)!.push(review.rating)
+  }
+  for (const [courseId, ratings] of reviewsByCourse) {
+    const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length
+    courseReviewMap.set(courseId, {
+      averageRating: Math.round(avg * 10) / 10,
+      totalReviews: ratings.length,
+    })
+  }
+
   // Separate featured and regular courses
   const featuredCourses = coursesWithModules.filter((c) => c.isFeatured)
   const regularCourses = coursesWithModules.filter((c) => !c.isFeatured)
@@ -81,7 +111,13 @@ export default async function KurserPage() {
 
         {/* Featured Course */}
         {featuredCourses.length > 0 &&
-          featuredCourses.map((course) => <FeaturedCourseCard key={course.id} course={course} />)}
+          featuredCourses.map((course) => (
+            <FeaturedCourseCard
+              key={course.id}
+              course={course}
+              reviewData={courseReviewMap.get(course.id)}
+            />
+          ))}
 
         {/* Regular Courses Grid */}
         {regularCourses.length > 0 ? (
@@ -154,6 +190,30 @@ export default async function KurserPage() {
                             </div>
                           )}
                         </div>
+
+                        {/* Rating */}
+                        {courseReviewMap.has(course.id) && (
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <div className="flex gap-0.5">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star
+                                  key={s}
+                                  className={`h-3.5 w-3.5 ${
+                                    s <= Math.round(courseReviewMap.get(course.id)!.averageRating)
+                                      ? 'fill-[#FB914C] text-[#FB914C]'
+                                      : 'text-muted-foreground/20'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="font-medium text-foreground">
+                              {courseReviewMap.get(course.id)!.averageRating}
+                            </span>
+                            <span className="text-muted-foreground">
+                              ({courseReviewMap.get(course.id)!.totalReviews})
+                            </span>
+                          </div>
+                        )}
 
                         {/* Instructor */}
                         {course.instructor && typeof course.instructor === 'object' && (
