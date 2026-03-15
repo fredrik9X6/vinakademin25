@@ -2,7 +2,7 @@
  * Standalone cron script for sending review request emails.
  *
  * Meant to be run as a Railway Cron service:
- *   Start command: npx tsx scripts/send-review-emails.ts
+ *   Start command: node --import tsx scripts/send-review-emails.ts
  *   Cron schedule: 0 */6 * * *  (every 6 hours)
  *
  * Uses Payload's local API directly — no HTTP server needed.
