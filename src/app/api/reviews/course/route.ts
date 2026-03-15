@@ -3,20 +3,40 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const getPgErrorDetails = (error: unknown) => {
+  if (!isObject(error)) return null
+
+  return {
+    code: typeof error.code === 'string' ? error.code : undefined,
+    message: typeof error.message === 'string' ? error.message : undefined,
+    detail: typeof error.detail === 'string' ? error.detail : undefined,
+    hint: typeof error.hint === 'string' ? error.hint : undefined,
+    table: typeof error.table === 'string' ? error.table : undefined,
+    column: typeof error.column === 'string' ? error.column : undefined,
+    constraint: typeof error.constraint === 'string' ? error.constraint : undefined,
+  }
+}
+
 export async function POST(req: NextRequest) {
   const payload = await getPayload({ config })
 
   try {
     const { courseId, rating, content, token } = await req.json()
+    const parsedCourseId = Number(courseId)
+    const parsedRating = Number(rating)
+    const reviewContent = typeof content === 'string' ? content.trim() : ''
 
-    if (!courseId || !rating || !content) {
+    if (!parsedCourseId || !parsedRating || !reviewContent) {
       return NextResponse.json(
         { error: 'Betyg och recensionstext krävs' },
         { status: 400 },
       )
     }
 
-    if (rating < 1 || rating > 5) {
+    if (parsedRating < 1 || parsedRating > 5) {
       return NextResponse.json({ error: 'Betyg måste vara 1-5' }, { status: 400 })
     }
 
@@ -35,7 +55,7 @@ export async function POST(req: NextRequest) {
         where: {
           and: [
             { user: { equals: user.id } },
-            { course: { equals: courseId } },
+            { course: { equals: parsedCourseId } },
           ],
         },
         limit: 1,
@@ -49,7 +69,7 @@ export async function POST(req: NextRequest) {
         collection: 'enrollments',
         where: {
           and: [
-            { course: { equals: courseId } },
+            { course: { equals: parsedCourseId } },
             { 'reviewTracking.reviewEmailToken': { equals: token } },
           ],
         },
@@ -80,7 +100,7 @@ export async function POST(req: NextRequest) {
       where: {
         and: [
           { author: { equals: authorId } },
-          { course: { equals: courseId } },
+          { course: { equals: parsedCourseId } },
         ],
       },
       limit: 1,
@@ -97,10 +117,12 @@ export async function POST(req: NextRequest) {
     const review = await payload.create({
       collection: 'course-reviews',
       data: {
-        course: courseId,
+        // Fallback title avoids DB errors if auto-title hook cannot resolve course title.
+        title: `Recension ${new Date().toISOString()}`,
+        course: parsedCourseId,
         author: authorId,
-        rating,
-        content,
+        rating: parsedRating,
+        content: reviewContent,
         status: 'published',
         isVerifiedPurchase,
         reviewToken: token || undefined,
@@ -108,8 +130,35 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ success: true, review: { id: review.id } })
-  } catch (error: any) {
-    payload.logger.error('Error creating course review:', error)
+  } catch (error) {
+    const pgError = getPgErrorDetails(error)
+    const formattedDetails = pgError
+      ? `code=${pgError.code || 'n/a'} message=${pgError.message || 'n/a'} detail=${pgError.detail || 'n/a'} table=${pgError.table || 'n/a'} column=${pgError.column || 'n/a'} constraint=${pgError.constraint || 'n/a'}`
+      : String(error)
+
+    payload.logger.error(`Error creating course review: ${formattedDetails}`)
+    console.error('Error creating course review:', error)
+
+    if (pgError?.code === '42703') {
+      return NextResponse.json(
+        {
+          error:
+            'Databasschemat för recensioner är inte uppdaterat. Lägg till saknade kolumner i Neon och försök igen.',
+        },
+        { status: 500 },
+      )
+    }
+
+    if (pgError?.code === '22P02' || pgError?.message?.includes('invalid input syntax for type json')) {
+      return NextResponse.json(
+        {
+          error:
+            'Recensionsdata kunde inte sparas på grund av ett schemafel i databasen. Kontrollera kolumntyperna för course_reviews.',
+        },
+        { status: 500 },
+      )
+    }
+
     return NextResponse.json(
       { error: 'Något gick fel, försök igen' },
       { status: 500 },
