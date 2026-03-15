@@ -397,6 +397,10 @@ export interface Region {
    */
   name: string;
   /**
+   * URL-friendly version of the name (auto-generated)
+   */
+  slug?: string | null;
+  /**
    * Country this region belongs to
    */
   country: number | Country;
@@ -411,7 +415,21 @@ export interface Region {
   /**
    * Optional description or notes about this region
    */
-  description?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -428,6 +446,10 @@ export interface Country {
    */
   name: string;
   /**
+   * URL-friendly version of the name (auto-generated)
+   */
+  slug?: string | null;
+  /**
    * User who created this country entry
    */
   createdBy?: (number | null) | User;
@@ -438,7 +460,21 @@ export interface Country {
   /**
    * Optional description or notes about this country
    */
-  description?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -507,9 +543,6 @@ export interface Vinprovningar {
      */
     aspectRatio?: string | null;
   };
-  /**
-   * Upload a preview video file to process with Mux
-   */
   previewSourceVideo?: (number | null) | Media;
   /**
    * Wine tasting price in SEK
@@ -663,9 +696,6 @@ export interface ContentItem {
    * YouTube/Vimeo URL or embed code
    */
   videoUrl?: string | null;
-  /**
-   * Upload a video file to process with Mux
-   */
   sourceVideo?: (number | null) | Media;
   /**
    * Primary type of content in this lesson
@@ -768,10 +798,6 @@ export interface Review {
    * User rating from 1-5
    */
   rating: number;
-  /**
-   * Whether the user would buy this wine again
-   */
-  buyAgain?: boolean | null;
   /**
    * User review text
    */
@@ -3297,6 +3323,7 @@ export interface GrapesSelect<T extends boolean = true> {
  */
 export interface CountriesSelect<T extends boolean = true> {
   name?: T;
+  slug?: T;
   createdBy?: T;
   updatedBy?: T;
   description?: T;
@@ -3309,6 +3336,7 @@ export interface CountriesSelect<T extends boolean = true> {
  */
 export interface RegionsSelect<T extends boolean = true> {
   name?: T;
+  slug?: T;
   country?: T;
   createdBy?: T;
   updatedBy?: T;
@@ -3342,7 +3370,6 @@ export interface ReviewsSelect<T extends boolean = true> {
   createdBy?: T;
   updatedBy?: T;
   rating?: T;
-  buyAgain?: T;
   reviewText?: T;
   isTrusted?: T;
   wsetTasting?:
@@ -3701,6 +3728,48 @@ export interface CourseReferenceBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'course-reference';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "RegionReferenceBlock".
+ */
+export interface RegionReferenceBlock {
+  /**
+   * Select a wine region to reference in this content
+   */
+  region: number | Region;
+  /**
+   * How this region reference should be displayed
+   */
+  displayStyle?: ('inline' | 'card' | 'link') | null;
+  /**
+   * Optional custom text to display instead of region name
+   */
+  customText?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'region-reference';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CountryReferenceBlock".
+ */
+export interface CountryReferenceBlock {
+  /**
+   * Select a country to reference in this content
+   */
+  country: number | Country;
+  /**
+   * How this country reference should be displayed
+   */
+  displayStyle?: ('inline' | 'card' | 'link') | null;
+  /**
+   * Optional custom text to display instead of country name
+   */
+  customText?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'country-reference';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
