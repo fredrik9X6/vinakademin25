@@ -194,7 +194,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                     Börja vinprovningen nu
                   </Button>
                 </Link>
-                <Link href="/profil" className="flex-1">
+                <Link href="/mina-provningar" className="flex-1">
                   <Button variant="outline" className="w-full h-12 text-base font-semibold" size="lg">
                     <ArrowRight className="w-5 h-5 mr-2" />
                     Gå till mina vinprovningar
@@ -215,7 +215,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                       Du får tillgång till vinprovningen inom några minuter. Om du inte ser
                       vinprovningen inom 10 minuter, kontakta vår support.
                     </p>
-                    <Link href="/profil">
+                    <Link href="/mina-provningar">
                       <Button variant="outline" size="sm" className="border-amber-300 dark:border-amber-700">
                         Kontrollera mina vinprovningar
                       </Button>
