@@ -484,6 +484,49 @@ export const Users: CollectionConfig = {
         },
       },
     },
+    {
+      name: 'onboarding',
+      type: 'group',
+      label: 'Onboarding',
+      fields: [
+        {
+          name: 'goal',
+          type: 'select',
+          label: 'Primärt mål',
+          options: [
+            { label: 'Lära mig grunderna i vin', value: 'learn_basics' },
+            { label: 'Bli bättre på mat- och vinkombinationer', value: 'pairing_confident' },
+            { label: 'Utforska nya regioner och druvor', value: 'explore_regions' },
+            { label: 'Bygga djupare expertkunskap', value: 'deep_knowledge' },
+          ],
+        },
+        {
+          name: 'completedAt',
+          type: 'date',
+          label: 'Onboarding slutförd',
+          admin: {
+            readOnly: true,
+          },
+        },
+        {
+          name: 'skippedAt',
+          type: 'date',
+          label: 'Onboarding hoppad över',
+          admin: {
+            readOnly: true,
+          },
+        },
+        {
+          name: 'source',
+          type: 'select',
+          label: 'Onboarding-källa',
+          options: [
+            { label: 'Standard registrering', value: 'registration' },
+            { label: 'Gästköp', value: 'guest_checkout' },
+          ],
+        },
+      ],
+    },
     // Wine Preferences
     {
       name: 'winePreferences',

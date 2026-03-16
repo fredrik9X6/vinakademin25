@@ -122,6 +122,7 @@ interface ReceiptEmailData {
   amount: number
   paidAt: string
   receiptUrl?: string | null
+  claimAccessUrl?: string
 }
 
 export function generateReceiptEmailHTML({
@@ -132,6 +133,7 @@ export function generateReceiptEmailHTML({
   amount,
   paidAt,
   receiptUrl,
+  claimAccessUrl,
 }: ReceiptEmailData): string {
   const formattedAmount = new Intl.NumberFormat('sv-SE', {
     style: 'currency',
@@ -241,6 +243,21 @@ export function generateReceiptEmailHTML({
                         <td align="center" style="padding: 0 0 32px;">
                           <a href="${receiptUrl}" style="display: inline-block; padding: 12px 32px; background-color: #fafafa; color: #FB914C; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600; border: 1px solid #e5e5e5;">
                             Visa kvitto från Stripe
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  ` : ''}
+
+                  ${claimAccessUrl ? `
+                    <p style="margin: 0 0 16px; color: #3f3f46; font-size: 16px; line-height: 1.6;">
+                      Vill du aktivera ditt konto och komma åt dina vinprovningar direkt?
+                    </p>
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td align="center" style="padding: 0 0 32px;">
+                          <a href="${claimAccessUrl}" style="display: inline-block; padding: 12px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600;">
+                            Aktivera konto
                           </a>
                         </td>
                       </tr>

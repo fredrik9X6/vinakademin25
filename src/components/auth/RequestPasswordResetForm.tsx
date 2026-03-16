@@ -36,16 +36,22 @@ type RequestPasswordResetFormValues = z.infer<typeof RequestPasswordResetSchema>
 
 interface RequestPasswordResetFormProps {
   onSuccess?: () => void
+  initialEmail?: string
+  loginHref?: string
 }
 
-export function RequestPasswordResetForm({ onSuccess }: RequestPasswordResetFormProps) {
+export function RequestPasswordResetForm({
+  onSuccess,
+  initialEmail = '',
+  loginHref = '/logga-in',
+}: RequestPasswordResetFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
 
   const form = useForm<RequestPasswordResetFormValues>({
     resolver: zodResolver(RequestPasswordResetSchema),
     defaultValues: {
-      email: '',
+      email: initialEmail,
     },
   })
 
@@ -93,7 +99,7 @@ export function RequestPasswordResetForm({ onSuccess }: RequestPasswordResetForm
           </CardDescription>
         </CardHeader>
         <CardFooter>
-          <Link href="/logga-in" className="w-full">
+          <Link href={loginHref} className="w-full">
             <Button variant="outline" className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Tillbaka till inloggning
@@ -134,7 +140,7 @@ export function RequestPasswordResetForm({ onSuccess }: RequestPasswordResetForm
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {isLoading ? 'Skickar...' : 'Skicka återställnings-e-post'}
             </Button>
-            <Link href="/logga-in" className="w-full">
+            <Link href={loginHref} className="w-full">
               <Button variant="outline" className="w-full">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Tillbaka till inloggning

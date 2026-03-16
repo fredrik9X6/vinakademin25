@@ -25,9 +25,6 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
   }
 
   const user = await getUser()
-  if (!user) {
-    redirect('/logga-in')
-  }
 
   const payload = await getPayload({ config })
 
@@ -63,8 +60,8 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
         })
       }
 
-      // Check if enrollment was created
-      if (course) {
+      // Check if enrollment was created for logged in users
+      if (course && user?.id) {
         const enrollmentResult = await payload.find({
           collection: 'enrollments',
           where: {
@@ -83,6 +80,18 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
     course?.featuredImage && typeof course.featuredImage === 'object'
       ? course.featuredImage.url
       : null
+
+  const orderUserEmail =
+    order?.user && typeof order.user === 'object' ? (order.user as any).email : null
+  const orderMetadata =
+    order?.metadata && typeof order.metadata === 'object' ? (order.metadata as Record<string, any>) : null
+  const guestEmailFromMetadata = orderMetadata?.guestEmail || null
+  const activationEmail = guestEmailFromMetadata || orderUserEmail || null
+  const checkoutOrigin = orderMetadata?.checkoutOrigin
+  const isGuestOrder = checkoutOrigin === 'guest'
+  const activationHref = activationEmail
+    ? `/aktivera-konto?email=${encodeURIComponent(activationEmail)}&next=${encodeURIComponent('/mina-provningar')}`
+    : '/aktivera-konto'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -186,7 +195,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             </div>
 
             {/* Action Buttons */}
-            {enrollment ? (
+            {user && enrollment ? (
               <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-border">
                 <Link href={`/vinprovningar/${course?.slug}`} className="flex-1">
                   <Button className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all" size="lg">
@@ -198,6 +207,20 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                   <Button variant="outline" className="w-full h-12 text-base font-semibold" size="lg">
                     <ArrowRight className="w-5 h-5 mr-2" />
                     Gå till mina vinprovningar
+                  </Button>
+                </Link>
+              </div>
+            ) : !user && isGuestOrder ? (
+              <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-border">
+                <Link href={activationHref} className="flex-1">
+                  <Button className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all" size="lg">
+                    <ArrowRight className="w-5 h-5 mr-2" />
+                    Aktivera konto och se mina vinprovningar
+                  </Button>
+                </Link>
+                <Link href={`/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-provningar&source=guest_checkout')}`} className="flex-1">
+                  <Button variant="outline" className="w-full h-12 text-base font-semibold" size="lg">
+                    Jag har redan konto
                   </Button>
                 </Link>
               </div>
@@ -215,9 +238,15 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                       Du får tillgång till vinprovningen inom några minuter. Om du inte ser
                       vinprovningen inom 10 minuter, kontakta vår support.
                     </p>
-                    <Link href="/mina-provningar">
+                    <Link
+                      href={
+                        user
+                          ? '/mina-provningar'
+                          : `/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-provningar')}`
+                      }
+                    >
                       <Button variant="outline" size="sm" className="border-amber-300 dark:border-amber-700">
-                        Kontrollera mina vinprovningar
+                        {user ? 'Kontrollera mina vinprovningar' : 'Logga in för att se vinprovningar'}
                       </Button>
                     </Link>
                   </div>

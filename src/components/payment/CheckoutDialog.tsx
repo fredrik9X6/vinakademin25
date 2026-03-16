@@ -2,14 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { SimpleCheckout } from './SimpleCheckout'
 import { OrderSummary } from './OrderSummary'
 import { PaymentStatus } from './PaymentStatus'
 
 import { useAuth } from '@/context/AuthContext'
-import { usePathname } from 'next/navigation'
 import type { Vinprovningar } from '@/payload-types'
 
 interface CheckoutDialogProps {
@@ -22,48 +19,16 @@ type CheckoutStep = 'checkout' | 'processing' | 'success' | 'error'
 
 export function CheckoutDialog({ course, isOpen, onClose }: CheckoutDialogProps) {
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('checkout')
-  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
-  const pathname = usePathname()
 
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (isOpen) {
       setCurrentStep('checkout')
-      setPaymentIntentId(null)
       setError(null)
     }
   }, [isOpen])
-
-  // Check if user is logged in
-  if (!user) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Logga in för att köpa</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 sm:py-6">
-            <Alert>
-              <AlertDescription>
-                Du måste vara inloggad för att köpa vinprovningar. Logga in eller skapa ett konto för att
-                fortsätta.
-              </AlertDescription>
-            </Alert>
-            <div className="flex flex-col sm:flex-row gap-3 mt-6">
-              <Button asChild className="flex-1">
-                <a href={`/logga-in?from=${encodeURIComponent(pathname)}`}>Logga in</a>
-              </Button>
-              <Button variant="outline" asChild className="flex-1">
-                <a href={`/registrera?from=${encodeURIComponent(pathname)}`}>Skapa konto</a>
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    )
-  }
 
   // Payment processing handled by Stripe Checkout redirect
 
@@ -77,7 +42,7 @@ export function CheckoutDialog({ course, isOpen, onClose }: CheckoutDialogProps)
   const getDialogTitle = () => {
     switch (currentStep) {
       case 'checkout':
-        return 'Köp vinprovning'
+        return user ? 'Köp vinprovning' : 'Köp vinprovning utan konto'
       case 'processing':
         return 'Behandlar betalning...'
       case 'success':
