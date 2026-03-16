@@ -20,6 +20,10 @@ const protectedPaths = [
     path: '/mina-provningar',
     roles: ['admin', 'instructor', 'subscriber', 'user'],
   },
+  {
+    path: '/onboarding',
+    roles: ['admin', 'instructor', 'subscriber', 'user'],
+  },
 ]
 
 // Middleware function to protect routes
@@ -83,6 +87,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/' ||
     pathname === '/logga-in' ||
     pathname === '/registrera' ||
+    pathname === '/aktivera-konto' ||
     pathname === '/glomt-losenord' ||
     pathname === '/aterstall-losenord' ||
     pathname === '/verifiera-epost' ||

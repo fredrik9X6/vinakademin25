@@ -3,6 +3,8 @@ import { getStripeServer, validateWebhookSignature } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { headers } from 'next/headers'
+import crypto from 'crypto'
+import { getSiteURL } from '@/lib/site-url'
 
 // Disable body parsing to get raw body for Stripe signature verification
 export const runtime = 'nodejs'
@@ -133,6 +135,14 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
   const { courseId, userId } = paymentIntent.metadata
 
   if (!courseId || !userId) {
+    if (paymentIntent?.metadata?.checkoutMode === 'guest') {
+      console.log(
+        'ℹ️ payment_intent.succeeded for guest checkout handled in checkout.session.completed:',
+        paymentIntent.id,
+      )
+      return
+    }
+
     console.error('❌ Missing metadata in payment intent:', paymentIntent.id)
     return
   }
@@ -297,182 +307,281 @@ async function handleSubscriptionDeleted(subscription: any, payload: any) {
   // Handle subscription deletion
 }
 
+const getCheckoutEmail = (session: any): string | null => {
+  const metadataEmail = String(session?.metadata?.guestEmail || session?.metadata?.userEmail || '').trim()
+  const customerEmail = String(session?.customer_details?.email || session?.customer_email || '').trim()
+  const email = metadataEmail || customerEmail
+  return email ? email.toLowerCase() : null
+}
+
+const resolveCheckoutUser = async (payload: any, session: any) => {
+  const checkoutMode =
+    session?.metadata?.checkoutMode === 'guest' ? 'guest' : 'authenticated'
+
+  const metadataUserId = parseInt(String(session?.metadata?.userId || ''), 10)
+  if (checkoutMode === 'authenticated' && !isNaN(metadataUserId)) {
+    try {
+      const existingUser = await payload.findByID({
+        collection: 'users',
+        id: metadataUserId,
+      })
+
+      if (existingUser) {
+        return {
+          checkoutMode,
+          user: existingUser,
+          isNewUser: false,
+          email: String(existingUser.email || '').toLowerCase(),
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not load authenticated checkout user by id:', metadataUserId, error)
+    }
+  }
+
+  const email = getCheckoutEmail(session)
+  if (!email) {
+    throw new Error('Checkout session is missing a usable customer email')
+  }
+
+  const existingUsers = await payload.find({
+    collection: 'users',
+    where: {
+      email: { equals: email },
+    },
+    limit: 1,
+  })
+
+  if (existingUsers.docs.length > 0) {
+    return {
+      checkoutMode,
+      user: existingUsers.docs[0],
+      isNewUser: false,
+      email,
+    }
+  }
+
+  const guestFirstName = String(session?.metadata?.guestFirstName || '').trim()
+  const guestLastName = String(session?.metadata?.guestLastName || '').trim()
+  const randomPassword = crypto.randomBytes(24).toString('hex')
+
+  const createdUser = await payload.create({
+    collection: 'users',
+    data: {
+      email,
+      password: randomPassword,
+      firstName: guestFirstName || undefined,
+      lastName: guestLastName || undefined,
+      role: 'user',
+      accountStatus: 'active',
+      _verified: true,
+      onboarding: {
+        source: 'guest_checkout',
+      },
+    } as any,
+  })
+
+  console.log('✅ Created guest checkout user:', createdUser.id, email)
+
+  return {
+    checkoutMode,
+    user: createdUser,
+    isNewUser: true,
+    email,
+  }
+}
+
 async function handleCheckoutSessionCompleted(session: any, payload: any, stripe: any) {
   console.log('🔔 Webhook: Checkout session completed:', session.id)
   console.log('🔍 Session metadata:', session.metadata)
 
-  const { courseId, userId } = session.metadata
-
-  if (!courseId || !userId) {
-    console.error('❌ Missing metadata in checkout session:', session.id, { courseId, userId })
+  const courseId = session?.metadata?.courseId
+  const courseIdInt = parseInt(String(courseId || ''), 10)
+  if (!courseId || isNaN(courseIdInt)) {
+    console.error('❌ Missing or invalid course metadata in checkout session:', session.id, { courseId })
     return
   }
-
-  // Convert string metadata to proper types for PayloadCMS
-  const userIdInt = parseInt(userId, 10)
-  const courseIdInt = parseInt(courseId, 10)
-
-  if (isNaN(userIdInt) || isNaN(courseIdInt)) {
-    console.error('❌ Invalid user or course ID in metadata:', {
-      userId,
-      courseId,
-      userIdInt,
-      courseIdInt,
-    })
-    return
-  }
-
-  console.log('✅ Parsed metadata:', { userIdInt, courseIdInt })
 
   try {
-    // Find order by Stripe session ID
-    console.log('🔍 Finding order by session ID:', session.id)
-    const orders = await payload.find({
+    const resolvedCheckout = await resolveCheckoutUser(payload, session)
+    const userIdInt = parseInt(String(resolvedCheckout.user.id), 10)
+    if (isNaN(userIdInt)) {
+      throw new Error(`Resolved user id is invalid: ${resolvedCheckout.user.id}`)
+    }
+
+    const course = await payload.findByID({
+      collection: 'vinprovningar',
+      id: courseIdInt,
+    })
+
+    const ordersBySession = await payload.find({
       collection: 'orders',
       where: {
         stripeSessionId: { equals: session.id },
       },
       limit: 1,
     })
+    const existingOrder = ordersBySession.docs[0] || null
+    const wasAlreadyCompleted = existingOrder?.status === 'completed'
 
-    console.log('📋 Orders found:', orders.docs.length)
+    let paymentIntentId: string | null = null
+    let chargeId: string | null = null
+    let receiptUrl: string | null = null
+    let paymentMethodType: string | null = session.payment_method_types?.[0] || null
+    let paymentMethodDetails: any = null
 
-    if (orders.docs.length > 0) {
-      const order = orders.docs[0]
-      console.log('📦 Found order:', order.id, 'Current status:', order.status)
-
-      let paymentIntentId: string | null = null
-      let chargeId: string | null = null
-      let receiptUrl: string | null = null
-      let paymentMethodType: string | null = session.payment_method_types?.[0] || null
-      let paymentMethodDetails: any = null
-
-      if (session.payment_intent) {
-        paymentIntentId =
-          typeof session.payment_intent === 'string'
-            ? session.payment_intent
-            : session.payment_intent.id
-        try {
-          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-            expand: ['latest_charge'],
-          })
-          if (typeof paymentIntent.latest_charge === 'string') {
-            chargeId = paymentIntent.latest_charge
-          } else if (paymentIntent.latest_charge?.id) {
-            chargeId = paymentIntent.latest_charge.id
-          }
-
-          if (chargeId) {
-            const charge =
-              typeof paymentIntent.latest_charge === 'object' && paymentIntent.latest_charge?.id
-                ? paymentIntent.latest_charge
-                : await stripe.charges.retrieve(chargeId)
-
-            receiptUrl = charge?.receipt_url ?? null
-            paymentMethodType = charge?.payment_method_details?.type || paymentMethodType || null
-            paymentMethodDetails = charge?.payment_method_details ?? null
-          }
-        } catch (intentError) {
-          console.error('⚠️ Unable to enrich payment details from Payment Intent:', intentError)
+    if (session.payment_intent) {
+      paymentIntentId =
+        typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+          expand: ['latest_charge'],
+        })
+        if (typeof paymentIntent.latest_charge === 'string') {
+          chargeId = paymentIntent.latest_charge
+        } else if (paymentIntent.latest_charge?.id) {
+          chargeId = paymentIntent.latest_charge.id
         }
+
+        if (chargeId) {
+          const charge =
+            typeof paymentIntent.latest_charge === 'object' && paymentIntent.latest_charge?.id
+              ? paymentIntent.latest_charge
+              : await stripe.charges.retrieve(chargeId)
+
+          receiptUrl = charge?.receipt_url ?? null
+          paymentMethodType = charge?.payment_method_details?.type || paymentMethodType || null
+          paymentMethodDetails = charge?.payment_method_details ?? null
+        }
+      } catch (intentError) {
+        console.error('⚠️ Unable to enrich payment details from Payment Intent:', intentError)
       }
+    }
 
-      // Update order status to completed
-      console.log('🔄 Updating order status to completed...')
-      const updatedOrder = await payload.update({
-        collection: 'orders',
-        id: order.id,
-        data: {
-          status: 'completed',
-          paidAt: new Date().toISOString(),
-          paymentMethod: paymentMethodType,
-          paymentMethodDetails: paymentMethodDetails
-            ? JSON.parse(JSON.stringify(paymentMethodDetails))
-            : null,
-          stripePaymentIntentId: paymentIntentId,
-          stripeChargeId: chargeId,
-          receiptUrl,
-        },
-      })
-      console.log('✅ Order updated successfully:', updatedOrder.id)
+    const orderPayload = {
+      status: 'completed',
+      paidAt: new Date().toISOString(),
+      user: userIdInt,
+      paymentMethod: paymentMethodType,
+      paymentMethodDetails: paymentMethodDetails ? JSON.parse(JSON.stringify(paymentMethodDetails)) : null,
+      stripePaymentIntentId: paymentIntentId,
+      stripeChargeId: chargeId,
+      receiptUrl,
+      metadata: {
+        ...(existingOrder?.metadata || {}),
+        checkoutOrigin: resolvedCheckout.checkoutMode,
+        guestEmail: resolvedCheckout.checkoutMode === 'guest' ? resolvedCheckout.email : null,
+      },
+    }
 
-      // Check if enrollment already exists
-      console.log('🔍 Checking for existing enrollment...')
-      const existingEnrollment = await payload.find({
-        collection: 'enrollments',
-        where: {
-          and: [{ user: { equals: userIdInt } }, { course: { equals: courseIdInt } }],
-        },
-        limit: 1,
-      })
-
-      console.log('📚 Existing enrollments found:', existingEnrollment.docs.length)
-
-      if (existingEnrollment.docs.length === 0) {
-        console.log('🎓 Creating new enrollment...')
-
-        // Create enrollment using PayloadCMS 3 best practices
-        const enrollment = await payload.create({
-          collection: 'enrollments',
+    const updatedOrder = existingOrder
+      ? await payload.update({
+          collection: 'orders',
+          id: existingOrder.id,
+          data: orderPayload,
+        })
+      : await payload.create({
+          collection: 'orders',
           data: {
-            user: userIdInt, // Use integer ID for relationship
-            course: courseIdInt, // Use integer ID for relationship
-            status: 'active',
-            enrolledAt: new Date().toISOString(),
-            order: order.id, // Reference to the order
+            orderNumber: `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            user: userIdInt,
+            status: 'completed',
+            items: [
+              {
+                course: courseIdInt,
+                price: Number(session.amount_total || 0) / 100,
+                quantity: 1,
+              },
+            ],
+            amount: Number(session.amount_total || 0) / 100,
+            currency: String(session.currency || 'sek').toUpperCase(),
+            stripeSessionId: session.id,
+            stripeCustomerId: String(session.customer || ''),
+            paymentMethod: paymentMethodType,
+            paymentMethodDetails: paymentMethodDetails ? JSON.parse(JSON.stringify(paymentMethodDetails)) : null,
+            stripePaymentIntentId: paymentIntentId,
+            stripeChargeId: chargeId,
+            receiptUrl,
+            paidAt: new Date().toISOString(),
+            metadata: {
+              checkoutOrigin: resolvedCheckout.checkoutMode,
+              guestEmail: resolvedCheckout.checkoutMode === 'guest' ? resolvedCheckout.email : null,
+            },
           },
         })
 
-        console.log('✅ Enrollment created successfully:', enrollment.id)
-        console.log(`🎉 User ${userIdInt} enrolled in course ${courseIdInt}`)
-      } else {
-        console.log('⚠️ Enrollment already exists for this user and course')
-      }
+    const existingEnrollment = await payload.find({
+      collection: 'enrollments',
+      where: {
+        and: [{ user: { equals: userIdInt } }, { course: { equals: courseIdInt } }],
+      },
+      limit: 1,
+    })
 
-      // Send receipt email
+    if (existingEnrollment.docs.length === 0) {
+      await payload.create({
+        collection: 'enrollments',
+        data: {
+          user: userIdInt,
+          course: courseIdInt,
+          status: 'active',
+          enrolledAt: new Date().toISOString(),
+          order: updatedOrder.id,
+        },
+      })
+      console.log(`🎉 User ${userIdInt} enrolled in course ${courseIdInt}`)
+    }
+
+    if (!wasAlreadyCompleted) {
       try {
-        console.log('📧 Preparing to send receipt email...')
-        
-        // Fetch user and course details
-        const user = await payload.findByID({
-          collection: 'users',
-          id: userIdInt,
+        const { generateReceiptEmailHTML } = await import('@/lib/email-templates')
+        const siteURL = getSiteURL()
+        const claimAccessUrl =
+          resolvedCheckout.checkoutMode === 'guest'
+            ? `${siteURL}/aktivera-konto?email=${encodeURIComponent(resolvedCheckout.email)}&next=${encodeURIComponent('/mina-provningar')}`
+            : undefined
+
+        const emailHTML = generateReceiptEmailHTML({
+          firstName: resolvedCheckout.user.firstName || undefined,
+          courseTitle: course.title,
+          courseSlug: course.slug || course.id.toString(),
+          orderId: updatedOrder.id.toString(),
+          amount: updatedOrder.amount || 0,
+          paidAt: updatedOrder.paidAt || new Date().toISOString(),
+          receiptUrl: updatedOrder.receiptUrl || null,
+          claimAccessUrl,
         })
 
-        const course = await payload.findByID({
-          collection: 'vinprovningar',
-          id: courseIdInt,
+        await payload.sendEmail({
+          to: resolvedCheckout.email,
+          subject: `Kvitto - ${course.title} - Vinakademin`,
+          html: emailHTML,
         })
 
-        if (!user?.email) {
-          console.warn('⚠️ User email not found, skipping receipt email')
-        } else {
-          const { generateReceiptEmailHTML } = await import('@/lib/email-templates')
-          
-          const emailHTML = generateReceiptEmailHTML({
-            firstName: user.firstName || undefined,
-            courseTitle: course.title,
-            courseSlug: course.slug || course.id.toString(),
-            orderId: order.id.toString(),
-            amount: order.amount || 0,
-            paidAt: updatedOrder.paidAt || new Date().toISOString(),
-            receiptUrl: updatedOrder.receiptUrl || null,
+        if (resolvedCheckout.checkoutMode === 'guest') {
+          await payload.forgotPassword({
+            collection: 'users',
+            data: {
+              email: resolvedCheckout.email,
+            },
           })
-
-          await payload.sendEmail({
-            to: user.email,
-            subject: `Kvitto - ${course.title} - Vinakademin`,
-            html: emailHTML,
+          console.log(`[checkout_funnel] account_claimed_email_sent`, {
+            sessionId: session.id,
+            userId: userIdInt,
+            email: resolvedCheckout.email,
           })
-
-          console.log('✅ Receipt email sent successfully to:', user.email)
         }
+
+        console.log(`[checkout_funnel] checkout_completed`, {
+          mode: resolvedCheckout.checkoutMode,
+          sessionId: session.id,
+          userId: userIdInt,
+          courseId: courseIdInt,
+          isNewUser: resolvedCheckout.isNewUser,
+        })
       } catch (emailError) {
-        // Don't fail the webhook if email sending fails
-        console.error('⚠️ Error sending receipt email:', emailError)
+        console.error('⚠️ Error sending receipt or claim email:', emailError)
       }
-    } else {
-      console.error('❌ No order found for session ID:', session.id)
     }
   } catch (error) {
     console.error('❌ Error handling checkout session completion:', error)
