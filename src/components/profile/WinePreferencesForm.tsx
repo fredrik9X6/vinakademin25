@@ -26,9 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import * as SelectPrimitive from '@radix-ui/react-select'
+import { cn } from '@/lib/utils'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { toast } from 'sonner'
-import { Wine, MapPin, Palette, DollarSign } from 'lucide-react'
+import { Check, Wine, MapPin, Palette, DollarSign } from 'lucide-react'
 
 // Define Zod schema matching User collection winePreferences
 const WinePreferencesSchema = z.object({
@@ -60,14 +62,34 @@ const wineStyles = [
   { value: 'rose', label: 'Rosévin' },
   { value: 'sweet', label: 'Sött vin' },
   { value: 'fortified', label: 'Starkvin' },
+  { value: 'natural', label: 'Naturvin' },
 ]
 
-// Tasting experience levels from User collection
+// Tasting experience levels from User collection (values must match Payload options)
 const tastingExperienceLevels = [
-  { value: 'Nybörjare', label: 'Nybörjare' },
-  { value: 'Medel', label: 'Medel' },
-  { value: 'Avancerad', label: 'Avancerad' },
-  { value: 'Expert', label: 'Expert' },
+  {
+    value: 'Nybörjare',
+    label: 'Nybörjare',
+    description:
+      'Vin är gott, men du känner ingen stor skillnad mellan viner — än.',
+  },
+  {
+    value: 'Medel',
+    label: 'Medel',
+    description:
+      'Du märker om det är lätt eller fylligt, och börjar hitta favoritdruvor.',
+  },
+  {
+    value: 'Avancerad',
+    label: 'Avancerad',
+    description: 'Du pratar gärna om terroir, syra och fat — och menar det.',
+  },
+  {
+    value: 'Expert',
+    label: 'Expert',
+    description:
+      'Blindprovning är nästan sport, och du vet varför det smakar som det gör.',
+  },
 ]
 
 // Discovery preferences from User collection
@@ -446,11 +468,30 @@ export function WinePreferencesForm({ userId, initialData, onSuccess }: WinePref
                         <SelectValue placeholder="Välj erfarenhetsnivå" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="min-w-[min(28rem,calc(100vw-2rem))]">
                       {tastingExperienceLevels.map((level) => (
-                        <SelectItem key={level.value} value={level.value}>
-                          {level.label}
-                        </SelectItem>
+                        <SelectPrimitive.Item
+                          key={level.value}
+                          value={level.value}
+                          textValue={level.label}
+                          className={cn(
+                            'relative flex w-full cursor-default select-none items-start rounded-sm py-2 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+                          )}
+                        >
+                          <span className="absolute right-2 top-2 flex h-3.5 w-3.5 items-center justify-center">
+                            <SelectPrimitive.ItemIndicator>
+                              <Check className="h-4 w-4" />
+                            </SelectPrimitive.ItemIndicator>
+                          </span>
+                          <div className="flex flex-col gap-0.5 pr-2">
+                            <SelectPrimitive.ItemText asChild>
+                              <span className="font-medium">{level.label}</span>
+                            </SelectPrimitive.ItemText>
+                            <span className="text-xs leading-snug text-muted-foreground">
+                              {level.description}
+                            </span>
+                          </div>
+                        </SelectPrimitive.Item>
                       ))}
                     </SelectContent>
                   </Select>

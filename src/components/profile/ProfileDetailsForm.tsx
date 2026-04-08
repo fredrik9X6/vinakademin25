@@ -71,6 +71,16 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
       })
 
       if (response.ok) {
+        const json = await response.json()
+        const saved = json?.data as Partial<ProfileFormValues> | undefined
+        if (saved) {
+          form.reset({
+            firstName: saved.firstName ?? values.firstName,
+            lastName: saved.lastName ?? values.lastName,
+            email: saved.email ?? values.email,
+            bio: saved.bio ?? values.bio ?? '',
+          })
+        }
         toast.success('Profil uppdaterad', {
           description: 'Dina profiluppgifter har sparats.',
         })

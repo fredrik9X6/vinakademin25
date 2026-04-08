@@ -573,6 +573,7 @@ export const Users: CollectionConfig = {
             { label: 'Rosévin', value: 'rose' },
             { label: 'Sött vin', value: 'sweet' },
             { label: 'Starkvin', value: 'fortified' },
+            { label: 'Naturvin', value: 'natural' },
           ],
         },
         {

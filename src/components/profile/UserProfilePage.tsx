@@ -106,7 +106,7 @@ export function UserProfilePage() {
   // Show loading state while user data is being fetched
   if (isLoading) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-4 lg:gap-6 lg:px-6 lg:py-6">
         <div className="flex flex-col space-y-8">
           {/* Skeleton for tab navigation */}
           <div className="flex h-12 w-full justify-start overflow-x-auto bg-transparent p-0">
@@ -178,7 +178,11 @@ export function UserProfilePage() {
 
   // Show error state if user is not logged in
   if (!user) {
-    return <div className="p-4">Du måste vara inloggad för att se din profil.</div>
+    return (
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 lg:px-6">
+        Du måste vara inloggad för att se din profil.
+      </div>
+    )
   }
 
   // TODO: Add loading and error states based on data fetching
@@ -188,7 +192,7 @@ export function UserProfilePage() {
 
   return (
     <motion.div
-      className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6"
+      className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-4 lg:gap-6 lg:px-6 lg:py-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
