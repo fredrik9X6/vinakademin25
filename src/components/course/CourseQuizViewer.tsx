@@ -17,7 +17,7 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Progress } from '@/components/ui/progress'
 import CourseTableOfContents from './CourseTableOfContents'
 // Removed mock preview component
@@ -59,11 +59,13 @@ export default function CourseQuizViewer({
   const router = useRouter()
   const [isTocOpen, setIsTocOpen] = useState(false)
   const [theaterMode, setTheaterMode] = useState(false)
+  const hasNavigatedToReviewRef = useRef(false)
   const { activeSession } = useActiveSession()
 
   // Use session from props or from context (for persistent navigation)
   const effectiveSessionId =
-    sessionId || (activeSession?.courseId === course.id ? activeSession.sessionId : null)
+    sessionId ||
+    (activeSession && activeSession.courseId === course.id ? activeSession.sessionId : null)
 
   const buildUrl = (base: string) => {
     return effectiveSessionId ? `${base}&session=${effectiveSessionId}` : base
@@ -97,6 +99,15 @@ export default function CourseQuizViewer({
   // Get all items (lessons and quizzes) in order
   const allItems = getFlattenedCourseItems(course.modules)
   const currentItemIndex = allItems.findIndex((item) => item.type === 'quiz' && item.id === quiz.id)
+  const isLastQuizItem =
+    currentItemIndex >= 0 && allItems.length > 0 && currentItemIndex === allItems.length - 1
+
+  /** Prompt review after completing the last content item in order — even if other items were skipped. */
+  const maybeNavigateToCourseReview = useCallback(() => {
+    if (isSessionParticipant || hasNavigatedToReviewRef.current) return
+    hasNavigatedToReviewRef.current = true
+    router.push(`/vinprovningar/${course.slug || course.id}/recension`)
+  }, [isSessionParticipant, router, course.slug, course.id])
 
   const navigateToItem = (item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
@@ -109,6 +120,20 @@ export default function CourseQuizViewer({
   const goToNext = () => {
     if (currentItemIndex < allItems.length - 1) {
       navigateToItem(allItems[currentItemIndex + 1])
+    }
+  }
+
+  const handleQuizNextOrReview = async () => {
+    if (isSessionParticipant) {
+      if (!isLastQuizItem) goToNext()
+      return
+    }
+    if (isLastQuizItem) {
+      await fetchProgress()
+      maybeNavigateToCourseReview()
+    } else {
+      await fetchProgress()
+      goToNext()
     }
   }
 
@@ -185,11 +210,18 @@ export default function CourseQuizViewer({
                     <ChevronLeft className="w-4 h-4 mr-1" /> Föregående
                   </Button>
                   <Button
-                    onClick={goToNext}
-                    disabled={currentItemIndex === allItems.length - 1}
+                    onClick={() => void handleQuizNextOrReview()}
                     className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/25"
                   >
-                    Nästa <ChevronRight className="w-4 h-4 ml-1" />
+                    {isLastQuizItem ? (
+                      <>
+                        Betygsätt vinprovningen <ChevronRight className="w-4 h-4 ml-1" />
+                      </>
+                    ) : (
+                      <>
+                        Nästa <ChevronRight className="w-4 h-4 ml-1" />
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -206,13 +238,18 @@ export default function CourseQuizViewer({
                   onPassed={async () => {
                     if (isSessionParticipant) {
                       markQuizCompleted(quiz.id)
-                    } else {
-                      try {
-                        await fetchProgress()
-                      } catch {}
+                      return
                     }
+                    try {
+                      await fetchProgress()
+                      if (isLastQuizItem) {
+                        maybeNavigateToCourseReview()
+                      }
+                    } catch {}
                   }}
-                  onNavigateNext={() => goToNext()}
+                  onNavigateNext={() => {
+                    void handleQuizNextOrReview()
+                  }}
                 />
               </div>
             ) : (
@@ -316,11 +353,12 @@ export default function CourseQuizViewer({
           </div>
           <Button
             size="lg"
-            onClick={goToNext}
-            disabled={currentItemIndex === allItems.length - 1}
+            onClick={() => void handleQuizNextOrReview()}
             className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
           >
-            <span className="hidden xs:inline">Nästa</span>
+            <span className="hidden xs:inline">
+              {isLastQuizItem ? 'Betygsätt' : 'Nästa'}
+            </span>
             <ChevronRight className="w-5 h-5 ml-1" />
           </Button>
         </div>

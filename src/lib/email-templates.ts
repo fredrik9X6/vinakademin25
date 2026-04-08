@@ -1,3 +1,11 @@
+import {
+  emailBrandOrange,
+  emailDarkSolidButton,
+  emailHeaderCellStyle,
+  emailLightOutlineButton,
+  emailPrimaryCtaButton,
+  emailWarmCalloutStyle,
+} from './email-cta'
 import { getSiteURL } from './site-url'
 
 const SITE_URL = getSiteURL()
@@ -41,7 +49,7 @@ export function generateReviewRequestEmailHTML({
 
               <!-- Header with Logo -->
               <tr>
-                <td align="center" style="padding: 48px 40px 32px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); border-radius: 12px 12px 0 0;">
+                <td align="center" bgcolor="${emailBrandOrange}" style="${emailHeaderCellStyle()}">
                   <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
                     Vinakademin
                   </h1>
@@ -71,9 +79,7 @@ export function generateReviewRequestEmailHTML({
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
                       <td align="center" style="padding: 0 0 32px;">
-                        <a href="${reviewUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(251, 145, 76, 0.3);">
-                          Skriv en recension
-                        </a>
+                        ${emailPrimaryCtaButton(reviewUrl, 'Skriv en recension')}
                       </td>
                     </tr>
                   </table>
@@ -170,7 +176,7 @@ export function generateReceiptEmailHTML({
               
               <!-- Header with Logo -->
               <tr>
-                <td align="center" style="padding: 48px 40px 32px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); border-radius: 12px 12px 0 0;">
+                <td align="center" bgcolor="${emailBrandOrange}" style="${emailHeaderCellStyle()}">
                   <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
                     🍷 Vinakademin
                   </h1>
@@ -241,9 +247,7 @@ export function generateReceiptEmailHTML({
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                       <tr>
                         <td align="center" style="padding: 0 0 32px;">
-                          <a href="${receiptUrl}" style="display: inline-block; padding: 12px 32px; background-color: #fafafa; color: #FB914C; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600; border: 1px solid #e5e5e5;">
-                            Visa kvitto från Stripe
-                          </a>
+                          ${emailLightOutlineButton(receiptUrl, 'Visa kvitto från Stripe')}
                         </td>
                       </tr>
                     </table>
@@ -256,9 +260,7 @@ export function generateReceiptEmailHTML({
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                       <tr>
                         <td align="center" style="padding: 0 0 32px;">
-                          <a href="${claimAccessUrl}" style="display: inline-block; padding: 12px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600;">
-                            Aktivera konto
-                          </a>
+                          ${emailDarkSolidButton(claimAccessUrl, 'Aktivera konto')}
                         </td>
                       </tr>
                     </table>
@@ -271,15 +273,13 @@ export function generateReceiptEmailHTML({
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
                       <td align="center" style="padding: 0 0 32px;">
-                        <a href="${courseUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(251, 145, 76, 0.3);">
-                          Börja vinprovningen nu
-                        </a>
+                        ${emailPrimaryCtaButton(courseUrl, 'Börja vinprovningen nu')}
                       </td>
                     </tr>
                   </table>
 
                   <!-- What's Next -->
-                  <div style="padding: 24px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 8px; margin-bottom: 32px;">
+                  <div style="${emailWarmCalloutStyle()}">
                     <h3 style="margin: 0 0 16px; color: #FB914C; font-size: 18px; font-weight: 600;">
                       Vad händer nu?
                     </h3>

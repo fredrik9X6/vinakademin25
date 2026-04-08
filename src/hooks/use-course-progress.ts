@@ -10,7 +10,7 @@ interface LessonProgress {
   progress?: number
 }
 
-interface CourseProgress {
+export interface CourseProgress {
   totalLessons: number
   completedLessons: number
   progressPercentage: number
@@ -27,6 +27,14 @@ interface CourseProgress {
   }>
   nextIncompleteItem?: { type: 'lesson' | 'quiz'; id: number } | null
   quizCount?: number
+}
+
+export type ProgressPostResult = {
+  success: true
+  progress: Pick<
+    CourseProgress,
+    'totalLessons' | 'completedLessons' | 'progressPercentage' | 'status'
+  >
 }
 
 // Local storage key for session participant progress
@@ -76,15 +84,14 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
     [courseId, isGuestMode],
   )
 
-  // Fetch initial progress
-  const fetchProgress = useCallback(async () => {
-    if (!courseId) return
+  // Fetch initial progress — returns full GET payload for enrolled users (null on 401, undefined on error / no courseId)
+  const fetchProgress = useCallback(async (): Promise<CourseProgress | null | undefined> => {
+    if (!courseId) return undefined
 
     // For guest/session participants, use local progress only
     if (isGuestMode) {
       setLoading(false)
-      // Create a minimal progress object for guests
-      setProgress({
+      const guestProgress: CourseProgress = {
         totalLessons: 0,
         completedLessons: localCompletedLessons.size,
         progressPercentage: 0,
@@ -94,8 +101,9 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
         })),
         status: 'in-progress',
         completedQuizzes: Array.from(localCompletedQuizzes),
-      })
-      return
+      }
+      setProgress(guestProgress)
+      return guestProgress
     }
 
     try {
@@ -115,16 +123,18 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
         if (response.status === 401) {
           // User not authenticated - this is expected for demo/preview
           setProgress(null)
-          return
+          return null
         }
         throw new Error('Failed to fetch progress')
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as CourseProgress
       setProgress(data)
+      return data
     } catch (err) {
       console.error('Error fetching course progress:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch progress')
+      return undefined
     } finally {
       setLoading(false)
     }
@@ -133,10 +143,14 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
   // Track which lessons have already shown completion toast to prevent spam
   const completionToastShownRef = useRef(new Set<number>())
 
-  // Update lesson completion
+  // Update lesson completion — returns server POST payload for enrolled users
   const updateLessonProgress = useCallback(
-    async (lessonId: number, isCompleted: boolean, videoProgress?: number) => {
-      if (!courseId) return
+    async (
+      lessonId: number,
+      isCompleted: boolean,
+      videoProgress?: number,
+    ): Promise<ProgressPostResult | undefined> => {
+      if (!courseId) return undefined
 
       // Check if we already showed a completion toast for this lesson
       const alreadyNotified = completionToastShownRef.current.has(lessonId)
@@ -145,7 +159,7 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
       // For guest/session participants, use local storage
       if (isGuestMode) {
         // Skip if already completed locally and trying to complete again
-        if (isCompleted && localCompletedLessons.has(lessonId)) return
+        if (isCompleted && localCompletedLessons.has(lessonId)) return undefined
 
         setLocalCompletedLessons((prev) => {
           const newSet = new Set(prev)
@@ -184,13 +198,13 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
         if (!isCompleted) {
           completionToastShownRef.current.delete(lessonId)
         }
-        return
+        return undefined
       }
 
       // Skip API call if already completed and trying to auto-complete again
       const existingProgress = progress?.lessonProgress.find((p) => p.lessonId === lessonId)
       if (isCompleted && existingProgress?.isCompleted && videoProgress !== undefined) {
-        return
+        return undefined
       }
 
       // Mark toast as shown BEFORE the async call to prevent race conditions
@@ -217,7 +231,7 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
 
         if (!response.ok) {
           if (response.status === 401) {
-            return
+            return undefined
           }
           // Rollback toast ref on failure
           if (shouldShowToast) {
@@ -226,7 +240,7 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
           throw new Error('Failed to update progress')
         }
 
-        const data = await response.json()
+        const data = (await response.json()) as ProgressPostResult
 
         setProgress((prev) => {
           if (!prev) return null
@@ -247,12 +261,14 @@ export function useCourseProgress(courseId: string | number, isGuestMode: boolea
         if (shouldShowToast) {
           toast.success('Moment markerat som slutfört!')
         }
+        return data
       } catch (err) {
         console.error('Error updating lesson progress:', err)
         // Don't show error toast for guest users
         if (!isGuestMode) {
           toast.error('Kunde inte uppdatera framsteg')
         }
+        return undefined
       }
     },
     [courseId, isGuestMode, localCompletedQuizzes, saveLocalProgress, progress, localCompletedLessons],
