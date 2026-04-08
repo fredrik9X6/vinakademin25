@@ -56,7 +56,8 @@ export function BreadcrumbBar() {
     const slug = pathSegments[1]
 
     const config = section ? ROUTE_CONFIG[section] : undefined
-    if (!config?.titleApi || !slug || pathSegments.length !== 2) {
+    // Resolve course/post title for /section/slug and nested routes like /vinprovningar/slug/recension
+    if (!config?.titleApi || !slug) {
       setResolvedTitle(null)
       return
     }
@@ -130,7 +131,7 @@ export function BreadcrumbBar() {
       } else if (segment === 'success' && pathSegments[0] === 'checkout') {
         label = 'Betalning genomford'
       } else if (i === 1 && ROUTE_CONFIG[pathSegments[0]]) {
-        label = isLast && resolvedTitle ? resolvedTitle : formatSlug(segment)
+        label = resolvedTitle ?? formatSlug(segment)
       } else if (
         i === 2 &&
         pathSegments[0] === 'artiklar' &&

@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BookOpen, Clock, ArrowRight, Sparkles, Play, Star } from 'lucide-react'
 import { getTotalCourseItems, countFreeItems } from '@/lib/course-utils'
@@ -81,8 +80,11 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
           </div>
         </div>
 
-        {/* Featured Course Card */}
-        <div className="relative group">
+        {/* Featured Course Card — entire card links to the wine tasting */}
+        <Link
+          href={`/vinprovningar/${course.slug || course.id}`}
+          className="relative group block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[#FB914C] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
           {/* Gradient border wrapper */}
           <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FDBA75] via-[#FB914C] to-[#FDBA75] rounded-2xl opacity-75 blur group-hover:opacity-100 transition duration-500" />
 
@@ -173,8 +175,8 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                   {freeItems > 0 && (
                     <div className="pt-2">
                       <Badge
-                        variant="secondary"
-                        className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30"
+                        variant="outline"
+                        className="pointer-events-none border-[#FDBA75]/30 bg-[#FDBA75]/10 text-[#FB914C] hover:bg-[#FDBA75]/10"
                       >
                         <Play className="h-3 w-3 mr-1" />
                         {freeItems} gratis moment
@@ -213,21 +215,18 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                     )}
                   </div>
 
-                  {/* CTA Button */}
-                  <Link href={`/vinprovningar/${course.slug || course.id}`} className="block">
-                    <Button
-                      size="lg"
-                      className="w-full bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white border-0 shadow-lg shadow-[#FB914C]/20 group transition-all duration-300"
-                    >
-                      {freeItems > 0 ? 'Prova gratis' : 'Läs mer'}
-                      <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                    </Button>
-                  </Link>
+                  {/* CTA (visual only — card is the link) */}
+                  <span
+                    className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md px-8 text-sm font-medium text-white bg-gradient-to-r from-[#FB914C] to-[#FDBA75] shadow-lg shadow-[#FB914C]/20 transition-all duration-300 group-hover:from-[#FDBA75] group-hover:to-[#FB914C]"
+                  >
+                    {freeItems > 0 ? 'Prova gratis' : 'Läs mer'}
+                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
     </section>
   )
