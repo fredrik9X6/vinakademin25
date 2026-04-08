@@ -129,6 +129,39 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // So the review-request cron never treats this enrollment as needing an email
+    try {
+      const enrollmentList = await payload.find({
+        collection: 'enrollments',
+        where: {
+          and: [
+            { user: { equals: authorId } },
+            { course: { equals: parsedCourseId } },
+          ],
+        },
+        limit: 1,
+      })
+      const enr = enrollmentList.docs[0] as
+        | { id: string | number; reviewTracking?: { reviewEmailSentAt?: string } }
+        | undefined
+      if (enr && !enr.reviewTracking?.reviewEmailSentAt) {
+        await payload.update({
+          collection: 'enrollments',
+          id: enr.id,
+          data: {
+            reviewTracking: {
+              ...(enr as { reviewTracking?: Record<string, unknown> }).reviewTracking,
+              reviewEmailSentAt: new Date().toISOString(),
+            },
+          } as any,
+        })
+      }
+    } catch (enrollErr) {
+      payload.logger.warn(
+        `Could not set reviewEmailSentAt on enrollment after review create: ${String(enrollErr)}`,
+      )
+    }
+
     return NextResponse.json({ success: true, review: { id: review.id } })
   } catch (error) {
     const pgError = getPgErrorDetails(error)

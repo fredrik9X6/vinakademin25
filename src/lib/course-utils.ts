@@ -162,3 +162,28 @@ export function countFreeItems(modules: CourseModule[]): number {
 
   return count
 }
+
+/** Shape shared with GET /api/progress and POST /api/progress responses for completion checks */
+export type CourseProgressLike = {
+  progressPercentage?: number
+  status?: string
+  nextIncompleteItem?: { type: 'lesson' | 'quiz'; id: number } | null
+  totalLessons?: number
+}
+
+/**
+ * True when the learner has finished all content (lessons + passed quizzes).
+ * Not used for the review-page prompt: that triggers on the last item in course order even if other items were skipped.
+ */
+export function isCourseProgressComplete(p: CourseProgressLike | null | undefined): boolean {
+  if (!p) return false
+  if (p.status === 'completed') return true
+  if ((p.progressPercentage ?? 0) >= 100) return true
+  if (
+    p.nextIncompleteItem === null &&
+    (p.totalLessons ?? 0) > 0
+  ) {
+    return true
+  }
+  return false
+}

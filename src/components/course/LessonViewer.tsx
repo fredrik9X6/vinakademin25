@@ -110,7 +110,6 @@ export default function LessonViewer({
   const {
     progress: courseProgress,
     loading: progressLoading,
-    markLessonCompleted,
     toggleLessonCompletion,
     isLessonCompleted,
     updateLessonProgress,
@@ -121,9 +120,24 @@ export default function LessonViewer({
   const [showReviewComparison, setShowReviewComparison] = useState(false)
   const [theaterMode, setTheaterMode] = useState(false)
 
+  const allItems = getFlattenedCourseItems(course.modules)
+  const currentItemIndex = allItems.findIndex(
+    (item) => item.type === 'lesson' && item.id === lesson.id,
+  )
+  const isLastLessonItem =
+    currentItemIndex >= 0 && allItems.length > 0 && currentItemIndex === allItems.length - 1
+
   // Debounce auto-complete to prevent toast spam
   const hasAutoCompletedRef = useRef(false)
   const lastProgressUpdateRef = useRef(0)
+  const hasNavigatedToReviewRef = useRef(false)
+
+  /** Prompt review after completing the last content item in order — even if other items were skipped. */
+  const maybeNavigateToCourseReview = useCallback(() => {
+    if (isSessionParticipant || hasNavigatedToReviewRef.current) return
+    hasNavigatedToReviewRef.current = true
+    router.push(`/vinprovningar/${course.slug || course.id}/recension`)
+  }, [isSessionParticipant, router, course.slug, course.id])
 
   const handleTimeUpdate = useCallback((e: any) => {
     try {
@@ -138,16 +152,26 @@ export default function LessonViewer({
 
       if (pct >= 90 && !hasAutoCompletedRef.current) {
         hasAutoCompletedRef.current = true
-        updateLessonProgress(lesson.id, true, pct)
+        void (async () => {
+          await updateLessonProgress(lesson.id, true, pct)
+          if (!isLastLessonItem) return
+          maybeNavigateToCourseReview()
+        })()
       } else if (pct < 90) {
         updateLessonProgress(lesson.id, false, pct)
       }
     } catch {}
-  }, [lesson.id, updateLessonProgress])
+  }, [
+    lesson.id,
+    updateLessonProgress,
+    isLastLessonItem,
+    maybeNavigateToCourseReview,
+  ])
 
   // Use session from props or from context (for persistent navigation)
   const effectiveSessionId =
-    sessionId || (activeSession?.courseId === course.id ? activeSession.sessionId : null)
+    sessionId ||
+    (activeSession && activeSession.courseId === course.id ? activeSession.sessionId : null)
 
   const buildUrl = (base: string) => {
     return effectiveSessionId ? `${base}&session=${effectiveSessionId}` : base
@@ -156,12 +180,6 @@ export default function LessonViewer({
   const isLessonFree = lesson.isFree || false
   // Allow access if: user has purchased, is session participant, OR lesson is free (authenticated users can access free lessons)
   const canAccessLesson = userHasAccess || isSessionParticipant || isLessonFree
-
-  // Get all items (lessons and quizzes) in order
-  const allItems = getFlattenedCourseItems(course.modules)
-  const currentItemIndex = allItems.findIndex(
-    (item) => item.type === 'lesson' && item.id === lesson.id,
-  )
 
   const navigateToItem = (item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
@@ -172,9 +190,16 @@ export default function LessonViewer({
   }
 
   const goToNextLesson = async () => {
-    // Auto-mark current lesson as complete when navigating to next
+    if (isLastLessonItem) {
+      if (!isLessonCompleted(lesson.id)) {
+        await updateLessonProgress(lesson.id, true)
+      }
+      maybeNavigateToCourseReview()
+      return
+    }
+
     if (!isLessonCompleted(lesson.id)) {
-      await markLessonCompleted(lesson.id)
+      await updateLessonProgress(lesson.id, true)
     }
 
     if (currentItemIndex < allItems.length - 1) {
@@ -232,10 +257,14 @@ export default function LessonViewer({
                         {...{ qualitySelector: true } as any}
                         onTimeUpdate={handleTimeUpdate}
                         onEnded={() => {
-                          if (!hasAutoCompletedRef.current) {
-                            hasAutoCompletedRef.current = true
-                          }
-                          updateLessonProgress(lesson.id, true, 100)
+                          void (async () => {
+                            if (!hasAutoCompletedRef.current) {
+                              hasAutoCompletedRef.current = true
+                            }
+                            await updateLessonProgress(lesson.id, true, 100)
+                            if (!isLastLessonItem) return
+                            maybeNavigateToCourseReview()
+                          })()
                         }}
                       />
                     </div>
@@ -311,10 +340,17 @@ export default function LessonViewer({
                 </Button>
                 <Button
                   onClick={goToNextLesson}
-                  disabled={currentItemIndex === allItems.length - 1}
                   className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/25"
                 >
-                  Nästa <ChevronRight className="w-4 h-4 ml-1" />
+                  {isLastLessonItem ? (
+                    <>
+                      Betygsätt vinprovningen <ChevronRight className="w-4 h-4 ml-1" />
+                    </>
+                  ) : (
+                    <>
+                      Nästa <ChevronRight className="w-4 h-4 ml-1" />
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -520,10 +556,11 @@ export default function LessonViewer({
           <Button
             size="lg"
             onClick={goToNextLesson}
-            disabled={currentItemIndex === allItems.length - 1}
             className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
           >
-            <span className="hidden xs:inline">Nästa</span>
+            <span className="hidden xs:inline">
+              {isLastLessonItem ? 'Betygsätt' : 'Nästa'}
+            </span>
             <ChevronRight className="w-5 h-5 ml-1" />
           </Button>
         </div>

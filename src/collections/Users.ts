@@ -1,4 +1,10 @@
 import type { CollectionConfig } from 'payload'
+import {
+  emailBrandOrange,
+  emailHeaderCellStyle,
+  emailPrimaryCtaButton,
+  emailWarmCalloutStyle,
+} from '../lib/email-cta'
 import { getSiteURL, getCookieDomain } from '../lib/site-url'
 
 type User = {
@@ -67,7 +73,7 @@ export const Users: CollectionConfig = {
                     
                     <!-- Header with Logo -->
                     <tr>
-                      <td align="center" style="padding: 48px 40px 32px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); border-radius: 12px 12px 0 0;">
+                      <td align="center" bgcolor="${emailBrandOrange}" style="${emailHeaderCellStyle()}">
                         <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
                           🍷 Vinakademin
                         </h1>
@@ -93,9 +99,7 @@ export const Users: CollectionConfig = {
                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                           <tr>
                             <td align="center" style="padding: 0 0 32px;">
-                              <a href="${resetUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(251, 145, 76, 0.3);">
-                                Återställ lösenord
-                              </a>
+                              ${emailPrimaryCtaButton(resetUrl, 'Återställ lösenord')}
                             </td>
                           </tr>
                         </table>
@@ -177,7 +181,7 @@ export const Users: CollectionConfig = {
                     
                     <!-- Header with Logo -->
                     <tr>
-                      <td align="center" style="padding: 48px 40px 32px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); border-radius: 12px 12px 0 0;">
+                      <td align="center" bgcolor="${emailBrandOrange}" style="${emailHeaderCellStyle()}">
                         <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
                           🍷 Vinakademin
                         </h1>
@@ -207,9 +211,7 @@ export const Users: CollectionConfig = {
                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                           <tr>
                             <td align="center" style="padding: 0 0 32px;">
-                              <a href="${verifyUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(251, 145, 76, 0.3);">
-                                Verifiera e-post
-                              </a>
+                              ${emailPrimaryCtaButton(verifyUrl, 'Verifiera e-post')}
                             </td>
                           </tr>
                         </table>
@@ -225,7 +227,7 @@ export const Users: CollectionConfig = {
                         </p>
 
                         <!-- What's Next -->
-                        <div style="padding: 24px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 8px; margin-bottom: 32px;">
+                        <div style="${emailWarmCalloutStyle()}">
                           <h3 style="margin: 0 0 16px; color: #FB914C; font-size: 18px; font-weight: 600;">
                             Vad händer sen?
                           </h3>
