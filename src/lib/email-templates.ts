@@ -126,6 +126,8 @@ interface ReceiptEmailData {
   courseSlug: string
   orderId: string
   amount: number
+  discountAmount?: number
+  discountCode?: string
   paidAt: string
   receiptUrl?: string | null
   claimAccessUrl?: string
@@ -137,6 +139,8 @@ export function generateReceiptEmailHTML({
   courseSlug,
   orderId,
   amount,
+  discountAmount = 0,
+  discountCode,
   paidAt,
   receiptUrl,
   claimAccessUrl,
@@ -145,6 +149,14 @@ export function generateReceiptEmailHTML({
     style: 'currency',
     currency: 'SEK',
   }).format(amount)
+  const formattedOriginalAmount = new Intl.NumberFormat('sv-SE', {
+    style: 'currency',
+    currency: 'SEK',
+  }).format(amount + discountAmount)
+  const formattedDiscountAmount = new Intl.NumberFormat('sv-SE', {
+    style: 'currency',
+    currency: 'SEK',
+  }).format(discountAmount)
 
   const formattedDate = new Date(paidAt).toLocaleDateString('sv-SE', {
     year: 'numeric',
@@ -212,9 +224,27 @@ export function generateReceiptEmailHTML({
                           ${courseTitle}
                         </td>
                       </tr>
+                      ${discountAmount > 0 ? `
                       <tr>
                         <td style="padding: 8px 0; color: #71717a; font-size: 14px; border-bottom: 1px solid #e5e5e5;">
-                          Belopp:
+                          Ordinarie pris:
+                        </td>
+                        <td align="right" style="padding: 8px 0; color: #18181b; font-size: 14px; font-weight: 500; border-bottom: 1px solid #e5e5e5;">
+                          ${formattedOriginalAmount}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #71717a; font-size: 14px; border-bottom: 1px solid #e5e5e5;">
+                          Rabatt${discountCode ? ` (${discountCode})` : ''}:
+                        </td>
+                        <td align="right" style="padding: 8px 0; color: #166534; font-size: 14px; font-weight: 600; border-bottom: 1px solid #e5e5e5;">
+                          -${formattedDiscountAmount}
+                        </td>
+                      </tr>
+                      ` : ''}
+                      <tr>
+                        <td style="padding: 8px 0; color: #71717a; font-size: 14px; border-bottom: 1px solid #e5e5e5;">
+                          Betalat:
                         </td>
                         <td align="right" style="padding: 8px 0; color: #18181b; font-size: 14px; font-weight: 500; border-bottom: 1px solid #e5e5e5;">
                           ${formattedAmount}

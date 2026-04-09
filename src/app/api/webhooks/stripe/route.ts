@@ -403,6 +403,15 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
   }
 
   try {
+    let hydratedSession = session
+    try {
+      hydratedSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ['discounts', 'discounts.promotion_code'],
+      })
+    } catch (sessionError) {
+      console.error('⚠️ Unable to hydrate checkout session discounts:', sessionError)
+    }
+
     const resolvedCheckout = await resolveCheckoutUser(payload, session)
     const userIdInt = parseInt(String(resolvedCheckout.user.id), 10)
     if (isNaN(userIdInt)) {
@@ -427,12 +436,26 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
     let paymentIntentId: string | null = null
     let chargeId: string | null = null
     let receiptUrl: string | null = null
-    let paymentMethodType: string | null = session.payment_method_types?.[0] || null
+    let paymentMethodType: string | null = hydratedSession.payment_method_types?.[0] || null
     let paymentMethodDetails: any = null
+    const amountTotal = Number(hydratedSession.amount_total || 0) / 100
+    const amountSubtotal = Number(hydratedSession.amount_subtotal || hydratedSession.amount_total || 0) / 100
+    const discountAmount = Number(hydratedSession.total_details?.amount_discount || 0) / 100
+    const appliedDiscount = Array.isArray(hydratedSession.discounts)
+      ? hydratedSession.discounts[0]
+      : null
+    const discountCode =
+      appliedDiscount?.promotion_code &&
+      typeof appliedDiscount.promotion_code === 'object' &&
+      'code' in appliedDiscount.promotion_code
+        ? String(appliedDiscount.promotion_code.code)
+        : null
 
-    if (session.payment_intent) {
+    if (hydratedSession.payment_intent) {
       paymentIntentId =
-        typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id
+        typeof hydratedSession.payment_intent === 'string'
+          ? hydratedSession.payment_intent
+          : hydratedSession.payment_intent.id
       try {
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
           expand: ['latest_charge'],
@@ -462,6 +485,19 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
       status: 'completed',
       paidAt: new Date().toISOString(),
       user: userIdInt,
+      items: [
+        {
+          course: courseIdInt,
+          price: amountTotal,
+          quantity: 1,
+        },
+      ],
+      amount: amountTotal,
+      currency: String(hydratedSession.currency || 'sek').toUpperCase(),
+      discountAmount,
+      discountCode,
+      stripeSessionId: hydratedSession.id,
+      stripeCustomerId: String(hydratedSession.customer || ''),
       paymentMethod: paymentMethodType,
       paymentMethodDetails: paymentMethodDetails ? JSON.parse(JSON.stringify(paymentMethodDetails)) : null,
       stripePaymentIntentId: paymentIntentId,
@@ -471,6 +507,7 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
         ...(existingOrder?.metadata || {}),
         checkoutOrigin: resolvedCheckout.checkoutMode,
         guestEmail: resolvedCheckout.checkoutMode === 'guest' ? resolvedCheckout.email : null,
+        amountSubtotal,
       },
     }
 
@@ -489,14 +526,16 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
             items: [
               {
                 course: courseIdInt,
-                price: Number(session.amount_total || 0) / 100,
+                price: amountTotal,
                 quantity: 1,
               },
             ],
-            amount: Number(session.amount_total || 0) / 100,
-            currency: String(session.currency || 'sek').toUpperCase(),
-            stripeSessionId: session.id,
-            stripeCustomerId: String(session.customer || ''),
+            amount: amountTotal,
+            currency: String(hydratedSession.currency || 'sek').toUpperCase(),
+            discountAmount,
+            discountCode,
+            stripeSessionId: hydratedSession.id,
+            stripeCustomerId: String(hydratedSession.customer || ''),
             paymentMethod: paymentMethodType,
             paymentMethodDetails: paymentMethodDetails ? JSON.parse(JSON.stringify(paymentMethodDetails)) : null,
             stripePaymentIntentId: paymentIntentId,
@@ -506,6 +545,7 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
             metadata: {
               checkoutOrigin: resolvedCheckout.checkoutMode,
               guestEmail: resolvedCheckout.checkoutMode === 'guest' ? resolvedCheckout.email : null,
+              amountSubtotal,
             },
           },
         })
@@ -547,6 +587,8 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
           courseSlug: course.slug || course.id.toString(),
           orderId: updatedOrder.id.toString(),
           amount: updatedOrder.amount || 0,
+          discountAmount: updatedOrder.discountAmount || 0,
+          discountCode: updatedOrder.discountCode || undefined,
           paidAt: updatedOrder.paidAt || new Date().toISOString(),
           receiptUrl: updatedOrder.receiptUrl || null,
           claimAccessUrl,

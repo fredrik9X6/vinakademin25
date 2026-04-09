@@ -140,7 +140,25 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                   )}
                   {order && (
                     <div className="mt-4 pt-4 border-t border-border">
-                      <div className="flex items-center justify-between text-sm">
+                      {order.discountAmount ? (
+                        <>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Ordinarie pris:</span>
+                            <span className="text-muted-foreground line-through">
+                              {formatPrice((order.amount || 0) + (order.discountAmount || 0))}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between text-sm">
+                            <span className="text-emerald-700 dark:text-emerald-400">
+                              Rabatt{order.discountCode ? ` (${order.discountCode})` : ''}:
+                            </span>
+                            <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                              -{formatPrice(order.discountAmount || 0)}
+                            </span>
+                          </div>
+                        </>
+                      ) : null}
+                      <div className="mt-1 flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Totalt betalat:</span>
                         <span className="font-semibold text-lg text-green-600 dark:text-green-400">
                           {formatPrice(order.amount || 0)}
