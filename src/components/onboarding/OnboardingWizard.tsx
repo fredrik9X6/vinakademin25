@@ -1,60 +1,66 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { Progress } from '@/components/ui/progress'
+import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+import {
+  PRICE_RANGE_OPTIONS,
+  TASTING_EXPERIENCE_OPTIONS,
+  WINE_STYLE_OPTIONS,
+} from '@/lib/wine-preferences-options'
+import { ChevronLeft, Sparkles } from 'lucide-react'
 
-interface OptionItem {
-  id: number
-  label: string
-}
+const ONBOARDING_GOAL_OPTIONS = [
+  {
+    value: 'learn_basics',
+    label: 'Grunderna i vin',
+    description: 'Bygga trygghet kring glaset — utan krångel.',
+  },
+  {
+    value: 'pairing_confident',
+    label: 'Mat och vin',
+    description: 'Känna dig säkrare när du väljer till middagen.',
+  },
+  {
+    value: 'explore_regions',
+    label: 'Utforska nytt',
+    description: 'Nya regioner, druvor och stilar i din egen takt.',
+  },
+  {
+    value: 'deep_knowledge',
+    label: 'Djupare kunskap',
+    description: 'Nörda ner dig i detaljer, terroir och stil.',
+  },
+] as const
 
 interface OnboardingWizardProps {
   source: 'registration' | 'guest_checkout'
   nextPath: string
-  grapeOptions: OptionItem[]
-  regionOptions: OptionItem[]
 }
 
-export function OnboardingWizard({
-  source,
-  nextPath,
-  grapeOptions,
-  regionOptions,
-}: OnboardingWizardProps) {
+const STEP_COUNT = 6
+
+export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
   const router = useRouter()
+  const [step, setStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [goal, setGoal] = useState('learn_basics')
   const [tastingExperience, setTastingExperience] = useState('Nybörjare')
   const [priceRange, setPriceRange] = useState('mid')
   const [preferredStyles, setPreferredStyles] = useState<string[]>([])
-  const [favoriteGrapes, setFavoriteGrapes] = useState<number[]>([])
-  const [favoriteRegions, setFavoriteRegions] = useState<number[]>([])
   const [newsletter, setNewsletter] = useState(true)
   const [courseProgress, setCourseProgress] = useState(true)
   const [newCourses, setNewCourses] = useState(true)
 
-  const styleOptions = useMemo(
-    () => [
-      { value: 'light_red', label: 'Lätta röda viner' },
-      { value: 'medium_red', label: 'Medeltunga röda viner' },
-      { value: 'full_red', label: 'Fylliga röda viner' },
-      { value: 'light_white', label: 'Lätta vita viner' },
-      { value: 'full_white', label: 'Fylliga vita viner' },
-      { value: 'sparkling', label: 'Mousserande viner' },
-      { value: 'rose', label: 'Rosé' },
-      { value: 'sweet', label: 'Sött vin' },
-    ],
-    [],
-  )
+  const progressPercent = Math.round(((step + 1) / STEP_COUNT) * 100)
 
   const toggleString = (arr: string[], value: string) =>
-    arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]
-  const toggleNumber = (arr: number[], value: number) =>
     arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]
 
   const submit = async (action: 'complete' | 'skip') => {
@@ -71,8 +77,8 @@ export function OnboardingWizard({
           tastingExperience,
           priceRange,
           preferredStyles,
-          favoriteGrapes,
-          favoriteRegions,
+          favoriteGrapes: [],
+          favoriteRegions: [],
           notifications: {
             newsletter,
             courseProgress,
@@ -86,7 +92,7 @@ export function OnboardingWizard({
         throw new Error(data.error || 'Kunde inte spara onboarding')
       }
 
-      toast.success(action === 'skip' ? 'Onboarding hoppades över' : 'Onboarding sparad')
+      toast.success(action === 'skip' ? 'Onboarding hoppades över' : 'Välkommen — vi har sparat dina val')
       router.push(nextPath)
       router.refresh()
     } catch (error) {
@@ -97,148 +103,229 @@ export function OnboardingWizard({
     }
   }
 
+  const goNext = () => setStep((s) => Math.min(s + 1, STEP_COUNT - 1))
+  const goBack = () => setStep((s) => Math.max(s - 1, 0))
+
   return (
-    <Card className="w-full max-w-3xl">
-      <CardHeader>
-        <CardTitle>Välkommen! Anpassa din vinprofil</CardTitle>
-        <CardDescription>
-          Svara på några snabba frågor så kan vi ge dig en bättre start. Du kan hoppa över detta och
-          ändra senare i din profil.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-8">
-        <div className="space-y-2">
-          <Label>Vad är ditt mål just nu?</Label>
-          <select
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
+    <Card className="w-full max-w-lg border-0 bg-transparent shadow-none sm:max-w-xl">
+      <div className="mb-6 space-y-2">
+        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span>
+            Steg {step + 1} av {STEP_COUNT}
+          </span>
+          <button
+            type="button"
+            className="shrink-0 underline-offset-4 hover:underline"
+            onClick={() => submit('skip')}
+            disabled={isSubmitting}
           >
-            <option value="learn_basics">Lära mig grunderna i vin</option>
-            <option value="pairing_confident">Bli bättre på mat- och vinkombinationer</option>
-            <option value="explore_regions">Utforska nya regioner och druvor</option>
-            <option value="deep_knowledge">Bygga djupare expertkunskap</option>
-          </select>
+            Hoppa över allt
+          </button>
         </div>
+        <Progress value={progressPercent} className="h-1.5" />
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Erfarenhetsnivå</Label>
-            <select
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={tastingExperience}
-              onChange={(e) => setTastingExperience(e.target.value)}
-            >
-              <option value="Nybörjare">Nybörjare</option>
-              <option value="Medel">Medel</option>
-              <option value="Avancerad">Avancerad</option>
-              <option value="Expert">Expert</option>
-            </select>
+      <CardContent className="space-y-8 px-0">
+        {step === 0 && (
+          <div className="space-y-6 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+              <Sparkles className="h-7 w-7 text-primary" aria-hidden />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+                Välkommen till Vinakademin
+              </h1>
+              <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
+                Några korta frågor hjälper oss att anpassa din första tid här. Du kan alltid ändra
+                svaren i din profil.
+              </p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Föredragen prisklass</Label>
-            <select
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={priceRange}
-              onChange={(e) => setPriceRange(e.target.value)}
-            >
-              <option value="budget">Under 200 kr</option>
-              <option value="mid">200-500 kr</option>
-              <option value="premium">500-1000 kr</option>
-              <option value="luxury">Över 1000 kr</option>
-            </select>
-          </div>
-        </div>
+        )}
 
-        <div className="space-y-3">
-          <Label>Vilka vinstilar gillar du?</Label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {styleOptions.map((style) => (
-              <label key={style.value} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={preferredStyles.includes(style.value)}
-                  onChange={() => setPreferredStyles((current) => toggleString(current, style.value))}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold tracking-tight">Vad vill du få ut av Vinakademin?</h2>
+              <p className="text-muted-foreground text-sm">Välj det som känns mest rätt just nu.</p>
+            </div>
+            <div className="grid gap-3">
+              {ONBOARDING_GOAL_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    setGoal(opt.value)
+                  }}
+                  className={cn(
+                    'rounded-xl border-2 p-4 text-left transition-colors',
+                    goal === opt.value
+                      ? 'border-primary bg-primary/5'
+                      : 'border-transparent bg-muted/50 hover:bg-muted',
+                  )}
+                >
+                  <div className="font-medium">{opt.label}</div>
+                  <p className="text-muted-foreground mt-1 text-sm leading-snug">{opt.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold tracking-tight">Hur skulle du beskriva din vinkunskap?</h2>
+              <p className="text-muted-foreground text-sm">Inget rätt eller fel — vi utgår från var du är.</p>
+            </div>
+            <div className="grid gap-3">
+              {TASTING_EXPERIENCE_OPTIONS.map((level) => (
+                <button
+                  key={level.value}
+                  type="button"
+                  onClick={() => setTastingExperience(level.value)}
+                  className={cn(
+                    'rounded-xl border-2 p-4 text-left transition-colors',
+                    tastingExperience === level.value
+                      ? 'border-primary bg-primary/5'
+                      : 'border-transparent bg-muted/50 hover:bg-muted',
+                  )}
+                >
+                  <div className="font-medium">{level.label}</div>
+                  <p className="text-muted-foreground mt-1 text-sm leading-snug">{level.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold tracking-tight">Vilka vinstilar gillar du?</h2>
+              <p className="text-muted-foreground text-sm">Välj en eller flera — eller gå vidare och fyll i senare.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {WINE_STYLE_OPTIONS.map((style) => {
+                const on = preferredStyles.includes(style.value)
+                return (
+                  <button
+                    key={style.value}
+                    type="button"
+                    onClick={() => setPreferredStyles((c) => toggleString(c, style.value))}
+                    className={cn(
+                      'rounded-full border px-3 py-1.5 text-sm transition-colors',
+                      on
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-background hover:bg-muted',
+                    )}
+                  >
+                    {style.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold tracking-tight">Ungefär vilken prisklass köper du oftast?</h2>
+              <p className="text-muted-foreground text-sm">Vi använder det för att tipsa om innehåll som passar din vardag.</p>
+            </div>
+            <div className="grid gap-3">
+              {PRICE_RANGE_OPTIONS.map((range) => (
+                <button
+                  key={range.value}
+                  type="button"
+                  onClick={() => setPriceRange(range.value)}
+                  className={cn(
+                    'rounded-xl border-2 p-4 text-left font-medium transition-colors',
+                    priceRange === range.value
+                      ? 'border-primary bg-primary/5'
+                      : 'border-transparent bg-muted/50 hover:bg-muted',
+                  )}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold tracking-tight">Hur vill vi hålla kontakten?</h2>
+              <p className="text-muted-foreground text-sm">Du kan ändra detta när som helst under Notiser i profilen.</p>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="onb-newsletter" className="text-base">
+                    Nyhetsbrev
+                  </Label>
+                  <p className="text-muted-foreground text-xs">Tips, inspiration och nyheter från Vinakademin.</p>
+                </div>
+                <Switch
+                  id="onb-newsletter"
+                  checked={newsletter}
+                  onCheckedChange={setNewsletter}
+                  disabled={isSubmitting}
                 />
-                {style.label}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <Label>Favoritdruvor (valfritt)</Label>
-            <div className="max-h-40 overflow-y-auto border rounded-md p-3 space-y-2">
-              {grapeOptions.map((grape) => (
-                <label key={grape.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={favoriteGrapes.includes(grape.id)}
-                    onChange={() => setFavoriteGrapes((current) => toggleNumber(current, grape.id))}
-                  />
-                  {grape.label}
-                </label>
-              ))}
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="onb-course" className="text-base">
+                    Kursprogress
+                  </Label>
+                  <p className="text-muted-foreground text-xs">Påminnelser om dina kurser och lektioner.</p>
+                </div>
+                <Switch
+                  id="onb-course"
+                  checked={courseProgress}
+                  onCheckedChange={setCourseProgress}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="onb-new" className="text-base">
+                    Nya vinprovningar
+                  </Label>
+                  <p className="text-muted-foreground text-xs">När vi släpper något du kan vara intresserad av.</p>
+                </div>
+                <Switch
+                  id="onb-new"
+                  checked={newCourses}
+                  onCheckedChange={setNewCourses}
+                  disabled={isSubmitting}
+                />
+              </div>
             </div>
           </div>
-          <div className="space-y-3">
-            <Label>Favoritregioner (valfritt)</Label>
-            <div className="max-h-40 overflow-y-auto border rounded-md p-3 space-y-2">
-              {regionOptions.map((region) => (
-                <label key={region.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={favoriteRegions.includes(region.id)}
-                    onChange={() => setFavoriteRegions((current) => toggleNumber(current, region.id))}
-                  />
-                  {region.label}
-                </label>
-              ))}
-            </div>
+        )}
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {step > 0 && (
+            <Button type="button" variant="outline" onClick={goBack} disabled={isSubmitting} className="sm:w-auto">
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Tillbaka
+            </Button>
+          )}
+          <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:justify-end">
+            {step < STEP_COUNT - 1 ? (
+              <Button type="button" onClick={goNext} disabled={isSubmitting} className="sm:min-w-[8rem]">
+                {step === 0 ? 'Kom igång' : 'Nästa'}
+              </Button>
+            ) : (
+              <Button type="button" onClick={() => submit('complete')} disabled={isSubmitting} className="sm:min-w-[8rem]">
+                {isSubmitting ? 'Sparar…' : 'Spara och gå vidare'}
+              </Button>
+            )}
           </div>
         </div>
-
-        <div className="space-y-2">
-          <Label>Utskick du vill få</Label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={newsletter}
-                onChange={(e) => setNewsletter(e.target.checked)}
-              />
-              Nyhetsbrev
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={courseProgress}
-                onChange={(e) => setCourseProgress(e.target.checked)}
-              />
-              Påminnelser om kursprogress
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={newCourses}
-                onChange={(e) => setNewCourses(e.target.checked)}
-              />
-              Nya vinprovningar
-            </label>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={() => submit('complete')} disabled={isSubmitting} className="flex-1">
-            Spara och fortsätt
-          </Button>
-          <Button variant="outline" onClick={() => submit('skip')} disabled={isSubmitting} className="flex-1">
-            Hoppa över tills vidare
-          </Button>
-        </div>
-
-        <Input type="hidden" value={source} readOnly />
       </CardContent>
     </Card>
   )

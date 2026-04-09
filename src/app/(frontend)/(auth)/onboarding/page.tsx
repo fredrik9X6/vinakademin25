@@ -1,6 +1,4 @@
 import { redirect } from 'next/navigation'
-import { getPayload } from 'payload'
-import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
 
@@ -31,29 +29,9 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     source,
   })
 
-  const payload = await getPayload({ config })
-  const [grapesResult, regionsResult] = await Promise.all([
-    payload.find({ collection: 'grapes', limit: 100, sort: 'name' }),
-    payload.find({ collection: 'regions', limit: 100, sort: 'name' }),
-  ])
-
-  const grapeOptions = grapesResult.docs.map((grape: any) => ({
-    id: grape.id,
-    label: grape.name,
-  }))
-  const regionOptions = regionsResult.docs.map((region: any) => ({
-    id: region.id,
-    label: region.name,
-  }))
-
   return (
     <div className="min-h-svh bg-muted flex items-center justify-center p-6">
-      <OnboardingWizard
-        source={source}
-        nextPath={nextPath}
-        grapeOptions={grapeOptions}
-        regionOptions={regionOptions}
-      />
+      <OnboardingWizard source={source} nextPath={nextPath} />
     </div>
   )
 }

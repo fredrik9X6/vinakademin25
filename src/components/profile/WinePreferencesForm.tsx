@@ -31,6 +31,12 @@ import { cn } from '@/lib/utils'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { toast } from 'sonner'
 import { Check, Wine, MapPin, Palette, DollarSign } from 'lucide-react'
+import {
+  DISCOVERY_PREFERENCE_OPTIONS,
+  PRICE_RANGE_OPTIONS,
+  TASTING_EXPERIENCE_OPTIONS,
+  WINE_STYLE_OPTIONS,
+} from '@/lib/wine-preferences-options'
 
 // Define Zod schema matching User collection winePreferences
 const WinePreferencesSchema = z.object({
@@ -50,65 +56,6 @@ interface WinePreferencesFormProps {
   initialData?: Partial<WinePreferencesFormValues>
   onSuccess?: () => void
 }
-
-// Wine styles from User collection
-const wineStyles = [
-  { value: 'light_red', label: 'Lätta röda viner' },
-  { value: 'medium_red', label: 'Medeltunga röda viner' },
-  { value: 'full_red', label: 'Fylliga röda viner' },
-  { value: 'light_white', label: 'Lätta vita viner' },
-  { value: 'full_white', label: 'Fylliga vita viner' },
-  { value: 'sparkling', label: 'Mousserande viner' },
-  { value: 'rose', label: 'Rosévin' },
-  { value: 'sweet', label: 'Sött vin' },
-  { value: 'fortified', label: 'Starkvin' },
-  { value: 'natural', label: 'Naturvin' },
-]
-
-// Tasting experience levels from User collection (values must match Payload options)
-const tastingExperienceLevels = [
-  {
-    value: 'Nybörjare',
-    label: 'Nybörjare',
-    description:
-      'Vin är gott, men du känner ingen stor skillnad mellan viner — än.',
-  },
-  {
-    value: 'Medel',
-    label: 'Medel',
-    description:
-      'Du märker om det är lätt eller fylligt, och börjar hitta favoritdruvor.',
-  },
-  {
-    value: 'Avancerad',
-    label: 'Avancerad',
-    description: 'Du pratar gärna om terroir, syra och fat — och menar det.',
-  },
-  {
-    value: 'Expert',
-    label: 'Expert',
-    description:
-      'Blindprovning är nästan sport, och du vet varför det smakar som det gör.',
-  },
-]
-
-// Discovery preferences from User collection
-const discoveryPreferences = [
-  { value: 'new_grapes', label: 'Upptäck nya druvor' },
-  { value: 'new_regions', label: 'Utforska nya regioner' },
-  { value: 'price_ranges', label: 'Prova olika prisklasser' },
-  { value: 'wine_culture', label: 'Lär dig om vinkultur' },
-  { value: 'recommendations', label: 'Få personliga rekommendationer' },
-  { value: 'virtual_tastings', label: 'Delta i virtuella provningar' },
-]
-
-// Price ranges from User collection
-const priceRanges = [
-  { value: 'budget', label: 'Under 200 kr' },
-  { value: 'mid', label: '200-500 kr' },
-  { value: 'premium', label: '500-1000 kr' },
-  { value: 'luxury', label: 'Över 1000 kr' },
-]
 
 interface Grape {
   id: string
@@ -380,7 +327,7 @@ export function WinePreferencesForm({ userId, initialData, onSuccess }: WinePref
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {priceRanges.map((range) => (
+                      {PRICE_RANGE_OPTIONS.map((range) => (
                         <SelectItem key={range.value} value={range.value}>
                           {range.label}
                         </SelectItem>
@@ -410,7 +357,7 @@ export function WinePreferencesForm({ userId, initialData, onSuccess }: WinePref
               render={() => (
                 <FormItem>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {wineStyles.map((style) => (
+                    {WINE_STYLE_OPTIONS.map((style) => (
                       <FormField
                         key={style.value}
                         control={form.control}
@@ -469,7 +416,7 @@ export function WinePreferencesForm({ userId, initialData, onSuccess }: WinePref
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="min-w-[min(28rem,calc(100vw-2rem))]">
-                      {tastingExperienceLevels.map((level) => (
+                      {TASTING_EXPERIENCE_OPTIONS.map((level) => (
                         <SelectPrimitive.Item
                           key={level.value}
                           value={level.value}
@@ -515,7 +462,7 @@ export function WinePreferencesForm({ userId, initialData, onSuccess }: WinePref
               render={() => (
                 <FormItem>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {discoveryPreferences.map((pref) => (
+                    {DISCOVERY_PREFERENCE_OPTIONS.map((pref) => (
                       <FormField
                         key={pref.value}
                         control={form.control}
