@@ -221,7 +221,7 @@ export function NotificationPreferencesForm({
                 </FormItem>
               )}
             /> */}
-            {/* TEMPORARILY HIDDEN - Kursframsteg */}
+            {/* TEMPORARILY HIDDEN - Framsteg */}
             {/* <FormField
               control={form.control}
               name="email.courseProgress"
