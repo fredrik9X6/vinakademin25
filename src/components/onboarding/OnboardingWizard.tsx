@@ -278,9 +278,9 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
               <div className="flex items-center justify-between gap-4 rounded-md border p-3">
                 <div className="space-y-0.5">
                   <Label htmlFor="onb-course" className="text-base">
-                    Kursprogress
+                    Framsteg
                   </Label>
-                  <p className="text-muted-foreground text-xs">Påminnelser om dina kurser och lektioner.</p>
+                  <p className="text-muted-foreground text-xs">Påminnelser om dina vinprovningar och lektioner.</p>
                 </div>
                 <Switch
                   id="onb-course"
