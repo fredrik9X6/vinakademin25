@@ -6,7 +6,7 @@ import {
   emailWarmCalloutStyle,
 } from '../lib/email-cta'
 import { getSiteURL, getCookieDomain } from '../lib/site-url'
-import { isAdmin, adminFieldLevel, adminOrInstructorFieldLevel } from '../lib/access'
+import { adminFieldLevel, adminOrInstructorFieldLevel } from '../lib/access'
 
 type User = {
   id: string
@@ -271,8 +271,6 @@ export const Users: CollectionConfig = {
     },
   },
   access: {
-    // Only admins can access the Payload admin panel
-    admin: isAdmin,
     // Bare minimum access control - simplified
     read: ({ req }) => {
       // Allow admin to read all
