@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { MessageSquare, X, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,12 +27,25 @@ export function FeedbackButton({ position = 'bottom-right' }: FeedbackButtonProp
   const [feedbackType, setFeedbackType] = useState<FeedbackType>('idea')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // On course content pages (lesson/quiz), the lesson nav bar sits above the
+  // global bottom nav so the feedback button must clear both bars.
+  const isCourseContentPage =
+    pathname.startsWith('/vinprovningar/') &&
+    (searchParams.has('lesson') || searchParams.has('quiz'))
 
   // On mobile (below md): position above the bottom tab bar (h-16 + safe area)
+  // On course content pages: also clear the lesson/quiz nav bar
   // On desktop (md+): normal bottom-4 positioning
+  const mobileBottom = isCourseContentPage
+    ? 'bottom-[calc(9rem+env(safe-area-inset-bottom))]'
+    : 'bottom-[calc(4.5rem+env(safe-area-inset-bottom))]'
+
   const positionClasses = {
-    'bottom-right': 'bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:bottom-4',
-    'bottom-left': 'bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 md:bottom-4',
+    'bottom-right': `${mobileBottom} right-4 md:bottom-4`,
+    'bottom-left': `${mobileBottom} left-4 md:bottom-4`,
   }
 
   const handleSubmit = async () => {
