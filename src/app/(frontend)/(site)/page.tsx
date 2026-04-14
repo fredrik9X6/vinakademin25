@@ -451,15 +451,7 @@ export default async function HomePage() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Link href="/om-oss" className="flex-1">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full border-[#FB914C]/30 hover:border-[#FB914C] hover:bg-[#FDBA75]/5"
-                  >
-                    Läs mer om oss
-                  </Button>
-                </Link>
+                {/* Om oss link hidden until page is ready */}
               </div>
             </div>
           </div>
@@ -702,15 +694,7 @@ export default async function HomePage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/om-oss">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-base px-8 py-6 border-[#FB914C]/30 hover:border-[#FB914C] hover:bg-[#FDBA75]/5"
-                >
-                  Läs mer om oss
-                </Button>
-              </Link>
+              {/* Om oss link hidden until page is ready */}
             </div>
 
             {/* Feature highlights with orange accents */}

@@ -19,7 +19,6 @@ const exploreLinks = [
 ]
 
 const aboutLinks = [
-  { label: 'Om oss', href: '/om-oss' },
   { label: 'Kontakt', href: '/kontakt' },
   { label: 'Varumärke', href: '/styleguide' },
 ]
