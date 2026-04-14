@@ -6,6 +6,7 @@ import {
   emailWarmCalloutStyle,
 } from '../lib/email-cta'
 import { getSiteURL, getCookieDomain } from '../lib/site-url'
+import { adminFieldLevel, adminOrInstructorFieldLevel } from '../lib/access'
 
 type User = {
   id: string
@@ -335,10 +336,9 @@ export const Users: CollectionConfig = {
       label: 'Role',
       defaultValue: 'user',
       required: true,
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       options: [
         {
           label: 'Admin',
@@ -368,10 +368,9 @@ export const Users: CollectionConfig = {
       type: 'checkbox',
       label: 'Email Verified',
       defaultValue: false,
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin' || req.user?.role === 'instructor',
-      // },
+      access: {
+        update: adminOrInstructorFieldLevel,
+      },
       admin: {
         description: 'Has the user verified their email address?',
         position: 'sidebar',
@@ -382,10 +381,9 @@ export const Users: CollectionConfig = {
       type: 'select',
       label: 'Account Status',
       defaultValue: 'active',
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       options: [
         {
           label: 'Active',
@@ -411,10 +409,9 @@ export const Users: CollectionConfig = {
       type: 'select',
       label: 'Subscription Status',
       defaultValue: 'none',
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       options: [
         {
           label: 'None',
@@ -447,10 +444,9 @@ export const Users: CollectionConfig = {
       type: 'select',
       label: 'Subscription Plan',
       defaultValue: 'none',
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       options: [
         {
           label: 'None',
@@ -474,10 +470,9 @@ export const Users: CollectionConfig = {
       name: 'subscriptionExpiry',
       type: 'date',
       label: 'Subscription Expiry',
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       admin: {
         description: 'Date when the subscription expires',
         position: 'sidebar',

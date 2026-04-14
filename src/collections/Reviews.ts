@@ -12,13 +12,15 @@ export const Reviews: CollectionConfig = {
   access: {
     // Bare minimum access control - simplified
     read: ({ req }) => {
-      // Admin/instructor can read all
       if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
-      // Users can read their own reviews
       if (req.user) {
-        return { user: { equals: req.user.id } } as any
+        return {
+          or: [
+            { user: { equals: req.user.id } },
+            { isTrusted: { equals: true } },
+          ],
+        } as any
       }
-      // Public can read trusted reviews
       return { isTrusted: { equals: true } } as any
     },
     create: ({ req }) => Boolean(req.user),

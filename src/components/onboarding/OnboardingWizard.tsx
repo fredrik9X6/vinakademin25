@@ -132,7 +132,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
               <Sparkles className="h-7 w-7 text-primary" aria-hidden />
             </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              <h1 className="text-2xl font-medium tracking-tight md:text-3xl">
                 Välkommen till Vinakademin
               </h1>
               <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
@@ -146,7 +146,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
         {step === 1 && (
           <div className="space-y-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight">Vad vill du få ut av Vinakademin?</h2>
+              <h2 className="text-xl font-medium tracking-tight">Vad vill du få ut av Vinakademin?</h2>
               <p className="text-muted-foreground text-sm">Välj det som känns mest rätt just nu.</p>
             </div>
             <div className="grid gap-3">
@@ -175,7 +175,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
         {step === 2 && (
           <div className="space-y-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight">Hur skulle du beskriva din vinkunskap?</h2>
+              <h2 className="text-xl font-medium tracking-tight">Hur skulle du beskriva din vinkunskap?</h2>
               <p className="text-muted-foreground text-sm">Inget rätt eller fel — vi utgår från var du är.</p>
             </div>
             <div className="grid gap-3">
@@ -202,7 +202,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
         {step === 3 && (
           <div className="space-y-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight">Vilka vinstilar gillar du?</h2>
+              <h2 className="text-xl font-medium tracking-tight">Vilka vinstilar gillar du?</h2>
               <p className="text-muted-foreground text-sm">Välj en eller flera — eller gå vidare och fyll i senare.</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -231,7 +231,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
         {step === 4 && (
           <div className="space-y-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight">Ungefär vilken prisklass köper du oftast?</h2>
+              <h2 className="text-xl font-medium tracking-tight">Ungefär vilken prisklass köper du oftast?</h2>
               <p className="text-muted-foreground text-sm">Vi använder det för att tipsa om innehåll som passar din vardag.</p>
             </div>
             <div className="grid gap-3">
@@ -257,7 +257,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
         {step === 5 && (
           <div className="space-y-6">
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight">Hur vill vi hålla kontakten?</h2>
+              <h2 className="text-xl font-medium tracking-tight">Hur vill vi hålla kontakten?</h2>
               <p className="text-muted-foreground text-sm">Du kan ändra detta när som helst under Notiser i profilen.</p>
             </div>
             <div className="space-y-4">
