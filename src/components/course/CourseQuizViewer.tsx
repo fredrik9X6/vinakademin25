@@ -26,14 +26,6 @@ import { useRouter } from 'next/navigation'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { useMemo } from 'react'
 import { getFlattenedCourseItems } from '@/lib/course-utils'
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb'
 import { useActiveSession } from '@/context/SessionContext'
 
 interface CourseQuizViewerProps {
@@ -153,34 +145,8 @@ export default function CourseQuizViewer({
         <div className={`grid grid-cols-1 gap-8 ${theaterMode ? '' : 'lg:grid-cols-3'}`}>
           {/* Main Content */}
           <div className={`space-y-6 order-2 lg:order-1 ${theaterMode ? '' : 'lg:col-span-2'}`}>
-            {/* Breadcrumbs and Title */}
+            {/* Title and Navigation */}
             <div className="space-y-4">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink href={`/vinprovningar/${course.slug || course.id}`}>
-                      Vinprovning
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink href={`/vinprovningar/${course.slug || course.id}`}>
-                      {course.title}
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink href={`/vinprovningar/${course.slug || course.id}`}>
-                      {module.title}
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Quiz</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -336,7 +302,7 @@ export default function CourseQuizViewer({
       </div>
 
       {/* Mobile Bottom Navigation - Fixed */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50">
+      <div className="md:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 bg-background border-t border-border shadow-lg z-50">
         <div className="flex items-center justify-between p-4 gap-2">
           <Button
             variant="outline"
@@ -365,7 +331,7 @@ export default function CourseQuizViewer({
       </div>
 
       {/* Add bottom padding to prevent content from being hidden behind fixed nav */}
-      <div className="md:hidden h-20" />
+      <div className="md:hidden h-36" />
     </div>
   )
 }

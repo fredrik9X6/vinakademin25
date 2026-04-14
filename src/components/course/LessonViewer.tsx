@@ -538,7 +538,7 @@ export default function LessonViewer({
       </div>
 
       {/* Mobile Bottom Navigation - Fixed */}
-      <div className="md:hidden fixed bottom-16 left-0 right-0 bg-background border-t border-border shadow-lg z-50">
+      <div className="md:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 bg-background border-t border-border shadow-lg z-50">
         <div className="flex items-center justify-between p-4 gap-2">
           <Button
             variant="outline"

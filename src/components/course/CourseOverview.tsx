@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,7 @@ import CourseTableOfContents from './CourseTableOfContents'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { toast } from 'sonner'
 import { PurchaseButton, CoursePurchasePanel } from '@/components/payment'
+import { CheckoutDialog } from '@/components/payment/CheckoutDialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import StartSessionButton from './StartSessionButton'
 import { getFlattenedCourseItems } from '@/lib/course-utils'
@@ -112,6 +113,7 @@ export default function CourseOverview({
   const { getNextIncompleteItem, getQuizCount } = useCourseProgress(course.id)
   const { activeSession } = useActiveSession()
   const { user: authUser } = useAuth()
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
 
   // Use session from props or from context (for persistent navigation)
   const effectiveSessionId =
@@ -199,9 +201,16 @@ export default function CourseOverview({
     const canAccess = userHasAccess || isSessionParticipant || (isLessonFree && !!authUser)
 
     if (!canAccess) {
-      const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
-      router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
-      toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
+      if (authUser) {
+        // Logged in but hasn't purchased — show checkout modal
+        setIsCheckoutOpen(true)
+        toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
+      } else {
+        // Not logged in — redirect to login
+        const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
+        router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
+        toast.info('Du behöver logga in för att se detta innehåll')
+      }
       return
     }
 
@@ -259,9 +268,16 @@ export default function CourseOverview({
       const canAccess = userHasAccess || isSessionParticipant || (isQuizFree && !!authUser)
 
       if (!canAccess) {
-        const currentUrl = `/vinprovningar/${course.slug || course.id}?quiz=${item.id}`
-        router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
-        toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
+        if (authUser) {
+          // Logged in but hasn't purchased — show checkout modal
+          setIsCheckoutOpen(true)
+          toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
+        } else {
+          // Not logged in — redirect to login
+          const currentUrl = `/vinprovningar/${course.slug || course.id}?quiz=${item.id}`
+          router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
+          toast.info('Du behöver logga in för att se detta innehåll')
+        }
         return
       }
 
@@ -639,6 +655,27 @@ export default function CourseOverview({
           </div>
         </div>
       </div>
+
+      {/* Checkout dialog — triggered when logged-in user clicks a locked item */}
+      <CheckoutDialog
+        course={{
+          id: course.id,
+          title: course.title,
+          description: course.description || '',
+          fullDescription: course.fullDescription || null,
+          price: course.price || 0,
+          slug: course.slug || course.id.toString(),
+          featuredImage: course.featuredImage as any,
+          level: (course.level as 'beginner' | 'intermediate' | 'advanced') || 'beginner',
+          duration: totalMoment,
+          instructor: course.instructor as any,
+          updatedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          _status: 'published',
+        } as any}
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+      />
     </div>
   )
 }
