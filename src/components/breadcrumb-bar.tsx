@@ -175,7 +175,7 @@ export function BreadcrumbBar() {
 
   return (
     <div className="border-b bg-background">
-      <div className="mx-auto max-w-7xl flex h-10 items-center px-4 lg:px-6">
+      <div className="mx-auto max-w-7xl flex min-h-10 items-center py-2 px-4 lg:px-6">
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((crumb, index) => (
