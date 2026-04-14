@@ -9,13 +9,11 @@ import {
   Users,
   Target,
   Sparkles,
-  Wine,
   BookOpen,
   ArrowRight,
   Quote,
 } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
 
 export const metadata: Metadata = {
   title: 'Om Oss | Vinakademin',
@@ -97,17 +95,7 @@ export default function AboutPage() {
           </p>
         </div>
 
-        {/* Hero Image Placeholder */}
-        <div className="relative rounded-lg overflow-hidden mb-16 aspect-[21/9] bg-gradient-to-br from-orange-100 to-orange-50 dark:from-muted/50 dark:to-muted/20">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center space-y-3">
-              <Wine className="h-16 w-16 mx-auto text-orange-500/50" />
-              <p className="text-sm text-muted-foreground">
-                Plats för hero-bild av grundarna / team
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Hero image placeholder hidden until real photo is available */}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
