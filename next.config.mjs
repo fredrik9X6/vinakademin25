@@ -74,6 +74,12 @@ const nextConfig = {
         destination: '/vinprovningar/:slug*',
         permanent: true,
       },
+      // Legacy English URL from older emails; canonical is /aterstall-losenord
+      {
+        source: '/reset-password',
+        destination: '/aterstall-losenord',
+        permanent: true,
+      },
     ]
   },
 }

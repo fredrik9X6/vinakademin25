@@ -50,7 +50,7 @@ export const Users: CollectionConfig = {
       generateEmailHTML: (args) => {
         const { token, user } = args || {}
         const firstName = (user as any)?.firstName || ''
-        const resetUrl = `${SITE_URL}/reset-password?token=${token}`
+        const resetUrl = `${SITE_URL}/aterstall-losenord?token=${token}`
 
         return `
           <!DOCTYPE html>
