@@ -13,19 +13,12 @@ const logCheckoutEvent = (event: string, details: Record<string, unknown>) => {
 
 export async function POST(request: NextRequest) {
   try {
-    const guestCheckoutEnabled = process.env.ENABLE_GUEST_CHECKOUT === 'true'
     const user = await getUser()
 
     const payload = await getPayload({ config })
     const { courseId, guestEmail, guestFirstName, guestLastName } = await request.json()
 
     const checkoutMode: 'authenticated' | 'guest' = user?.id ? 'authenticated' : 'guest'
-    if (checkoutMode === 'guest' && !guestCheckoutEnabled) {
-      return NextResponse.json(
-        { error: 'Du måste vara inloggad för att köpa vinprovningar' },
-        { status: 401 },
-      )
-    }
 
     if (!courseId) {
       console.log('Checkout Session API: No courseId provided')

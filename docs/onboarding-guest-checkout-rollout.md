@@ -1,11 +1,6 @@
 # Guest Checkout & Onboarding Rollout
 
-## Feature Flag
-
-- `ENABLE_GUEST_CHECKOUT=true` enables guest checkout on the server.
-- `NEXT_PUBLIC_ENABLE_GUEST_CHECKOUT=true` enables guest checkout UI input fields on the client.
-
-Set both values in Railway/Vercel for full activation.
+Guest checkout (purchase while logged out, with account created after payment) is always enabled.
 
 ## Funnel Events (logs)
 
@@ -28,10 +23,9 @@ The implementation emits structured logs for monitoring:
 
 ### 2) Guest Checkout New Email
 
-1. Ensure `ENABLE_GUEST_CHECKOUT` and `NEXT_PUBLIC_ENABLE_GUEST_CHECKOUT` are both `true`.
-2. Open checkout while logged out.
-3. Enter guest email and complete payment.
-4. Verify:
+1. Open checkout while logged out.
+2. Enter guest email and complete payment.
+3. Verify:
    - order is completed,
    - enrollment is created,
    - receipt email is sent,
