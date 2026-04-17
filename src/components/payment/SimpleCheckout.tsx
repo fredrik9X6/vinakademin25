@@ -24,17 +24,9 @@ export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCh
   const [guestLastName, setGuestLastName] = useState('')
 
   const finalPrice = (course.price || 0) - discountAmount
-  const guestCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_GUEST_CHECKOUT === 'true'
-  const canUseGuestCheckout = !user && guestCheckoutEnabled
   const hasValidGuestEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())
 
   const handleCheckout = async () => {
-    if (!user && !guestCheckoutEnabled) {
-      setError('Du måste vara inloggad för att köpa vinprovningar')
-      onError?.('Du måste vara inloggad för att köpa vinprovningar')
-      return
-    }
-
     if (!user && !hasValidGuestEmail) {
       setError('Ange en giltig e-postadress för att fortsätta')
       onError?.('Ange en giltig e-postadress för att fortsätta')
@@ -89,7 +81,7 @@ export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCh
         </Alert>
       )}
 
-      {canUseGuestCheckout && (
+      {!user && (
         <div className="rounded-xl border border-border p-4 space-y-3 bg-muted/30">
           <p className="text-sm font-medium">Fortsätt utan konto</p>
           <p className="text-xs text-muted-foreground">
@@ -151,11 +143,7 @@ export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCh
       {/* Primary CTA Button */}
       <Button
         onClick={handleCheckout}
-        disabled={
-          isLoading ||
-          (!user && !guestCheckoutEnabled) ||
-          (!user && guestCheckoutEnabled && !hasValidGuestEmail)
-        }
+        disabled={isLoading || (!user && !hasValidGuestEmail)}
         className="w-full h-14 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
         size="lg"
       >
