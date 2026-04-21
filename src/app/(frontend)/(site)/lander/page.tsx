@@ -3,14 +3,17 @@ import config from '@/payload.config'
 import Link from 'next/link'
 import { Globe } from 'lucide-react'
 import type { Metadata } from 'next'
+import { getSiteURL } from '@/lib/site-url'
 
 export const metadata: Metadata = {
   title: 'Vinländer | Vinakademin',
   description: 'Utforska vinländer från hela världen. Lär dig om traditioner, regioner och viner från varje land.',
+  alternates: { canonical: `${getSiteURL()}/lander` },
   openGraph: {
     type: 'website',
     title: 'Vinländer | Vinakademin',
     description: 'Utforska vinländer från hela världen.',
+    url: `${getSiteURL()}/lander`,
     siteName: 'Vinakademin',
     locale: 'sv_SE',
   },

@@ -2,14 +2,17 @@ import { Metadata } from 'next'
 import { NewsletterSignupBlock } from '@/components/blocks/NewsletterSignupBlock'
 import { Card, CardContent } from '@/components/ui/card'
 import { Clock, Star, Users, Wine, UtensilsCrossed, Quote } from 'lucide-react'
+import { getSiteURL } from '@/lib/site-url'
 
 export const metadata: Metadata = {
   title: 'Nyhetsbrev - Vinakademin',
   description:
     'Få veckans bästa vintips, smaknoter och artiklar direkt i din inbox. Gratis och lärorikt för alla som älskar vin.',
+  alternates: { canonical: `${getSiteURL()}/nyhetsbrev` },
   openGraph: {
     title: 'Vinakademins Nyhetsbrev - Veckans Vintips',
     description: 'Få veckans bästa vintips, smaknoter och artiklar direkt i din inbox.',
+    url: `${getSiteURL()}/nyhetsbrev`,
     type: 'website',
   },
 }

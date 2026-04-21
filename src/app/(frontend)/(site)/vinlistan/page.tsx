@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getPayload } from 'payload'
@@ -6,6 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { VinlistanToolbar } from '@/components/vinlistan/VinlistanToolbar'
 import { VinlistanPagination } from '@/components/vinlistan/VinlistanPagination'
+import { getSiteURL } from '@/lib/site-url'
+
+export const metadata: Metadata = {
+  title: 'Vinlistan — hitta ditt nästa vin',
+  description:
+    'Bläddra bland viner recenserade och rekommenderade av Vinakademin. Sök på druva, region eller land och hitta ditt nästa vin — både vardagsviner och fynd.',
+  alternates: { canonical: `${getSiteURL()}/vinlistan` },
+  openGraph: {
+    title: 'Vinlistan — hitta ditt nästa vin | Vinakademin',
+    description:
+      'Bläddra bland viner recenserade och rekommenderade av Vinakademin. Sök på druva, region eller land.',
+    url: `${getSiteURL()}/vinlistan`,
+    type: 'website',
+  },
+}
 
 type SearchParams = {
   q?: string
