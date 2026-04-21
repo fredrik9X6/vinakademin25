@@ -2,6 +2,9 @@ import { getStripeServer, STRIPE_CONFIG, formatAmountForStripe } from './stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import type { Vinprovningar } from '@/payload-types'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('lib-stripe-products')
 
 // Types for Stripe product management
 export interface StripeProductData {
@@ -90,7 +93,7 @@ export async function syncCourseWithStripe(
   if (courseData?.title && courseData?.price !== undefined) {
     // Use provided course data directly (avoids race conditions with DB)
     course = courseData as Vinprovningar
-    console.log(`Using provided course data for Stripe sync: title="${course.title}"`)
+    log.info(`Using provided course data for Stripe sync: title="${course.title}"`)
   } else {
     // Fetch course from PayloadCMS with overrideAccess to bypass access control
     // Use draft: false to ensure we get the published version with all fields
@@ -105,7 +108,7 @@ export async function syncCourseWithStripe(
       throw new Error(`Course with ID ${courseId} not found`)
     }
 
-    console.log(`Fetched course data for Stripe sync: title="${course.title}", id=${course.id}`)
+    log.info(`Fetched course data for Stripe sync: title="${course.title}", id=${course.id}`)
   }
 
   // Validate required fields before calling Stripe
@@ -151,7 +154,7 @@ export async function syncCourseWithStripe(
     try {
       product = await stripe.products.update(course.stripeProductId, productData)
     } catch (error) {
-      console.error(`Failed to update Stripe product ${course.stripeProductId}:`, error)
+      log.error(`Failed to update Stripe product ${course.stripeProductId}:`, error)
       // If update fails, create new product
       product = await stripe.products.create(productData)
     }
@@ -168,7 +171,7 @@ export async function syncCourseWithStripe(
       // Stripe prices are immutable, so we need to create a new one and archive the old
       await stripe.prices.update(course.stripePriceId, { active: false })
     } catch (error) {
-      console.error(`Failed to archive old price ${course.stripePriceId}:`, error)
+      log.error(`Failed to archive old price ${course.stripePriceId}:`, error)
     }
   }
 
@@ -195,7 +198,7 @@ export async function syncCourseWithStripe(
     })
 
     if (!existingDoc) {
-      console.error(`Could not find course ${courseId} to update Stripe IDs`)
+      log.error(`Could not find course ${courseId} to update Stripe IDs`)
       return { productId: product.id, priceId: price.id }
     }
 
@@ -211,15 +214,15 @@ export async function syncCourseWithStripe(
       // Don't use draft: true as we want to update the published version
     })
     
-    console.log(`Successfully updated course ${courseId} with Stripe IDs`)
+    log.info(`Successfully updated course ${courseId} with Stripe IDs`)
   } catch (updateError: any) {
     // Log the error but don't throw - Stripe product/price were created successfully
     // The IDs will be synced on next save, or can be manually added
-    console.error(`Failed to save Stripe IDs to course ${courseId}:`, updateError.message)
-    console.log(`Stripe Product ID: ${product.id}`)
-    console.log(`Stripe Price ID: ${price.id}`)
-    console.log('These IDs were created successfully in Stripe but could not be saved to the database.')
-    console.log('They will be synced on next course update, or can be manually added in the admin panel.')
+    log.error(`Failed to save Stripe IDs to course ${courseId}:`, updateError.message)
+    log.info(`Stripe Product ID: ${product.id}`)
+    log.info(`Stripe Price ID: ${price.id}`)
+    log.info('These IDs were created successfully in Stripe but could not be saved to the database.')
+    log.info('They will be synced on next course update, or can be manually added in the admin panel.')
   }
 
   return {
@@ -288,11 +291,11 @@ export async function syncAllCoursesWithStripe(): Promise<void> {
     limit: 1000,
   })
 
-  console.log(`Syncing ${courses.docs.length} courses with Stripe...`)
+  log.info(`Syncing ${courses.docs.length} courses with Stripe...`)
 
   const syncPromises = courses.docs.map((course) =>
     syncCourseWithStripe(course.id.toString()).catch((error) => {
-      console.error(`Failed to sync course ${course.id}:`, error)
+      log.error(`Failed to sync course ${course.id}:`, error)
       return null
     }),
   )
@@ -300,7 +303,7 @@ export async function syncAllCoursesWithStripe(): Promise<void> {
   const results = await Promise.allSettled(syncPromises)
   const successful = results.filter((result) => result.status === 'fulfilled').length
 
-  console.log(`Successfully synced ${successful}/${courses.docs.length} courses with Stripe`)
+  log.info(`Successfully synced ${successful}/${courses.docs.length} courses with Stripe`)
 }
 
 /**
@@ -317,7 +320,7 @@ export async function getStripePriceByCourseId(courseId: string): Promise<string
 
     return course.stripePriceId || null
   } catch (error) {
-    console.error(`Failed to get Stripe price for course ${courseId}:`, error)
+    log.error(`Failed to get Stripe price for course ${courseId}:`, error)
     return null
   }
 }
@@ -353,7 +356,7 @@ export async function validateStripePrice(priceId: string): Promise<boolean> {
     const price = await stripe.prices.retrieve(priceId)
     return price.active
   } catch (error) {
-    console.error(`Failed to validate Stripe price ${priceId}:`, error)
+    log.error(`Failed to validate Stripe price ${priceId}:`, error)
     return false
   }
 }
@@ -384,7 +387,7 @@ export async function getCourseCheckoutData(courseId: string): Promise<{
       amount: course.price || 0,
     }
   } catch (error) {
-    console.error(`Failed to get checkout data for course ${courseId}:`, error)
+    log.error(`Failed to get checkout data for course ${courseId}:`, error)
     return null
   }
 }

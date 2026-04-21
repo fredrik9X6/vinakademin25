@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-reviews-course')
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -170,7 +173,7 @@ export async function POST(req: NextRequest) {
       : String(error)
 
     payload.logger.error(`Error creating course review: ${formattedDetails}`)
-    console.error('Error creating course review:', error)
+    log.error('Error creating course review:', error)
 
     if (pgError?.code === '42703') {
       return NextResponse.json(

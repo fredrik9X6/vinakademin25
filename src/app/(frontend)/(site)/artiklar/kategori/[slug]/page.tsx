@@ -9,6 +9,9 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import type { BlogPost, BlogCategory, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-artiklar-kategori-[slug]-page')
 
 interface PageProps {
   params: Promise<{
@@ -96,7 +99,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       },
     }
   } catch (error) {
-    console.error('Error generating metadata for category page:', error)
+    log.error('Error generating metadata for category page:', error)
     return {
       title: 'Kategori | Vinakademin',
       description: 'Vinakademin - din guide till vinets värld.',
@@ -316,7 +319,7 @@ async function CategoryContent({ params, searchParams }: PageProps) {
       </div>
     )
   } catch (error) {
-    console.error('Error fetching category posts:', error)
+    log.error('Error fetching category posts:', error)
     notFound()
   }
 }

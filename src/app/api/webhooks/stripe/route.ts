@@ -5,6 +5,9 @@ import config from '@/payload.config'
 import { headers } from 'next/headers'
 import crypto from 'crypto'
 import { getSiteURL } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('stripe-webhook')
 
 // Disable body parsing to get raw body for Stripe signature verification
 export const runtime = 'nodejs'
@@ -14,12 +17,12 @@ export async function POST(request: NextRequest) {
   // Get raw body as array buffer to preserve exact format for signature verification
   const body = await request.arrayBuffer()
   const bodyBuffer = Buffer.from(body)
-  
+
   const headersList = await headers()
   const signature = headersList.get('stripe-signature')
 
   if (!signature) {
-    console.error('No Stripe signature found')
+    log.error('No Stripe signature found')
     return NextResponse.json({ error: 'No signature provided' }, { status: 400 })
   }
 
@@ -32,31 +35,31 @@ export async function POST(request: NextRequest) {
     // In development with ngrok, signature verification can fail due to request modification
     // Log but don't fail - Stripe will retry and some events may still succeed
     const errorMessage = err?.message || String(err)
-    
+
     // Try to parse the event anyway for development/debugging
     // In production, you should always verify signatures
     const isDevelopment = process.env.NODE_ENV === 'development'
-    
+
     if (isDevelopment && errorMessage.includes('No signatures found')) {
-      console.warn('⚠️ Webhook signature verification failed (likely due to ngrok). Attempting to parse event anyway...')
+      log.warn('Webhook signature verification failed (likely due to ngrok). Attempting to parse event anyway')
       try {
         // Try to parse the event manually for development
         // Note: Stripe webhook events have structure: { type, data: { object: {...} } }
         const eventData = JSON.parse(bodyBuffer.toString('utf-8'))
-        
+
         // Ensure event has the correct structure
         if (eventData && typeof eventData === 'object') {
           event = eventData
-          console.warn(`⚠️ Bypassed signature verification for event type: ${event?.type || 'unknown'}`)
+          log.warn({ eventType: event?.type || 'unknown' }, 'Bypassed signature verification')
         } else {
           throw new Error('Invalid event structure')
         }
       } catch (parseError) {
-        console.error('❌ Could not parse webhook body:', parseError)
+        log.error({ err: parseError }, 'Could not parse webhook body')
         return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 })
       }
     } else {
-      console.error('❌ Webhook signature verification failed:', errorMessage)
+      log.error({ err: errorMessage }, 'Webhook signature verification failed')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
   }
@@ -99,51 +102,50 @@ export async function POST(request: NextRequest) {
         break
 
       case 'charge.updated':
-        // Log charge updates but don't need to process them
-        console.log('💳 Charge updated:', event.data.object.id, 'Status:', event.data.object.status)
+        log.info(
+          { chargeId: event.data.object.id, status: event.data.object.status },
+          'Charge updated',
+        )
         break
 
       case 'charge.succeeded':
-        // Charge succeeded - payment intent webhook handles the actual logic
-        console.log('💳 Charge succeeded:', event.data.object.id)
+        log.info({ chargeId: event.data.object.id }, 'Charge succeeded')
         break
 
       case 'payment_intent.created':
-        // Payment intent created - no action needed yet
-        console.log('💳 Payment intent created:', event.data.object.id)
+        log.info({ paymentIntentId: event.data.object.id }, 'Payment intent created')
         break
 
       case 'customer.updated':
-        // Customer updated - no action needed
-        console.log('👤 Customer updated:', event.data.object.id)
+        log.info({ customerId: event.data.object.id }, 'Customer updated')
         break
 
       default:
-        console.log(`⚠️ Unhandled event type: ${event.type}`)
+        log.warn({ eventType: event.type }, 'Unhandled event type')
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('Error processing webhook:', error)
+    log.error({ err: error }, 'Error processing webhook')
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }
 
 async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: any) {
-  console.log('🔔 Webhook: Payment succeeded:', paymentIntent.id)
+  log.info({ paymentIntentId: paymentIntent.id }, 'Payment succeeded')
 
   const { courseId, userId } = paymentIntent.metadata
 
   if (!courseId || !userId) {
     if (paymentIntent?.metadata?.checkoutMode === 'guest') {
-      console.log(
-        'ℹ️ payment_intent.succeeded for guest checkout handled in checkout.session.completed:',
-        paymentIntent.id,
+      log.info(
+        { paymentIntentId: paymentIntent.id },
+        'payment_intent.succeeded for guest checkout handled in checkout.session.completed',
       )
       return
     }
 
-    console.error('❌ Missing metadata in payment intent:', paymentIntent.id)
+    log.error({ paymentIntentId: paymentIntent.id }, 'Missing metadata in payment intent')
     return
   }
 
@@ -152,7 +154,7 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
   const courseIdInt = parseInt(courseId, 10)
 
   if (isNaN(userIdInt) || isNaN(courseIdInt)) {
-    console.error('❌ Invalid user or course ID in payment intent metadata:', { userId, courseId })
+    log.error({ userId, courseId }, 'Invalid user or course ID in payment intent metadata')
     return
   }
 
@@ -168,7 +170,7 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
 
     if (orders.docs.length > 0) {
       const order = orders.docs[0]
-      console.log('📦 Found order for payment intent:', order.id)
+      log.info({ orderId: order.id, paymentIntentId: paymentIntent.id }, 'Found order for payment intent')
 
       const paymentIntentId = paymentIntent.id
       let chargeId: string | null = null
@@ -194,7 +196,7 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
             charge.payment_method_details?.type || paymentMethodType || null
           paymentMethodDetails = charge.payment_method_details
         } catch (chargeError) {
-          console.error('⚠️ Unable to retrieve charge while handling payment intent:', chargeError)
+          log.error({ err: chargeError, chargeId }, 'Unable to retrieve charge while handling payment intent')
         }
       }
 
@@ -236,23 +238,23 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
             order: order.id,
           },
         })
-        console.log('✅ Enrollment created:', enrollment.id)
+        log.info({ enrollmentId: enrollment.id }, 'Enrollment created')
       }
 
-      console.log('✅ Order updated and enrollment processed for payment:', paymentIntent.id)
+      log.info(
+        { paymentIntentId: paymentIntent.id },
+        'Order updated and enrollment processed for payment',
+      )
     } else {
-      console.error('❌ No order found for payment intent:', paymentIntent.id)
+      log.error({ paymentIntentId: paymentIntent.id }, 'No order found for payment intent')
     }
   } catch (error) {
-    console.error('❌ Error handling payment success:', error)
-    if (error instanceof Error) {
-      console.error('Error details:', error.message)
-    }
+    log.error({ err: error }, 'Error handling payment success')
   }
 }
 
 async function handlePaymentFailed(paymentIntent: any, payload: any) {
-  console.log('Payment failed:', paymentIntent.id)
+  log.info({ paymentIntentId: paymentIntent.id }, 'Payment failed')
 
   try {
     // Update order status
@@ -275,35 +277,35 @@ async function handlePaymentFailed(paymentIntent: any, payload: any) {
         },
       })
 
-      console.log('Order marked as failed for payment:', paymentIntent.id)
+      log.info({ paymentIntentId: paymentIntent.id }, 'Order marked as failed for payment')
     }
   } catch (error) {
-    console.error('Error handling payment failure:', error)
+    log.error({ err: error }, 'Error handling payment failure')
   }
 }
 
-async function handleSubscriptionPaymentSucceeded(invoice: any, payload: any) {
-  console.log('Subscription payment succeeded:', invoice.id)
+async function handleSubscriptionPaymentSucceeded(invoice: any, _payload: any) {
+  log.info({ invoiceId: invoice.id }, 'Subscription payment succeeded')
   // Handle subscription payment success
 }
 
-async function handleSubscriptionPaymentFailed(invoice: any, payload: any) {
-  console.log('Subscription payment failed:', invoice.id)
+async function handleSubscriptionPaymentFailed(invoice: any, _payload: any) {
+  log.info({ invoiceId: invoice.id }, 'Subscription payment failed')
   // Handle subscription payment failure
 }
 
-async function handleSubscriptionCreated(subscription: any, payload: any) {
-  console.log('Subscription created:', subscription.id)
+async function handleSubscriptionCreated(subscription: any, _payload: any) {
+  log.info({ subscriptionId: subscription.id }, 'Subscription created')
   // Handle subscription creation
 }
 
-async function handleSubscriptionUpdated(subscription: any, payload: any) {
-  console.log('Subscription updated:', subscription.id)
+async function handleSubscriptionUpdated(subscription: any, _payload: any) {
+  log.info({ subscriptionId: subscription.id }, 'Subscription updated')
   // Handle subscription updates
 }
 
-async function handleSubscriptionDeleted(subscription: any, payload: any) {
-  console.log('Subscription deleted:', subscription.id)
+async function handleSubscriptionDeleted(subscription: any, _payload: any) {
+  log.info({ subscriptionId: subscription.id }, 'Subscription deleted')
   // Handle subscription deletion
 }
 
@@ -335,7 +337,7 @@ const resolveCheckoutUser = async (payload: any, session: any) => {
         }
       }
     } catch (error) {
-      console.warn('⚠️ Could not load authenticated checkout user by id:', metadataUserId, error)
+      log.warn({ err: error, userId: metadataUserId }, 'Could not load authenticated checkout user by id')
     }
   }
 
@@ -381,7 +383,7 @@ const resolveCheckoutUser = async (payload: any, session: any) => {
     } as any,
   })
 
-  console.log('✅ Created guest checkout user:', createdUser.id, email)
+  log.info({ userId: createdUser.id, email }, 'Created guest checkout user')
 
   return {
     checkoutMode,
@@ -392,13 +394,15 @@ const resolveCheckoutUser = async (payload: any, session: any) => {
 }
 
 async function handleCheckoutSessionCompleted(session: any, payload: any, stripe: any) {
-  console.log('🔔 Webhook: Checkout session completed:', session.id)
-  console.log('🔍 Session metadata:', session.metadata)
+  log.info({ sessionId: session.id, metadata: session.metadata }, 'Checkout session completed')
 
   const courseId = session?.metadata?.courseId
   const courseIdInt = parseInt(String(courseId || ''), 10)
   if (!courseId || isNaN(courseIdInt)) {
-    console.error('❌ Missing or invalid course metadata in checkout session:', session.id, { courseId })
+    log.error(
+      { sessionId: session.id, courseId },
+      'Missing or invalid course metadata in checkout session',
+    )
     return
   }
 
@@ -409,7 +413,7 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
         expand: ['discounts', 'discounts.promotion_code'],
       })
     } catch (sessionError) {
-      console.error('⚠️ Unable to hydrate checkout session discounts:', sessionError)
+      log.error({ err: sessionError }, 'Unable to hydrate checkout session discounts')
     }
 
     const resolvedCheckout = await resolveCheckoutUser(payload, session)
@@ -477,7 +481,7 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
           paymentMethodDetails = charge?.payment_method_details ?? null
         }
       } catch (intentError) {
-        console.error('⚠️ Unable to enrich payment details from Payment Intent:', intentError)
+        log.error({ err: intentError }, 'Unable to enrich payment details from Payment Intent')
       }
     }
 
@@ -569,7 +573,7 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
           order: updatedOrder.id,
         },
       })
-      console.log(`🎉 User ${userIdInt} enrolled in course ${courseIdInt}`)
+      log.info({ userId: userIdInt, courseId: courseIdInt }, 'User enrolled in course')
     }
 
     if (!wasAlreadyCompleted) {
@@ -607,36 +611,33 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
               email: resolvedCheckout.email,
             },
           })
-          console.log(`[checkout_funnel] account_claimed_email_sent`, {
-            sessionId: session.id,
-            userId: userIdInt,
-            email: resolvedCheckout.email,
-          })
+          log.info(
+            { event: 'account_claimed_email_sent', sessionId: session.id, userId: userIdInt, email: resolvedCheckout.email },
+            'checkout_funnel',
+          )
         }
 
-        console.log(`[checkout_funnel] checkout_completed`, {
-          mode: resolvedCheckout.checkoutMode,
-          sessionId: session.id,
-          userId: userIdInt,
-          courseId: courseIdInt,
-          isNewUser: resolvedCheckout.isNewUser,
-        })
+        log.info(
+          {
+            event: 'checkout_completed',
+            mode: resolvedCheckout.checkoutMode,
+            sessionId: session.id,
+            userId: userIdInt,
+            courseId: courseIdInt,
+            isNewUser: resolvedCheckout.isNewUser,
+          },
+          'checkout_funnel',
+        )
       } catch (emailError) {
-        console.error('⚠️ Error sending receipt or claim email:', emailError)
+        log.error({ err: emailError }, 'Error sending receipt or claim email')
       }
     }
   } catch (error) {
-    console.error('❌ Error handling checkout session completion:', error)
-
-    // Log detailed error information
-    if (error instanceof Error) {
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
-    }
+    log.error({ err: error }, 'Error handling checkout session completion')
 
     // If it's a PayloadCMS validation error, log the details
     if (error && typeof error === 'object' && 'data' in error) {
-      console.error('PayloadCMS error data:', error.data)
+      log.error({ errorData: (error as any).data }, 'PayloadCMS error data')
     }
   }
 }

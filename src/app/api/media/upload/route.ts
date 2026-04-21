@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-media-upload')
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest) {
       doc: media,
     })
   } catch (error: any) {
-    console.error('Media upload error:', error)
+    log.error('Media upload error:', error)
     return NextResponse.json(
       {
         error: 'Upload failed',

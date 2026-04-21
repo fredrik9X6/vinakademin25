@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-me')
 
 /**
  * PayloadCMS 3 compatible /api/users/me endpoint
@@ -50,7 +53,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Auth check error:', error)
+    log.error('Auth check error:', error)
     return NextResponse.json({ error: 'Authentication failed' }, { status: 401 })
   }
 }

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-[userId]-transactions')
 
 // GET user transactions
 export async function GET(
@@ -43,7 +46,7 @@ export async function GET(
       total: transactions.totalDocs,
     })
   } catch (error) {
-    console.error('Error fetching user transactions:', error)
+    log.error('Error fetching user transactions:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

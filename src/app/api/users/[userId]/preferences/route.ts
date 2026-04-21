@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-[userId]-preferences')
 
 // GET user preferences
 export async function GET(
@@ -40,7 +43,7 @@ export async function GET(
       data: userData.winePreferences || {},
     })
   } catch (error) {
-    console.error('Error fetching user preferences:', error)
+    log.error('Error fetching user preferences:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -83,7 +86,7 @@ export async function PUT(
       message: 'Preferences updated successfully',
     })
   } catch (error) {
-    console.error('Error updating user preferences:', error)
+    log.error('Error updating user preferences:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

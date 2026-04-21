@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getCookieDomain } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-login')
 
 /**
  * PayloadCMS 3 compatible login endpoint
@@ -110,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error: any) {
-    console.error('Login error:', error)
+    log.error('Login error:', error)
 
     // Handle PayloadCMS error format
     if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {

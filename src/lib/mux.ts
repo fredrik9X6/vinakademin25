@@ -1,4 +1,7 @@
 import Mux from '@mux/mux-node'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('lib-mux')
 
 // Only initialize Mux if environment variables are present
 const mux =
@@ -26,7 +29,7 @@ export const uploadVideoToMux = async (videoUrl: string, lessonId: string) => {
 
     return asset
   } catch (error) {
-    console.error('Error uploading video to Mux:', error)
+    log.error('Error uploading video to Mux:', error)
     throw error
   }
 }
@@ -51,7 +54,7 @@ export const createDirectUpload = async (passthrough: string, corsOrigin: string
 
     return upload
   } catch (error) {
-    console.error('Error creating Mux direct upload:', error)
+    log.error('Error creating Mux direct upload:', error)
     throw error
   }
 }
@@ -66,7 +69,7 @@ export const deleteAssetFromMux = async (assetId: string) => {
   try {
     await mux.video.assets.delete(assetId)
   } catch (error) {
-    console.error('Error deleting asset from Mux:', error)
+    log.error('Error deleting asset from Mux:', error)
     throw error
   }
 }

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-[userId]-courses')
 
 // GET user courses
 export async function GET(
@@ -165,7 +168,7 @@ export async function GET(
       total: enrollments.totalDocs,
     })
   } catch (error) {
-    console.error('Error fetching user courses:', error)
+    log.error('Error fetching user courses:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

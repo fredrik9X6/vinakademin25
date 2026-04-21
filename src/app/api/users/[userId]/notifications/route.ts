@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-[userId]-notifications')
 
 // GET user notification preferences
 export async function GET(
@@ -60,7 +63,7 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error('Error fetching notification preferences:', error)
+    log.error('Error fetching notification preferences:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -103,7 +106,7 @@ export async function PUT(
       message: 'Notification preferences updated successfully',
     })
   } catch (error) {
-    console.error('Error updating notification preferences:', error)
+    log.error('Error updating notification preferences:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

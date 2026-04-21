@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendPendingReviewEmails } from '@/lib/send-review-emails'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-cron-send-review-emails')
 
 /**
  * HTTP endpoint for triggering review emails.
@@ -18,7 +21,7 @@ export async function POST(req: NextRequest) {
     const result = await sendPendingReviewEmails()
     return NextResponse.json({ success: true, ...result })
   } catch (error) {
-    console.error('Error in send-review-emails cron:', error)
+    log.error('Error in send-review-emails cron:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

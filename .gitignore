@@ -40,6 +40,9 @@ next-env.d.ts
 
 .env
 
+# session artifacts that shouldn't be committed
+cookies.txt
+
 /media
 
 # Added by Claude Task Master

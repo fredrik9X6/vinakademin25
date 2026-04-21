@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('middleware')
 
 // Define protected paths and their required roles
 // Default role upon registration is now 'user' (set in AuthContext)
@@ -111,7 +114,7 @@ export async function middleware(request: NextRequest) {
 
   // If user is not authenticated and trying to access protected path, redirect to login
   if (!payloadToken && protectedPath) {
-    console.log(`Middleware: No auth cookie found, redirecting to login from ${pathname}`)
+    log.info(`Middleware: No auth cookie found, redirecting to login from ${pathname}`)
     url.pathname = '/logga-in'
     url.searchParams.set('from', pathname)
     return NextResponse.redirect(url)
@@ -119,7 +122,7 @@ export async function middleware(request: NextRequest) {
 
   // If user is authenticated and trying to access login/register, redirect to dashboard
   if (payloadToken && (pathname === '/logga-in' || pathname === '/registrera')) {
-    console.log(`Middleware: Auth cookie found, redirecting from ${pathname} to /profil`)
+    log.info(`Middleware: Auth cookie found, redirecting from ${pathname} to /profil`)
     url.pathname = '/profil'
     return NextResponse.redirect(url)
   }
@@ -129,7 +132,7 @@ export async function middleware(request: NextRequest) {
   // If we reach here, the user is either authenticated accessing a protected route,
   // or accessing an unprotected route.
 
-  console.log(`Middleware: Allowing access to ${pathname}.`)
+  log.info(`Middleware: Allowing access to ${pathname}.`)
   return NextResponse.next()
 }
 

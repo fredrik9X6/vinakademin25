@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation'
 import { getUser } from '@/lib/get-user'
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(auth)-onboarding-page')
 
 interface OnboardingPageProps {
   searchParams: Promise<{
@@ -24,7 +27,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     redirect(nextPath)
   }
 
-  console.log('[onboarding_funnel] onboarding_started', {
+  log.info('[onboarding_funnel] onboarding_started', {
     userId: user.id,
     source,
   })

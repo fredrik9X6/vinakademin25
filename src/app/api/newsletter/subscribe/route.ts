@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-newsletter-subscribe')
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +16,7 @@ export async function POST(request: NextRequest) {
     const beehiivPublicationId = process.env.BEEHIIV_PUBLICATION_ID
 
     if (!beehiivApiKey || !beehiivPublicationId) {
-      console.error('Beehiiv credentials not configured')
+      log.error('Beehiiv credentials not configured')
       return NextResponse.json(
         { error: 'Nyhetsbrev-tjänsten är inte konfigurerad' },
         { status: 500 },
@@ -42,7 +45,7 @@ export async function POST(request: NextRequest) {
     const beehiivData = await beehiivResponse.json()
 
     if (!beehiivResponse.ok) {
-      console.error('Beehiiv API error:', beehiivData)
+      log.error('Beehiiv API error:', beehiivData)
 
       // Handle specific Beehiiv errors
       if (beehiivData.errors?.[0]?.detail?.includes('already subscribed')) {
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest) {
       { status: 200 },
     )
   } catch (error) {
-    console.error('Newsletter subscription error:', error)
+    log.error('Newsletter subscription error:', error)
     return NextResponse.json(
       { error: 'Ett oväntat fel uppstod. Försök igen senare.' },
       { status: 500 },

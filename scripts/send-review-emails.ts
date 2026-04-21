@@ -8,19 +8,22 @@
  * Uses Payload's local API directly — no HTTP server needed.
  */
 import { sendPendingReviewEmails } from '../src/lib/send-review-emails'
+import { loggerFor } from '../src/lib/logger'
+
+const log = loggerFor('scripts-send-review-emails')
 
 async function main() {
-  console.log(`[${new Date().toISOString()}] Starting review email cron job...`)
+  log.info(`[${new Date().toISOString()}] Starting review email cron job...`)
 
   try {
     const result = await sendPendingReviewEmails()
 
-    console.log(`[${new Date().toISOString()}] Review email cron completed:`)
-    console.log(`  Processed: ${result.processed}`)
-    console.log(`  Sent: ${result.sent}`)
-    console.log(`  Errors: ${result.errors}`)
+    log.info(`[${new Date().toISOString()}] Review email cron completed:`)
+    log.info(`  Processed: ${result.processed}`)
+    log.info(`  Sent: ${result.sent}`)
+    log.info(`  Errors: ${result.errors}`)
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] Review email cron failed:`, error)
+    log.error(`[${new Date().toISOString()}] Review email cron failed:`, error)
     process.exit(1)
   }
 

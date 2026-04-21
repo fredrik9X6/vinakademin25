@@ -4,15 +4,18 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getCourseCheckoutData } from '@/lib/stripe-products'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-payments-create-payment-intent')
 
 export async function POST(request: NextRequest) {
   try {
     // Get user session
     const user = await getUser()
-    console.log('Payment API: User retrieved:', user ? `ID: ${user.id}` : 'null')
+    log.info('Payment API: User retrieved:', user ? `ID: ${user.id}` : 'null')
 
     if (!user?.id) {
-      console.log('Payment API: No user found, returning 401')
+      log.info('Payment API: No user found, returning 401')
       return NextResponse.json(
         { error: 'Du måste vara inloggad för att köpa vinprovningar' },
         { status: 401 },
@@ -21,10 +24,10 @@ export async function POST(request: NextRequest) {
 
     const payload = await getPayload({ config })
     const { courseId, paymentMethod } = await request.json()
-    console.log('Payment API: Request data:', { courseId, paymentMethod })
+    log.info('Payment API: Request data:', { courseId, paymentMethod })
 
     if (!courseId) {
-      console.log('Payment API: No courseId provided')
+      log.info('Payment API: No courseId provided')
       return NextResponse.json({ error: 'Vinprovnings-ID krävs' }, { status: 400 })
     }
 
@@ -33,19 +36,19 @@ export async function POST(request: NextRequest) {
       collection: 'vinprovningar',
       id: courseId,
     })
-    console.log(
+    log.info(
       'Payment API: Course found:',
       course ? `ID: ${course.id}, Title: ${course.title}` : 'null',
     )
 
     if (!course) {
-      console.log('Payment API: Course not found')
+      log.info('Payment API: Course not found')
       return NextResponse.json({ error: 'Vinprovningen hittades inte' }, { status: 404 })
     }
 
     // Check if course has a price
     if (!course.price || course.price <= 0) {
-      console.log('Payment API: Course has no price')
+      log.info('Payment API: Course has no price')
       return NextResponse.json({ error: 'Vinprovningen har inget pris' }, { status: 400 })
     }
 
@@ -60,13 +63,13 @@ export async function POST(request: NextRequest) {
       },
       limit: 1,
     })
-    console.log(
+    log.info(
       'Payment API: Existing enrollment check:',
       existingEnrollment.docs.length > 0 ? 'Found' : 'Not found',
     )
 
     if (existingEnrollment.docs.length > 0) {
-      console.log('Payment API: User already owns course')
+      log.info('Payment API: User already owns course')
       return NextResponse.json({ error: 'Du äger redan denna vinprovning' }, { status: 400 })
     }
 
@@ -76,14 +79,14 @@ export async function POST(request: NextRequest) {
       user.id.toString(),
       `${user.firstName || ''} ${user.lastName || ''}`.trim(),
     )
-    console.log('Payment API: Stripe customer:', customer.id)
+    log.info('Payment API: Stripe customer:', customer.id)
 
     // Get course checkout data (Stripe product/price)
     const checkoutData = await getCourseCheckoutData(courseId)
-    console.log('Payment API: Checkout data:', checkoutData ? 'Found' : 'Not found')
+    log.info('Payment API: Checkout data:', checkoutData ? 'Found' : 'Not found')
 
     if (!checkoutData) {
-      console.log('Payment API: Course not configured for payment')
+      log.info('Payment API: Course not configured for payment')
       return NextResponse.json(
         { error: 'Vinprovningen är inte konfigurerad för betalning' },
         { status: 400 },
@@ -120,10 +123,10 @@ export async function POST(request: NextRequest) {
 
     const stripe = getStripeServer()
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentData)
-    console.log('Payment API: Payment intent created:', paymentIntent.id)
+    log.info('Payment API: Payment intent created:', paymentIntent.id)
 
     // Create order record in PayloadCMS (orderNumber will be auto-generated)
-    console.log('Payment API: Creating order with data:', {
+    log.info('Payment API: Creating order with data:', {
       user: user.id.toString(),
       courseId: courseId.toString(),
       amount: course.price,
@@ -150,16 +153,16 @@ export async function POST(request: NextRequest) {
           paymentMethod: paymentMethod,
         },
       })
-      console.log('Payment API: Order created successfully:', order.id)
+      log.info('Payment API: Order created successfully:', order.id)
     } catch (orderError) {
-      console.error('Payment API: Order creation failed:', orderError)
-      console.error('Payment API: Order creation error details:', {
+      log.error('Payment API: Order creation failed:', orderError)
+      log.error('Payment API: Order creation error details:', {
         message: orderError instanceof Error ? orderError.message : 'Unknown error',
         data: (orderError as any)?.data || 'No data',
         cause: (orderError as any)?.cause || 'No cause',
       })
       // Don't throw the error - continue with payment intent even if order creation fails
-      console.log('Payment API: Continuing with payment intent despite order creation failure')
+      log.info('Payment API: Continuing with payment intent despite order creation failure')
     }
 
     return NextResponse.json({
@@ -167,7 +170,7 @@ export async function POST(request: NextRequest) {
       paymentIntentId: paymentIntent.id,
     })
   } catch (error) {
-    console.error('Payment API: Error creating payment intent:', error)
+    log.error('Payment API: Error creating payment intent:', error)
 
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

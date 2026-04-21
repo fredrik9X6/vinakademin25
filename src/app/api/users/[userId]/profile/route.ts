@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-[userId]-profile')
 
 // PUT update user profile
 export async function PUT(
@@ -50,7 +53,7 @@ export async function PUT(
       message: 'Profile updated successfully',
     })
   } catch (error) {
-    console.error('Error updating user profile:', error)
+    log.error('Error updating user profile:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

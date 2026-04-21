@@ -9,6 +9,9 @@ import Link from 'next/link'
 import { ArrowLeft, Tag } from 'lucide-react'
 import type { BlogPost, BlogCategory, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-artiklar-tagg-[slug]-page')
 
 interface PageProps {
   params: Promise<{
@@ -95,7 +98,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       },
     }
   } catch (error) {
-    console.error('Error generating metadata for tag page:', error)
+    log.error('Error generating metadata for tag page:', error)
     return {
       title: 'Tagg | Vinakademin',
       description: 'Vinakademin - din guide till vinets värld.',
@@ -326,7 +329,7 @@ async function TagContent({ params, searchParams }: PageProps) {
       </div>
     )
   } catch (error) {
-    console.error('Error fetching tag posts:', error)
+    log.error('Error fetching tag posts:', error)
     notFound()
   }
 }

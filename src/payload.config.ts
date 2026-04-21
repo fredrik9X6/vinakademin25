@@ -7,6 +7,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { resendAdapter } from '@payloadcms/email-resend'
+import { loggerFor } from './lib/logger'
 import { Media } from './collections/Media'
 import { Users } from './collections/Users'
 import { Vinprovningar } from './collections/Vinprovningar'
@@ -117,11 +118,15 @@ const nextPublicSiteURL = normalizeServerURL(process.env.NEXT_PUBLIC_SITE_URL)
 
 // Log critical config values in production (only once at startup)
 if (process.env.NODE_ENV === 'production') {
-  console.log('🔍 Payload Config Check:')
-  console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? '✅ Set' : '❌ Missing')
-  console.log('  - PAYLOAD_SECRET:', process.env.PAYLOAD_SECRET ? '✅ Set' : '❌ Missing')
-  console.log('  - PAYLOAD_PUBLIC_SERVER_URL:', payloadPublicServerURL || '❌ Not set')
-  console.log('  - NEXT_PUBLIC_SITE_URL:', nextPublicSiteURL || '❌ Not set')
+  loggerFor('payload-config').info(
+    {
+      databaseUrl: Boolean(process.env.DATABASE_URL),
+      payloadSecret: Boolean(process.env.PAYLOAD_SECRET),
+      payloadPublicServerURL: payloadPublicServerURL || null,
+      nextPublicSiteURL: nextPublicSiteURL || null,
+    },
+    'Payload config check',
+  )
 }
 
 export default buildConfig({

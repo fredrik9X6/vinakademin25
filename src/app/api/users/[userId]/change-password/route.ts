@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-[userId]-change-password')
 
 // PUT change user password
 export async function PUT(
@@ -60,7 +63,7 @@ export async function PUT(
       message: 'Password updated successfully',
     })
   } catch (error) {
-    console.error('Error changing password:', error)
+    log.error('Error changing password:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
