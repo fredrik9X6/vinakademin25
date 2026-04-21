@@ -1,3 +1,6 @@
+import { loggerFor } from '@/lib/logger'
+const log = loggerFor('lib-api-user-settings')
+
 // API utility functions for user settings
 export interface WinePreferences {
   favoriteGrapes: number[]
@@ -81,7 +84,7 @@ export async function fetchWinePreferences(userId: string): Promise<ApiResponse<
 
     return await response.json()
   } catch (error) {
-    console.error('Error fetching wine preferences:', error)
+    log.error('Error fetching wine preferences:', error)
     return {
       success: false,
       message: 'Kunde inte hämta vinpreferenser',
@@ -108,7 +111,7 @@ export async function updateWinePreferences(
 
     return await response.json()
   } catch (error) {
-    console.error('Error updating wine preferences:', error)
+    log.error('Error updating wine preferences:', error)
     return {
       success: false,
       message: 'Kunde inte uppdatera vinpreferenser',
@@ -134,7 +137,7 @@ export async function fetchNotificationPreferences(
 
     return await response.json()
   } catch (error) {
-    console.error('Error fetching notification preferences:', error)
+    log.error('Error fetching notification preferences:', error)
     return {
       success: false,
       message: 'Kunde inte hämta aviseringsinställningar',
@@ -161,7 +164,7 @@ export async function updateNotificationPreferences(
 
     return await response.json()
   } catch (error) {
-    console.error('Error updating notification preferences:', error)
+    log.error('Error updating notification preferences:', error)
     return {
       success: false,
       message: 'Kunde inte uppdatera aviseringsinställningar',
@@ -185,7 +188,7 @@ export async function fetchProfileInfo(userId: string): Promise<ApiResponse<Prof
 
     return await response.json()
   } catch (error) {
-    console.error('Error fetching profile info:', error)
+    log.error('Error fetching profile info:', error)
     return {
       success: false,
       message: 'Kunde inte hämta profilinformation',
@@ -212,7 +215,7 @@ export async function updateProfileInfo(
 
     return await response.json()
   } catch (error) {
-    console.error('Error updating profile info:', error)
+    log.error('Error updating profile info:', error)
     return {
       success: false,
       message: 'Kunde inte uppdatera profilinformation',
@@ -251,7 +254,7 @@ export async function fetchGrapes(params?: {
       data: payloadResponse.docs,
     }
   } catch (error) {
-    console.error('Error fetching grapes:', error)
+    log.error('Error fetching grapes:', error)
     return {
       success: false,
       message: 'Kunde inte hämta druvsorter',
@@ -292,7 +295,7 @@ export async function fetchRegions(params?: {
       data: payloadResponse.docs,
     }
   } catch (error) {
-    console.error('Error fetching regions:', error)
+    log.error('Error fetching regions:', error)
     return {
       success: false,
       message: 'Kunde inte hämta vinregioner',

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('reviews-api')
 
 /**
  * POST /api/reviews
@@ -11,12 +14,13 @@ import { cookies } from 'next/headers'
  * BUT handles PayloadCMS admin requests using PayloadCMS's native methods
  */
 export async function POST(request: NextRequest) {
-  console.log('🍷 [REVIEWS API] POST request received')
+  log.info('POST request received')
 
   try {
     const payload = await getPayload({ config })
     const cookieStore = await cookies()
     const token = cookieStore.get('payload-token')
+    void token
 
     // Get cookie string and verify user
     const cookieString = request.headers.get('cookie') || ''
@@ -26,7 +30,7 @@ export async function POST(request: NextRequest) {
       }),
     })
 
-    console.log('👤 [REVIEWS API] Authenticated user:', user?.id, user?.email)
+    log.info({ userId: user?.id, email: user?.email }, 'Authenticated user')
 
     // Check if this is a PayloadCMS admin request
     const isAdminRequest = request.headers.get('x-payload-admin') === 'true'
@@ -45,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     // If it's an admin request, handle it using PayloadCMS's native methods
     if (isAdminRequest || isFromAdminUI || hasPayloadQueryParams) {
-      console.log('🔄 [REVIEWS API] Handling admin request with PayloadCMS methods')
+      log.info('Handling admin request with PayloadCMS methods')
 
       // Extract query params for PayloadCMS find operations
       const depth = searchParams.get('depth') ? parseInt(searchParams.get('depth') || '0') : 0
@@ -73,7 +77,7 @@ export async function POST(request: NextRequest) {
           const bodyText = await request.text()
           if (bodyText && bodyText.trim()) {
             body = JSON.parse(bodyText)
-            console.log('📦 [REVIEWS API] Parsed JSON body:', JSON.stringify(body, null, 2))
+            log.debug({ body }, 'Parsed JSON body')
             // Check if body has actual data (not just empty object)
             isRelationshipFetch =
               Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
@@ -86,7 +90,7 @@ export async function POST(request: NextRequest) {
           const payloadField = formData.get('_payload') as string
           if (payloadField) {
             body = JSON.parse(payloadField)
-            console.log('📦 [REVIEWS API] Parsed _payload field:', JSON.stringify(body, null, 2))
+            log.debug({ body }, 'Parsed _payload field')
             isRelationshipFetch =
               Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
           } else {
@@ -96,17 +100,17 @@ export async function POST(request: NextRequest) {
               formEntries[key] = value
             }
             body = formEntries
-            console.log('📦 [REVIEWS API] Parsed FormData entries:', JSON.stringify(body, null, 2))
+            log.debug({ body }, 'Parsed FormData entries')
             isRelationshipFetch =
               Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
           }
         } else {
           const bodyText = await request.text()
-          console.log('📦 [REVIEWS API] Raw body text:', bodyText.substring(0, 500))
+          log.debug({ bodyPreview: bodyText.substring(0, 500) }, 'Raw body text')
           if (bodyText && bodyText.trim()) {
             try {
               body = JSON.parse(bodyText)
-              console.log('📦 [REVIEWS API] Parsed body from text:', JSON.stringify(body, null, 2))
+              log.debug({ body }, 'Parsed body from text')
               isRelationshipFetch =
                 Object.keys(body).length === 0 || (!body.wine && !body.rating && !body.id)
             } catch {
@@ -117,14 +121,14 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch (parseError) {
-        console.error('❌ [REVIEWS API] Error parsing admin request body:', parseError)
+        log.error({ err: parseError }, 'Error parsing admin request body')
         // If parsing fails, assume it's a relationship fetch
         isRelationshipFetch = true
       }
 
       // For relationship fetches (empty body or no required fields), use find
       if (isRelationshipFetch && !searchParams.has('id')) {
-        console.log('📋 [REVIEWS API] Admin relationship fetch request')
+        log.info('Admin relationship fetch request')
         const result = await payload.find({
           collection: 'reviews',
           where: Object.keys(where).length > 0 ? where : undefined,
@@ -138,10 +142,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Otherwise, this is a create/update operation
-      console.log(
-        '📦 [REVIEWS API] Full body before transformation:',
-        JSON.stringify(body, null, 2),
-      )
+      log.debug({ body }, 'Full body before transformation')
 
       // Transform data for PayloadCMS admin requests
       // Relationship fields come as strings or objects, need to convert to number IDs
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
       // Handle create or update operation
       if (body.id || searchParams.get('id')) {
         // Update existing review
-        console.log('🔄 [REVIEWS API] Admin update request')
+        log.info('Admin update request')
         const reviewId = body.id || searchParams.get('id')
         const result = await payload.update({
           collection: 'reviews',
@@ -192,8 +193,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ doc: result })
       } else {
         // Create new review
-        console.log('📝 [REVIEWS API] Admin create request')
-        console.log('📦 [REVIEWS API] Transformed body:', { wine: body.wine, rating: body.rating })
+        log.info({ wine: body.wine, rating: body.rating }, 'Admin create request')
         const result = await payload.create({
           collection: 'reviews',
           data: body,
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
 
     // Frontend form submission logic continues below...
     if (!user) {
-      console.log('❌ [REVIEWS API] Not authenticated')
+      log.warn('Not authenticated')
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
 
         if (!bodyText || bodyText.trim() === '') {
           // Empty body - check query params
-          console.log('⚠️ [REVIEWS API] Empty request body, checking query params')
+          log.warn('Empty request body, checking query params')
           const { searchParams } = new URL(request.url)
           if (searchParams.toString()) {
             body = Object.fromEntries(searchParams.entries())
@@ -257,15 +257,13 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (parseError) {
-      console.error('❌ [REVIEWS API] Error parsing request body:', parseError)
-      console.error('❌ [REVIEWS API] Content-Type:', contentType)
-      console.error('❌ [REVIEWS API] Request URL:', request.url)
+      log.error({ err: parseError, contentType, url: request.url }, 'Error parsing request body')
 
       // If parsing fails, try to get data from query params as fallback
       const { searchParams } = new URL(request.url)
       if (searchParams.toString()) {
         body = Object.fromEntries(searchParams.entries())
-        console.log('⚠️ [REVIEWS API] Using query params as fallback:', body)
+        log.warn({ body }, 'Using query params as fallback')
       } else {
         return NextResponse.json(
           {
@@ -277,22 +275,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('📦 [REVIEWS API] Request body:', {
-      wine: body.wine,
-      session: body.session,
-      sessionParticipant: body.sessionParticipant,
-    })
+    log.debug(
+      { wine: body.wine, session: body.session, sessionParticipant: body.sessionParticipant },
+      'Request body',
+    )
 
     // Validate required fields
     if (!body.wine) {
-      console.log(
-        '⚠️ [REVIEWS API] Missing required fields - this might be a relationship fetch request',
-      )
       // PayloadCMS relationship fields may send POST requests with empty bodies when fetching options
       // Return empty result instead of error to avoid breaking the admin UI
       const { searchParams } = new URL(request.url)
-      console.log('⚠️ [REVIEWS API] Query params:', searchParams.toString())
-      console.log('⚠️ [REVIEWS API] This appears to be a relationship fetch request')
+      log.warn(
+        { queryParams: searchParams.toString() },
+        'Missing required fields — treating as relationship fetch',
+      )
       // Return a proper PayloadCMS-formatted response for relationship fetching
       return NextResponse.json(
         {
@@ -348,7 +344,7 @@ export async function POST(request: NextRequest) {
     if (existingReviews.totalDocs > 0) {
       // Update existing review
       const existingReview = existingReviews.docs[0]
-      console.log('🔄 [REVIEWS API] Updating existing review:', existingReview.id)
+      log.info({ reviewId: existingReview.id }, 'Updating existing review')
 
       review = await payload.update({
         collection: 'reviews',
@@ -367,10 +363,10 @@ export async function POST(request: NextRequest) {
         } as any,
       })
 
-      console.log('✅ [REVIEWS API] Review updated:', review.id)
+      log.info({ reviewId: review.id }, 'Review updated')
     } else {
       // Create new review
-      console.log('📝 [REVIEWS API] Creating new review')
+      log.info('Creating new review')
 
       review = await payload.create({
         collection: 'reviews',
@@ -388,7 +384,7 @@ export async function POST(request: NextRequest) {
         } as any,
       })
 
-      console.log('✅ [REVIEWS API] Review created:', review.id)
+      log.info({ reviewId: review.id }, 'Review created')
     }
 
     return NextResponse.json(
@@ -399,7 +395,7 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     )
   } catch (error) {
-    console.error('❌ [REVIEWS API] Error creating review:', error)
+    log.error({ err: error }, 'Error creating review')
     return NextResponse.json(
       {
         error: 'Failed to create review',
@@ -477,7 +473,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(reviews, { status: 200 })
   } catch (error) {
-    console.error('Error fetching reviews:', error)
+    log.error({ err: error }, 'Error fetching reviews')
     return NextResponse.json(
       {
         error: 'Failed to fetch reviews',

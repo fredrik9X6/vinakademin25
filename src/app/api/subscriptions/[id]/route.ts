@@ -3,6 +3,9 @@ import { getStripeServer } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-subscriptions-[id]')
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -33,7 +36,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ subscription })
   } catch (error) {
-    console.error('Error fetching subscription:', error)
+    log.error('Error fetching subscription:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid hämtning av prenumeration' },
       { status: 500 },
@@ -99,7 +102,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ subscription: updatedSubscription })
   } catch (error) {
-    console.error('Error updating subscription:', error)
+    log.error('Error updating subscription:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid uppdatering av prenumeration' },
       { status: 500 },
@@ -166,7 +169,7 @@ export async function DELETE(
 
     return NextResponse.json({ subscription: updatedSubscription })
   } catch (error) {
-    console.error('Error canceling subscription:', error)
+    log.error('Error canceling subscription:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid avbokning av prenumeration' },
       { status: 500 },

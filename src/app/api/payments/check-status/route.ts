@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-payments-check-status')
 
 export async function POST(request: NextRequest) {
   try {
@@ -106,7 +109,7 @@ export async function POST(request: NextRequest) {
       enrollment: isEnrolled ? enrollment.docs[0] : null,
     })
   } catch (error) {
-    console.error('Error checking payment status:', error)
+    log.error('Error checking payment status:', error)
 
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

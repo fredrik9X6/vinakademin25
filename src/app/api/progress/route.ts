@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-progress')
 
 // GET user progress for a specific course
 export async function GET(request: NextRequest) {
@@ -299,7 +302,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(courseProgress)
   } catch (error) {
-    console.error('Error fetching course progress:', error)
+    log.error('Error fetching course progress:', error)
     return NextResponse.json({ error: 'Failed to fetch course progress' }, { status: 500 })
   }
 }
@@ -526,7 +529,7 @@ export async function POST(request: NextRequest) {
         }
       } catch (err) {
         // Non-critical: log but don't fail the progress update
-        console.error('Error updating review threshold on enrollment:', err)
+        log.error('Error updating review threshold on enrollment:', err)
       }
     }
 
@@ -540,7 +543,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error updating lesson progress:', error)
+    log.error('Error updating lesson progress:', error)
     return NextResponse.json({ error: 'Failed to update lesson progress' }, { status: 500 })
   }
 }

@@ -1,5 +1,8 @@
 import type { CollectionConfig } from 'payload'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('collections-Reviews')
 
 export const Reviews: CollectionConfig = {
   slug: 'reviews',
@@ -179,7 +182,7 @@ export const Reviews: CollectionConfig = {
                 }
               } catch (error) {
                 // If wine fetch fails, return fallback
-                console.error('Error generating review title:', error)
+                log.error('Error generating review title:', error)
               }
             }
             

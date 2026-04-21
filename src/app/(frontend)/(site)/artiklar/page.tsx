@@ -6,6 +6,9 @@ import { BlogPostCard, BlogFilters } from '@/components/blog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { BlogPost, BlogCategory, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-artiklar-page')
 
 interface PageProps {
   searchParams: Promise<{
@@ -251,7 +254,7 @@ async function ArticlesContent({ searchParams }: PageProps) {
       </div>
     )
   } catch (error) {
-    console.error('Error fetching blog posts:', error)
+    log.error('Error fetching blog posts:', error)
     notFound()
   }
 }

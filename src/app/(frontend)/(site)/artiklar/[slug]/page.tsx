@@ -10,6 +10,9 @@ import { Clock } from 'lucide-react'
 import { calculateReadingTime } from '@/lib/reading-time'
 import type { BlogPost, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-artiklar-[slug]-page')
 
 interface PageProps {
   params: Promise<{
@@ -165,7 +168,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       },
     }
   } catch (error) {
-    console.error('Error generating metadata for blog post:', error)
+    log.error('Error generating metadata for blog post:', error)
     return {
       title: 'Artikel | Vinakademin',
       description: 'Vinakademin - din guide till vinets värld.',
@@ -339,7 +342,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
       </>
     )
   } catch (error) {
-    console.error('Error fetching blog post:', error)
+    log.error('Error fetching blog post:', error)
     notFound()
   }
 }

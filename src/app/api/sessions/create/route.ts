@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-sessions-create')
 
 /**
  * Generate a random 6-character join code (e.g., WINE42, ABC123)
@@ -128,7 +131,7 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     )
   } catch (error) {
-    console.error('Error creating session:', error)
+    log.error('Error creating session:', error)
     return NextResponse.json(
       {
         error: 'Internal server error',

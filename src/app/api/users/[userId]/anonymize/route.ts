@@ -3,6 +3,9 @@ import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import type { User } from '@/payload-types'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-[userId]-anonymize')
 
 // POST to anonymize/delete user account
 // Moved from DELETE /api/users/[userId] to avoid conflicting with PayloadCMS REST API
@@ -97,14 +100,14 @@ export async function POST(
     }
 
     // Log the deletion for audit purposes
-    console.log(`User account ${userId} has been anonymized due to deletion request`)
+    log.info(`User account ${userId} has been anonymized due to deletion request`)
 
     return NextResponse.json({
       success: true,
       message: 'Account has been successfully deleted and anonymized',
     })
   } catch (error) {
-    console.error('Error deleting user account:', error)
+    log.error('Error deleting user account:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

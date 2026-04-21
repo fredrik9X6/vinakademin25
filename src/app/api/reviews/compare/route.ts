@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-reviews-compare')
 
 /**
  * GET /api/reviews/compare?sessionId=<sessionId>&lessonId=<lessonId>
@@ -137,7 +140,7 @@ export async function GET(request: NextRequest) {
       totalReviews: reviews.totalDocs,
     })
   } catch (error) {
-    console.error('Error fetching reviews for comparison:', error)
+    log.error('Error fetching reviews for comparison:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

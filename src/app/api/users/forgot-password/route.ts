@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-forgot-password')
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +26,7 @@ export async function POST(request: NextRequest) {
       message: 'If an account with that email exists, a password reset link has been sent.',
     })
   } catch (error) {
-    console.error('Forgot password error:', error)
+    log.error('Forgot password error:', error)
 
     // Don't reveal if the email exists or not for security
     return NextResponse.json({

@@ -8,6 +8,9 @@ import React from 'react'
 
 import { importMap } from './admin/importMap.js'
 import './custom.scss'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(payload)-layout')
 
 type Args = {
   children: React.ReactNode
@@ -22,7 +25,7 @@ const serverFunction: ServerFunctionClient = async function (args) {
       importMap,
     })
   } catch (error: any) {
-    console.error('❌ serverFunction error:', {
+    log.error('❌ serverFunction error:', {
       message: error?.message,
       digest: error?.digest,
       stack: error?.stack?.split('\n').slice(0, 3).join('\n'),
@@ -33,12 +36,12 @@ const serverFunction: ServerFunctionClient = async function (args) {
 
 const Layout = async ({ children }: Args) => {
   try {
-    console.log('🔍 Admin layout render starting...')
+    log.info('🔍 Admin layout render starting...')
     const result = await RootLayout({ config, importMap, serverFunction, children })
-    console.log('✅ Admin layout render successful')
+    log.info('✅ Admin layout render successful')
     return result
   } catch (error: any) {
-    console.error('❌ Admin layout error:', {
+    log.error('❌ Admin layout error:', {
       message: error?.message,
       digest: error?.digest,
       stack: error?.stack?.split('\n').slice(0, 5).join('\n'),

@@ -3,6 +3,9 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { createDirectUpload } from '@/lib/mux'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-mux-upload')
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,7 +64,7 @@ export async function POST(request: NextRequest) {
       uploadId: upload.id,
     })
   } catch (error: any) {
-    console.error('Mux direct upload error:', error)
+    log.error('Mux direct upload error:', error)
     return NextResponse.json(
       { error: 'Upload creation failed', message: error?.message || 'Could not create upload URL' },
       { status: 500 },

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-orders-user-[userId]')
 
 export async function GET(
   request: NextRequest,
@@ -35,7 +38,7 @@ export async function GET(
 
     return NextResponse.json({ orders: orders.docs })
   } catch (error) {
-    console.error('Error fetching user orders:', error)
+    log.error('Error fetching user orders:', error)
     return NextResponse.json({ error: 'Ett fel uppstod vid hämtning av ordrar' }, { status: 500 })
   }
 }

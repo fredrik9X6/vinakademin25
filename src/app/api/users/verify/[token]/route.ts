@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-verify-[token]')
 
 export async function POST(
   request: NextRequest,
@@ -24,7 +27,7 @@ export async function POST(
       message: 'Email verified successfully',
     })
   } catch (error) {
-    console.error('Email verification error:', error)
+    log.error('Email verification error:', error)
 
     // Handle PayloadCMS validation errors
     if (error && typeof error === 'object' && 'errors' in error) {

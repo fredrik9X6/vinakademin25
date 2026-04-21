@@ -9,6 +9,9 @@ import Image from 'next/image'
 import { transformCourseWithModules } from '@/lib/course-utils-server'
 import { getTotalCourseItems, countFreeItems } from '@/lib/course-utils'
 import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-vinprovningar-page')
 
 /**
  * Validates and returns a valid image URL, or null if invalid
@@ -17,7 +20,7 @@ function getValidImageUrl(url: string | undefined | null): string | null {
   if (!url || typeof url !== 'string') return null
   // Check for invalid filenames (just a dash, empty, or undefined in path)
   if (url.includes('/-.') || url.endsWith('/-') || url.includes('undefined')) {
-    console.warn('Invalid image URL detected:', url)
+    log.warn('Invalid image URL detected:', url)
     return null
   }
   return url

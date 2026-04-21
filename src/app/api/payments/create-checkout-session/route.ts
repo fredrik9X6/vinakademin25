@@ -4,11 +4,14 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { getSiteURL } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-payments-create-checkout-session')
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const logCheckoutEvent = (event: string, details: Record<string, unknown>) => {
-  console.log(`[checkout_funnel] ${event}`, details)
+  log.info(`[checkout_funnel] ${event}`, details)
 }
 
 export async function POST(request: NextRequest) {
@@ -21,7 +24,7 @@ export async function POST(request: NextRequest) {
     const checkoutMode: 'authenticated' | 'guest' = user?.id ? 'authenticated' : 'guest'
 
     if (!courseId) {
-      console.log('Checkout Session API: No courseId provided')
+      log.info('Checkout Session API: No courseId provided')
       return NextResponse.json({ error: 'Vinprovnings-ID krävs' }, { status: 400 })
     }
 
@@ -30,19 +33,19 @@ export async function POST(request: NextRequest) {
       collection: 'vinprovningar',
       id: courseId,
     })
-    console.log(
+    log.info(
       'Checkout Session API: Course found:',
       course ? `ID: ${course.id}, Title: ${course.title}` : 'null',
     )
 
     if (!course) {
-      console.log('Checkout Session API: Course not found')
+      log.info('Checkout Session API: Course not found')
       return NextResponse.json({ error: 'Vinprovningen hittades inte' }, { status: 404 })
     }
 
     // Check if course has a price
     if (!course.price || course.price <= 0) {
-      console.log('Checkout Session API: Course has no price')
+      log.info('Checkout Session API: Course has no price')
       return NextResponse.json({ error: 'Vinprovningen har inget pris' }, { status: 400 })
     }
 
@@ -191,12 +194,12 @@ export async function POST(request: NextRequest) {
             },
           },
         })
-        console.log('Checkout Session API: Order created successfully:', order.id)
+        log.info('Checkout Session API: Order created successfully:', order.id)
       } else {
-        console.log('Checkout Session API: Skipping pre-order creation for guest checkout without known user')
+        log.info('Checkout Session API: Skipping pre-order creation for guest checkout without known user')
       }
     } catch (orderError) {
-      console.error('Checkout Session API: Order creation failed:', orderError)
+      log.error('Checkout Session API: Order creation failed:', orderError)
     }
 
     return NextResponse.json({
@@ -204,7 +207,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     })
   } catch (error) {
-    console.error('Checkout Session API: Error creating checkout session:', error)
+    log.error('Checkout Session API: Error creating checkout session:', error)
 
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

@@ -27,6 +27,29 @@ const eslintConfig = [
       'react/no-unescaped-entities': 'off',
       'react-hooks/exhaustive-deps': 'off',
       'eslint-comments/no-unused-disable': 'off',
+      // Server code uses the pino logger from src/lib/logger.ts; console.warn/error
+      // are permitted as last-resort fallbacks. Client components keep full console access
+      // via the override below.
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
+  {
+    // Allow raw console.* in client-only directories — browser devtools is the right destination.
+    files: [
+      'src/components/**/*.{ts,tsx}',
+      'src/hooks/**/*.{ts,tsx}',
+      'src/context/**/*.{ts,tsx}',
+      'src/app/(frontend)/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    // CLI scripts legitimately print to stdout as their primary UX.
+    files: ['scripts/**/*.{js,mjs,ts}'],
+    rules: {
+      'no-console': 'off',
     },
   },
 ]

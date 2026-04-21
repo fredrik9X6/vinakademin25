@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-sessions-[sessionId]')
 
 /**
  * GET /api/sessions/[sessionId]
@@ -150,7 +153,7 @@ export async function GET(
 
     return NextResponse.json(responseData, { status: 200 })
   } catch (error) {
-    console.error('Error getting session:', error)
+    log.error('Error getting session:', error)
     return NextResponse.json(
       {
         error: 'Internal server error',
@@ -237,7 +240,7 @@ export async function PATCH(
       { status: 200 },
     )
   } catch (error) {
-    console.error('Error updating session:', error)
+    log.error('Error updating session:', error)
     return NextResponse.json(
       {
         error: 'Internal server error',
@@ -317,7 +320,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Session ended' }, { status: 200 })
   } catch (error) {
-    console.error('Error ending session:', error)
+    log.error('Error ending session:', error)
     return NextResponse.json(
       {
         error: 'Internal server error',

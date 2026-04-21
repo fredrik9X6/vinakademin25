@@ -8,6 +8,9 @@ import CourseQuizViewer from '@/components/course/CourseQuizViewer'
 import CourseCompletionPage from '@/components/course/CourseCompletionPage'
 import { cookies } from 'next/headers'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-vinprovningar-[slug]-page')
 
 interface CoursePageProps {
   params: Promise<{
@@ -228,7 +231,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
         }
       }
     } catch (error) {
-      console.error('Error fetching session:', error)
+      log.error('Error fetching session:', error)
     }
   }
 
@@ -265,7 +268,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     }
   } catch (error) {
     // If there's an error checking enrollment, assume no access
-    console.error('Error checking course enrollment:', error)
+    log.error('Error checking course enrollment:', error)
     userHasAccess = false
   }
 
@@ -318,7 +321,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
         }
       }
     } catch (error) {
-      console.error('Error fetching user progress:', error)
+      log.error('Error fetching user progress:', error)
     }
   }
 
@@ -379,7 +382,7 @@ export async function generateStaticParams() {
   )
 
   if (!process.env.PAYLOAD_SECRET || !hasDatabaseUrl) {
-    console.warn(
+    log.warn(
       '[generateStaticParams] Skipping course prebuild – missing PAYLOAD_SECRET or database URL.',
     )
     return []
@@ -400,7 +403,7 @@ export async function generateStaticParams() {
         slug: course.slug,
       }))
   } catch (error) {
-    console.warn('[generateStaticParams] Failed to fetch courses during build:', error)
+    log.warn('[generateStaticParams] Failed to fetch courses during build:', error)
     return []
   }
 }

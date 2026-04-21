@@ -3,6 +3,9 @@ import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getStripeServer } from '@/lib/stripe'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-orders-[orderId]-receipt')
 
 export async function GET(
   request: NextRequest,
@@ -64,7 +67,7 @@ export async function GET(
         }
       }
     } catch (stripeError) {
-      console.error('Error fetching receipt from Stripe:', stripeError)
+      log.error('Error fetching receipt from Stripe:', stripeError)
       return NextResponse.json({ error: 'Kunde inte hämta kvitto från Stripe' }, { status: 500 })
     }
 
@@ -77,7 +80,7 @@ export async function GET(
 
     return NextResponse.json({ receiptUrl })
   } catch (error) {
-    console.error('Error fetching receipt:', error)
+    log.error('Error fetching receipt:', error)
     return NextResponse.json({ error: 'Ett fel uppstod vid hämtning av kvitto' }, { status: 500 })
   }
 }

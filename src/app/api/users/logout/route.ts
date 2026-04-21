@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getCookieDomain } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-logout')
 
 /**
  * PayloadCMS 3 compatible logout endpoint
@@ -43,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error('Logout error:', error)
+    log.error('Logout error:', error)
     return NextResponse.json({ error: 'Logout failed' }, { status: 500 })
   }
 }

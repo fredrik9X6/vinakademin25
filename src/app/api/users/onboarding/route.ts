@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-onboarding')
 
 const logOnboardingEvent = (event: string, details: Record<string, unknown>) => {
-  console.log(`[onboarding_funnel] ${event}`, details)
+  log.info(`[onboarding_funnel] ${event}`, details)
 }
 
 export async function GET() {
@@ -98,7 +101,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true, onboarding: (updatedUser as any).onboarding })
   } catch (error) {
-    console.error('Error updating onboarding preferences:', error)
+    log.error('Error updating onboarding preferences:', error)
     return NextResponse.json(
       { error: 'Kunde inte spara onboarding-valen, försök igen.' },
       { status: 500 },

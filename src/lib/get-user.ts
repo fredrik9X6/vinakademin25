@@ -1,6 +1,9 @@
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('lib-get-user')
 
 export const getUser = async () => {
   const payload = await getPayload({ config })
@@ -8,12 +11,12 @@ export const getUser = async () => {
   const cookieString = headersList.get('cookie') || ''
 
   if (!cookieString) {
-    console.log('getUser: No cookie header found.')
+    log.info('getUser: No cookie header found.')
     return null
   }
 
   try {
-    console.log('getUser: Verifying authentication...')
+    log.info('getUser: Verifying authentication...')
     const { user } = await payload.auth({
       headers: new Headers({
         Cookie: cookieString,
@@ -21,14 +24,14 @@ export const getUser = async () => {
     })
 
     if (user) {
-      console.log('getUser: User authenticated, user:', user.id)
+      log.info('getUser: User authenticated, user:', user.id)
       return user
     } else {
-      console.log('getUser: No user found in authentication result.')
+      log.info('getUser: No user found in authentication result.')
       return null
     }
   } catch (error) {
-    console.error('getUser: Error verifying authentication:', error)
+    log.error('getUser: Error verifying authentication:', error)
     return null
   }
 }

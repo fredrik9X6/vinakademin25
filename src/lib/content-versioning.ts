@@ -1,6 +1,9 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import type { Vinprovningar, Module, ContentItem, User } from '@/payload-types'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('lib-content-versioning')
 
 interface VersionInfo {
   version: string
@@ -83,7 +86,7 @@ export class ContentVersionManager {
         changes,
       }
     } catch (error) {
-      console.error('Error creating version:', error)
+      log.error('Error creating version:', error)
       throw error
     }
   }
@@ -128,7 +131,7 @@ export class ContentVersionManager {
 
       return publishedVersion
     } catch (error) {
-      console.error('Error publishing version:', error)
+      log.error('Error publishing version:', error)
       throw error
     }
   }
@@ -151,7 +154,7 @@ export class ContentVersionManager {
 
       return content?.versionHistory || []
     } catch (error) {
-      console.error('Error fetching version history:', error)
+      log.error('Error fetching version history:', error)
       throw error
     }
   }
@@ -197,7 +200,7 @@ export class ContentVersionManager {
 
       return rolledBackContent
     } catch (error) {
-      console.error('Error rolling back version:', error)
+      log.error('Error rolling back version:', error)
       throw error
     }
   }
@@ -225,9 +228,9 @@ export class ContentVersionManager {
 
       // Note: In a production system, you would set up a job scheduler
       // to automatically publish content at the scheduled time
-      console.log(`Content scheduled for release at ${releaseDate.toISOString()}`)
+      log.info(`Content scheduled for release at ${releaseDate.toISOString()}`)
     } catch (error) {
-      console.error('Error scheduling release:', error)
+      log.error('Error scheduling release:', error)
       throw error
     }
   }
@@ -259,7 +262,7 @@ export class ContentVersionManager {
         await this.notifyUsersOfRetirement(id, migrationPath)
       }
     } catch (error) {
-      console.error('Error retiring content:', error)
+      log.error('Error retiring content:', error)
       throw error
     }
   }
@@ -306,7 +309,7 @@ export class ContentVersionManager {
 
       return updates
     } catch (error) {
-      console.error('Error fetching content updates:', error)
+      log.error('Error fetching content updates:', error)
       throw error
     }
   }
@@ -345,11 +348,11 @@ export class ContentVersionManager {
         // Create notifications for each enrolled user
         for (const enrollment of enrollments.docs) {
           // In a real system, you would send email notifications or push notifications
-          console.log(`Notifying user ${enrollment.user} of course update: ${content.title}`)
+          log.info(`Notifying user ${enrollment.user} of course update: ${content.title}`)
         }
       }
     } catch (error) {
-      console.error('Error notifying users of update:', error)
+      log.error('Error notifying users of update:', error)
     }
   }
 
@@ -371,12 +374,12 @@ export class ContentVersionManager {
 
       for (const enrollment of enrollments.docs) {
         // In a real system, send retirement notification
-        console.log(
+        log.info(
           `Notifying user ${enrollment.user} of course retirement${migrationPath ? ` - Migration path: ${migrationPath}` : ''}`,
         )
       }
     } catch (error) {
-      console.error('Error notifying users of retirement:', error)
+      log.error('Error notifying users of retirement:', error)
     }
   }
 }

@@ -7,6 +7,9 @@ import { CheckCircle, ArrowRight, BookOpen, Sparkles, Mail, Clock, Shield } from
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/stripe'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-checkout-success-page')
 
 export const dynamic = 'force-dynamic'
 
@@ -73,7 +76,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
       }
     }
   } catch (error) {
-    console.error('Error fetching order:', error)
+    log.error('Error fetching order:', error)
   }
 
   const courseImage =

@@ -3,6 +3,9 @@ import { getStripeServer } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-subscriptions-user-[userId]-reactivate')
 
 export async function POST(
   request: NextRequest,
@@ -75,7 +78,7 @@ export async function POST(
       message: 'Prenumeration återaktiverad framgångsrikt',
     })
   } catch (error) {
-    console.error('Error reactivating subscription:', error)
+    log.error('Error reactivating subscription:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid återaktivering av prenumeration' },
       { status: 500 },
