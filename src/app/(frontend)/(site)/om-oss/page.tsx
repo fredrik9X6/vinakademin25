@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { getSiteURL } from '@/lib/site-url'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
   title: 'Om Oss | Vinakademin',
   description:
     'Möt grundarna bakom Vinakademin och läs om vår resa att göra vinkunskap tillgänglig för alla.',
+  alternates: { canonical: `${getSiteURL()}/om-oss` },
 }
 
 const values = [

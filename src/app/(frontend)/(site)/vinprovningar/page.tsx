@@ -1,5 +1,7 @@
+import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { getSiteURL } from '@/lib/site-url'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,6 +14,20 @@ import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
 import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('(frontend)-(site)-vinprovningar-page')
+
+export const metadata: Metadata = {
+  title: 'Vinprovningar online — guidade vinkurser på svenska',
+  description:
+    'Bläddra bland Vinakademins vinprovningar och onlinekurser. Lär dig om vindistrikt, druvor och provningsteknik i din egen takt — från nybörjare till entusiast.',
+  alternates: { canonical: `${getSiteURL()}/vinprovningar` },
+  openGraph: {
+    title: 'Vinprovningar online — guidade vinkurser | Vinakademin',
+    description:
+      'Bläddra bland Vinakademins vinprovningar och onlinekurser. Lär dig om vindistrikt, druvor och provningsteknik i din egen takt.',
+    url: `${getSiteURL()}/vinprovningar`,
+    type: 'website',
+  },
+}
 
 /**
  * Validates and returns a valid image URL, or null if invalid

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { Vinprovningar, Module, ContentItem } from '@/payload-types'
@@ -8,6 +9,7 @@ import CourseQuizViewer from '@/components/course/CourseQuizViewer'
 import CourseCompletionPage from '@/components/course/CourseCompletionPage'
 import { cookies } from 'next/headers'
 import { getUser } from '@/lib/get-user'
+import { getSiteURL } from '@/lib/site-url'
 import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('(frontend)-(site)-vinprovningar-[slug]-page')
@@ -22,6 +24,77 @@ interface CoursePageProps {
     session?: string
     completed?: string
   }>
+}
+
+export async function generateMetadata({ params }: CoursePageProps): Promise<Metadata> {
+  const { slug } = await params
+  const payload = await getPayload({ config })
+
+  const result = await payload.find({
+    collection: 'vinprovningar',
+    where: {
+      and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
+    },
+    depth: 1,
+    limit: 1,
+  })
+
+  const course = result.docs[0] as Vinprovningar | undefined
+  const base = getSiteURL()
+  const canonical = `${base}/vinprovningar/${slug}`
+
+  if (!course) {
+    return {
+      title: 'Vinprovning hittades inte',
+      robots: { index: false, follow: false },
+      alternates: { canonical },
+    }
+  }
+
+  const title = course.title
+  const description =
+    (course.description && course.description.trim().slice(0, 160)) ||
+    `Vinprovning online med Vinakademin — ${course.title}. Lär dig om vin i din egen takt.`
+
+  const featured =
+    typeof course.featuredImage === 'object' && course.featuredImage?.url
+      ? {
+          url: course.featuredImage.url.startsWith('http')
+            ? course.featuredImage.url
+            : `${base}${course.featuredImage.url}`,
+          alt: course.featuredImage.alt || course.title,
+          width: course.featuredImage.width ?? 1200,
+          height: course.featuredImage.height ?? 630,
+        }
+      : null
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: 'website',
+      ...(featured && {
+        images: [
+          {
+            url: featured.url,
+            width: featured.width,
+            height: featured.height,
+            alt: featured.alt,
+          },
+        ],
+      }),
+    },
+    twitter: {
+      card: featured ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      ...(featured && { images: [featured.url] }),
+    },
+  }
 }
 
 export default async function CoursePage({ params, searchParams }: CoursePageProps) {

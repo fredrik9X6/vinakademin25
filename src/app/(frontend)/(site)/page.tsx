@@ -1,5 +1,7 @@
+import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { getSiteURL } from '@/lib/site-url'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,6 +27,20 @@ import { transformCourseWithModules } from '@/lib/course-utils-server'
 import { NewsletterSignupBlock } from '@/components/blocks/NewsletterSignupBlock'
 import { NeuralHeroWithBanner } from '@/components/home/NeuralHeroWithBanner'
 import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
+
+export const metadata: Metadata = {
+  title: 'Vinprovningar online & vinkurser på svenska',
+  description:
+    'Upptäck vin med Vinakademin — vinprovningar online, guidade vinkurser och vinkunskap för både nybörjare och entusiaster. Lär dig av experter och bygg din egen vinlista.',
+  alternates: { canonical: `${getSiteURL()}/` },
+  openGraph: {
+    title: 'Vinprovningar online & vinkurser | Vinakademin',
+    description:
+      'Upptäck vin med Vinakademin — vinprovningar online, guidade vinkurser och vinkunskap för både nybörjare och entusiaster.',
+    url: `${getSiteURL()}/`,
+    type: 'website',
+  },
+}
 
 export default async function HomePage() {
   const payload = await getPayload({ config })
