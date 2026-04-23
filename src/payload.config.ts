@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { resendAdapter } from '@payloadcms/email-resend'
 import { loggerFor } from './lib/logger'
+import { migrations } from './migrations'
 import { Media } from './collections/Media'
 import { Users } from './collections/Users'
 import { Vinprovningar } from './collections/Vinprovningar'
@@ -217,10 +218,18 @@ export default buildConfig({
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: postgresAdapter({
-    push: true,
+    // push only runs in dev mode under the Payload CLI's hot-reload path.
+    // In production (`next start`) push is a no-op — schema changes must land
+    // as migrations. Default is false (safe); opt in per-env by setting
+    // PAYLOAD_DB_PUSH=true. Keep off on shared/prod databases.
+    push: process.env.PAYLOAD_DB_PUSH === 'true',
     pool: {
       connectionString: databaseConnectionString,
     },
+    // Run pending migrations at server init so Railway deploys apply schema
+    // changes automatically. Long-lived Node process → init-time is the right
+    // hook per Payload's guidance.
+    prodMigrations: migrations,
   }),
   sharp,
   plugins: [
