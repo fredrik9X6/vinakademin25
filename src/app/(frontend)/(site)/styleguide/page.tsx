@@ -28,7 +28,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Palette,
   Type,
-  Image,
+  Image as ImageIcon,
   MessagesSquare,
   Grid,
   MousePointer2,
@@ -347,7 +347,7 @@ export default function StyleguidePage() {
           <CardHeader className="space-y-1 pb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-950">
-                <Image className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                <ImageIcon className="h-5 w-5 text-orange-600 dark:text-orange-400" />
               </div>
               <div>
                 <CardTitle className="text-2xl">Logotyp</CardTitle>
@@ -621,7 +621,7 @@ export default function StyleguidePage() {
           <TabsContent value="brand" className="space-y-6">
             <Card>
               <CardHeader className="flex flex-row items-center gap-3">
-                <Image className="h-6 w-6 text-orange-500" />
+                <ImageIcon className="h-6 w-6 text-orange-500" />
                 <div>
                   <CardTitle>Varumärkesresurser</CardTitle>
                   <CardDescription>Nedladdningar, frizon och felanvändning</CardDescription>

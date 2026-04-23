@@ -70,8 +70,24 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 
     const canonicalUrl = `${baseUrl}/artiklar/tagg/${slug}${params.toString() ? `?${params.toString()}` : ''}`
 
+    // Thin-content guard: noindex tag pages with fewer than 3 published posts
+    // so shallow archives don't compete with deeper content in search.
+    const MIN_POSTS_FOR_INDEX = 3
+    const postCountResult = await payload.find({
+      collection: 'blog-posts',
+      where: {
+        and: [
+          { _status: { equals: 'published' } },
+          { tags: { contains: tag.id } },
+        ],
+      },
+      limit: 0,
+      depth: 0,
+    })
+    const isThin = (postCountResult.totalDocs || 0) < MIN_POSTS_FOR_INDEX
+
     const robotsContent =
-      currentPage > 1
+      currentPage > 1 || isThin
         ? 'noindex, follow'
         : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
 

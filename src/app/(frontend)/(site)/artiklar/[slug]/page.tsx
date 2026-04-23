@@ -128,7 +128,9 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       authors: [{ name: authorName }],
       creator: authorName,
       publisher: 'Vinakademin',
-      robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+      robots: post.noindex
+        ? 'noindex, follow'
+        : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
       alternates: {
         canonical: canonicalUrl,
       },
@@ -251,6 +253,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
         {/* PayloadCMS 3 native live preview component */}
         <RefreshRouteOnSave />
 
+        {!post.noindex && (
         <ArticleJsonLd
           siteURL={siteURL}
           url={canonicalUrl}
@@ -271,6 +274,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
           section={categoryName}
           keywords={tagNames}
         />
+        )}
 
         <BreadcrumbJsonLd
           items={[

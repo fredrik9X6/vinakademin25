@@ -18,6 +18,7 @@ import { ExternalLink, Clock, ArrowRight, CalendarDays, Sparkles } from 'lucide-
 import type { Metadata } from 'next'
 import { BlogPostCard } from '@/components/blog'
 import { getSiteURL } from '@/lib/site-url'
+import { resolveSeo } from '@/lib/seo'
 import { BreadcrumbJsonLd, WineProductJsonLd } from '@/components/seo/JsonLd'
 
 type PageProps = {
@@ -106,29 +107,43 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
   const { wine } = data as any
-  const title = `${wine.name}${wine.vintage ? ` · ${wine.vintage}` : ''} | Vinakademin`
-  const description = `${wine.winery || ''}${wine.region?.name ? ` · ${wine.region.name}` : ''}$${
-    wine.country?.name ? `, ${wine.country.name}` : ''
-  }`.replace(/\$+/g, '')
+  const fallbackTitle = `${wine.name}${wine.vintage ? ` · ${wine.vintage}` : ''} | Vinakademin`
+  const fallbackDescription = [
+    wine.winery,
+    wine.region?.name,
+    wine.country?.name,
+  ]
+    .filter(Boolean)
+    .join(' · ') || `${wine.name} — vin i Vinakademins vinlista`
   const canonicalUrl = `${baseUrl}/vinlistan/${wine.slug || wine.id}`
+
+  const seo = resolveSeo(wine, {
+    title: fallbackTitle,
+    description: fallbackDescription,
+    imageUrl: wine.image?.url || null,
+  })
+
   return {
-    title,
-    description,
-    robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+    title: seo.title,
+    description: seo.description,
+    robots: seo.noindex
+      ? 'noindex, follow'
+      : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     alternates: { canonical: canonicalUrl },
     openGraph: {
       type: 'article',
-      title,
-      description,
+      title: seo.title,
+      description: seo.description,
       url: canonicalUrl,
       siteName: 'Vinakademin',
       locale: 'sv_SE',
-      images: wine.image?.url ? [{ url: wine.image.url }] : undefined,
+      images: seo.imageUrl ? [{ url: seo.imageUrl }] : undefined,
     },
     twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
+      card: seo.imageUrl ? 'summary_large_image' : 'summary',
+      title: seo.title,
+      description: seo.description,
+      ...(seo.imageUrl && { images: [seo.imageUrl] }),
     },
   }
 }
@@ -377,24 +392,26 @@ export default async function WineDetailPage({ params }: PageProps) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <WineProductJsonLd
-        siteURL={siteURL}
-        name={wine.name}
-        slug={wineSlug}
-        description={productDescription}
-        imageUrl={
-          wine.image?.url
-            ? wine.image.url.startsWith('http')
-              ? wine.image.url
-              : `${siteURL}${wine.image.url}`
-            : null
-        }
-        producer={wine.winery || null}
-        countryName={wine.country?.name || null}
-        vintage={wine.vintage ? Number(wine.vintage) : null}
-        price={typeof wine.price === 'number' && wine.price > 0 ? wine.price : null}
-        aggregateRating={aggregateRating}
-      />
+      {!wine.noindex && (
+        <WineProductJsonLd
+          siteURL={siteURL}
+          name={wine.name}
+          slug={wineSlug}
+          description={productDescription}
+          imageUrl={
+            wine.image?.url
+              ? wine.image.url.startsWith('http')
+                ? wine.image.url
+                : `${siteURL}${wine.image.url}`
+              : null
+          }
+          producer={wine.winery || null}
+          countryName={wine.country?.name || null}
+          vintage={wine.vintage ? Number(wine.vintage) : null}
+          price={typeof wine.price === 'number' && wine.price > 0 ? wine.price : null}
+          aggregateRating={aggregateRating}
+        />
+      )}
       <BreadcrumbJsonLd
         items={[
           { name: 'Hem', url: `${siteURL}/` },

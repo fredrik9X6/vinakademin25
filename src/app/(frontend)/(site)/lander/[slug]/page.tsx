@@ -9,6 +9,7 @@ import { Globe, MapPin, Wine as WineIcon, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { getSiteURL } from '@/lib/site-url'
+import { resolveSeo } from '@/lib/seo'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -37,22 +38,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
 
-  const title = `${country.name} | Vinakademin`
-  const description = `Utforska viner och vinregioner från ${country.name}. Lär dig om landets vintraditioner och druvor.`
+  const fallbackTitle = `${country.name} | Vinakademin`
+  const fallbackDescription = `Utforska viner och vinregioner från ${country.name}. Lär dig om landets vintraditioner och druvor.`
   const canonicalUrl = `${baseUrl}/lander/${slug}`
+  const seo = resolveSeo(country as any, {
+    title: fallbackTitle,
+    description: fallbackDescription,
+  })
 
   return {
-    title,
-    description,
-    robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+    title: seo.title,
+    description: seo.description,
+    robots: seo.noindex
+      ? 'noindex, follow'
+      : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     alternates: { canonical: canonicalUrl },
     openGraph: {
       type: 'website',
-      title,
-      description,
+      title: seo.title,
+      description: seo.description,
       url: canonicalUrl,
       siteName: 'Vinakademin',
       locale: 'sv_SE',
+      ...(seo.imageUrl && { images: [{ url: seo.imageUrl }] }),
     },
   }
 }

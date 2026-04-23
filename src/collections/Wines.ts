@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminOnly, adminOrInstructorOnly, anyLoggedIn } from '../lib/access'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
+import { seoFields } from '../fields/seo'
 
 export const Wines: CollectionConfig = {
   slug: 'wines',
@@ -184,6 +185,7 @@ export const Wines: CollectionConfig = {
         },
       ],
     },
+    ...seoFields,
   ],
   hooks: {
     beforeChange: [

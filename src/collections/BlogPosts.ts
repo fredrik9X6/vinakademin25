@@ -4,6 +4,7 @@ import { withCreatedByUpdatedBy } from '../lib/hooks'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { BlocksFeature, UploadFeature } from '@payloadcms/richtext-lexical'
 import { WineReference, WineList, NewsletterSignup, CourseReference, RegionReference, CountryReference } from '../components/blocks'
+import { seoFields } from '../fields/seo'
 
 export const BlogPosts: CollectionConfig = {
   slug: 'blog-posts',
@@ -174,21 +175,6 @@ export const BlogPosts: CollectionConfig = {
         description: 'When this post was/will be published',
       },
     },
-    {
-      name: 'seoTitle',
-      type: 'text',
-      maxLength: 60,
-      admin: {
-        description: 'SEO title (default: post title)',
-      },
-    },
-    {
-      name: 'seoDescription',
-      type: 'textarea',
-      maxLength: 160,
-      admin: {
-        description: 'SEO meta description (default: excerpt)',
-      },
-    },
+    ...seoFields,
   ],
 }
