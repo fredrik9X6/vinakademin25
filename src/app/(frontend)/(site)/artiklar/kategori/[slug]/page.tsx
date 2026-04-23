@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import type { BlogPost, BlogCategory, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
+import { getSiteURL } from '@/lib/site-url'
 import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('(frontend)-(site)-artiklar-kategori-[slug]-page')
@@ -62,7 +63,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       : `Alla artiklar inom kategorin ${category.name} på Vinakademin - din guide till vinets värld.`
 
     // Generate canonical URL
-    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const baseUrl = getSiteURL()
     const params = new URLSearchParams()
     if (search) params.set('search', search)
     tagsArray.forEach((tag) => params.append('tags', tag))

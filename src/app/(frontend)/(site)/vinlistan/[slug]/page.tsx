@@ -17,6 +17,8 @@ import {
 import { ExternalLink, Clock, ArrowRight, CalendarDays, Sparkles } from 'lucide-react'
 import type { Metadata } from 'next'
 import { BlogPostCard } from '@/components/blog'
+import { getSiteURL } from '@/lib/site-url'
+import { BreadcrumbJsonLd, WineProductJsonLd } from '@/components/seo/JsonLd'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -94,7 +96,7 @@ async function fetchWineBySlug(slug: string) {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const data = await fetchWineBySlug(slug)
-  const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const baseUrl = getSiteURL()
   if (!data) {
     return {
       title: `Vin | Vinakademin`,
@@ -348,8 +350,58 @@ export default async function WineDetailPage({ params }: PageProps) {
       })
     : null
 
+  const siteURL = getSiteURL()
+  const wineSlug = wine.slug || String(wine.id)
+  const trustedReviewRatings = (trustedReviewsRes.docs || [])
+    .map((r: any) => Number(r.rating))
+    .filter((n: number) => Number.isFinite(n) && n > 0)
+  const aggregateRating =
+    trustedReviewRatings.length > 0
+      ? {
+          value: trustedReviewRatings.reduce((a: number, b: number) => a + b, 0) /
+            trustedReviewRatings.length,
+          count: trustedReviewRatings.length,
+        }
+      : null
+  const productDescription = [
+    wine.winery,
+    wine.region?.name,
+    wine.country?.name,
+    Array.isArray(wine.grapes) && wine.grapes.length > 0
+      ? wine.grapes.map((g: any) => (typeof g === 'object' ? g.name : g)).join(', ')
+      : null,
+    wine.vintage ? `Årgång ${wine.vintage}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ') || `${wine.name} — vin i Vinakademins vinlista`
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      <WineProductJsonLd
+        siteURL={siteURL}
+        name={wine.name}
+        slug={wineSlug}
+        description={productDescription}
+        imageUrl={
+          wine.image?.url
+            ? wine.image.url.startsWith('http')
+              ? wine.image.url
+              : `${siteURL}${wine.image.url}`
+            : null
+        }
+        producer={wine.winery || null}
+        countryName={wine.country?.name || null}
+        vintage={wine.vintage ? Number(wine.vintage) : null}
+        price={typeof wine.price === 'number' && wine.price > 0 ? wine.price : null}
+        aggregateRating={aggregateRating}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Hem', url: `${siteURL}/` },
+          { name: 'Vinlistan', url: `${siteURL}/vinlistan` },
+          { name: wine.name, url: `${siteURL}/vinlistan/${wineSlug}` },
+        ]}
+      />
       <div className="mb-6 flex items-center justify-between">
         <Link href="/vinlistan" className="text-sm text-muted-foreground hover:underline">
           ← Tillbaka till Vinlistan
