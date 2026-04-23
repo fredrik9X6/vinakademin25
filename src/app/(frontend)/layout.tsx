@@ -5,6 +5,8 @@ import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '@/context/AuthContext'
 import { AnalyticsProvider } from '@/components/analytics'
 import { Toaster } from '@/components/ui/sonner'
+import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/seo/JsonLd'
+import { getSiteURL } from '@/lib/site-url'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -52,9 +54,12 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const siteURL = getSiteURL()
   return (
     <html lang="sv" className={`${inter.variable}`} suppressHydrationWarning>
       <body className="font-sans">
+        <OrganizationJsonLd siteURL={siteURL} />
+        <WebSiteJsonLd siteURL={siteURL} />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

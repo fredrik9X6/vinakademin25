@@ -10,6 +10,7 @@ import CourseCompletionPage from '@/components/course/CourseCompletionPage'
 import { cookies } from 'next/headers'
 import { getUser } from '@/lib/get-user'
 import { getSiteURL } from '@/lib/site-url'
+import { BreadcrumbJsonLd, CourseJsonLd } from '@/components/seo/JsonLd'
 import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('(frontend)-(site)-vinprovningar-[slug]-page')
@@ -138,6 +139,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
     return (
       <div className="min-h-screen bg-background">
+        <CourseSchema course={course} />
         <CourseOverview
           course={courseWithModules}
           userHasAccess={false}
@@ -400,6 +402,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
   return (
     <div className="min-h-screen bg-background">
+      <CourseSchema course={course} />
       {showCompletionPage ? (
         <CourseCompletionPage
           course={courseWithModules}
@@ -439,6 +442,49 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
         />
       )}
     </div>
+  )
+}
+
+function CourseSchema({ course }: { course: Vinprovningar }) {
+  const base = getSiteURL()
+  const slug = course.slug || String(course.id)
+  const instructor =
+    typeof course.instructor === 'object' && course.instructor
+      ? [course.instructor.firstName, course.instructor.lastName].filter(Boolean).join(' ').trim()
+      : null
+
+  const featured =
+    typeof course.featuredImage === 'object' && course.featuredImage?.url
+      ? course.featuredImage.url.startsWith('http')
+        ? course.featuredImage.url
+        : `${base}${course.featuredImage.url}`
+      : null
+
+  const description =
+    (course.description && course.description.trim().slice(0, 5000)) ||
+    `Vinprovning online med Vinakademin — ${course.title}.`
+
+  return (
+    <>
+      <CourseJsonLd
+        siteURL={base}
+        title={course.title}
+        slug={slug}
+        description={description}
+        imageUrl={featured}
+        price={course.price ?? null}
+        level={course.level ?? null}
+        durationHours={course.duration ?? null}
+        instructorName={instructor || null}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Hem', url: `${base}/` },
+          { name: 'Vinprovningar', url: `${base}/vinprovningar` },
+          { name: course.title, url: `${base}/vinprovningar/${slug}` },
+        ]}
+      />
+    </>
   )
 }
 

@@ -7,6 +7,8 @@ import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 import { Card, CardContent } from '@/components/ui/card'
 import { Globe, MapPin, Wine as WineIcon, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
+import { BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { getSiteURL } from '@/lib/site-url'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -26,7 +28,7 @@ async function fetchCountryBySlug(slug: string) {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const country = await fetchCountryBySlug(slug)
-  const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const baseUrl = getSiteURL()
 
   if (!country) {
     return {
@@ -111,8 +113,16 @@ export default async function CountryDetailPage({ params }: PageProps) {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', minimumFractionDigits: 0 }).format(price)
 
+  const siteURL = getSiteURL()
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Hem', url: `${siteURL}/` },
+          { name: 'Vinländer', url: `${siteURL}/lander` },
+          { name: (country as any).name, url: `${siteURL}/lander/${(country as any).slug}` },
+        ]}
+      />
       <div className="mb-6">
         <Link href="/lander" className="text-sm text-muted-foreground hover:underline">
           ← Alla länder
