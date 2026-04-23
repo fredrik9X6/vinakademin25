@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { anyLoggedIn, adminOnly } from '../lib/access'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
+import { seoFields } from '../fields/seo'
 
 export const Countries: CollectionConfig = {
   slug: 'countries',
@@ -101,6 +102,7 @@ export const Countries: CollectionConfig = {
       label: 'Description',
       admin: { description: 'Optional description or notes about this country' },
     },
+    ...seoFields,
   ],
   timestamps: true,
 }

@@ -5,6 +5,7 @@ import { syncCourseWithStripe } from '../lib/stripe-products'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { BlocksFeature } from '@payloadcms/richtext-lexical'
 import { WineReference, WineList, NewsletterSignup, CourseReference, RegionReference, CountryReference } from '../components/blocks'
+import { seoFields } from '../fields/seo'
 
 export const Vinprovningar: CollectionConfig = {
   slug: 'vinprovningar',
@@ -406,5 +407,6 @@ export const Vinprovningar: CollectionConfig = {
         placeholder: 'Will be created automatically when published',
       },
     },
+    ...seoFields,
   ],
 }

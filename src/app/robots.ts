@@ -41,7 +41,6 @@ export default function robots(): MetadataRoute.Robots {
           '/aterstall-losenord',
           '/glomt-losenord',
           '/onboarding',
-          '/my-route',
         ],
       },
     ],

@@ -10,6 +10,7 @@ import CourseCompletionPage from '@/components/course/CourseCompletionPage'
 import { cookies } from 'next/headers'
 import { getUser } from '@/lib/get-user'
 import { getSiteURL } from '@/lib/site-url'
+import { resolveSeo } from '@/lib/seo'
 import { BreadcrumbJsonLd, CourseJsonLd } from '@/components/seo/JsonLd'
 import { loggerFor } from '@/lib/logger'
 
@@ -52,48 +53,38 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
     }
   }
 
-  const title = course.title
-  const description =
-    (course.description && course.description.trim().slice(0, 160)) ||
-    `Vinprovning online med Vinakademin — ${course.title}. Lär dig om vin i din egen takt.`
-
-  const featured =
+  const featuredImageUrl =
     typeof course.featuredImage === 'object' && course.featuredImage?.url
-      ? {
-          url: course.featuredImage.url.startsWith('http')
-            ? course.featuredImage.url
-            : `${base}${course.featuredImage.url}`,
-          alt: course.featuredImage.alt || course.title,
-          width: course.featuredImage.width ?? 1200,
-          height: course.featuredImage.height ?? 630,
-        }
+      ? course.featuredImage.url
       : null
 
+  const seo = resolveSeo(course, {
+    title: course.title,
+    description:
+      (course.description && course.description.trim().slice(0, 160)) ||
+      `Vinprovning online med Vinakademin — ${course.title}. Lär dig om vin i din egen takt.`,
+    imageUrl: featuredImageUrl,
+  })
+
   return {
-    title,
-    description,
+    title: seo.title,
+    description: seo.description,
     alternates: { canonical },
+    ...(seo.noindex && { robots: { index: false, follow: true } }),
     openGraph: {
-      title,
-      description,
+      title: seo.title,
+      description: seo.description,
       url: canonical,
       type: 'website',
-      ...(featured && {
-        images: [
-          {
-            url: featured.url,
-            width: featured.width,
-            height: featured.height,
-            alt: featured.alt,
-          },
-        ],
+      ...(seo.imageUrl && {
+        images: [{ url: seo.imageUrl, alt: course.title }],
       }),
     },
     twitter: {
-      card: featured ? 'summary_large_image' : 'summary',
-      title,
-      description,
-      ...(featured && { images: [featured.url] }),
+      card: seo.imageUrl ? 'summary_large_image' : 'summary',
+      title: seo.title,
+      description: seo.description,
+      ...(seo.imageUrl && { images: [seo.imageUrl] }),
     },
   }
 }
@@ -446,6 +437,10 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 }
 
 function CourseSchema({ course }: { course: Vinprovningar }) {
+  // Respect the CMS noindex toggle: a page we tell Google not to index
+  // shouldn't still emit rich-result claims.
+  if (course.noindex) return null
+
   const base = getSiteURL()
   const slug = course.slug || String(course.id)
   const instructor =
@@ -453,25 +448,27 @@ function CourseSchema({ course }: { course: Vinprovningar }) {
       ? [course.instructor.firstName, course.instructor.lastName].filter(Boolean).join(' ').trim()
       : null
 
-  const featured =
+  const featuredImageUrl =
     typeof course.featuredImage === 'object' && course.featuredImage?.url
-      ? course.featuredImage.url.startsWith('http')
-        ? course.featuredImage.url
-        : `${base}${course.featuredImage.url}`
+      ? course.featuredImage.url
       : null
 
-  const description =
-    (course.description && course.description.trim().slice(0, 5000)) ||
-    `Vinprovning online med Vinakademin — ${course.title}.`
+  const seo = resolveSeo(course, {
+    title: course.title,
+    description:
+      (course.description && course.description.trim().slice(0, 5000)) ||
+      `Vinprovning online med Vinakademin — ${course.title}.`,
+    imageUrl: featuredImageUrl,
+  })
 
   return (
     <>
       <CourseJsonLd
         siteURL={base}
-        title={course.title}
+        title={seo.title}
         slug={slug}
-        description={description}
-        imageUrl={featured}
+        description={seo.description}
+        imageUrl={seo.imageUrl}
         price={course.price ?? null}
         level={course.level ?? null}
         durationHours={course.duration ?? null}

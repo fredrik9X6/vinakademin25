@@ -268,6 +268,12 @@ export interface User {
    * Date when the subscription expires
    */
   subscriptionExpiry?: string | null;
+  onboarding?: {
+    goal?: ('learn_basics' | 'pairing_confident' | 'explore_regions' | 'deep_knowledge') | null;
+    completedAt?: string | null;
+    skippedAt?: string | null;
+    source?: ('registration' | 'guest_checkout') | null;
+  };
   /**
    * User's wine preferences
    */
@@ -291,6 +297,7 @@ export interface User {
           | 'rose'
           | 'sweet'
           | 'fortified'
+          | 'natural'
         )[]
       | null;
     tastingExperience?: ('Nybörjare' | 'Medel' | 'Avancerad' | 'Expert') | null;
@@ -430,6 +437,22 @@ export interface Region {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * SEO title (default: auto-generated from the document title). Ideal length: 50–60 characters.
+   */
+  seoTitle?: string | null;
+  /**
+   * SEO meta description (default: auto-generated). Ideal length: 120–160 characters.
+   */
+  seoDescription?: string | null;
+  /**
+   * Social-share / Open Graph image (default: the document featured image). Recommended 1200×630.
+   */
+  seoImage?: (number | null) | Media;
+  /**
+   * Block search engines from indexing this page.
+   */
+  noindex?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -475,6 +498,22 @@ export interface Country {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * SEO title (default: auto-generated from the document title). Ideal length: 50–60 characters.
+   */
+  seoTitle?: string | null;
+  /**
+   * SEO meta description (default: auto-generated). Ideal length: 120–160 characters.
+   */
+  seoDescription?: string | null;
+  /**
+   * Social-share / Open Graph image (default: the document featured image). Recommended 1200×630.
+   */
+  seoImage?: (number | null) | Media;
+  /**
+   * Block search engines from indexing this page.
+   */
+  noindex?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -590,6 +629,22 @@ export interface Vinprovningar {
    * Stripe Price ID - Auto-generated when wine tasting is published with a price
    */
   stripePriceId?: string | null;
+  /**
+   * SEO title (default: auto-generated from the document title). Ideal length: 50–60 characters.
+   */
+  seoTitle?: string | null;
+  /**
+   * SEO meta description (default: auto-generated). Ideal length: 120–160 characters.
+   */
+  seoDescription?: string | null;
+  /**
+   * Social-share / Open Graph image (default: the document featured image). Recommended 1200×630.
+   */
+  seoImage?: (number | null) | Media;
+  /**
+   * Block search engines from indexing this page.
+   */
+  noindex?: boolean | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1127,6 +1182,22 @@ export interface Wine {
         id?: string | null;
       }[]
     | null;
+  /**
+   * SEO title (default: auto-generated from the document title). Ideal length: 50–60 characters.
+   */
+  seoTitle?: string | null;
+  /**
+   * SEO meta description (default: auto-generated). Ideal length: 120–160 characters.
+   */
+  seoDescription?: string | null;
+  /**
+   * Social-share / Open Graph image (default: the document featured image). Recommended 1200×630.
+   */
+  seoImage?: (number | null) | Media;
+  /**
+   * Block search engines from indexing this page.
+   */
+  noindex?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1813,6 +1884,23 @@ export interface Enrollment {
     offlineAccess?: boolean | null;
   };
   /**
+   * Review request tracking
+   */
+  reviewTracking?: {
+    /**
+     * When the user reached the 70% completion threshold
+     */
+    reviewThresholdReachedAt?: string | null;
+    /**
+     * When the review request email was sent
+     */
+    reviewEmailSentAt?: string | null;
+    /**
+     * Token for the review request email link
+     */
+    reviewEmailToken?: string | null;
+  };
+  /**
    * Administrative notes and communication
    */
   notes?: {
@@ -2342,48 +2430,20 @@ export interface Order {
  */
 export interface CourseReview {
   id: number;
-  title: string;
+  /**
+   * Auto-generated from course name and rating
+   */
+  title?: string | null;
   course: number | Vinprovningar;
   author: number | User;
   rating: number;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  pros?:
-    | {
-        point: string;
-        id?: string | null;
-      }[]
-    | null;
-  cons?:
-    | {
-        point: string;
-        id?: string | null;
-      }[]
-    | null;
-  status: 'published' | 'pending' | 'rejected';
+  content: string;
+  status: 'published' | 'pending';
   isVerifiedPurchase?: boolean | null;
-  completionStatus?: ('not_started' | 'in_progress' | 'completed') | null;
-  helpfulVotes?: number | null;
-  totalVotes?: number | null;
-  moderatorNotes?: string | null;
-  metadata?: {
-    deviceType?: ('desktop' | 'mobile' | 'tablet') | null;
-    userAgent?: string | null;
-    location?: string | null;
-  };
+  /**
+   * Token from review request email (used to verify the review link)
+   */
+  reviewToken?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2431,13 +2491,21 @@ export interface BlogPost {
    */
   publishedDate?: string | null;
   /**
-   * SEO title (default: post title)
+   * SEO title (default: auto-generated from the document title). Ideal length: 50–60 characters.
    */
   seoTitle?: string | null;
   /**
-   * SEO meta description (default: excerpt)
+   * SEO meta description (default: auto-generated). Ideal length: 120–160 characters.
    */
   seoDescription?: string | null;
+  /**
+   * Social-share / Open Graph image (default: the document featured image). Recommended 1200×630.
+   */
+  seoImage?: (number | null) | Media;
+  /**
+   * Block search engines from indexing this page.
+   */
+  noindex?: boolean | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -2755,6 +2823,14 @@ export interface UsersSelect<T extends boolean = true> {
   subscriptionStatus?: T;
   subscriptionPlan?: T;
   subscriptionExpiry?: T;
+  onboarding?:
+    | T
+    | {
+        goal?: T;
+        completedAt?: T;
+        skippedAt?: T;
+        source?: T;
+      };
   winePreferences?:
     | T
     | {
@@ -2857,6 +2933,10 @@ export interface VinprovningarSelect<T extends boolean = true> {
       };
   stripeProductId?: T;
   stripePriceId?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  seoImage?: T;
+  noindex?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -3134,6 +3214,13 @@ export interface EnrollmentsSelect<T extends boolean = true> {
         requiresProctoring?: T;
         offlineAccess?: T;
       };
+  reviewTracking?:
+    | T
+    | {
+        reviewThresholdReachedAt?: T;
+        reviewEmailSentAt?: T;
+        reviewEmailToken?: T;
+      };
   notes?:
     | T
     | {
@@ -3175,6 +3262,10 @@ export interface WinesSelect<T extends boolean = true> {
         pairing?: T;
         id?: T;
       };
+  seoTitle?: T;
+  seoDescription?: T;
+  seoImage?: T;
+  noindex?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3327,6 +3418,10 @@ export interface CountriesSelect<T extends boolean = true> {
   createdBy?: T;
   updatedBy?: T;
   description?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  seoImage?: T;
+  noindex?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3341,6 +3436,10 @@ export interface RegionsSelect<T extends boolean = true> {
   createdBy?: T;
   updatedBy?: T;
   description?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  seoImage?: T;
+  noindex?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3424,31 +3523,9 @@ export interface CourseReviewsSelect<T extends boolean = true> {
   author?: T;
   rating?: T;
   content?: T;
-  pros?:
-    | T
-    | {
-        point?: T;
-        id?: T;
-      };
-  cons?:
-    | T
-    | {
-        point?: T;
-        id?: T;
-      };
   status?: T;
   isVerifiedPurchase?: T;
-  completionStatus?: T;
-  helpfulVotes?: T;
-  totalVotes?: T;
-  moderatorNotes?: T;
-  metadata?:
-    | T
-    | {
-        deviceType?: T;
-        userAgent?: T;
-        location?: T;
-      };
+  reviewToken?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3468,6 +3545,8 @@ export interface BlogPostsSelect<T extends boolean = true> {
   publishedDate?: T;
   seoTitle?: T;
   seoDescription?: T;
+  seoImage?: T;
+  noindex?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
