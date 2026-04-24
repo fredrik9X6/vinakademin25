@@ -1,5 +1,8 @@
 import type { Access, PayloadRequest } from 'payload'
 import type { User } from '../payload-types'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('lib-access-control')
 
 // Use PayloadCMS v3 Access type for proper type safety
 // This ensures all access functions conform to PayloadCMS v3 API
@@ -27,7 +30,7 @@ export const isEnrolledInCourse = async (
 
     return enrollment.totalDocs > 0
   } catch (error) {
-    console.error('Error checking enrollment:', error)
+    log.error('Error checking enrollment:', error)
     return false
   }
 }
@@ -78,7 +81,7 @@ export const hasPermission = async (
         return false
     }
   } catch (error) {
-    console.error('Error checking permission:', error)
+    log.error('Error checking permission:', error)
     return false
   }
 }
@@ -113,7 +116,7 @@ export const hasPreviewAccess = async (
 
     return previewEnrollment.totalDocs > 0
   } catch (error) {
-    console.error('Error checking preview access:', error)
+    log.error('Error checking preview access:', error)
     return false
   }
 }
@@ -140,7 +143,7 @@ export const hasFreePreviewAccess = async (
     // For now, return false if no lesson-specific check
     return false
   } catch (error) {
-    console.error('Error checking free preview access:', error)
+    log.error('Error checking free preview access:', error)
     return false
   }
 }
@@ -241,7 +244,7 @@ export const isEnrollmentValid = async (
 
     return true
   } catch (error) {
-    console.error('Error checking enrollment validity:', error)
+    log.error('Error checking enrollment validity:', error)
     return false
   }
 }
@@ -274,7 +277,7 @@ export const getUserAccessLevel = async (
     const enrollmentDoc = enrollment.docs[0]
     return enrollmentDoc.accessLevel || 'full'
   } catch (error) {
-    console.error('Error getting user access level:', error)
+    log.error('Error getting user access level:', error)
     return 'none'
   }
 }
@@ -345,7 +348,7 @@ export const canAccessLesson = async (
     // Check content viewing permission
     return await hasPermission(req, userId, String(courseId), 'viewContent')
   } catch (error) {
-    console.error('Error checking lesson access:', error)
+    log.error('Error checking lesson access:', error)
     return false
   }
 }
@@ -407,7 +410,7 @@ export const canTakeQuiz = async (
     // Check quiz taking permission
     return await hasPermission(req, userId, String(courseId), 'takeQuizzes')
   } catch (error) {
-    console.error('Error checking quiz access:', error)
+    log.error('Error checking quiz access:', error)
     return false
   }
 }

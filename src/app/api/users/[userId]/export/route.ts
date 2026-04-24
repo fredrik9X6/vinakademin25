@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-[userId]-export')
 
 // POST request to initiate data export
 export async function POST(
@@ -119,7 +122,7 @@ export async function POST(
       },
     })
   } catch (error) {
-    console.error('Error exporting user data:', error)
+    log.error('Error exporting user data:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -153,7 +156,7 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error('Error checking export status:', error)
+    log.error('Error checking export status:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

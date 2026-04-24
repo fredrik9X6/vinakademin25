@@ -2,19 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@/payload.config'
 import mux from '@/lib/mux'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('mux-webhook')
 
 export async function POST(req: NextRequest) {
-  console.log('🔔 Mux webhook received')
+  log.info('Mux webhook received')
 
   const webhookSecret = process.env.MUX_WEBHOOK_SIGNING_SECRET
 
   if (!webhookSecret) {
-    console.error('❌ MUX_WEBHOOK_SIGNING_SECRET is not configured')
+    log.error('MUX_WEBHOOK_SIGNING_SECRET is not configured')
     return NextResponse.json({ message: 'Webhook secret not configured' }, { status: 500 })
   }
 
   if (!mux) {
-    console.error('❌ Mux client is not configured')
+    log.error('Mux client is not configured')
     return NextResponse.json({ message: 'Mux not configured' }, { status: 500 })
   }
 
@@ -33,11 +36,11 @@ export async function POST(req: NextRequest) {
     try {
       event = mux.webhooks.unwrap(body, headers, webhookSecret)
     } catch (err) {
-      console.error('❌ Webhook signature verification failed:', err)
+      log.error({ err }, 'Webhook signature verification failed')
       return NextResponse.json({ message: 'Invalid signature' }, { status: 401 })
     }
 
-    console.log('📦 Verified webhook event:', event.type, (event.data as any)?.id)
+    log.info({ eventType: event.type, dataId: (event.data as any)?.id }, 'Verified webhook event')
 
     const payload = await getPayload({ config: configPromise })
 
@@ -47,11 +50,11 @@ export async function POST(req: NextRequest) {
         const passthrough = asset.passthrough as string | undefined
 
         if (!passthrough) {
-          console.log('ℹ️ Asset ready but no passthrough — skipping')
+          log.info('Asset ready but no passthrough — skipping')
           break
         }
 
-        console.log('✅ Asset ready:', passthrough)
+        log.info({ passthrough }, 'Asset ready')
 
         if (passthrough.startsWith('vinprovning-preview-')) {
           await updateVinprovningMuxData(payload, passthrough, {
@@ -60,7 +63,6 @@ export async function POST(req: NextRequest) {
             status: 'ready' as const,
             duration: asset.duration || 0,
             aspectRatio: asset.aspect_ratio || '16:9',
-            errorMessage: '',
           })
         } else {
           await updateContentItemMuxData(payload, passthrough, {
@@ -69,7 +71,6 @@ export async function POST(req: NextRequest) {
             status: 'ready' as const,
             duration: asset.duration || 0,
             aspectRatio: asset.aspect_ratio || '16:9',
-            errorMessage: '',
           })
         }
         break
@@ -81,25 +82,22 @@ export async function POST(req: NextRequest) {
 
         if (!passthrough) break
 
-        // Extract error message from Mux
         const errorMsg =
           asset.errors?.messages?.join('; ') ||
           asset.errors?.type ||
           'Video processing failed'
 
-        console.log('❌ Asset errored:', passthrough, errorMsg)
+        log.error({ passthrough, errorMsg }, 'Asset errored')
 
         if (passthrough.startsWith('vinprovning-preview-')) {
           await updateVinprovningMuxData(payload, passthrough, {
             assetId: asset.id,
             status: 'errored' as const,
-            errorMessage: errorMsg,
           })
         } else {
           await updateContentItemMuxData(payload, passthrough, {
             assetId: asset.id,
             status: 'errored' as const,
-            errorMessage: errorMsg,
           })
         }
         break
@@ -113,7 +111,7 @@ export async function POST(req: NextRequest) {
 
         if (!passthrough || !assetId) break
 
-        console.log('📤 Upload completed, asset created:', passthrough, assetId)
+        log.info({ passthrough, assetId }, 'Upload completed, asset created')
 
         if (passthrough.startsWith('vinprovning-preview-')) {
           await updateVinprovningMuxData(payload, passthrough, {
@@ -135,18 +133,15 @@ export async function POST(req: NextRequest) {
 
         if (!passthrough) break
 
-        const errorMsg = 'Video upload failed — please try again'
-        console.log('❌ Upload errored:', passthrough)
+        log.error({ passthrough }, 'Upload errored')
 
         if (passthrough.startsWith('vinprovning-preview-')) {
           await updateVinprovningMuxData(payload, passthrough, {
             status: 'errored' as const,
-            errorMessage: errorMsg,
           })
         } else {
           await updateContentItemMuxData(payload, passthrough, {
             status: 'errored' as const,
-            errorMessage: errorMsg,
           })
         }
         break
@@ -156,18 +151,18 @@ export async function POST(req: NextRequest) {
         const data = event.data as any
         const passthrough = data.new_asset_settings?.passthrough as string | undefined
         if (passthrough) {
-          console.log('ℹ️ Upload cancelled:', passthrough)
+          log.info({ passthrough }, 'Upload cancelled')
         }
         break
       }
 
       default:
-        console.log('ℹ️ Unhandled webhook event:', event.type)
+        log.info({ eventType: event.type }, 'Unhandled webhook event')
     }
 
     return NextResponse.json({ message: 'Webhook processed successfully' })
   } catch (error) {
-    console.error('❌ Webhook processing error:', error)
+    log.error({ err: error }, 'Webhook processing error')
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
@@ -180,7 +175,6 @@ type MuxDataUpdate = {
   status?: 'preparing' | 'ready' | 'errored'
   duration?: number
   aspectRatio?: string
-  errorMessage?: string
 }
 
 async function updateVinprovningMuxData(
@@ -204,7 +198,7 @@ async function updateVinprovningMuxData(
       currentMux?.status === data.status &&
       (data.status !== 'ready' || currentMux?.playbackId === data.playbackId)
     ) {
-      console.log('ℹ️ Vinprovning already up to date — skipping')
+      log.info({ vinprovningId }, 'Vinprovning already up to date — skipping')
       return
     }
 
@@ -219,9 +213,9 @@ async function updateVinprovningMuxData(
         overrideAccess: true,
         draft: false,
       })
-      console.log('✅ Updated published vinprovning:', vinprovningId)
+      log.info({ vinprovningId }, 'Updated published vinprovning')
     } catch (err) {
-      console.error('❌ Error updating published vinprovning:', err)
+      log.error({ err, vinprovningId }, 'Error updating published vinprovning')
     }
 
     // Also update draft version if it exists
@@ -233,12 +227,12 @@ async function updateVinprovningMuxData(
         overrideAccess: true,
         draft: true,
       })
-      console.log('✅ Updated draft vinprovning:', vinprovningId)
+      log.info({ vinprovningId }, 'Updated draft vinprovning')
     } catch {
       // Draft may not exist — that's fine
     }
   } catch (error) {
-    console.error('❌ Error updating vinprovning:', vinprovningId, error)
+    log.error({ err: error, vinprovningId }, 'Error updating vinprovning')
   }
 }
 
@@ -261,7 +255,7 @@ async function updateContentItemMuxData(
       currentMux?.status === data.status &&
       (data.status !== 'ready' || currentMux?.playbackId === data.playbackId)
     ) {
-      console.log('ℹ️ Content item already up to date — skipping')
+      log.info({ contentItemId }, 'Content item already up to date — skipping')
       return
     }
 
@@ -271,8 +265,8 @@ async function updateContentItemMuxData(
       data: { muxData: data },
       overrideAccess: true,
     })
-    console.log('✅ Updated content item:', contentItemId)
+    log.info({ contentItemId }, 'Updated content item')
   } catch (error) {
-    console.error('❌ Error updating content item:', contentItemId, error)
+    log.error({ err: error, contentItemId }, 'Error updating content item')
   }
 }

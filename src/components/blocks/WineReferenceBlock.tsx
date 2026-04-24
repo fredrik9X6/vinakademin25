@@ -1,11 +1,41 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '../ui/badge'
 import { Card, CardContent } from '../ui/card'
 import { ExternalLink, Wine as WineIcon } from 'lucide-react'
 import type { Wine, Media } from '../../payload-types'
+
+/** Resolve a media field that might be a populated object or just an ID */
+function useResolvedImageUrl(image: Media | number | string | null | undefined): string | null {
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(() => {
+    if (!image) return null
+    if (typeof image === 'object' && image.url) return image.url
+    return null
+  })
+
+  useEffect(() => {
+    if (!image) return
+    if (typeof image === 'object' && image.url) {
+      setResolvedUrl(image.url)
+      return
+    }
+    // image is an ID (number or string) — fetch the media record
+    const mediaId = typeof image === 'number' ? image : parseInt(String(image), 10)
+    if (isNaN(mediaId)) return
+
+    fetch(`/api/media/${mediaId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.url) setResolvedUrl(data.url)
+      })
+      .catch(() => {})
+  }, [image])
+
+  return resolvedUrl
+}
 
 interface WineReferenceBlockData {
   wine: Wine
@@ -38,16 +68,11 @@ export function WineReferenceBlock({
   caption,
   openInNewTab,
 }: WineReferenceBlockProps) {
-  // Use Systembolaget URL if available, otherwise fall back to internal link
-  const externalUrl = wine.systembolagetUrl
-  const internalUrl = `/wines/${wine.slug}`
-  const href = externalUrl || internalUrl
-  const isExternal = !!externalUrl
-
-  const linkProps = isExternal
+  const href = `/vinlistan/${wine.slug || wine.id}`
+  const linkProps = openInNewTab
     ? {
         href,
-        target: '_blank',
+        target: '_blank' as const,
         rel: 'noopener noreferrer',
       }
     : {
@@ -55,7 +80,7 @@ export function WineReferenceBlock({
       }
 
   const displayText = customText || wine.name
-  const wineImage = wine.image as Media | null
+  const imageUrl = useResolvedImageUrl(wine.image as Media | number | null)
 
   // Format price with Swedish currency
   const formatPrice = (price: number) => {
@@ -68,28 +93,26 @@ export function WineReferenceBlock({
   }
 
   if (displayStyle === 'link') {
-    const LinkComponent = isExternal ? 'a' : Link
     return (
-      <LinkComponent
+      <Link
         {...linkProps}
         className="inline-flex items-center gap-1 text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 underline underline-offset-2 transition-colors font-medium"
       >
         {displayText}
-        {isExternal && <ExternalLink className="h-3 w-3" />}
-      </LinkComponent>
+        {openInNewTab && <ExternalLink className="h-3 w-3" />}
+      </Link>
     )
   }
 
   if (displayStyle === 'inline') {
-    const LinkComponent = isExternal ? 'a' : Link
     return (
       <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors">
-        <LinkComponent
+        <Link
           {...linkProps}
           className="text-gray-900 dark:text-gray-100 hover:text-orange-500 dark:hover:text-orange-400 font-medium transition-colors"
         >
           {displayText}
-        </LinkComponent>
+        </Link>
         {wine.price && (
           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
             {formatPrice(wine.price)}
@@ -103,7 +126,7 @@ export function WineReferenceBlock({
         {showDetails?.showVintage && wine.vintage && (
           <span className="text-xs text-gray-500 dark:text-gray-400">{wine.vintage}</span>
         )}
-        {isExternal && <ExternalLink className="h-3 w-3 text-gray-400" />}
+        {openInNewTab && <ExternalLink className="h-3 w-3 text-gray-400" />}
       </span>
     )
   }
@@ -116,9 +139,9 @@ export function WineReferenceBlock({
             {/* Clean image container matching card background */}
             {showDetails?.showImage && (
               <div className="relative w-28 h-36 flex-shrink-0 flex items-center justify-center">
-                {wineImage ? (
+                {imageUrl ? (
                   <Image
-                    src={typeof wineImage === 'object' ? wineImage.url || '' : wineImage}
+                    src={imageUrl}
                     alt={wine.name}
                     fill
                     className="object-contain p-3"
@@ -134,25 +157,15 @@ export function WineReferenceBlock({
             {/* Content with minimal styling */}
             <div className="flex-1 p-4 min-h-[144px] flex flex-col justify-between">
               <div className="space-y-2">
-                {isExternal ? (
-                  <a
-                    {...linkProps}
-                    className="text-lg font-semibold text-sidebar-foreground hover:text-orange-500 dark:hover:text-orange-400 transition-colors line-clamp-2 group"
-                  >
-                    {wine.name}
+                <Link
+                  {...linkProps}
+                  className="text-lg font-semibold text-sidebar-foreground hover:text-orange-500 dark:hover:text-orange-400 transition-colors line-clamp-2 group"
+                >
+                  {wine.name}
+                  {openInNewTab && (
                     <ExternalLink className="inline h-4 w-4 ml-1 align-text-top opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </a>
-                ) : (
-                  <Link
-                    {...linkProps}
-                    className="text-lg font-semibold text-sidebar-foreground hover:text-orange-500 dark:hover:text-orange-400 transition-colors line-clamp-2 group"
-                  >
-                    {wine.name}
-                    {openInNewTab && (
-                      <ExternalLink className="inline h-4 w-4 ml-1 align-text-top opacity-0 group-hover:opacity-100 transition-opacity" />
-                    )}
-                  </Link>
-                )}
+                  )}
+                </Link>
                 {wine.winery && (
                   <p className="text-sidebar-foreground/70 mt-0.5 line-clamp-1">{wine.winery}</p>
                 )}

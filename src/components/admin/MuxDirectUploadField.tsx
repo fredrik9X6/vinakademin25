@@ -21,7 +21,6 @@ export const MuxDirectUploadField: React.FC<{
   const assetIdField = useField<string>({ path: `${muxDataPath}.assetId` })
   const playbackIdField = useField<string>({ path: `${muxDataPath}.playbackId` })
   const statusField = useField<string>({ path: `${muxDataPath}.status` })
-  const errorMessageField = useField<string>({ path: `${muxDataPath}.errorMessage` })
 
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle')
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -33,15 +32,16 @@ export const MuxDirectUploadField: React.FC<{
   // Derive initial state from existing muxData
   useEffect(() => {
     const status = statusField.value
+    const hasAsset = Boolean(assetIdField.value)
     if (status === 'ready' && playbackIdField.value) {
       setUploadStatus('ready')
-    } else if (status === 'preparing') {
+    } else if (status === 'preparing' && hasAsset) {
       setUploadStatus('processing')
-    } else if (status === 'errored') {
+    } else if (status === 'errored' && hasAsset) {
       setUploadStatus('errored')
-      setErrorMessage(errorMessageField.value || 'Video processing failed')
+      setErrorMessage('Video processing failed')
     }
-  }, [statusField.value, playbackIdField.value, errorMessageField.value])
+  }, [statusField.value, playbackIdField.value, assetIdField.value])
 
   // Poll for status when processing
   useEffect(() => {

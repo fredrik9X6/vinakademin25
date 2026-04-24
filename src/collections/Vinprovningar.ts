@@ -4,7 +4,8 @@ import { deleteAssetFromMux } from '../lib/mux'
 import { syncCourseWithStripe } from '../lib/stripe-products'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { BlocksFeature } from '@payloadcms/richtext-lexical'
-import { WineReference, WineList, NewsletterSignup } from '../components/blocks'
+import { WineReference, WineList, NewsletterSignup, CourseReference, RegionReference, CountryReference } from '../components/blocks'
+import { seoFields } from '../fields/seo'
 
 export const Vinprovningar: CollectionConfig = {
   slug: 'vinprovningar',
@@ -208,7 +209,7 @@ export const Vinprovningar: CollectionConfig = {
         features: ({ rootFeatures }) => [
           ...rootFeatures,
           BlocksFeature({
-            blocks: [WineList, WineReference, NewsletterSignup],
+            blocks: [WineList, WineReference, NewsletterSignup, CourseReference, RegionReference, CountryReference],
           }),
         ],
       }),
@@ -270,7 +271,6 @@ export const Vinprovningar: CollectionConfig = {
             { label: 'Ready', value: 'ready' },
             { label: 'Errored', value: 'errored' },
           ],
-          defaultValue: 'preparing',
           admin: {
             readOnly: true,
           },
@@ -289,15 +289,6 @@ export const Vinprovningar: CollectionConfig = {
           admin: {
             description: 'e.g., 16:9',
             readOnly: true,
-          },
-        },
-        {
-          name: 'errorMessage',
-          type: 'text',
-          admin: {
-            description: 'Error details if video processing failed',
-            readOnly: true,
-            condition: (_data, siblingData) => siblingData?.status === 'errored',
           },
         },
       ],
@@ -416,5 +407,6 @@ export const Vinprovningar: CollectionConfig = {
         placeholder: 'Will be created automatically when published',
       },
     },
+    ...seoFields,
   ],
 }

@@ -4,6 +4,9 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { SUBSCRIPTION_PLANS } from '@/lib/stripe-products'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-subscriptions')
 
 export async function POST(request: NextRequest) {
   try {
@@ -119,7 +122,7 @@ export async function POST(request: NextRequest) {
       clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
     })
   } catch (error) {
-    console.error('Error creating subscription:', error)
+    log.error('Error creating subscription:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid skapande av prenumeration' },
       { status: 500 },
@@ -158,7 +161,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ subscriptions: subscriptions.docs })
   } catch (error) {
-    console.error('Error fetching subscriptions:', error)
+    log.error('Error fetching subscriptions:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid hämtning av prenumerationer' },
       { status: 500 },

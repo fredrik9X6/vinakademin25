@@ -24,7 +24,7 @@ const ProfileSchema = z.object({
   firstName: z.string().min(1, { message: 'Förnamn krävs.' }),
   lastName: z.string().min(1, { message: 'Efternamn krävs.' }),
   email: z.string().email({ message: 'Ogiltig e-postadress.' }),
-  bio: z.string().max(500, { message: 'Bio kan inte vara längre än 500 tecken.' }).optional(),
+  bio: z.string().max(500, { message: 'Bio kan inte vara längre än 500 tecken.' }).default(''),
 })
 
 export type ProfileFormValues = z.infer<typeof ProfileSchema>
@@ -71,6 +71,16 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
       })
 
       if (response.ok) {
+        const json = await response.json()
+        const saved = json?.data as Partial<ProfileFormValues> | undefined
+        if (saved) {
+          form.reset({
+            firstName: saved.firstName ?? values.firstName,
+            lastName: saved.lastName ?? values.lastName,
+            email: saved.email ?? values.email,
+            bio: saved.bio ?? values.bio ?? '',
+          })
+        }
         toast.success('Profil uppdaterad', {
           description: 'Dina profiluppgifter har sparats.',
         })
@@ -143,24 +153,25 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="bio"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bio (valfritt)</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Berätta lite om dig själv..."
-                  className="resize-none"
-                  {...field}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="bio"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Bio (valfritt)</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Berätta lite om dig själv..."
+                    className="resize-none"
+                    {...field}
+                    value={field.value ?? ''}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
         <Button type="submit" disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

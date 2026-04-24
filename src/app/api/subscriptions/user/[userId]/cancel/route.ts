@@ -3,6 +3,9 @@ import { getStripeServer } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-subscriptions-user-[userId]-cancel')
 
 export async function POST(
   request: NextRequest,
@@ -72,7 +75,7 @@ export async function POST(
       message: 'Prenumeration avbruten framgångsrikt',
     })
   } catch (error) {
-    console.error('Error canceling subscription:', error)
+    log.error('Error canceling subscription:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid avbokning av prenumeration' },
       { status: 500 },

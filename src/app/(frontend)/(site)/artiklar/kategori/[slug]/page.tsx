@@ -9,6 +9,10 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import type { BlogPost, BlogCategory, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
+import { getSiteURL } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-artiklar-kategori-[slug]-page')
 
 interface PageProps {
   params: Promise<{
@@ -59,7 +63,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       : `Alla artiklar inom kategorin ${category.name} på Vinakademin - din guide till vinets värld.`
 
     // Generate canonical URL
-    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const baseUrl = getSiteURL()
     const params = new URLSearchParams()
     if (search) params.set('search', search)
     tagsArray.forEach((tag) => params.append('tags', tag))
@@ -67,8 +71,23 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 
     const canonicalUrl = `${baseUrl}/artiklar/kategori/${slug}${params.toString() ? `?${params.toString()}` : ''}`
 
+    // Thin-content guard: noindex category pages with fewer than 3 published posts.
+    const MIN_POSTS_FOR_INDEX = 3
+    const postCountResult = await payload.find({
+      collection: 'blog-posts',
+      where: {
+        and: [
+          { _status: { equals: 'published' } },
+          { category: { equals: category.id } },
+        ],
+      },
+      limit: 0,
+      depth: 0,
+    })
+    const isThin = (postCountResult.totalDocs || 0) < MIN_POSTS_FOR_INDEX
+
     const robotsContent =
-      currentPage > 1
+      currentPage > 1 || isThin
         ? 'noindex, follow'
         : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
 
@@ -96,7 +115,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       },
     }
   } catch (error) {
-    console.error('Error generating metadata for category page:', error)
+    log.error('Error generating metadata for category page:', error)
     return {
       title: 'Kategori | Vinakademin',
       description: 'Vinakademin - din guide till vinets värld.',
@@ -316,7 +335,7 @@ async function CategoryContent({ params, searchParams }: PageProps) {
       </div>
     )
   } catch (error) {
-    console.error('Error fetching category posts:', error)
+    log.error('Error fetching category posts:', error)
     notFound()
   }
 }

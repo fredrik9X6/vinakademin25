@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-progress')
 
 // GET user progress for a specific course
 export async function GET(request: NextRequest) {
@@ -299,7 +302,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(courseProgress)
   } catch (error) {
-    console.error('Error fetching course progress:', error)
+    log.error('Error fetching course progress:', error)
     return NextResponse.json({ error: 'Failed to fetch course progress' }, { status: 500 })
   }
 }
@@ -494,17 +497,53 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Check if progress crossed the 70% review threshold
+    // and mark it on the enrollment record for the cron to pick up
+    const roundedProgress = Math.round(progressPercentage)
+    if (roundedProgress >= 70) {
+      try {
+        const enrollmentResult = await payload.find({
+          collection: 'enrollments',
+          where: {
+            and: [
+              { user: { equals: user.id } },
+              { course: { equals: courseIdInt } },
+              { 'reviewTracking.reviewThresholdReachedAt': { exists: false } },
+            ],
+          },
+          limit: 1,
+        })
+
+        if (enrollmentResult.docs.length > 0) {
+          const enrollment = enrollmentResult.docs[0]
+          await payload.update({
+            collection: 'enrollments',
+            id: enrollment.id,
+            data: {
+              reviewTracking: {
+                ...(enrollment as any).reviewTracking,
+                reviewThresholdReachedAt: new Date().toISOString(),
+              },
+            } as any,
+          })
+        }
+      } catch (err) {
+        // Non-critical: log but don't fail the progress update
+        log.error('Error updating review threshold on enrollment:', err)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       progress: {
         totalLessons: totalCount,
         completedLessons: completedCount,
-        progressPercentage: Math.round(progressPercentage),
+        progressPercentage: roundedProgress,
         status,
       },
     })
   } catch (error) {
-    console.error('Error updating lesson progress:', error)
+    log.error('Error updating lesson progress:', error)
     return NextResponse.json({ error: 'Failed to update lesson progress' }, { status: 500 })
   }
 }

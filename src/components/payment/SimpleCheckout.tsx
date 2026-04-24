@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Input } from '@/components/ui/input'
 import { useAuth } from '@/context/AuthContext'
 import { Loader2, CreditCard, ShieldCheck, Lock } from 'lucide-react'
 import { formatPrice } from '@/lib/stripe'
@@ -18,13 +19,17 @@ export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCh
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [guestFirstName, setGuestFirstName] = useState('')
+  const [guestLastName, setGuestLastName] = useState('')
 
   const finalPrice = (course.price || 0) - discountAmount
+  const hasValidGuestEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())
 
   const handleCheckout = async () => {
-    if (!user) {
-      setError('Du måste vara inloggad för att köpa vinprovningar')
-      onError?.('Du måste vara inloggad för att köpa vinprovningar')
+    if (!user && !hasValidGuestEmail) {
+      setError('Ange en giltig e-postadress för att fortsätta')
+      onError?.('Ange en giltig e-postadress för att fortsätta')
       return
     }
 
@@ -42,6 +47,9 @@ export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCh
         credentials: 'include',
         body: JSON.stringify({
           courseId: course.id,
+          guestEmail: !user ? guestEmail.trim().toLowerCase() : undefined,
+          guestFirstName: !user ? guestFirstName.trim() : undefined,
+          guestLastName: !user ? guestLastName.trim() : undefined,
         }),
       })
 
@@ -71,6 +79,38 @@ export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCh
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+      )}
+
+      {!user && (
+        <div className="rounded-xl border border-border p-4 space-y-3 bg-muted/30">
+          <p className="text-sm font-medium">Fortsätt utan konto</p>
+          <p className="text-xs text-muted-foreground">
+            Ange din e-post så skickar vi kvitto och instruktioner för att aktivera ditt konto efter köp.
+          </p>
+          <Input
+            type="email"
+            placeholder="E-postadress"
+            value={guestEmail}
+            onChange={(e) => setGuestEmail(e.target.value)}
+            disabled={isLoading}
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Input
+              type="text"
+              placeholder="Förnamn (valfritt)"
+              value={guestFirstName}
+              onChange={(e) => setGuestFirstName(e.target.value)}
+              disabled={isLoading}
+            />
+            <Input
+              type="text"
+              placeholder="Efternamn (valfritt)"
+              value={guestLastName}
+              onChange={(e) => setGuestLastName(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
       )}
 
       {/* Price Display - Clean, Elegant */}
@@ -103,7 +143,7 @@ export function SimpleCheckout({ course, discountAmount = 0, onError }: SimpleCh
       {/* Primary CTA Button */}
       <Button
         onClick={handleCheckout}
-        disabled={isLoading || !user}
+        disabled={isLoading || (!user && !hasValidGuestEmail)}
         className="w-full h-14 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
         size="lg"
       >

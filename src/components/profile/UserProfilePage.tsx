@@ -15,14 +15,13 @@ import { WinePreferencesForm } from './WinePreferencesForm'
 import { NotificationPreferencesForm } from './NotificationPreferencesForm'
 import { PaymentHistory } from './PaymentHistory'
 import { DataExportButton } from './DataExportButton'
-import { CoursePurchasePanel } from './CoursePurchasePanel'
 import { UserReviewsPanel } from './UserReviewsPanel'
 
 export function UserProfilePage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const tabParam = searchParams.get('tab')
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, checkAuth } = useAuth()
   const [notificationPreferences, setNotificationPreferences] = React.useState<any>(null)
 
   // Map tab values to Swedish URL parameters
@@ -33,7 +32,6 @@ export function UserProfilePage() {
     payments: 'betalningar',
     data: 'data',
     settings: 'installningar',
-    courses: 'vinprovningar',
     reviews: 'recensioner',
   }
 
@@ -60,7 +58,7 @@ export function UserProfilePage() {
         return 'data'
       case 'kurser':
       case 'vinprovningar':
-        return 'courses'
+        return 'details'
       case 'recensioner':
       case 'recension':
         return 'reviews'
@@ -69,6 +67,13 @@ export function UserProfilePage() {
         return 'details'
     }
   }
+
+  // Redirect old vinprovningar/kurser tab to the new Mina Provningar page
+  React.useEffect(() => {
+    if (tabParam === 'vinprovningar' || tabParam === 'kurser') {
+      router.replace('/mina-provningar')
+    }
+  }, [tabParam, router])
 
   // Load notification preferences when user is available
   React.useEffect(() => {
@@ -101,7 +106,7 @@ export function UserProfilePage() {
   // Show loading state while user data is being fetched
   if (isLoading) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-4 lg:gap-6 lg:px-6 lg:py-6">
         <div className="flex flex-col space-y-8">
           {/* Skeleton for tab navigation */}
           <div className="flex h-12 w-full justify-start overflow-x-auto bg-transparent p-0">
@@ -173,7 +178,11 @@ export function UserProfilePage() {
 
   // Show error state if user is not logged in
   if (!user) {
-    return <div className="p-4">Du måste vara inloggad för att se din profil.</div>
+    return (
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 lg:px-6">
+        Du måste vara inloggad för att se din profil.
+      </div>
+    )
   }
 
   // TODO: Add loading and error states based on data fetching
@@ -183,7 +192,7 @@ export function UserProfilePage() {
 
   return (
     <motion.div
-      className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6"
+      className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-4 lg:gap-6 lg:px-6 lg:py-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -231,12 +240,6 @@ export function UserProfilePage() {
             Kontoinställningar
           </TabsTrigger>
           <TabsTrigger
-            value="courses"
-            className="flex-shrink-0 h-9 px-4 mx-1 text-sm font-medium text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 rounded-md whitespace-nowrap transition-all duration-200"
-          >
-            Mina Vinprovningar
-          </TabsTrigger>
-          <TabsTrigger
             value="reviews"
             className="flex-shrink-0 h-9 px-4 mx-1 text-sm font-medium text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:bg-primary/90 rounded-md whitespace-nowrap transition-all duration-200"
           >
@@ -271,6 +274,7 @@ export function UserProfilePage() {
                       email: user.email,
                       bio: user.bio || '',
                     }}
+                    onSuccess={() => checkAuth()}
                   />
                 </div>
                 <div className="space-y-6">
@@ -402,34 +406,6 @@ export function UserProfilePage() {
               </div>
               <Separator />
               <AccountSettingsForm userId={String(user.id)} userEmail={user.email} />
-            </div>
-          </motion.div>
-        </TabsContent>
-
-        <TabsContent value="courses" className="space-y-12">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-            className="space-y-12"
-          >
-            {/* Course Purchase Management Section */}
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium">Mina Vinprovningar</h3>
-                <p className="text-sm text-muted-foreground">
-                  Hantera dina köpta vinprovningar, framsteg och köphistorik.
-                </p>
-              </div>
-              <Separator />
-
-              <CoursePurchasePanel
-                userId={String(user.id)}
-                onCourseAccess={(courseSlug) => {
-                  // Navigate to course using the proper slug
-                  window.location.href = `/vinprovningar/${courseSlug}`
-                }}
-              />
             </div>
           </motion.div>
         </TabsContent>

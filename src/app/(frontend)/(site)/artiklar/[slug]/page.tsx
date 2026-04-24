@@ -10,6 +10,11 @@ import { Clock } from 'lucide-react'
 import { calculateReadingTime } from '@/lib/reading-time'
 import type { BlogPost, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
+import { ArticleJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { getSiteURL } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-artiklar-[slug]-page')
 
 interface PageProps {
   params: Promise<{
@@ -64,7 +69,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     // Get featured image info
     const getFeaturedImage = () => {
       if (post.featuredImage && typeof post.featuredImage === 'object' && post.featuredImage.url) {
-        const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+        const baseUrl = getSiteURL()
         return {
           url: post.featuredImage.url.startsWith('http')
             ? post.featuredImage.url
@@ -111,7 +116,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       `Läs mer om ${post.title} på Vinakademin - din guide till vinets värld.`
 
     // Generate canonical URL
-    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const baseUrl = getSiteURL()
     const canonicalUrl = `${baseUrl}/artiklar/${post.slug}`
 
     return {
@@ -123,7 +128,9 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       authors: [{ name: authorName }],
       creator: authorName,
       publisher: 'Vinakademin',
-      robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+      robots: post.noindex
+        ? 'noindex, follow'
+        : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
       alternates: {
         canonical: canonicalUrl,
       },
@@ -165,7 +172,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       },
     }
   } catch (error) {
-    console.error('Error generating metadata for blog post:', error)
+    log.error('Error generating metadata for blog post:', error)
     return {
       title: 'Artikel | Vinakademin',
       description: 'Vinakademin - din guide till vinets värld.',
@@ -222,13 +229,60 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
     const readingTime = calculateReadingTime(post.content)
 
     // Generate canonical URL
-    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
-    const canonicalUrl = `${baseUrl}/artiklar/${post.slug}`
+    const siteURL = getSiteURL()
+    const canonicalUrl = `${siteURL}/artiklar/${post.slug}`
+
+    const featuredImageForSchema =
+      post.featuredImage && typeof post.featuredImage === 'object' && post.featuredImage.url
+        ? post.featuredImage.url.startsWith('http')
+          ? post.featuredImage.url
+          : `${siteURL}${post.featuredImage.url}`
+        : null
+    const tagNames = Array.isArray(post.tags)
+      ? post.tags
+          .filter((t): t is BlogTag => typeof t === 'object' && t !== null && 'name' in t)
+          .map((t) => t.name)
+      : []
+    const categoryName =
+      post.category && typeof post.category === 'object' ? post.category.name : undefined
+    const seoDescription =
+      post.seoDescription || post.excerpt || `${post.title} — Vinakademin.`
 
     return (
       <>
         {/* PayloadCMS 3 native live preview component */}
         <RefreshRouteOnSave />
+
+        {!post.noindex && (
+        <ArticleJsonLd
+          siteURL={siteURL}
+          url={canonicalUrl}
+          headline={post.title}
+          description={seoDescription}
+          imageUrls={featuredImageForSchema ? [featuredImageForSchema] : []}
+          authorName={authorName}
+          datePublished={
+            post.publishedDate ? new Date(post.publishedDate).toISOString() : new Date().toISOString()
+          }
+          dateModified={
+            post.updatedAt
+              ? new Date(post.updatedAt).toISOString()
+              : post.publishedDate
+                ? new Date(post.publishedDate).toISOString()
+                : new Date().toISOString()
+          }
+          section={categoryName}
+          keywords={tagNames}
+        />
+        )}
+
+        <BreadcrumbJsonLd
+          items={[
+            { name: 'Hem', url: `${siteURL}/` },
+            { name: 'Artiklar', url: `${siteURL}/artiklar` },
+            { name: post.title, url: canonicalUrl },
+          ]}
+        />
 
         <article className="max-w-4xl mx-auto px-4 py-8">
           <header className="mb-8">
@@ -339,7 +393,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
       </>
     )
   } catch (error) {
-    console.error('Error fetching blog post:', error)
+    log.error('Error fetching blog post:', error)
     notFound()
   }
 }

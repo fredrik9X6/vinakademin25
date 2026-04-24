@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-subscriptions-user-[userId]')
 
 export async function GET(
   request: NextRequest,
@@ -38,7 +41,7 @@ export async function GET(
 
     return NextResponse.json({ subscription })
   } catch (error) {
-    console.error('Error fetching user subscription:', error)
+    log.error('Error fetching user subscription:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid hämtning av prenumeration' },
       { status: 500 },
@@ -98,7 +101,7 @@ export async function PUT(
 
     return NextResponse.json({ subscription: updatedSubscription })
   } catch (error) {
-    console.error('Error updating user subscription:', error)
+    log.error('Error updating user subscription:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid uppdatering av prenumeration' },
       { status: 500 },

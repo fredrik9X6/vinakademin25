@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminOnly, adminOrInstructorOnly, anyLoggedIn } from '../lib/access'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
+import { seoFields } from '../fields/seo'
 
 export const Wines: CollectionConfig = {
   slug: 'wines',
@@ -50,9 +51,12 @@ export const Wines: CollectionConfig = {
       hooks: {
         beforeValidate: [
           ({ data }) => {
-            if (data?.name && !data.slug) {
-              return data.name
+            const source = data?.slug || data?.name
+            if (source) {
+              return String(source)
                 .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/(^-|-$)/g, '')
             }
@@ -181,6 +185,7 @@ export const Wines: CollectionConfig = {
         },
       ],
     },
+    ...seoFields,
   ],
   hooks: {
     beforeChange: [

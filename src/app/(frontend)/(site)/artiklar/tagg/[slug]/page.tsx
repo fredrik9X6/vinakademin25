@@ -9,6 +9,10 @@ import Link from 'next/link'
 import { ArrowLeft, Tag } from 'lucide-react'
 import type { BlogPost, BlogCategory, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
+import { getSiteURL } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-artiklar-tagg-[slug]-page')
 
 interface PageProps {
   params: Promise<{
@@ -58,7 +62,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       : `Alla artiklar taggade med ${tag.name} på Vinakademin - din guide till vinets värld.`
 
     // Generate canonical URL
-    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const baseUrl = getSiteURL()
     const params = new URLSearchParams()
     if (search) params.set('search', search)
     if (category) params.set('category', category)
@@ -66,8 +70,24 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 
     const canonicalUrl = `${baseUrl}/artiklar/tagg/${slug}${params.toString() ? `?${params.toString()}` : ''}`
 
+    // Thin-content guard: noindex tag pages with fewer than 3 published posts
+    // so shallow archives don't compete with deeper content in search.
+    const MIN_POSTS_FOR_INDEX = 3
+    const postCountResult = await payload.find({
+      collection: 'blog-posts',
+      where: {
+        and: [
+          { _status: { equals: 'published' } },
+          { tags: { contains: tag.id } },
+        ],
+      },
+      limit: 0,
+      depth: 0,
+    })
+    const isThin = (postCountResult.totalDocs || 0) < MIN_POSTS_FOR_INDEX
+
     const robotsContent =
-      currentPage > 1
+      currentPage > 1 || isThin
         ? 'noindex, follow'
         : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
 
@@ -95,7 +115,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       },
     }
   } catch (error) {
-    console.error('Error generating metadata for tag page:', error)
+    log.error('Error generating metadata for tag page:', error)
     return {
       title: 'Tagg | Vinakademin',
       description: 'Vinakademin - din guide till vinets värld.',
@@ -326,7 +346,7 @@ async function TagContent({ params, searchParams }: PageProps) {
       </div>
     )
   } catch (error) {
-    console.error('Error fetching tag posts:', error)
+    log.error('Error fetching tag posts:', error)
     notFound()
   }
 }

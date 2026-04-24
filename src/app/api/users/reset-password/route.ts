@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-reset-password')
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +28,7 @@ export async function POST(request: NextRequest) {
       message: 'Password reset successfully',
     })
   } catch (error) {
-    console.error('Reset password error:', error)
+    log.error('Reset password error:', error)
 
     // Handle PayloadCMS validation errors
     if (error && typeof error === 'object' && 'errors' in error) {

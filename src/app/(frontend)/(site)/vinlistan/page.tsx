@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getPayload } from 'payload'
@@ -6,6 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { VinlistanToolbar } from '@/components/vinlistan/VinlistanToolbar'
 import { VinlistanPagination } from '@/components/vinlistan/VinlistanPagination'
+import { getSiteURL } from '@/lib/site-url'
+
+export const metadata: Metadata = {
+  title: 'Vinlistan — hitta ditt nästa vin',
+  description:
+    'Bläddra bland viner recenserade och rekommenderade av Vinakademin. Sök på druva, region eller land och hitta ditt nästa vin — både vardagsviner och fynd.',
+  alternates: { canonical: `${getSiteURL()}/vinlistan` },
+  openGraph: {
+    title: 'Vinlistan — hitta ditt nästa vin | Vinakademin',
+    description:
+      'Bläddra bland viner recenserade och rekommenderade av Vinakademin. Sök på druva, region eller land.',
+    url: `${getSiteURL()}/vinlistan`,
+    type: 'website',
+  },
+}
 
 type SearchParams = {
   q?: string
@@ -19,7 +35,7 @@ type SearchParams = {
   ratingMin?: string
 }
 
-async function fetchTrustedReviewsAndWines(params: SearchParams) {
+async function fetchWinesForVinlistan(params: SearchParams) {
   const payload = await getPayload({ config })
 
   const limit = 24
@@ -39,47 +55,45 @@ async function fetchTrustedReviewsAndWines(params: SearchParams) {
   const filterGrape = (params.grape || '').trim().toLowerCase()
   const filterRatingMin = Number(params.ratingMin || '') || null
 
-  // Optional pre-filter by wines matching q (name, winery, grapes)
-  let wineIds: number[] | null = null
-  if (q) {
-    const wines = await payload.find({
-      collection: 'wines',
-      where: {
-        or: [{ name: { like: q } }, { winery: { like: q } }],
-      },
-      limit: 200, // cap prefilter to keep fast
-    })
-    wineIds = (wines.docs || []).map((w: any) => Number(w.id))
-    if (wineIds.length === 0) {
-      return { items: [], total: 0, page, pageCount: 0 }
-    }
+  // Fetch all wines (vinlistan should contain the full wine collection)
+  const winesRes = await payload.find({
+    collection: 'wines',
+    depth: 2 as any,
+    limit: 2000,
+  } as any)
+  const wines = winesRes.docs || []
+
+  if (wines.length === 0) {
+    return { items: [], total: 0, page, pageCount: 0 }
   }
 
-  // Fetch trusted reviews with wine populated (depth-like via follow-up)
+  // Fetch trusted reviews and map highest rating per wine
   const reviews = await payload.find({
     collection: 'reviews',
     where: {
-      and: [{ isTrusted: { equals: true } }, ...(wineIds ? [{ wine: { in: wineIds } }] : [])],
+      and: [{ isTrusted: { equals: true } }],
     },
     limit: 500, // we will dedupe by wine, then paginate
     sort: '-createdAt',
     depth: 2 as any,
   } as any)
 
-  // Dedupe by wine id, keep highest rating per wine
-  const byWine = new Map<number, any>()
+  const trustedReviewByWine = new Map<number, any>()
   for (const reviewDoc of reviews.docs || []) {
     const review = reviewDoc as any
     const wine = typeof review?.wine === 'object' ? review.wine : null
     if (!wine) continue
     const wid = Number((wine as any).id)
-    const prev = byWine.get(wid)
+    const prev = trustedReviewByWine.get(wid)
     if (!prev || (Number(review.rating) || 0) > (Number(prev.rating) || 0)) {
-      byWine.set(wid, review)
+      trustedReviewByWine.set(wid, review)
     }
   }
 
-  let items = Array.from(byWine.values())
+  let items = wines.map((wine: any) => ({
+    wine,
+    review: trustedReviewByWine.get(Number(wine.id)) || null,
+  }))
 
   // Helper: classify wine type
   const classifyWine = (w: any): 'sparkling' | 'red' | 'white' | null => {
@@ -115,9 +129,22 @@ async function fetchTrustedReviewsAndWines(params: SearchParams) {
   }
 
   // Filtering
-  items = items.filter((r: any) => {
-    const w = typeof r.wine === 'object' ? r.wine : null
+  items = items.filter((item: any) => {
+    const w = item.wine
     if (!w) return false
+
+    if (q) {
+      const name = String(w?.name || '').toLowerCase()
+      const winery = String(w?.winery || '').toLowerCase()
+      const grapes: string[] = Array.isArray(w?.grapes)
+        ? (w.grapes as any[]).map((g) => (typeof g === 'object' ? String(g.name) : String(g)))
+        : []
+      const hit =
+        name.includes(q.toLowerCase()) ||
+        winery.includes(q.toLowerCase()) ||
+        grapes.some((g) => String(g).toLowerCase().includes(q.toLowerCase()))
+      if (!hit) return false
+    }
 
     if (filterTypes.length > 0) {
       const t = classifyWine(w)
@@ -148,7 +175,7 @@ async function fetchTrustedReviewsAndWines(params: SearchParams) {
     }
 
     if (filterRatingMin != null) {
-      const rating = Number(r.rating) || 0
+      const rating = Number(item.review?.rating) || 0
       if (rating < filterRatingMin) return false
     }
 
@@ -157,10 +184,10 @@ async function fetchTrustedReviewsAndWines(params: SearchParams) {
 
   // Sorting
   items.sort((a: any, b: any) => {
-    const wa = typeof a.wine === 'object' ? a.wine : null
-    const wb = typeof b.wine === 'object' ? b.wine : null
-    const ra = Number(a.rating) || 0
-    const rb = Number(b.rating) || 0
+    const wa = a.wine || null
+    const wb = b.wine || null
+    const ra = Number(a.review?.rating) || 0
+    const rb = Number(b.review?.rating) || 0
     const pa = Number(wa?.price) || 0
     const pb = Number(wb?.price) || 0
     if (sort === 'rating-desc') return rb - ra
@@ -180,8 +207,9 @@ async function fetchTrustedReviewsAndWines(params: SearchParams) {
   return { items, total, page, pageCount }
 }
 
-function WineCard({ review }: { review: any }) {
-  const wine = typeof review.wine === 'object' ? review.wine : null
+function WineCard({ item }: { item: any }) {
+  const wine = item?.wine || null
+  const review = item?.review || null
   if (!wine) return null
   const href = `/vinlistan/${wine.slug || wine.id}`
   const formatPrice = (price: number) =>
@@ -271,7 +299,7 @@ function WineCard({ review }: { review: any }) {
                     : ''}
                 </span>
               </div>
-              <div className="mt-1 text-xs">Betyg: {review.rating ?? '-'}/5</div>
+              <div className="mt-1 text-xs">Betyg: {review?.rating ?? '-'}/5</div>
             </div>
           </div>
         </CardContent>
@@ -286,7 +314,7 @@ export default async function VinlistanPage({
   searchParams: Promise<SearchParams>
 }) {
   const sp = await searchParams
-  const { items, total, page, pageCount } = await fetchTrustedReviewsAndWines(sp || {})
+  const { items, total, page, pageCount } = await fetchWinesForVinlistan(sp || {})
   const q = sp?.q || ''
   const sort = sp?.sort || 'rating-desc'
 
@@ -312,8 +340,8 @@ export default async function VinlistanPage({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {items.map((r: any) => (
-            <WineCard key={String(typeof r.wine === 'object' ? r.wine.id : r.id)} review={r} />
+          {items.map((item: any) => (
+            <WineCard key={String(item.wine?.id || item.id)} item={item} />
           ))}
         </div>
       )}

@@ -3,6 +3,11 @@ import { getStripeServer, validateWebhookSignature } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { headers } from 'next/headers'
+import crypto from 'crypto'
+import { getSiteURL } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('stripe-webhook')
 
 // Disable body parsing to get raw body for Stripe signature verification
 export const runtime = 'nodejs'
@@ -12,12 +17,12 @@ export async function POST(request: NextRequest) {
   // Get raw body as array buffer to preserve exact format for signature verification
   const body = await request.arrayBuffer()
   const bodyBuffer = Buffer.from(body)
-  
+
   const headersList = await headers()
   const signature = headersList.get('stripe-signature')
 
   if (!signature) {
-    console.error('No Stripe signature found')
+    log.error('No Stripe signature found')
     return NextResponse.json({ error: 'No signature provided' }, { status: 400 })
   }
 
@@ -30,31 +35,31 @@ export async function POST(request: NextRequest) {
     // In development with ngrok, signature verification can fail due to request modification
     // Log but don't fail - Stripe will retry and some events may still succeed
     const errorMessage = err?.message || String(err)
-    
+
     // Try to parse the event anyway for development/debugging
     // In production, you should always verify signatures
     const isDevelopment = process.env.NODE_ENV === 'development'
-    
+
     if (isDevelopment && errorMessage.includes('No signatures found')) {
-      console.warn('⚠️ Webhook signature verification failed (likely due to ngrok). Attempting to parse event anyway...')
+      log.warn('Webhook signature verification failed (likely due to ngrok). Attempting to parse event anyway')
       try {
         // Try to parse the event manually for development
         // Note: Stripe webhook events have structure: { type, data: { object: {...} } }
         const eventData = JSON.parse(bodyBuffer.toString('utf-8'))
-        
+
         // Ensure event has the correct structure
         if (eventData && typeof eventData === 'object') {
           event = eventData
-          console.warn(`⚠️ Bypassed signature verification for event type: ${event?.type || 'unknown'}`)
+          log.warn({ eventType: event?.type || 'unknown' }, 'Bypassed signature verification')
         } else {
           throw new Error('Invalid event structure')
         }
       } catch (parseError) {
-        console.error('❌ Could not parse webhook body:', parseError)
+        log.error({ err: parseError }, 'Could not parse webhook body')
         return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 })
       }
     } else {
-      console.error('❌ Webhook signature verification failed:', errorMessage)
+      log.error({ err: errorMessage }, 'Webhook signature verification failed')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
   }
@@ -97,43 +102,50 @@ export async function POST(request: NextRequest) {
         break
 
       case 'charge.updated':
-        // Log charge updates but don't need to process them
-        console.log('💳 Charge updated:', event.data.object.id, 'Status:', event.data.object.status)
+        log.info(
+          { chargeId: event.data.object.id, status: event.data.object.status },
+          'Charge updated',
+        )
         break
 
       case 'charge.succeeded':
-        // Charge succeeded - payment intent webhook handles the actual logic
-        console.log('💳 Charge succeeded:', event.data.object.id)
+        log.info({ chargeId: event.data.object.id }, 'Charge succeeded')
         break
 
       case 'payment_intent.created':
-        // Payment intent created - no action needed yet
-        console.log('💳 Payment intent created:', event.data.object.id)
+        log.info({ paymentIntentId: event.data.object.id }, 'Payment intent created')
         break
 
       case 'customer.updated':
-        // Customer updated - no action needed
-        console.log('👤 Customer updated:', event.data.object.id)
+        log.info({ customerId: event.data.object.id }, 'Customer updated')
         break
 
       default:
-        console.log(`⚠️ Unhandled event type: ${event.type}`)
+        log.warn({ eventType: event.type }, 'Unhandled event type')
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('Error processing webhook:', error)
+    log.error({ err: error }, 'Error processing webhook')
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }
 
 async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: any) {
-  console.log('🔔 Webhook: Payment succeeded:', paymentIntent.id)
+  log.info({ paymentIntentId: paymentIntent.id }, 'Payment succeeded')
 
   const { courseId, userId } = paymentIntent.metadata
 
   if (!courseId || !userId) {
-    console.error('❌ Missing metadata in payment intent:', paymentIntent.id)
+    if (paymentIntent?.metadata?.checkoutMode === 'guest') {
+      log.info(
+        { paymentIntentId: paymentIntent.id },
+        'payment_intent.succeeded for guest checkout handled in checkout.session.completed',
+      )
+      return
+    }
+
+    log.error({ paymentIntentId: paymentIntent.id }, 'Missing metadata in payment intent')
     return
   }
 
@@ -142,7 +154,7 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
   const courseIdInt = parseInt(courseId, 10)
 
   if (isNaN(userIdInt) || isNaN(courseIdInt)) {
-    console.error('❌ Invalid user or course ID in payment intent metadata:', { userId, courseId })
+    log.error({ userId, courseId }, 'Invalid user or course ID in payment intent metadata')
     return
   }
 
@@ -158,7 +170,7 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
 
     if (orders.docs.length > 0) {
       const order = orders.docs[0]
-      console.log('📦 Found order for payment intent:', order.id)
+      log.info({ orderId: order.id, paymentIntentId: paymentIntent.id }, 'Found order for payment intent')
 
       const paymentIntentId = paymentIntent.id
       let chargeId: string | null = null
@@ -184,7 +196,7 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
             charge.payment_method_details?.type || paymentMethodType || null
           paymentMethodDetails = charge.payment_method_details
         } catch (chargeError) {
-          console.error('⚠️ Unable to retrieve charge while handling payment intent:', chargeError)
+          log.error({ err: chargeError, chargeId }, 'Unable to retrieve charge while handling payment intent')
         }
       }
 
@@ -226,23 +238,23 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
             order: order.id,
           },
         })
-        console.log('✅ Enrollment created:', enrollment.id)
+        log.info({ enrollmentId: enrollment.id }, 'Enrollment created')
       }
 
-      console.log('✅ Order updated and enrollment processed for payment:', paymentIntent.id)
+      log.info(
+        { paymentIntentId: paymentIntent.id },
+        'Order updated and enrollment processed for payment',
+      )
     } else {
-      console.error('❌ No order found for payment intent:', paymentIntent.id)
+      log.error({ paymentIntentId: paymentIntent.id }, 'No order found for payment intent')
     }
   } catch (error) {
-    console.error('❌ Error handling payment success:', error)
-    if (error instanceof Error) {
-      console.error('Error details:', error.message)
-    }
+    log.error({ err: error }, 'Error handling payment success')
   }
 }
 
 async function handlePaymentFailed(paymentIntent: any, payload: any) {
-  console.log('Payment failed:', paymentIntent.id)
+  log.info({ paymentIntentId: paymentIntent.id }, 'Payment failed')
 
   try {
     // Update order status
@@ -265,227 +277,367 @@ async function handlePaymentFailed(paymentIntent: any, payload: any) {
         },
       })
 
-      console.log('Order marked as failed for payment:', paymentIntent.id)
+      log.info({ paymentIntentId: paymentIntent.id }, 'Order marked as failed for payment')
     }
   } catch (error) {
-    console.error('Error handling payment failure:', error)
+    log.error({ err: error }, 'Error handling payment failure')
   }
 }
 
-async function handleSubscriptionPaymentSucceeded(invoice: any, payload: any) {
-  console.log('Subscription payment succeeded:', invoice.id)
+async function handleSubscriptionPaymentSucceeded(invoice: any, _payload: any) {
+  log.info({ invoiceId: invoice.id }, 'Subscription payment succeeded')
   // Handle subscription payment success
 }
 
-async function handleSubscriptionPaymentFailed(invoice: any, payload: any) {
-  console.log('Subscription payment failed:', invoice.id)
+async function handleSubscriptionPaymentFailed(invoice: any, _payload: any) {
+  log.info({ invoiceId: invoice.id }, 'Subscription payment failed')
   // Handle subscription payment failure
 }
 
-async function handleSubscriptionCreated(subscription: any, payload: any) {
-  console.log('Subscription created:', subscription.id)
+async function handleSubscriptionCreated(subscription: any, _payload: any) {
+  log.info({ subscriptionId: subscription.id }, 'Subscription created')
   // Handle subscription creation
 }
 
-async function handleSubscriptionUpdated(subscription: any, payload: any) {
-  console.log('Subscription updated:', subscription.id)
+async function handleSubscriptionUpdated(subscription: any, _payload: any) {
+  log.info({ subscriptionId: subscription.id }, 'Subscription updated')
   // Handle subscription updates
 }
 
-async function handleSubscriptionDeleted(subscription: any, payload: any) {
-  console.log('Subscription deleted:', subscription.id)
+async function handleSubscriptionDeleted(subscription: any, _payload: any) {
+  log.info({ subscriptionId: subscription.id }, 'Subscription deleted')
   // Handle subscription deletion
 }
 
+const getCheckoutEmail = (session: any): string | null => {
+  const metadataEmail = String(session?.metadata?.guestEmail || session?.metadata?.userEmail || '').trim()
+  const customerEmail = String(session?.customer_details?.email || session?.customer_email || '').trim()
+  const email = metadataEmail || customerEmail
+  return email ? email.toLowerCase() : null
+}
+
+const resolveCheckoutUser = async (payload: any, session: any) => {
+  const checkoutMode =
+    session?.metadata?.checkoutMode === 'guest' ? 'guest' : 'authenticated'
+
+  const metadataUserId = parseInt(String(session?.metadata?.userId || ''), 10)
+  if (checkoutMode === 'authenticated' && !isNaN(metadataUserId)) {
+    try {
+      const existingUser = await payload.findByID({
+        collection: 'users',
+        id: metadataUserId,
+      })
+
+      if (existingUser) {
+        return {
+          checkoutMode,
+          user: existingUser,
+          isNewUser: false,
+          email: String(existingUser.email || '').toLowerCase(),
+        }
+      }
+    } catch (error) {
+      log.warn({ err: error, userId: metadataUserId }, 'Could not load authenticated checkout user by id')
+    }
+  }
+
+  const email = getCheckoutEmail(session)
+  if (!email) {
+    throw new Error('Checkout session is missing a usable customer email')
+  }
+
+  const existingUsers = await payload.find({
+    collection: 'users',
+    where: {
+      email: { equals: email },
+    },
+    limit: 1,
+  })
+
+  if (existingUsers.docs.length > 0) {
+    return {
+      checkoutMode,
+      user: existingUsers.docs[0],
+      isNewUser: false,
+      email,
+    }
+  }
+
+  const guestFirstName = String(session?.metadata?.guestFirstName || '').trim()
+  const guestLastName = String(session?.metadata?.guestLastName || '').trim()
+  const randomPassword = crypto.randomBytes(24).toString('hex')
+
+  const createdUser = await payload.create({
+    collection: 'users',
+    data: {
+      email,
+      password: randomPassword,
+      firstName: guestFirstName || undefined,
+      lastName: guestLastName || undefined,
+      role: 'user',
+      accountStatus: 'active',
+      _verified: true,
+      onboarding: {
+        source: 'guest_checkout',
+      },
+    } as any,
+  })
+
+  log.info({ userId: createdUser.id, email }, 'Created guest checkout user')
+
+  return {
+    checkoutMode,
+    user: createdUser,
+    isNewUser: true,
+    email,
+  }
+}
+
 async function handleCheckoutSessionCompleted(session: any, payload: any, stripe: any) {
-  console.log('🔔 Webhook: Checkout session completed:', session.id)
-  console.log('🔍 Session metadata:', session.metadata)
+  log.info({ sessionId: session.id, metadata: session.metadata }, 'Checkout session completed')
 
-  const { courseId, userId } = session.metadata
-
-  if (!courseId || !userId) {
-    console.error('❌ Missing metadata in checkout session:', session.id, { courseId, userId })
+  const courseId = session?.metadata?.courseId
+  const courseIdInt = parseInt(String(courseId || ''), 10)
+  if (!courseId || isNaN(courseIdInt)) {
+    log.error(
+      { sessionId: session.id, courseId },
+      'Missing or invalid course metadata in checkout session',
+    )
     return
   }
-
-  // Convert string metadata to proper types for PayloadCMS
-  const userIdInt = parseInt(userId, 10)
-  const courseIdInt = parseInt(courseId, 10)
-
-  if (isNaN(userIdInt) || isNaN(courseIdInt)) {
-    console.error('❌ Invalid user or course ID in metadata:', {
-      userId,
-      courseId,
-      userIdInt,
-      courseIdInt,
-    })
-    return
-  }
-
-  console.log('✅ Parsed metadata:', { userIdInt, courseIdInt })
 
   try {
-    // Find order by Stripe session ID
-    console.log('🔍 Finding order by session ID:', session.id)
-    const orders = await payload.find({
+    let hydratedSession = session
+    try {
+      hydratedSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ['discounts', 'discounts.promotion_code'],
+      })
+    } catch (sessionError) {
+      log.error({ err: sessionError }, 'Unable to hydrate checkout session discounts')
+    }
+
+    const resolvedCheckout = await resolveCheckoutUser(payload, session)
+    const userIdInt = parseInt(String(resolvedCheckout.user.id), 10)
+    if (isNaN(userIdInt)) {
+      throw new Error(`Resolved user id is invalid: ${resolvedCheckout.user.id}`)
+    }
+
+    const course = await payload.findByID({
+      collection: 'vinprovningar',
+      id: courseIdInt,
+    })
+
+    const ordersBySession = await payload.find({
       collection: 'orders',
       where: {
         stripeSessionId: { equals: session.id },
       },
       limit: 1,
     })
+    const existingOrder = ordersBySession.docs[0] || null
+    const wasAlreadyCompleted = existingOrder?.status === 'completed'
 
-    console.log('📋 Orders found:', orders.docs.length)
+    let paymentIntentId: string | null = null
+    let chargeId: string | null = null
+    let receiptUrl: string | null = null
+    let paymentMethodType: string | null = hydratedSession.payment_method_types?.[0] || null
+    let paymentMethodDetails: any = null
+    const amountTotal = Number(hydratedSession.amount_total || 0) / 100
+    const amountSubtotal = Number(hydratedSession.amount_subtotal || hydratedSession.amount_total || 0) / 100
+    const discountAmount = Number(hydratedSession.total_details?.amount_discount || 0) / 100
+    const appliedDiscount = Array.isArray(hydratedSession.discounts)
+      ? hydratedSession.discounts[0]
+      : null
+    const discountCode =
+      appliedDiscount?.promotion_code &&
+      typeof appliedDiscount.promotion_code === 'object' &&
+      'code' in appliedDiscount.promotion_code
+        ? String(appliedDiscount.promotion_code.code)
+        : null
 
-    if (orders.docs.length > 0) {
-      const order = orders.docs[0]
-      console.log('📦 Found order:', order.id, 'Current status:', order.status)
-
-      let paymentIntentId: string | null = null
-      let chargeId: string | null = null
-      let receiptUrl: string | null = null
-      let paymentMethodType: string | null = session.payment_method_types?.[0] || null
-      let paymentMethodDetails: any = null
-
-      if (session.payment_intent) {
-        paymentIntentId =
-          typeof session.payment_intent === 'string'
-            ? session.payment_intent
-            : session.payment_intent.id
-        try {
-          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-            expand: ['latest_charge'],
-          })
-          if (typeof paymentIntent.latest_charge === 'string') {
-            chargeId = paymentIntent.latest_charge
-          } else if (paymentIntent.latest_charge?.id) {
-            chargeId = paymentIntent.latest_charge.id
-          }
-
-          if (chargeId) {
-            const charge =
-              typeof paymentIntent.latest_charge === 'object' && paymentIntent.latest_charge?.id
-                ? paymentIntent.latest_charge
-                : await stripe.charges.retrieve(chargeId)
-
-            receiptUrl = charge?.receipt_url ?? null
-            paymentMethodType = charge?.payment_method_details?.type || paymentMethodType || null
-            paymentMethodDetails = charge?.payment_method_details ?? null
-          }
-        } catch (intentError) {
-          console.error('⚠️ Unable to enrich payment details from Payment Intent:', intentError)
+    if (hydratedSession.payment_intent) {
+      paymentIntentId =
+        typeof hydratedSession.payment_intent === 'string'
+          ? hydratedSession.payment_intent
+          : hydratedSession.payment_intent.id
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+          expand: ['latest_charge'],
+        })
+        if (typeof paymentIntent.latest_charge === 'string') {
+          chargeId = paymentIntent.latest_charge
+        } else if (paymentIntent.latest_charge?.id) {
+          chargeId = paymentIntent.latest_charge.id
         }
+
+        if (chargeId) {
+          const charge =
+            typeof paymentIntent.latest_charge === 'object' && paymentIntent.latest_charge?.id
+              ? paymentIntent.latest_charge
+              : await stripe.charges.retrieve(chargeId)
+
+          receiptUrl = charge?.receipt_url ?? null
+          paymentMethodType = charge?.payment_method_details?.type || paymentMethodType || null
+          paymentMethodDetails = charge?.payment_method_details ?? null
+        }
+      } catch (intentError) {
+        log.error({ err: intentError }, 'Unable to enrich payment details from Payment Intent')
       }
+    }
 
-      // Update order status to completed
-      console.log('🔄 Updating order status to completed...')
-      const updatedOrder = await payload.update({
-        collection: 'orders',
-        id: order.id,
-        data: {
-          status: 'completed',
-          paidAt: new Date().toISOString(),
-          paymentMethod: paymentMethodType,
-          paymentMethodDetails: paymentMethodDetails
-            ? JSON.parse(JSON.stringify(paymentMethodDetails))
-            : null,
-          stripePaymentIntentId: paymentIntentId,
-          stripeChargeId: chargeId,
-          receiptUrl,
+    const orderPayload = {
+      status: 'completed',
+      paidAt: new Date().toISOString(),
+      user: userIdInt,
+      items: [
+        {
+          course: courseIdInt,
+          price: amountTotal,
+          quantity: 1,
         },
-      })
-      console.log('✅ Order updated successfully:', updatedOrder.id)
+      ],
+      amount: amountTotal,
+      currency: String(hydratedSession.currency || 'sek').toUpperCase(),
+      discountAmount,
+      discountCode,
+      stripeSessionId: hydratedSession.id,
+      stripeCustomerId: String(hydratedSession.customer || ''),
+      paymentMethod: paymentMethodType,
+      paymentMethodDetails: paymentMethodDetails ? JSON.parse(JSON.stringify(paymentMethodDetails)) : null,
+      stripePaymentIntentId: paymentIntentId,
+      stripeChargeId: chargeId,
+      receiptUrl,
+      metadata: {
+        ...(existingOrder?.metadata || {}),
+        checkoutOrigin: resolvedCheckout.checkoutMode,
+        guestEmail: resolvedCheckout.checkoutMode === 'guest' ? resolvedCheckout.email : null,
+        amountSubtotal,
+      },
+    }
 
-      // Check if enrollment already exists
-      console.log('🔍 Checking for existing enrollment...')
-      const existingEnrollment = await payload.find({
-        collection: 'enrollments',
-        where: {
-          and: [{ user: { equals: userIdInt } }, { course: { equals: courseIdInt } }],
-        },
-        limit: 1,
-      })
-
-      console.log('📚 Existing enrollments found:', existingEnrollment.docs.length)
-
-      if (existingEnrollment.docs.length === 0) {
-        console.log('🎓 Creating new enrollment...')
-
-        // Create enrollment using PayloadCMS 3 best practices
-        const enrollment = await payload.create({
-          collection: 'enrollments',
+    const updatedOrder = existingOrder
+      ? await payload.update({
+          collection: 'orders',
+          id: existingOrder.id,
+          data: orderPayload,
+        })
+      : await payload.create({
+          collection: 'orders',
           data: {
-            user: userIdInt, // Use integer ID for relationship
-            course: courseIdInt, // Use integer ID for relationship
-            status: 'active',
-            enrolledAt: new Date().toISOString(),
-            order: order.id, // Reference to the order
+            orderNumber: `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            user: userIdInt,
+            status: 'completed',
+            items: [
+              {
+                course: courseIdInt,
+                price: amountTotal,
+                quantity: 1,
+              },
+            ],
+            amount: amountTotal,
+            currency: String(hydratedSession.currency || 'sek').toUpperCase(),
+            discountAmount,
+            discountCode,
+            stripeSessionId: hydratedSession.id,
+            stripeCustomerId: String(hydratedSession.customer || ''),
+            paymentMethod: paymentMethodType,
+            paymentMethodDetails: paymentMethodDetails ? JSON.parse(JSON.stringify(paymentMethodDetails)) : null,
+            stripePaymentIntentId: paymentIntentId,
+            stripeChargeId: chargeId,
+            receiptUrl,
+            paidAt: new Date().toISOString(),
+            metadata: {
+              checkoutOrigin: resolvedCheckout.checkoutMode,
+              guestEmail: resolvedCheckout.checkoutMode === 'guest' ? resolvedCheckout.email : null,
+              amountSubtotal,
+            },
           },
         })
 
-        console.log('✅ Enrollment created successfully:', enrollment.id)
-        console.log(`🎉 User ${userIdInt} enrolled in course ${courseIdInt}`)
-      } else {
-        console.log('⚠️ Enrollment already exists for this user and course')
-      }
+    const existingEnrollment = await payload.find({
+      collection: 'enrollments',
+      where: {
+        and: [{ user: { equals: userIdInt } }, { course: { equals: courseIdInt } }],
+      },
+      limit: 1,
+    })
 
-      // Send receipt email
+    if (existingEnrollment.docs.length === 0) {
+      await payload.create({
+        collection: 'enrollments',
+        data: {
+          user: userIdInt,
+          course: courseIdInt,
+          status: 'active',
+          enrolledAt: new Date().toISOString(),
+          order: updatedOrder.id,
+        },
+      })
+      log.info({ userId: userIdInt, courseId: courseIdInt }, 'User enrolled in course')
+    }
+
+    if (!wasAlreadyCompleted) {
       try {
-        console.log('📧 Preparing to send receipt email...')
-        
-        // Fetch user and course details
-        const user = await payload.findByID({
-          collection: 'users',
-          id: userIdInt,
+        const { generateReceiptEmailHTML } = await import('@/lib/email-templates')
+        const siteURL = getSiteURL()
+        const claimAccessUrl =
+          resolvedCheckout.checkoutMode === 'guest'
+            ? `${siteURL}/aktivera-konto?email=${encodeURIComponent(resolvedCheckout.email)}&next=${encodeURIComponent('/mina-provningar')}`
+            : undefined
+
+        const emailHTML = generateReceiptEmailHTML({
+          firstName: resolvedCheckout.user.firstName || undefined,
+          courseTitle: course.title,
+          courseSlug: course.slug || course.id.toString(),
+          orderId: updatedOrder.id.toString(),
+          amount: updatedOrder.amount || 0,
+          discountAmount: updatedOrder.discountAmount || 0,
+          discountCode: updatedOrder.discountCode || undefined,
+          paidAt: updatedOrder.paidAt || new Date().toISOString(),
+          receiptUrl: updatedOrder.receiptUrl || null,
+          claimAccessUrl,
         })
 
-        const course = await payload.findByID({
-          collection: 'vinprovningar',
-          id: courseIdInt,
+        await payload.sendEmail({
+          to: resolvedCheckout.email,
+          subject: `Kvitto - ${course.title} - Vinakademin`,
+          html: emailHTML,
         })
 
-        if (!user?.email) {
-          console.warn('⚠️ User email not found, skipping receipt email')
-        } else {
-          const { generateReceiptEmailHTML } = await import('@/lib/email-templates')
-          
-          const emailHTML = generateReceiptEmailHTML({
-            firstName: user.firstName || undefined,
-            courseTitle: course.title,
-            courseSlug: course.slug || course.id.toString(),
-            orderId: order.id.toString(),
-            amount: order.amount || 0,
-            paidAt: updatedOrder.paidAt || new Date().toISOString(),
-            receiptUrl: updatedOrder.receiptUrl || null,
+        if (resolvedCheckout.checkoutMode === 'guest') {
+          await payload.forgotPassword({
+            collection: 'users',
+            data: {
+              email: resolvedCheckout.email,
+            },
           })
-
-          await payload.sendEmail({
-            to: user.email,
-            subject: `Kvitto - ${course.title} - Vinakademin`,
-            html: emailHTML,
-          })
-
-          console.log('✅ Receipt email sent successfully to:', user.email)
+          log.info(
+            { event: 'account_claimed_email_sent', sessionId: session.id, userId: userIdInt, email: resolvedCheckout.email },
+            'checkout_funnel',
+          )
         }
+
+        log.info(
+          {
+            event: 'checkout_completed',
+            mode: resolvedCheckout.checkoutMode,
+            sessionId: session.id,
+            userId: userIdInt,
+            courseId: courseIdInt,
+            isNewUser: resolvedCheckout.isNewUser,
+          },
+          'checkout_funnel',
+        )
       } catch (emailError) {
-        // Don't fail the webhook if email sending fails
-        console.error('⚠️ Error sending receipt email:', emailError)
+        log.error({ err: emailError }, 'Error sending receipt or claim email')
       }
-    } else {
-      console.error('❌ No order found for session ID:', session.id)
     }
   } catch (error) {
-    console.error('❌ Error handling checkout session completion:', error)
-
-    // Log detailed error information
-    if (error instanceof Error) {
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
-    }
+    log.error({ err: error }, 'Error handling checkout session completion')
 
     // If it's a PayloadCMS validation error, log the details
     if (error && typeof error === 'object' && 'data' in error) {
-      console.error('PayloadCMS error data:', error.data)
+      log.error({ errorData: (error as any).data }, 'PayloadCMS error data')
     }
   }
 }

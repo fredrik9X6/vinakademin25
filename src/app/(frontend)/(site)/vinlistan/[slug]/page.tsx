@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { headers } from 'next/headers'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 import {
   Accordion,
@@ -13,25 +14,69 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Clock, ArrowRight, CalendarDays, Sparkles } from 'lucide-react'
 import type { Metadata } from 'next'
 import { BlogPostCard } from '@/components/blog'
+import { getSiteURL } from '@/lib/site-url'
+import { resolveSeo } from '@/lib/seo'
+import { BreadcrumbJsonLd, WineProductJsonLd } from '@/components/seo/JsonLd'
 
 type PageProps = {
   params: Promise<{ slug: string }>
 }
 
+const decodeSlug = (value: string): string => {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+const normalizeSlug = (value: string): string =>
+  decodeSlug(String(value || ''))
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+
 async function fetchWineBySlug(slug: string) {
   const payload = await getPayload({ config })
+  const decodedSlug = decodeSlug(slug)
+  const numericSlug = Number(decodedSlug)
+  const hasNumericSlug = Number.isFinite(numericSlug) && !Number.isNaN(numericSlug)
+  const slugCandidates = Array.from(
+    new Set(
+      [slug, decodedSlug, slug.toLowerCase(), decodedSlug.toLowerCase()].filter(
+        (candidate) => Boolean(candidate && candidate.trim()),
+      ),
+    ),
+  )
   const res = await payload.find({
     collection: 'wines',
     where: {
-      or: [{ slug: { equals: slug } }, { id: { equals: slug } }],
+      or: [
+        ...slugCandidates.map((candidate) => ({ slug: { equals: candidate } })),
+        ...(hasNumericSlug ? [{ id: { equals: numericSlug } }] : []),
+      ],
     },
     depth: 2 as any,
     limit: 1,
   } as any)
-  const wine = res.docs?.[0]
+  let wine: any | null = res.docs?.[0] ?? null
+  if (!wine && !hasNumericSlug) {
+    const normalizedRequestedSlug = normalizeSlug(decodedSlug)
+    const fallbackRes = await payload.find({
+      collection: 'wines',
+      depth: 2 as any,
+      limit: 2000,
+    } as any)
+    wine =
+      (fallbackRes.docs || []).find(
+        (doc: any) => doc?.slug && normalizeSlug(String(doc.slug)) === normalizedRequestedSlug,
+      ) || null
+  }
   if (!wine) return null
 
   // Load a trusted review if exists for rating display
@@ -52,7 +97,7 @@ async function fetchWineBySlug(slug: string) {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const data = await fetchWineBySlug(slug)
-  const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const baseUrl = getSiteURL()
   if (!data) {
     return {
       title: `Vin | Vinakademin`,
@@ -62,29 +107,43 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
   const { wine } = data as any
-  const title = `${wine.name}${wine.vintage ? ` · ${wine.vintage}` : ''} | Vinakademin`
-  const description = `${wine.winery || ''}${wine.region?.name ? ` · ${wine.region.name}` : ''}$${
-    wine.country?.name ? `, ${wine.country.name}` : ''
-  }`.replace(/\$+/g, '')
+  const fallbackTitle = `${wine.name}${wine.vintage ? ` · ${wine.vintage}` : ''} | Vinakademin`
+  const fallbackDescription = [
+    wine.winery,
+    wine.region?.name,
+    wine.country?.name,
+  ]
+    .filter(Boolean)
+    .join(' · ') || `${wine.name} — vin i Vinakademins vinlista`
   const canonicalUrl = `${baseUrl}/vinlistan/${wine.slug || wine.id}`
+
+  const seo = resolveSeo(wine, {
+    title: fallbackTitle,
+    description: fallbackDescription,
+    imageUrl: wine.image?.url || null,
+  })
+
   return {
-    title,
-    description,
-    robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+    title: seo.title,
+    description: seo.description,
+    robots: seo.noindex
+      ? 'noindex, follow'
+      : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     alternates: { canonical: canonicalUrl },
     openGraph: {
       type: 'article',
-      title,
-      description,
+      title: seo.title,
+      description: seo.description,
       url: canonicalUrl,
       siteName: 'Vinakademin',
       locale: 'sv_SE',
-      images: wine.image?.url ? [{ url: wine.image.url }] : undefined,
+      images: seo.imageUrl ? [{ url: seo.imageUrl }] : undefined,
     },
     twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
+      card: seo.imageUrl ? 'summary_large_image' : 'summary',
+      title: seo.title,
+      description: seo.description,
+      ...(seo.imageUrl && { images: [seo.imageUrl] }),
     },
   }
 }
@@ -166,6 +225,9 @@ export default async function WineDetailPage({ params }: PageProps) {
       return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     })
 
+  const wineIdStr = String(wine.id)
+  const wineSlugStr = String(wine.slug || '')
+
   // Fetch related wines by region or grapes
   const grapeIds: number[] = Array.isArray(wine.grapes)
     ? (wine.grapes as any[])
@@ -190,6 +252,19 @@ export default async function WineDetailPage({ params }: PageProps) {
   } as any)
   const relatedWines = relatedRes.docs || []
 
+  // Fetch vinprovningar that reference this wine
+  const vinRes = await payload.find({
+    collection: 'vinprovningar',
+    where: { _status: { equals: 'published' } },
+    depth: 2 as any,
+    limit: 100,
+  } as any)
+  const allVinprovningar = vinRes.docs || []
+  const relatedVinprovningar = allVinprovningar.filter((v: any) => {
+    const json = JSON.stringify(v.fullDescription || {})
+    return json.includes(wineIdStr) || json.includes(wineSlugStr)
+  })
+
   // Fetch blog posts where this wine is referenced in content blocks
   const postsRes = await payload.find({
     collection: 'blog-posts',
@@ -199,8 +274,6 @@ export default async function WineDetailPage({ params }: PageProps) {
     limit: 100,
   } as any)
   const blogPostsAll = postsRes.docs || []
-  const wineIdStr = String(wine.id)
-  const wineSlugStr = String(wine.slug || '')
   const referencesWine = (content: any): boolean => {
     if (!content || typeof content !== 'object') return false
     const stack: any[] = [content]
@@ -284,99 +357,202 @@ export default async function WineDetailPage({ params }: PageProps) {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(price)
 
+  const lastUpdated = wine.updatedAt
+    ? new Date(wine.updatedAt).toLocaleDateString('sv-SE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : null
+
+  const siteURL = getSiteURL()
+  const wineSlug = wine.slug || String(wine.id)
+  const trustedReviewRatings = (trustedReviewsRes.docs || [])
+    .map((r: any) => Number(r.rating))
+    .filter((n: number) => Number.isFinite(n) && n > 0)
+  const aggregateRating =
+    trustedReviewRatings.length > 0
+      ? {
+          value: trustedReviewRatings.reduce((a: number, b: number) => a + b, 0) /
+            trustedReviewRatings.length,
+          count: trustedReviewRatings.length,
+        }
+      : null
+  const productDescription = [
+    wine.winery,
+    wine.region?.name,
+    wine.country?.name,
+    Array.isArray(wine.grapes) && wine.grapes.length > 0
+      ? wine.grapes.map((g: any) => (typeof g === 'object' ? g.name : g)).join(', ')
+      : null,
+    wine.vintage ? `Årgång ${wine.vintage}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ') || `${wine.name} — vin i Vinakademins vinlista`
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-6">
+      {!wine.noindex && (
+        <WineProductJsonLd
+          siteURL={siteURL}
+          name={wine.name}
+          slug={wineSlug}
+          description={productDescription}
+          imageUrl={
+            wine.image?.url
+              ? wine.image.url.startsWith('http')
+                ? wine.image.url
+                : `${siteURL}${wine.image.url}`
+              : null
+          }
+          producer={wine.winery || null}
+          countryName={wine.country?.name || null}
+          vintage={wine.vintage ? Number(wine.vintage) : null}
+          price={typeof wine.price === 'number' && wine.price > 0 ? wine.price : null}
+          aggregateRating={aggregateRating}
+        />
+      )}
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Hem', url: `${siteURL}/` },
+          { name: 'Vinlistan', url: `${siteURL}/vinlistan` },
+          { name: wine.name, url: `${siteURL}/vinlistan/${wineSlug}` },
+        ]}
+      />
+      <div className="mb-6 flex items-center justify-between">
         <Link href="/vinlistan" className="text-sm text-muted-foreground hover:underline">
           ← Tillbaka till Vinlistan
         </Link>
+        {lastUpdated ? (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CalendarDays className="h-3.5 w-3.5" />
+            <span>Senaste uppdaterad: {lastUpdated}</span>
+          </div>
+        ) : null}
       </div>
 
-      <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <CardTitle className="text-2xl font-semibold break-words">
-              {wine.name} {wine.vintage ? `· ${wine.vintage}` : ''}
-            </CardTitle>
-            {Number(wine.price) ? (
-              <div className="text-base sm:text-lg font-semibold text-primary">
-                {formatPrice(Number(wine.price))}
+      <Card className="mb-8 overflow-hidden">
+        <CardContent className="p-0">
+          {/* Mobile: stacked. Tablet (md): image left, content right side-by-side. */}
+          <div className="flex flex-col md:flex-row">
+            {/* Wine bottle image */}
+            <div className="flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20 md:w-52 lg:w-60 flex-shrink-0 py-8 px-6">
+              <div className="relative h-56 w-24 sm:h-64 sm:w-28 md:h-72 md:w-32">
+                {wine.image?.url ? (
+                  <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
+                ) : null}
               </div>
-            ) : null}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {wine.winery}
-            {wine.region?.name ? ` · ${wine.region.name}` : ''}
-            {wine.country?.name ? `, ${wine.country.name}` : ''}
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row gap-6">
-            <div className="relative h-56 w-28 sm:h-72 sm:w-40 mx-auto sm:mx-0 rounded-md overflow-hidden bg-transparent">
-              {wine.image?.url ? (
-                <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
-              ) : null}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="grid gap-6 lg:grid-cols-2">
-                <div>
-                  <div className="mb-3">
-                    <div className="text-sm">Druvor</div>
-                    <div className="text-sm text-muted-foreground">
-                      {Array.isArray(wine.grapes)
-                        ? (wine.grapes as any[])
-                            .map((g: any) => (typeof g === 'object' ? g.name : g))
-                            .join(', ')
-                        : '—'}
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <div className="text-sm">Alkohol</div>
-                    <div className="text-sm text-muted-foreground">
-                      {wine.alcohol ? `${wine.alcohol}%` : '—'}
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <div className="text-sm">Betyg</div>
-                    <div className="text-sm text-muted-foreground">{review?.rating ?? '—'}/5</div>
-                  </div>
-                  {review ? (
-                    <div className="mt-4">
-                      <Badge variant="secondary">Verifierad</Badge>
+
+            {/* Main content */}
+            <div className="flex-1 p-5 sm:p-6 md:p-8 flex flex-col gap-5 min-w-0">
+              {/* Header */}
+              <div>
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words">
+                    {wine.name}{wine.vintage ? <span className="text-muted-foreground font-normal"> · {wine.vintage}</span> : ''}
+                  </h1>
+                  {Number(wine.price) ? (
+                    <div className="text-xl font-bold text-[#FB914C]">
+                      {formatPrice(Number(wine.price))}
                     </div>
                   ) : null}
                 </div>
-                {wine.description?.root ? (
+                <div className="text-sm text-muted-foreground">
+                  {wine.winery}
+                  {wine.region?.name ? (
+                    <>
+                      {' · '}
+                      <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                        {wine.region.name}
+                      </Link>
+                    </>
+                  ) : null}
+                  {wine.country?.name ? (
+                    <>
+                      {', '}
+                      <Link href={`/lander/${wine.country.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                        {wine.country.name}
+                      </Link>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Badges */}
+              <div className="flex flex-wrap gap-2">
+                {review ? (
+                  <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30">
+                    Verifierad recension
+                  </Badge>
+                ) : null}
+                {review?.rating ? (
+                  <Badge variant="secondary">
+                    Betyg: {review.rating}/5
+                  </Badge>
+                ) : null}
+              </div>
+
+              {/* Details grid — 2 cols on mobile/tablet, 3 on desktop */}
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Druvor</div>
+                  <div className="text-sm font-medium">
+                    {Array.isArray(wine.grapes) && (wine.grapes as any[]).length > 0
+                      ? (wine.grapes as any[])
+                          .map((g: any) => (typeof g === 'object' ? g.name : g))
+                          .join(', ')
+                      : '—'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Alkohol</div>
+                  <div className="text-sm font-medium">{wine.alcohol ? `${wine.alcohol}%` : '—'}</div>
+                </div>
+                {wine.region?.name ? (
                   <div>
-                    <div className="text-sm font-medium mb-1">Beskrivning</div>
-                    <div className="prose prose-sm dark:prose-invert">
-                      <RichTextRenderer content={wine.description} />
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Region</div>
+                    <div className="text-sm font-medium">
+                      <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors hover:underline underline-offset-2">
+                        {wine.region.name}
+                      </Link>
                     </div>
                   </div>
                 ) : null}
               </div>
+
+              {/* Description */}
+              {wine.description?.root ? (
+                <div className="border-t border-border/50 pt-4">
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Beskrivning</div>
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <RichTextRenderer content={wine.description} />
+                  </div>
+                </div>
+              ) : null}
+
+                {/* Systembolaget link */}
+                {wine.systembolagetUrl && wine.systembolagetUrl.trim() ? (
+                  <div>
+                    <a
+                      href={
+                        wine.systembolagetUrl.startsWith('http')
+                          ? wine.systembolagetUrl
+                          : `https://${wine.systembolagetUrl}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-[#FB914C] hover:underline underline-offset-2"
+                    >
+                      Köp på Systembolaget
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                ) : null}
+              </div>
             </div>
-          </div>
-          {/* Description moved into right column on desktop */}
-          {wine.systembolagetUrl && wine.systembolagetUrl.trim() ? (
-            <div className="mt-3">
-              <a
-                href={
-                  wine.systembolagetUrl.startsWith('http')
-                    ? wine.systembolagetUrl
-                    : `https://${wine.systembolagetUrl}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-              >
-                Länk till Systembolaget
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       {/* Reviews */}
       <div className="mt-8">
@@ -541,6 +717,82 @@ export default async function WineDetailPage({ params }: PageProps) {
           </Accordion>
         )}
       </div>
+
+      {/* Vinprovningar referencing this wine */}
+      {relatedVinprovningar.length > 0 ? (
+        <div className="mt-10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#FDBA75]/10 to-[#FB914C]/10 border border-[#FDBA75]/20 mb-4">
+              <Sparkles className="h-4 w-4 text-[#FB914C]" />
+              <span className="text-sm font-medium text-[#FB914C]">Vinprovningar med detta vin</span>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {relatedVinprovningar.map((v: any) => (
+              <div key={v.id} className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FDBA75] via-[#FB914C] to-[#FDBA75] rounded-2xl opacity-50 blur group-hover:opacity-80 transition duration-500" />
+                <div className="relative bg-card rounded-2xl overflow-hidden border border-border">
+                  <div className="flex flex-col sm:flex-row gap-0">
+                    {v.featuredImage?.url ? (
+                      <div className="relative h-48 sm:h-auto sm:w-56 flex-shrink-0">
+                        <Image
+                          src={v.featuredImage.url}
+                          alt={v.title}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent sm:bg-gradient-to-r" />
+                      </div>
+                    ) : null}
+                    <div className="flex-1 p-6 sm:p-8 flex flex-col justify-between gap-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          {v.level ? (
+                            <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30">
+                              {v.level === 'beginner'
+                                ? 'Nybörjare'
+                                : v.level === 'intermediate'
+                                  ? 'Fortsättning'
+                                  : 'Avancerad'}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                          {v.title}
+                        </h3>
+                        {v.description ? (
+                          <p className="text-muted-foreground leading-relaxed line-clamp-3">
+                            {v.description}
+                          </p>
+                        ) : null}
+                        {v.duration ? (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>{v.duration}h</span>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="pt-2 border-t border-border flex items-center justify-between gap-4">
+                        {Number(v.price) > 0 ? (
+                          <span className="text-2xl font-bold bg-gradient-to-r from-[#FB914C] to-[#FDBA75] bg-clip-text text-transparent">
+                            {formatPrice(Number(v.price))}
+                          </span>
+                        ) : null}
+                        <Link href={`/vinprovningar/${v.slug}`}>
+                          <Button className="bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white border-0 shadow-lg shadow-[#FB914C]/20 group/btn transition-all duration-300">
+                            Läs mer
+                            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {/* Blog posts referencing this wine */}
       {blogPosts.length > 0 ? (

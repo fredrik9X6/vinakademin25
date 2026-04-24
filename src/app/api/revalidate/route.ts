@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-revalidate')
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
       now: Date.now(),
     })
   } catch (error) {
-    console.error('Error during revalidation:', error)
+    log.error('Error during revalidation:', error)
     return NextResponse.json(
       {
         message: 'Error revalidating',

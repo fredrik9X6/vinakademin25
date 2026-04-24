@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-contact')
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Contact form submitted successfully' })
   } catch (error) {
-    console.error('Error handling contact form:', error)
+    log.error('Error handling contact form:', error)
     return NextResponse.json({ error: 'Failed to submit contact form' }, { status: 500 })
   }
 }

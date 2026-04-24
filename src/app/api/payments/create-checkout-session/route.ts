@@ -4,27 +4,27 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { getSiteURL } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-payments-create-checkout-session')
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const logCheckoutEvent = (event: string, details: Record<string, unknown>) => {
+  log.info(`[checkout_funnel] ${event}`, details)
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Get user using PayloadCMS 3 pattern
     const user = await getUser()
-    console.log('Checkout Session API: User retrieved:', user ? `ID: ${user.id}` : 'null')
-
-    if (!user?.id) {
-      console.log('Checkout Session API: No user found, returning 401')
-      return NextResponse.json(
-        { error: 'Du måste vara inloggad för att köpa vinprovningar' },
-        { status: 401 },
-      )
-    }
 
     const payload = await getPayload({ config })
-    const { courseId } = await request.json()
-    console.log('Checkout Session API: Request data:', { courseId })
+    const { courseId, guestEmail, guestFirstName, guestLastName } = await request.json()
+
+    const checkoutMode: 'authenticated' | 'guest' = user?.id ? 'authenticated' : 'guest'
 
     if (!courseId) {
-      console.log('Checkout Session API: No courseId provided')
+      log.info('Checkout Session API: No courseId provided')
       return NextResponse.json({ error: 'Vinprovnings-ID krävs' }, { status: 400 })
     }
 
@@ -33,49 +33,76 @@ export async function POST(request: NextRequest) {
       collection: 'vinprovningar',
       id: courseId,
     })
-    console.log(
+    log.info(
       'Checkout Session API: Course found:',
       course ? `ID: ${course.id}, Title: ${course.title}` : 'null',
     )
 
     if (!course) {
-      console.log('Checkout Session API: Course not found')
+      log.info('Checkout Session API: Course not found')
       return NextResponse.json({ error: 'Vinprovningen hittades inte' }, { status: 404 })
     }
 
     // Check if course has a price
     if (!course.price || course.price <= 0) {
-      console.log('Checkout Session API: Course has no price')
+      log.info('Checkout Session API: Course has no price')
       return NextResponse.json({ error: 'Vinprovningen har inget pris' }, { status: 400 })
     }
 
-    // Check if user already owns this course
-    const existingEnrollment = await payload.find({
-      collection: 'enrollments',
-      where: {
-        and: [{ user: { equals: user.id } }, { course: { equals: courseId } }],
-      },
-      limit: 1,
-    })
-    console.log(
-      'Checkout Session API: Existing enrollment check:',
-      existingEnrollment.docs.length > 0 ? 'Found' : 'Not found',
-    )
+    let checkoutEmail = user?.email || ''
+    let checkoutFirstName = user?.firstName || ''
+    let checkoutLastName = user?.lastName || ''
+    let existingUserByEmail: any = null
 
-    if (existingEnrollment.docs.length > 0) {
-      console.log('Checkout Session API: User already owns course')
-      return NextResponse.json({ error: 'Du äger redan denna vinprovning' }, { status: 400 })
+    if (checkoutMode === 'guest') {
+      const normalizedEmail = String(guestEmail || '').trim().toLowerCase()
+      if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
+        return NextResponse.json({ error: 'Ange en giltig e-postadress för att fortsätta' }, { status: 400 })
+      }
+
+      checkoutEmail = normalizedEmail
+      checkoutFirstName = String(guestFirstName || '').trim()
+      checkoutLastName = String(guestLastName || '').trim()
+
+      const existingUsers = await payload.find({
+        collection: 'users',
+        where: {
+          email: { equals: normalizedEmail },
+        },
+        limit: 1,
+      })
+      existingUserByEmail = existingUsers.docs[0] || null
     }
 
-    // Get or create Stripe customer
-    const customer = await getOrCreateStripeCustomer(
-      user.email!,
-      user.id.toString(),
-      `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-    )
-    console.log('Checkout Session API: Stripe customer:', customer.id)
+    // Check if this user/email already owns this course
+    if (user?.id || existingUserByEmail?.id) {
+      const enrollmentUserId = user?.id || existingUserByEmail.id
+      const existingEnrollment = await payload.find({
+        collection: 'enrollments',
+        where: {
+          and: [{ user: { equals: enrollmentUserId } }, { course: { equals: courseId } }],
+        },
+        limit: 1,
+      })
 
-    // Create Stripe Checkout Session
+      if (existingEnrollment.docs.length > 0) {
+        return NextResponse.json({ error: 'Du äger redan denna vinprovning' }, { status: 400 })
+      }
+    }
+
+    const customer = await getOrCreateStripeCustomer(
+      checkoutEmail,
+      user?.id ? user.id.toString() : `guest:${checkoutEmail}`,
+      `${checkoutFirstName} ${checkoutLastName}`.trim(),
+    )
+
+    logCheckoutEvent('checkout_started', {
+      mode: checkoutMode,
+      courseId: String(courseId),
+      userId: user?.id || null,
+      email: checkoutEmail,
+    })
+
     const stripe = getStripeServer()
     const baseUrl = getSiteURL()
 
@@ -110,13 +137,18 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'payment',
+      allow_promotion_codes: true,
       success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/vinprovningar/${course.slug}?checkout=cancelled`,
       metadata: {
+        checkoutMode,
         courseId: courseId.toString(),
         courseTitle: course.title,
-        userId: user.id.toString(),
-        userEmail: user.email!,
+        userId: user?.id ? user.id.toString() : '',
+        userEmail: user?.email || '',
+        guestEmail: checkoutMode === 'guest' ? checkoutEmail : '',
+        guestFirstName: checkoutMode === 'guest' ? checkoutFirstName : '',
+        guestLastName: checkoutMode === 'guest' ? checkoutLastName : '',
       },
       automatic_tax: {
         enabled: true,
@@ -135,34 +167,39 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log('Checkout Session API: Session created:', session.id)
-
-    // Create order record in PayloadCMS for tracking
+    const orderUserId = user?.id || existingUserByEmail?.id
     try {
-      const order = await payload.create({
-        collection: 'orders',
-        data: {
-          orderNumber: `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          user: user.id,
-          status: 'pending',
-          items: [
-            {
-              course: courseId,
-              price: course.price,
-              quantity: 1,
+      if (orderUserId) {
+        const order = await payload.create({
+          collection: 'orders',
+          data: {
+            orderNumber: `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            user: orderUserId,
+            status: 'pending',
+            items: [
+              {
+                course: courseId,
+                price: course.price,
+                quantity: 1,
+              },
+            ],
+            amount: course.price,
+            currency: 'sek',
+            stripeSessionId: session.id,
+            stripeCustomerId: customer.id,
+            paymentMethod: null,
+            metadata: {
+              checkoutOrigin: checkoutMode,
+              guestEmail: checkoutMode === 'guest' ? checkoutEmail : null,
             },
-          ],
-          amount: course.price,
-          currency: 'sek',
-          stripeSessionId: session.id,
-          stripeCustomerId: customer.id,
-          paymentMethod: null, // Will be determined after payment
-        },
-      })
-      console.log('Checkout Session API: Order created successfully:', order.id)
+          },
+        })
+        log.info('Checkout Session API: Order created successfully:', order.id)
+      } else {
+        log.info('Checkout Session API: Skipping pre-order creation for guest checkout without known user')
+      }
     } catch (orderError) {
-      console.error('Checkout Session API: Order creation failed:', orderError)
-      // Continue anyway - the session is created and webhook will handle completion
+      log.error('Checkout Session API: Order creation failed:', orderError)
     }
 
     return NextResponse.json({
@@ -170,7 +207,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     })
   } catch (error) {
-    console.error('Checkout Session API: Error creating checkout session:', error)
+    log.error('Checkout Session API: Error creating checkout session:', error)
 
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

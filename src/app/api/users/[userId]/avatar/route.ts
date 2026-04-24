@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/get-user'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-users-[userId]-avatar')
 
 export const runtime = 'nodejs'
 
@@ -42,7 +45,7 @@ export async function PATCH(
       user: updatedUser,
     })
   } catch (error) {
-    console.error('Avatar update error:', error)
+    log.error('Avatar update error:', error)
     return NextResponse.json({ message: 'Failed to update avatar' }, { status: 500 })
   }
 }

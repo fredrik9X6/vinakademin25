@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { Vinprovningar, Module, ContentItem } from '@/payload-types'
@@ -8,6 +9,12 @@ import CourseQuizViewer from '@/components/course/CourseQuizViewer'
 import CourseCompletionPage from '@/components/course/CourseCompletionPage'
 import { cookies } from 'next/headers'
 import { getUser } from '@/lib/get-user'
+import { getSiteURL } from '@/lib/site-url'
+import { resolveSeo } from '@/lib/seo'
+import { BreadcrumbJsonLd, CourseJsonLd } from '@/components/seo/JsonLd'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-vinprovningar-[slug]-page')
 
 interface CoursePageProps {
   params: Promise<{
@@ -19,6 +26,67 @@ interface CoursePageProps {
     session?: string
     completed?: string
   }>
+}
+
+export async function generateMetadata({ params }: CoursePageProps): Promise<Metadata> {
+  const { slug } = await params
+  const payload = await getPayload({ config })
+
+  const result = await payload.find({
+    collection: 'vinprovningar',
+    where: {
+      and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
+    },
+    depth: 1,
+    limit: 1,
+  })
+
+  const course = result.docs[0] as Vinprovningar | undefined
+  const base = getSiteURL()
+  const canonical = `${base}/vinprovningar/${slug}`
+
+  if (!course) {
+    return {
+      title: 'Vinprovning hittades inte',
+      robots: { index: false, follow: false },
+      alternates: { canonical },
+    }
+  }
+
+  const featuredImageUrl =
+    typeof course.featuredImage === 'object' && course.featuredImage?.url
+      ? course.featuredImage.url
+      : null
+
+  const seo = resolveSeo(course, {
+    title: course.title,
+    description:
+      (course.description && course.description.trim().slice(0, 160)) ||
+      `Vinprovning online med Vinakademin — ${course.title}. Lär dig om vin i din egen takt.`,
+    imageUrl: featuredImageUrl,
+  })
+
+  return {
+    title: seo.title,
+    description: seo.description,
+    alternates: { canonical },
+    ...(seo.noindex && { robots: { index: false, follow: true } }),
+    openGraph: {
+      title: seo.title,
+      description: seo.description,
+      url: canonical,
+      type: 'website',
+      ...(seo.imageUrl && {
+        images: [{ url: seo.imageUrl, alt: course.title }],
+      }),
+    },
+    twitter: {
+      card: seo.imageUrl ? 'summary_large_image' : 'summary',
+      title: seo.title,
+      description: seo.description,
+      ...(seo.imageUrl && { images: [seo.imageUrl] }),
+    },
+  }
 }
 
 export default async function CoursePage({ params, searchParams }: CoursePageProps) {
@@ -34,7 +102,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     where: {
       and: [{ slug: { equals: resolvedParams.slug } }, { _status: { equals: 'published' } }],
     },
-    depth: 1, // Populate featuredImage and instructor
+    depth: 2, // Populate featuredImage, instructor, and nested block relationships (wine.image etc.)
     limit: 1,
   })
 
@@ -62,6 +130,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
     return (
       <div className="min-h-screen bg-background">
+        <CourseSchema course={course} />
         <CourseOverview
           course={courseWithModules}
           userHasAccess={false}
@@ -228,7 +297,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
         }
       }
     } catch (error) {
-      console.error('Error fetching session:', error)
+      log.error('Error fetching session:', error)
     }
   }
 
@@ -265,7 +334,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     }
   } catch (error) {
     // If there's an error checking enrollment, assume no access
-    console.error('Error checking course enrollment:', error)
+    log.error('Error checking course enrollment:', error)
     userHasAccess = false
   }
 
@@ -318,12 +387,13 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
         }
       }
     } catch (error) {
-      console.error('Error fetching user progress:', error)
+      log.error('Error fetching user progress:', error)
     }
   }
 
   return (
     <div className="min-h-screen bg-background">
+      <CourseSchema course={course} />
       {showCompletionPage ? (
         <CourseCompletionPage
           course={courseWithModules}
@@ -366,6 +436,55 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   )
 }
 
+function CourseSchema({ course }: { course: Vinprovningar }) {
+  // Respect the CMS noindex toggle: a page we tell Google not to index
+  // shouldn't still emit rich-result claims.
+  if (course.noindex) return null
+
+  const base = getSiteURL()
+  const slug = course.slug || String(course.id)
+  const instructor =
+    typeof course.instructor === 'object' && course.instructor
+      ? [course.instructor.firstName, course.instructor.lastName].filter(Boolean).join(' ').trim()
+      : null
+
+  const featuredImageUrl =
+    typeof course.featuredImage === 'object' && course.featuredImage?.url
+      ? course.featuredImage.url
+      : null
+
+  const seo = resolveSeo(course, {
+    title: course.title,
+    description:
+      (course.description && course.description.trim().slice(0, 5000)) ||
+      `Vinprovning online med Vinakademin — ${course.title}.`,
+    imageUrl: featuredImageUrl,
+  })
+
+  return (
+    <>
+      <CourseJsonLd
+        siteURL={base}
+        title={seo.title}
+        slug={slug}
+        description={seo.description}
+        imageUrl={seo.imageUrl}
+        price={course.price ?? null}
+        level={course.level ?? null}
+        durationHours={course.duration ?? null}
+        instructorName={instructor || null}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Hem', url: `${base}/` },
+          { name: 'Vinprovningar', url: `${base}/vinprovningar` },
+          { name: course.title, url: `${base}/vinprovningar/${slug}` },
+        ]}
+      />
+    </>
+  )
+}
+
 // Generate static params for published courses
 export async function generateStaticParams() {
   if (process.env.NODE_ENV === 'development') return []
@@ -379,7 +498,7 @@ export async function generateStaticParams() {
   )
 
   if (!process.env.PAYLOAD_SECRET || !hasDatabaseUrl) {
-    console.warn(
+    log.warn(
       '[generateStaticParams] Skipping course prebuild – missing PAYLOAD_SECRET or database URL.',
     )
     return []
@@ -400,7 +519,7 @@ export async function generateStaticParams() {
         slug: course.slug,
       }))
   } catch (error) {
-    console.warn('[generateStaticParams] Failed to fetch courses during build:', error)
+    log.warn('[generateStaticParams] Failed to fetch courses during build:', error)
     return []
   }
 }

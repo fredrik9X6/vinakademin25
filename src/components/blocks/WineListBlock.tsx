@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '../ui/badge'
@@ -7,6 +8,52 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Wine as WineIcon, ShoppingCart, ExternalLink, Sparkles } from 'lucide-react'
 import { Button } from '../ui/button'
 import type { Wine, Media } from '../../payload-types'
+
+/** Resolve image URLs for a list of wines, fetching media records when needed */
+function useResolvedWineImages(wines: Wine[]): Record<number | string, string> {
+  const [imageUrls, setImageUrls] = useState<Record<number | string, string>>(() => {
+    const initial: Record<number | string, string> = {}
+    for (const wine of wines) {
+      if (wine.image && typeof wine.image === 'object' && (wine.image as Media).url) {
+        initial[wine.id] = (wine.image as Media).url!
+      }
+    }
+    return initial
+  })
+
+  useEffect(() => {
+    const unresolvedIds: { wineId: number | string; mediaId: number }[] = []
+    for (const wine of wines) {
+      if (!wine.image) continue
+      if (typeof wine.image === 'object' && (wine.image as Media).url) continue
+      const mediaId = typeof wine.image === 'number' ? wine.image : parseInt(String(wine.image), 10)
+      if (!isNaN(mediaId)) {
+        unresolvedIds.push({ wineId: wine.id, mediaId })
+      }
+    }
+    if (unresolvedIds.length === 0) return
+
+    // Fetch all unresolved media records in parallel
+    Promise.all(
+      unresolvedIds.map(({ wineId, mediaId }) =>
+        fetch(`/api/media/${mediaId}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => ({ wineId, url: data?.url || null }))
+          .catch(() => ({ wineId, url: null })),
+      ),
+    ).then((results) => {
+      setImageUrls((prev) => {
+        const updated = { ...prev }
+        for (const { wineId, url } of results) {
+          if (url) updated[wineId] = url
+        }
+        return updated
+      })
+    })
+  }, [wines])
+
+  return imageUrls
+}
 
 interface WineListBlockProps {
   title?: string
@@ -39,18 +86,14 @@ export function WineListBlock({
     }).format(price)
   }
 
+  // Resolve image URLs (handles both populated Media objects and bare IDs)
+  const resolvedImages = useResolvedWineImages(wines)
+
   // Calculate total price
   const totalPrice = wines.reduce((sum, wine) => sum + (wine.price || 0), 0)
 
-  // Helper function to get wine link
-  const getWineLink = (wine: Wine) => {
-    const externalUrl = wine.systembolagetUrl
-    const internalUrl = `/vinlistan/${wine.slug}`
-    return externalUrl || internalUrl
-  }
-
-  // Helper function to check if wine link is external
-  const isExternalLink = (wine: Wine) => !!wine.systembolagetUrl
+  // Wines in rich text should link to internal wine pages
+  const getWineLink = (wine: Wine) => `/vinlistan/${wine.slug || wine.id}`
 
   if (displayStyle === 'compact') {
     return (
@@ -82,22 +125,11 @@ export function WineListBlock({
           <div className="space-y-1.5">
             {wines.map((wine, index) => {
               const wineHref = getWineLink(wine)
-              const isExternal = isExternalLink(wine)
-              const LinkComponent = isExternal ? 'a' : Link
-              const linkProps = isExternal
-                ? {
-                    href: wineHref,
-                    target: '_blank',
-                    rel: 'noopener noreferrer',
-                  }
-                : {
-                    href: wineHref,
-                  }
 
               return (
-                <LinkComponent
+                <Link
                   key={wine.id}
-                  {...linkProps}
+                  href={wineHref}
                   className="group flex items-center justify-between gap-3 p-2.5 rounded-md border border-border/30 bg-background/50 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-transparent dark:hover:from-orange-950/20 dark:hover:to-transparent hover:border-orange-300/50 dark:hover:border-orange-700/50 transition-all duration-150"
                 >
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -136,12 +168,9 @@ export function WineListBlock({
                       <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
                         {formatPrice(wine.price)}
                       </span>
-                      {isExternal && (
-                        <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors opacity-0 group-hover:opacity-100" />
-                      )}
                     </div>
                   )}
-                </LinkComponent>
+                </Link>
               )
             })}
           </div>
@@ -200,96 +229,66 @@ export function WineListBlock({
         {/* Wine Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {wines.map((wine) => {
-            const wineImage = wine.image as Media | null
+            const wineImageUrl = resolvedImages[wine.id] || null
             const wineHref = getWineLink(wine)
-            const isExternal = isExternalLink(wine)
-            const LinkComponent = isExternal ? 'a' : Link
-            const linkProps = isExternal
-              ? {
-                  href: wineHref,
-                  target: '_blank',
-                  rel: 'noopener noreferrer',
-                }
-              : {
-                  href: wineHref,
-                }
 
             return (
-              <Card
+              <Link
                 key={wine.id}
-                className="group relative overflow-hidden border-2 border-border/50 bg-background hover:border-orange-300 dark:hover:border-orange-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                href={wineHref}
+                className="group relative block"
               >
-                <CardContent className="p-0">
-                  {showImages && (
-                    <div className="relative w-full h-56 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden">
-                      {wineImage ? (
-                        <Image
-                          src={typeof wineImage === 'object' ? wineImage.url || '' : wineImage}
-                          alt={wine.name}
-                          fill
-                          className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <div className="p-6 rounded-full bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20">
-                            <WineIcon className="w-16 h-16 text-muted-foreground/40" />
+                <Card className="h-full overflow-hidden border-2 border-border/50 bg-background group-hover:border-orange-300 dark:group-hover:border-orange-700 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
+                  <CardContent className="p-0">
+                    {showImages && (
+                      <div className="relative w-full h-56 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden">
+                        {wineImageUrl ? (
+                          <Image
+                            src={wineImageUrl}
+                            alt={wine.name}
+                            fill
+                            className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div className="p-6 rounded-full bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20">
+                              <WineIcon className="w-16 h-16 text-muted-foreground/40" />
+                            </div>
                           </div>
+                        )}
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                    )}
+                    <div className="p-5 space-y-3">
+                      <div>
+                        <span className="font-bold text-lg text-foreground group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2 block mb-2">
+                          {wine.name}
+                        </span>
+                        {wine.winery && (
+                          <p className="text-sm font-medium text-muted-foreground line-clamp-1">
+                            {wine.winery}
+                            {wine.vintage && ` • ${wine.vintage}`}
+                          </p>
+                        )}
+                        {wine.region && (
+                          <p className="text-xs text-muted-foreground/80 mt-1">
+                            {typeof wine.region === 'object' ? wine.region.name : wine.region}
+                          </p>
+                        )}
+                      </div>
+                      {showPrices && wine.price && (
+                        <div className="pt-2 border-t border-border/50">
+                          <span className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                            {formatPrice(wine.price)}
+                          </span>
                         </div>
                       )}
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                  )}
-                  <div className="p-5 space-y-3">
-                    <div>
-                      <LinkComponent
-                        {...linkProps}
-                        className="font-bold text-lg text-foreground hover:text-orange-600 dark:hover:text-orange-400 transition-colors line-clamp-2 block mb-2"
-                      >
-                        {wine.name}
-                        {isExternal && (
-                          <ExternalLink className="inline h-3.5 w-3.5 ml-1 align-text-top opacity-0 group-hover:opacity-100 transition-opacity" />
-                        )}
-                      </LinkComponent>
-                      {wine.winery && (
-                        <p className="text-sm font-medium text-muted-foreground line-clamp-1">
-                          {wine.winery}
-                          {wine.vintage && ` • ${wine.vintage}`}
-                        </p>
-                      )}
-                      {wine.region && (
-                        <p className="text-xs text-muted-foreground/80 mt-1">
-                          {typeof wine.region === 'object' ? wine.region.name : wine.region}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                      {showPrices && wine.price && (
-                        <span className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                          {formatPrice(wine.price)}
-                        </span>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-300 dark:hover:border-orange-700"
-                      >
-                        {isExternal ? (
-                          <a href={wineHref} target="_blank" rel="noopener noreferrer">
-                            Visa <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                          </a>
-                        ) : (
-                          <Link href={wineHref}>
-                            Visa <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                          </Link>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             )
           })}
         </div>
@@ -333,132 +332,95 @@ export function WineListBlock({
       {/* Wine List */}
       <div className="space-y-4">
         {wines.map((wine, index) => {
-          const wineImage = wine.image as Media | null
+          const wineImageUrl = resolvedImages[wine.id] || null
           const wineHref = getWineLink(wine)
-          const isExternal = isExternalLink(wine)
-          const LinkComponent = isExternal ? 'a' : Link
-          const linkProps = isExternal
-            ? {
-                href: wineHref,
-                target: '_blank',
-                rel: 'noopener noreferrer',
-              }
-            : {
-                href: wineHref,
-              }
 
           return (
-            <Card
-              key={wine.id}
-              className="group overflow-hidden border-2 border-border/50 bg-background hover:border-orange-300 dark:hover:border-orange-700 transition-all duration-300 hover:shadow-lg"
-            >
-              <CardContent className="p-0">
-                <div className="flex flex-col sm:flex-row gap-0">
-                  {showImages && (
-                    <div className="relative w-full sm:w-32 lg:w-40 h-48 sm:h-auto bg-gradient-to-br from-muted/50 to-muted/30 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                      {wineImage ? (
-                        <Image
-                          src={typeof wineImage === 'object' ? wineImage.url || '' : wineImage}
-                          alt={wine.name}
-                          fill
-                          className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
-                          sizes="(max-width: 640px) 100vw, 160px"
-                        />
-                      ) : (
-                        <div className="p-4">
-                          <div className="p-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20">
-                            <WineIcon className="w-12 h-12 text-muted-foreground/40" />
+            <Link key={wine.id} href={wineHref} className="group block">
+              <Card className="overflow-hidden border-2 border-border/50 bg-background group-hover:border-orange-300 dark:group-hover:border-orange-700 transition-all duration-300 group-hover:shadow-lg">
+                <CardContent className="p-0">
+                  <div className="flex flex-col sm:flex-row gap-0">
+                    {showImages && (
+                      <div className="relative w-full sm:w-32 lg:w-40 h-48 sm:h-auto bg-gradient-to-br from-muted/50 to-muted/30 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                        {wineImageUrl ? (
+                          <Image
+                            src={wineImageUrl}
+                            alt={wine.name}
+                            fill
+                            className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 640px) 100vw, 160px"
+                          />
+                        ) : (
+                          <div className="p-4">
+                            <div className="p-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20">
+                              <WineIcon className="w-12 h-12 text-muted-foreground/40" />
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between min-w-0">
-                    <div>
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Badge
-                              variant="outline"
-                              className="text-xs font-bold px-2.5 py-0.5 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300"
-                            >
-                              #{index + 1}
-                            </Badge>
-                            <LinkComponent
-                              {...linkProps}
-                              className="text-xl md:text-2xl font-bold text-foreground hover:text-orange-600 dark:hover:text-orange-400 transition-colors line-clamp-2"
-                            >
-                              {wine.name}
-                              {isExternal && (
-                                <ExternalLink className="inline h-4 w-4 ml-1 align-text-top opacity-0 group-hover:opacity-100 transition-opacity" />
-                              )}
-                            </LinkComponent>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between min-w-0">
+                      <div>
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Badge
+                                variant="outline"
+                                className="text-xs font-bold px-2.5 py-0.5 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300"
+                              >
+                                #{index + 1}
+                              </Badge>
+                              <span className="text-xl md:text-2xl font-bold text-foreground group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2">
+                                {wine.name}
+                              </span>
+                            </div>
+                            {wine.winery && (
+                              <p className="text-base font-semibold text-muted-foreground mb-3">
+                                {wine.winery}
+                              </p>
+                            )}
                           </div>
-                          {wine.winery && (
-                            <p className="text-base font-semibold text-muted-foreground mb-3">
-                              {wine.winery}
-                            </p>
+                          {showPrices && wine.price && (
+                            <div className="flex-shrink-0 text-right">
+                              <span className="text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400">
+                                {formatPrice(wine.price)}
+                              </span>
+                            </div>
                           )}
                         </div>
-                        {showPrices && wine.price && (
-                          <div className="flex-shrink-0 text-right">
-                            <span className="text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400">
-                              {formatPrice(wine.price)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
 
-                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground mb-4">
-                        {wine.vintage && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-foreground/70">Årgång:</span>
-                            <span>{wine.vintage}</span>
-                          </div>
-                        )}
-                        {wine.region && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-foreground/70">Region:</span>
-                            <span>{typeof wine.region === 'object' ? wine.region.name : wine.region}</span>
-                          </div>
-                        )}
-                        {wine.grapes && wine.grapes.length > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-foreground/70">Druvor:</span>
-                            <span>
-                              {wine.grapes
-                                .slice(0, 3)
-                                .map((grape) => (typeof grape === 'object' ? grape.name : grape))
-                                .join(', ')}
-                              {wine.grapes.length > 3 && '...'}
-                            </span>
-                          </div>
-                        )}
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                          {wine.vintage && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-foreground/70">Årgång:</span>
+                              <span>{wine.vintage}</span>
+                            </div>
+                          )}
+                          {wine.region && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-foreground/70">Region:</span>
+                              <span>{typeof wine.region === 'object' ? wine.region.name : wine.region}</span>
+                            </div>
+                          )}
+                          {wine.grapes && wine.grapes.length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-foreground/70">Druvor:</span>
+                              <span>
+                                {wine.grapes
+                                  .slice(0, 3)
+                                  .map((grape) => (typeof grape === 'object' ? grape.name : grape))
+                                  .join(', ')}
+                                {wine.grapes.length > 3 && '...'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                      className="w-full sm:w-auto border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-300 dark:hover:border-orange-700 hover:text-orange-600 dark:hover:text-orange-400"
-                    >
-                      {isExternal ? (
-                        <a href={wineHref} target="_blank" rel="noopener noreferrer">
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Visa vin
-                        </a>
-                      ) : (
-                        <Link href={wineHref}>
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Visa vin
-                        </Link>
-                      )}
-                    </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           )
         })}
       </div>

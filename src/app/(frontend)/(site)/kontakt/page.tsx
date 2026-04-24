@@ -4,11 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Mail, HelpCircle, Users, BookOpen, Wine, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { getSiteURL } from '@/lib/site-url'
 
 export const metadata: Metadata = {
   title: 'Kontakta Oss | Vinakademin',
   description:
     'Har du frågor om våra vinprovningar? Kontakta Vinakademin via e-post så hjälper vi dig gärna.',
+  alternates: { canonical: `${getSiteURL()}/kontakt` },
 }
 
 const reasons = [

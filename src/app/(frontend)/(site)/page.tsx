@@ -1,5 +1,7 @@
+import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { getSiteURL } from '@/lib/site-url'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,6 +27,20 @@ import { transformCourseWithModules } from '@/lib/course-utils-server'
 import { NewsletterSignupBlock } from '@/components/blocks/NewsletterSignupBlock'
 import { NeuralHeroWithBanner } from '@/components/home/NeuralHeroWithBanner'
 import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
+
+export const metadata: Metadata = {
+  title: 'Vinprovningar online & vinkurser på svenska',
+  description:
+    'Upptäck vin med Vinakademin — vinprovningar online, guidade vinkurser och vinkunskap för både nybörjare och entusiaster. Lär dig av experter och bygg din egen vinlista.',
+  alternates: { canonical: `${getSiteURL()}/` },
+  openGraph: {
+    title: 'Vinprovningar online & vinkurser | Vinakademin',
+    description:
+      'Upptäck vin med Vinakademin — vinprovningar online, guidade vinkurser och vinkunskap för både nybörjare och entusiaster.',
+    url: `${getSiteURL()}/`,
+    type: 'website',
+  },
+}
 
 export default async function HomePage() {
   const payload = await getPayload({ config })
@@ -121,27 +137,29 @@ export default async function HomePage() {
                 {
                   icon: ShoppingCart,
                   title: 'Välj en vinprovning',
-                  description: 'Hitta en vinprovning som passar vad just du är sugen på',
+                  description:
+                    'Bläddra bland våra kurerade vinprovningar och välj den som passar dig bäst.',
                   step: '01',
                 },
                 {
                   icon: Wine,
                   title: 'Köp vinen',
-                  description: 'Vi har valt ut passande och goda viner som finns på systembolaget',
+                  description:
+                    'Få en lista med viner från Systembolaget. Enkla länkar så du hittar rätt.',
                   step: '02',
                 },
                 {
                   icon: VideoIcon,
-                  title: 'Sätt igång',
+                  title: 'Följ guiden',
                   description:
-                    'Provingen kan göras själv eller med vänner. Underhållande videos med tillhörande smaknoter, quiz och matnyttig info',
+                    'Bjud in vänner eller gör det själv. Se videor, läs noter och utforska vinerna.',
                   step: '03',
                 },
                 {
                   icon: BarChart3,
-                  title: 'Utvärdera',
+                  title: 'Jämför resultat',
                   description:
-                    'Hur gick det för dig? Jämför dina smaknoter med lärarens, gästernas och ta med dig feedbacken för vidare lärande',
+                    'Se guidens smaknoter och jämför med dina egna (och gästernas) intryck.',
                   step: '04',
                 },
               ].map((step, index) => (
@@ -196,7 +214,7 @@ export default async function HomePage() {
                 icon: BarChart3,
                 title: 'Jämför resultat',
                 description:
-                  'Se expertens smaknoter och jämför med dina egna (och gästernas) intryck.',
+                  'Se guidens smaknoter och jämför med dina egna (och gästernas) intryck.',
                 step: '04',
               },
             ].map((step, index) => (

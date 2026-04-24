@@ -6,6 +6,10 @@ import { BlogPostCard, BlogFilters } from '@/components/blog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { BlogPost, BlogCategory, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
+import { getSiteURL } from '@/lib/site-url'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-artiklar-page')
 
 interface PageProps {
   searchParams: Promise<{
@@ -36,7 +40,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     : 'Upptäck vinets värld genom våra expertguider, recensioner och utbildningsartiklar på Vinakademin - din guide till vinets värld.'
 
   // Generate canonical URL
-  const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const baseUrl = getSiteURL()
   const params = new URLSearchParams()
   if (search) params.set('search', search)
   if (category) params.set('category', category)
@@ -251,7 +255,7 @@ async function ArticlesContent({ searchParams }: PageProps) {
       </div>
     )
   } catch (error) {
-    console.error('Error fetching blog posts:', error)
+    log.error('Error fetching blog posts:', error)
     notFound()
   }
 }

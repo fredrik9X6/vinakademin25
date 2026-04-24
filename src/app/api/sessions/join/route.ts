@@ -3,6 +3,9 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import crypto from 'crypto'
 import { cookies } from 'next/headers'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-sessions-join')
 
 /**
  * Generate a unique participant token
@@ -185,7 +188,7 @@ export async function POST(request: NextRequest) {
       { status: 200 },
     )
   } catch (error) {
-    console.error('Error joining session:', error)
+    log.error('Error joining session:', error)
     return NextResponse.json(
       {
         error: 'Internal server error',

@@ -14,8 +14,10 @@ import {
   BookOpen,
   Menu,
   X,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Progress } from '@/components/ui/progress'
 import CourseTableOfContents from './CourseTableOfContents'
 // Removed mock preview component
@@ -24,14 +26,6 @@ import { useRouter } from 'next/navigation'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { useMemo } from 'react'
 import { getFlattenedCourseItems } from '@/lib/course-utils'
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb'
 import { useActiveSession } from '@/context/SessionContext'
 
 interface CourseQuizViewerProps {
@@ -56,11 +50,14 @@ export default function CourseQuizViewer({
 }: CourseQuizViewerProps) {
   const router = useRouter()
   const [isTocOpen, setIsTocOpen] = useState(false)
+  const [theaterMode, setTheaterMode] = useState(false)
+  const hasNavigatedToReviewRef = useRef(false)
   const { activeSession } = useActiveSession()
 
   // Use session from props or from context (for persistent navigation)
   const effectiveSessionId =
-    sessionId || (activeSession?.courseId === course.id ? activeSession.sessionId : null)
+    sessionId ||
+    (activeSession && activeSession.courseId === course.id ? activeSession.sessionId : null)
 
   const buildUrl = (base: string) => {
     return effectiveSessionId ? `${base}&session=${effectiveSessionId}` : base
@@ -94,6 +91,15 @@ export default function CourseQuizViewer({
   // Get all items (lessons and quizzes) in order
   const allItems = getFlattenedCourseItems(course.modules)
   const currentItemIndex = allItems.findIndex((item) => item.type === 'quiz' && item.id === quiz.id)
+  const isLastQuizItem =
+    currentItemIndex >= 0 && allItems.length > 0 && currentItemIndex === allItems.length - 1
+
+  /** Prompt review after completing the last content item in order — even if other items were skipped. */
+  const maybeNavigateToCourseReview = useCallback(() => {
+    if (isSessionParticipant || hasNavigatedToReviewRef.current) return
+    hasNavigatedToReviewRef.current = true
+    router.push(`/vinprovningar/${course.slug || course.id}/recension`)
+  }, [isSessionParticipant, router, course.slug, course.id])
 
   const navigateToItem = (item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
@@ -109,6 +115,20 @@ export default function CourseQuizViewer({
     }
   }
 
+  const handleQuizNextOrReview = async () => {
+    if (isSessionParticipant) {
+      if (!isLastQuizItem) goToNext()
+      return
+    }
+    if (isLastQuizItem) {
+      await fetchProgress()
+      maybeNavigateToCourseReview()
+    } else {
+      await fetchProgress()
+      goToNext()
+    }
+  }
+
   const goToPrev = () => {
     if (currentItemIndex > 0) {
       navigateToItem(allItems[currentItemIndex - 1])
@@ -121,38 +141,12 @@ export default function CourseQuizViewer({
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className={`mx-auto px-4 sm:px-6 lg:px-8 py-8 ${theaterMode ? 'max-w-full' : 'max-w-7xl'}`}>
+        <div className={`grid grid-cols-1 gap-8 ${theaterMode ? '' : 'lg:grid-cols-3'}`}>
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
-            {/* Breadcrumbs and Title */}
+          <div className={`space-y-6 order-2 lg:order-1 ${theaterMode ? '' : 'lg:col-span-2'}`}>
+            {/* Title and Navigation */}
             <div className="space-y-4">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink href={`/vinprovningar/${course.slug || course.id}`}>
-                      Vinprovning
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink href={`/vinprovningar/${course.slug || course.id}`}>
-                      {course.title}
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink href={`/vinprovningar/${course.slug || course.id}`}>
-                      {module.title}
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Quiz</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -163,6 +157,39 @@ export default function CourseQuizViewer({
                   </div>
                   <h1 className="text-3xl font-bold">{quiz.title}</h1>
                 </div>
+                {/* Desktop navigation */}
+                <div className="hidden md:flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setTheaterMode(!theaterMode)}
+                    className="gap-1.5 text-muted-foreground"
+                  >
+                    {theaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    <span className="text-xs">{theaterMode ? 'Visa meny' : 'Teaterläge'}</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={goToPrev}
+                    disabled={currentItemIndex === 0}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" /> Föregående
+                  </Button>
+                  <Button
+                    onClick={() => void handleQuizNextOrReview()}
+                    className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/25"
+                  >
+                    {isLastQuizItem ? (
+                      <>
+                        Betygsätt vinprovningen <ChevronRight className="w-4 h-4 ml-1" />
+                      </>
+                    ) : (
+                      <>
+                        Nästa <ChevronRight className="w-4 h-4 ml-1" />
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
 
               {/* end breadcrumbs/title wrapper */}
@@ -172,31 +199,22 @@ export default function CourseQuizViewer({
             {canAccessQuiz ? (
               <div className="space-y-6">
                 <QuizAttemptRunner
+                  key={quiz.id}
                   quiz={quiz}
                   onPassed={async () => {
-                    // Mark quiz as completed for session participants (local storage)
                     if (isSessionParticipant) {
                       markQuizCompleted(quiz.id)
-                    } else {
-                      try {
-                        await fetchProgress()
-                      } catch {}
-                    }
-                    // Prefer next lesson in same module; fallback to overview if none
-                    if (nextItem && nextItem.type === 'lesson') {
-                      router.push(
-                        buildUrl(`/vinprovningar/${course.slug || course.id}?lesson=${nextItem.id}`),
-                      )
-                    } else {
-                      const target = buildUrl(
-                        `/vinprovningar/${course.slug || course.id}?t=${Date.now()}`,
-                      )
-                      router.push(target)
+                      return
                     }
                     try {
-                      // @ts-ignore
-                      router.refresh?.()
+                      await fetchProgress()
+                      if (isLastQuizItem) {
+                        maybeNavigateToCourseReview()
+                      }
                     } catch {}
+                  }}
+                  onNavigateNext={() => {
+                    void handleQuizNextOrReview()
                   }}
                 />
               </div>
@@ -219,8 +237,8 @@ export default function CourseQuizViewer({
             )}
           </div>
 
-          {/* Table of Contents Sidebar - Desktop always visible, Mobile collapsible */}
-          <div className="space-y-6 order-1 lg:order-2">
+          {/* Table of Contents Sidebar - Desktop always visible (unless theater mode), Mobile collapsible */}
+          <div className={`space-y-6 order-1 lg:order-2 ${theaterMode ? 'hidden' : ''}`}>
             {/* Mobile TOC Header - Always Visible */}
             <Card className="lg:hidden">
               <CardContent className="p-0">
@@ -284,7 +302,7 @@ export default function CourseQuizViewer({
       </div>
 
       {/* Mobile Bottom Navigation - Fixed */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50">
+      <div className="md:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 bg-background border-t border-border shadow-lg z-50">
         <div className="flex items-center justify-between p-4 gap-2">
           <Button
             variant="outline"
@@ -300,20 +318,20 @@ export default function CourseQuizViewer({
             {currentItemIndex + 1} / {allItems.length}
           </div>
           <Button
-            variant="default"
             size="lg"
-            onClick={goToNext}
-            disabled={currentItemIndex === allItems.length - 1}
-            className="flex-1"
+            onClick={() => void handleQuizNextOrReview()}
+            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
           >
-            <span className="hidden xs:inline">Nästa</span>
+            <span className="hidden xs:inline">
+              {isLastQuizItem ? 'Betygsätt' : 'Nästa'}
+            </span>
             <ChevronRight className="w-5 h-5 ml-1" />
           </Button>
         </div>
       </div>
 
       {/* Add bottom padding to prevent content from being hidden behind fixed nav */}
-      <div className="md:hidden h-20" />
+      <div className="md:hidden h-36" />
     </div>
   )
 }

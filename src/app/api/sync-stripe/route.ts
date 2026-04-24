@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { syncAllCoursesWithStripe } from '@/lib/stripe-products'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-sync-stripe')
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔄 Syncing all courses with Stripe...')
+    log.info('🔄 Syncing all courses with Stripe...')
     await syncAllCoursesWithStripe()
-    console.log('✅ Successfully synced all courses with Stripe!')
+    log.info('✅ Successfully synced all courses with Stripe!')
 
     return NextResponse.json({
       success: true,
       message: 'Successfully synced all courses with Stripe',
     })
   } catch (error) {
-    console.error('❌ Error syncing courses with Stripe:', error)
+    log.error('❌ Error syncing courses with Stripe:', error)
     return NextResponse.json(
       {
         success: false,

@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 // Remove cookies import as we'll use req.headers
 // import { cookies } from 'next/headers'
 import config from '../../../../payload.config'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-auth-[...nextauth]')
 
 // This API route will handle authentication check for protected API routes
 export async function GET(req: NextRequest) {
@@ -55,7 +58,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Authentication error:', error)
+    log.error('Authentication error:', error)
     return NextResponse.json(
       {
         authenticated: false,

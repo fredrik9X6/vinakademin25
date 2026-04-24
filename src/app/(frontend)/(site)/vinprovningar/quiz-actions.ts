@@ -3,6 +3,9 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('(frontend)-(site)-vinprovningar-quiz-actions')
 
 /**
  * Helper function to find course and module for a content item (quiz or lesson)
@@ -199,14 +202,14 @@ export async function submitQuizAttempt(
   
   // Debug: Log submitted answers
   if (process.env.NODE_ENV === 'development') {
-    console.log('📝 Submitted answers:', JSON.stringify(answers, null, 2))
-    console.log('📋 Question map keys:', Array.from(questionMap.keys()))
+    log.info('📝 Submitted answers:', JSON.stringify(answers, null, 2))
+    log.info('📋 Question map keys:', Array.from(questionMap.keys()))
   }
   
   const evaluated = (Array.isArray(answers) ? answers : []).map((ans) => {
     const q = questionMap.get(String(ans.question))
     if (!q) {
-      console.warn('⚠️ Question not found in map:', ans.question)
+      log.warn('⚠️ Question not found in map:', ans.question)
       return { ...ans, isCorrect: false, pointsAwarded: 0 }
     }
 
@@ -219,7 +222,7 @@ export async function submitQuizAttempt(
       correct = correctOption && ans.answer != null && ans.answer === correctOption.text
       
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Multiple-choice evaluation:', {
+        log.info('🔍 Multiple-choice evaluation:', {
           questionId: q.id,
           questionTitle: q.title,
           userAnswer: ans.answer,
@@ -241,7 +244,7 @@ export async function submitQuizAttempt(
       
       // Debug logging (only in development)
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 True/False evaluation:', {
+        log.info('🔍 True/False evaluation:', {
           questionId: q.id,
           questionTitle: q.title,
           userAnswer: ans.answer,
@@ -272,7 +275,7 @@ export async function submitQuizAttempt(
     if (correct) correctCount += 1
     
     if (process.env.NODE_ENV === 'development') {
-      console.log(`📊 Question ${q.id} evaluation:`, {
+      log.info(`📊 Question ${q.id} evaluation:`, {
         correct,
         points,
         awarded,
@@ -289,7 +292,7 @@ export async function submitQuizAttempt(
   const passed = score >= (quiz.quizSettings?.passingScore ?? 70)
   
   if (process.env.NODE_ENV === 'development') {
-    console.log('📈 Final scoring:', {
+    log.info('📈 Final scoring:', {
       totalCount,
       correctCount,
       score,
@@ -493,4 +496,38 @@ export async function submitQuizAttempt(
   } catch {}
 
   return { score, passed }
+}
+
+export async function getLastQuizAttempt(quizId: number | string) {
+  const payload = await getPayload({ config })
+  const user = await getUser()
+  if (!user) return null
+
+  const attempts = await payload.find({
+    collection: 'quiz-attempts',
+    where: {
+      and: [
+        { user: { equals: String(user.id) } },
+        { quiz: { equals: String(quizId) } },
+        { status: { equals: 'completed' } },
+      ],
+    },
+    sort: '-completedAt',
+    limit: 1,
+    depth: 2,
+  })
+
+  if (attempts.docs.length === 0) return null
+
+  const attempt = attempts.docs[0] as any
+  return {
+    score: attempt.scoring?.score ?? 0,
+    passed: attempt.scoring?.passed ?? false,
+    completedAt: attempt.completedAt,
+    answers: (attempt.answers || []).map((a: any) => ({
+      questionId: typeof a.question === 'object' ? a.question.id : a.question,
+      answer: a.answer?.value,
+      isCorrect: a.isCorrect,
+    })),
+  }
 }

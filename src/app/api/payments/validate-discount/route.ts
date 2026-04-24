@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripeServer } from '@/lib/stripe'
 import { getUser } from '@/lib/get-user'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-payments-validate-discount')
 
 // Mock discount codes for demonstration
 // In production, these would be stored in Stripe or a database
@@ -81,7 +84,7 @@ export async function POST(request: NextRequest) {
       description: discountCode.description,
     })
   } catch (error) {
-    console.error('Error validating discount code:', error)
+    log.error('Error validating discount code:', error)
     return NextResponse.json(
       { error: 'Ett fel uppstod vid validering av rabattkod' },
       { status: 500 },

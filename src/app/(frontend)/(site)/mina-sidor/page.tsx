@@ -73,7 +73,7 @@ function DashboardContent() {
             <CardDescription>Se vilka vinprovningar du är anmäld till</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/profil?tab=kurser">
+            <Link href="/mina-provningar">
               <Button className="w-full">Visa mina vinprovningar</Button>
             </Link>
           </CardContent>

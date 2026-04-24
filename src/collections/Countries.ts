@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { anyLoggedIn, adminOnly } from '../lib/access'
 import { withCreatedByUpdatedBy } from '../lib/hooks'
+import { seoFields } from '../fields/seo'
 
 export const Countries: CollectionConfig = {
   slug: 'countries',
@@ -46,6 +47,32 @@ export const Countries: CollectionConfig = {
       admin: { description: 'Name of the country' },
     },
     {
+      name: 'slug',
+      type: 'text',
+      unique: true,
+      label: 'Slug',
+      admin: {
+        description: 'URL-friendly version of the name (auto-generated)',
+        position: 'sidebar',
+      },
+      hooks: {
+        beforeValidate: [
+          ({ data }) => {
+            if (data?.name && !data.slug) {
+              return data.name
+                .toLowerCase()
+                .replace(/[åä]/g, 'a')
+                .replace(/[ö]/g, 'o')
+                .replace(/[éè]/g, 'e')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '')
+            }
+            return data?.slug
+          },
+        ],
+      },
+    },
+    {
       name: 'createdBy',
       type: 'relationship',
       relationTo: 'users',
@@ -71,10 +98,11 @@ export const Countries: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'textarea',
+      type: 'richText',
       label: 'Description',
       admin: { description: 'Optional description or notes about this country' },
     },
+    ...seoFields,
   ],
   timestamps: true,
 }

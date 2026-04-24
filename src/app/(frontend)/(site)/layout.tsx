@@ -1,7 +1,7 @@
 import React from 'react'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { AppSidebar } from '@/components/app-sidebar'
-import { DynamicSiteHeader } from '@/components/dynamic-site-header'
+import { TopNavHeader } from '@/components/top-nav-header'
+import { BreadcrumbBar } from '@/components/breadcrumb-bar'
+import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 import { Footer } from '@/components/ui/footer'
 import { SessionProvider } from '@/context/SessionContext'
 import { ActiveSessionBanner } from '@/components/course/ActiveSessionBanner'
@@ -9,19 +9,18 @@ import { FeedbackButton } from '@/components/feedback'
 
 export const dynamic = 'force-dynamic'
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <SidebarProvider defaultOpen={true}>
-        <AppSidebar variant="inset" />
-        <SidebarInset>
-          <DynamicSiteHeader />
-          <ActiveSessionBanner />
-          <main className="min-w-0 overflow-x-hidden">{children}</main>
-          <Footer />
-        </SidebarInset>
+      <div className="flex min-h-screen flex-col">
+        <TopNavHeader />
+        <BreadcrumbBar />
+        <ActiveSessionBanner />
+        <main className="flex-1 min-w-0 overflow-x-hidden pb-20 md:pb-0">{children}</main>
+        <Footer />
+        <MobileBottomNav />
         <FeedbackButton />
-      </SidebarProvider>
+      </div>
     </SessionProvider>
   )
 }

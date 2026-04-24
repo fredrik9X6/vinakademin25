@@ -27,6 +27,8 @@ interface Order {
   orderNumber: string
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded'
   amount: number
+  discountAmount?: number
+  discountCode?: string
   currency: string
   items: Array<{
     course: {
@@ -304,13 +306,27 @@ export function PaymentHistory({ userId }: PaymentHistoryProps) {
                           {getStatusIcon(order.status)}
                           <span className="ml-1">{getStatusText(order.status)}</span>
                         </Badge>
-                        <span className="font-bold text-lg sm:text-base">
-                          {formatPrice(order.amount, order.currency)}
-                        </span>
+                        <div className="text-right">
+                          {order.discountAmount ? (
+                            <div className="text-xs text-muted-foreground line-through">
+                              {formatPrice(order.amount + order.discountAmount, order.currency)}
+                            </div>
+                          ) : null}
+                          <span className="font-bold text-lg sm:text-base">
+                            {formatPrice(order.amount, order.currency)}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     <Separator className="my-3" />
+
+                    {order.discountAmount ? (
+                      <div className="mb-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+                        Rabatt{order.discountCode ? ` (${order.discountCode})` : ''}: -
+                        {formatPrice(order.discountAmount, order.currency)}
+                      </div>
+                    ) : null}
 
                     {/* Footer Section - Mobile Optimized */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -336,15 +352,17 @@ export function PaymentHistory({ userId }: PaymentHistoryProps) {
                             </a>
                           </Button>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadReceipt(order.id)}
-                          className="flex-1 sm:flex-none"
-                        >
-                          <Receipt className="h-4 w-4 mr-1" />
-                          Kvitto
-                        </Button>
+                        {order.amount > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadReceipt(order.id)}
+                            className="flex-1 sm:flex-none"
+                          >
+                            <Receipt className="h-4 w-4 mr-1" />
+                            Kvitto
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>

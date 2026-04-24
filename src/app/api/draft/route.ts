@@ -1,5 +1,8 @@
 import { draftMode } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-draft')
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -24,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Create redirect response
     return NextResponse.redirect(new URL(url, request.url))
   } catch (error) {
-    console.error('Draft mode error:', error)
+    log.error('Draft mode error:', error)
     return new NextResponse('Error enabling draft mode', { status: 500 })
   }
 }

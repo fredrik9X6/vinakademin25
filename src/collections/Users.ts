@@ -1,5 +1,12 @@
 import type { CollectionConfig } from 'payload'
+import {
+  emailBrandOrange,
+  emailHeaderCellStyle,
+  emailPrimaryCtaButton,
+  emailWarmCalloutStyle,
+} from '../lib/email-cta'
 import { getSiteURL, getCookieDomain } from '../lib/site-url'
+import { adminFieldLevel, adminOrInstructorFieldLevel } from '../lib/access'
 
 type User = {
   id: string
@@ -37,10 +44,13 @@ export const Users: CollectionConfig = {
   auth: {
     cookies: cookieConfig,
     forgotPassword: {
+      generateEmailSubject: () => {
+        return 'Återställ ditt lösenord - Vinakademin'
+      },
       generateEmailHTML: (args) => {
         const { token, user } = args || {}
         const firstName = (user as any)?.firstName || ''
-        const resetUrl = `${SITE_URL}/reset-password?token=${token}`
+        const resetUrl = `${SITE_URL}/aterstall-losenord?token=${token}`
 
         return `
           <!DOCTYPE html>
@@ -64,7 +74,7 @@ export const Users: CollectionConfig = {
                     
                     <!-- Header with Logo -->
                     <tr>
-                      <td align="center" style="padding: 48px 40px 32px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); border-radius: 12px 12px 0 0;">
+                      <td align="center" bgcolor="${emailBrandOrange}" style="${emailHeaderCellStyle()}">
                         <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
                           🍷 Vinakademin
                         </h1>
@@ -90,9 +100,7 @@ export const Users: CollectionConfig = {
                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                           <tr>
                             <td align="center" style="padding: 0 0 32px;">
-                              <a href="${resetUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(251, 145, 76, 0.3);">
-                                Återställ lösenord
-                              </a>
+                              ${emailPrimaryCtaButton(resetUrl, 'Återställ lösenord')}
                             </td>
                           </tr>
                         </table>
@@ -144,6 +152,9 @@ export const Users: CollectionConfig = {
       },
     },
     verify: {
+      generateEmailSubject: () => {
+        return 'Verifiera din e-postadress - Vinakademin'
+      },
       generateEmailHTML: (args) => {
         const { token, user } = args || {}
         const firstName = (user as any)?.firstName || ''
@@ -171,7 +182,7 @@ export const Users: CollectionConfig = {
                     
                     <!-- Header with Logo -->
                     <tr>
-                      <td align="center" style="padding: 48px 40px 32px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); border-radius: 12px 12px 0 0;">
+                      <td align="center" bgcolor="${emailBrandOrange}" style="${emailHeaderCellStyle()}">
                         <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
                           🍷 Vinakademin
                         </h1>
@@ -201,9 +212,7 @@ export const Users: CollectionConfig = {
                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                           <tr>
                             <td align="center" style="padding: 0 0 32px;">
-                              <a href="${verifyUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #FDBA75 0%, #FB914C 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(251, 145, 76, 0.3);">
-                                Verifiera e-post
-                              </a>
+                              ${emailPrimaryCtaButton(verifyUrl, 'Verifiera e-post')}
                             </td>
                           </tr>
                         </table>
@@ -219,7 +228,7 @@ export const Users: CollectionConfig = {
                         </p>
 
                         <!-- What's Next -->
-                        <div style="padding: 24px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 8px; margin-bottom: 32px;">
+                        <div style="${emailWarmCalloutStyle()}">
                           <h3 style="margin: 0 0 16px; color: #FB914C; font-size: 18px; font-weight: 600;">
                             Vad händer sen?
                           </h3>
@@ -327,10 +336,9 @@ export const Users: CollectionConfig = {
       label: 'Role',
       defaultValue: 'user',
       required: true,
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       options: [
         {
           label: 'Admin',
@@ -360,10 +368,9 @@ export const Users: CollectionConfig = {
       type: 'checkbox',
       label: 'Email Verified',
       defaultValue: false,
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin' || req.user?.role === 'instructor',
-      // },
+      access: {
+        update: adminOrInstructorFieldLevel,
+      },
       admin: {
         description: 'Has the user verified their email address?',
         position: 'sidebar',
@@ -374,10 +381,9 @@ export const Users: CollectionConfig = {
       type: 'select',
       label: 'Account Status',
       defaultValue: 'active',
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       options: [
         {
           label: 'Active',
@@ -403,10 +409,9 @@ export const Users: CollectionConfig = {
       type: 'select',
       label: 'Subscription Status',
       defaultValue: 'none',
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       options: [
         {
           label: 'None',
@@ -439,10 +444,9 @@ export const Users: CollectionConfig = {
       type: 'select',
       label: 'Subscription Plan',
       defaultValue: 'none',
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       options: [
         {
           label: 'None',
@@ -466,10 +470,9 @@ export const Users: CollectionConfig = {
       name: 'subscriptionExpiry',
       type: 'date',
       label: 'Subscription Expiry',
-      // TODO: Add field-level access control later
-      // access: {
-      //   update: ({ req }) => req.user?.role === 'admin',
-      // },
+      access: {
+        update: adminFieldLevel,
+      },
       admin: {
         description: 'Date when the subscription expires',
         position: 'sidebar',
@@ -477,6 +480,49 @@ export const Users: CollectionConfig = {
           pickerAppearance: 'dayAndTime',
         },
       },
+    },
+    {
+      name: 'onboarding',
+      type: 'group',
+      label: 'Onboarding',
+      fields: [
+        {
+          name: 'goal',
+          type: 'select',
+          label: 'Primärt mål',
+          options: [
+            { label: 'Lära mig grunderna i vin', value: 'learn_basics' },
+            { label: 'Bli bättre på mat- och vinkombinationer', value: 'pairing_confident' },
+            { label: 'Utforska nya regioner och druvor', value: 'explore_regions' },
+            { label: 'Bygga djupare expertkunskap', value: 'deep_knowledge' },
+          ],
+        },
+        {
+          name: 'completedAt',
+          type: 'date',
+          label: 'Onboarding slutförd',
+          admin: {
+            readOnly: true,
+          },
+        },
+        {
+          name: 'skippedAt',
+          type: 'date',
+          label: 'Onboarding hoppad över',
+          admin: {
+            readOnly: true,
+          },
+        },
+        {
+          name: 'source',
+          type: 'select',
+          label: 'Onboarding-källa',
+          options: [
+            { label: 'Standard registrering', value: 'registration' },
+            { label: 'Gästköp', value: 'guest_checkout' },
+          ],
+        },
+      ],
     },
     // Wine Preferences
     {
@@ -522,6 +568,7 @@ export const Users: CollectionConfig = {
             { label: 'Rosévin', value: 'rose' },
             { label: 'Sött vin', value: 'sweet' },
             { label: 'Starkvin', value: 'fortified' },
+            { label: 'Naturvin', value: 'natural' },
           ],
         },
         {

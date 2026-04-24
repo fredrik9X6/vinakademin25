@@ -49,7 +49,9 @@ export function LoginForm({ className, returnTo, ...props }: LoginFormProps) {
     const success = await loginUser(values)
     if (success) {
       // Redirect to the return URL if provided, otherwise go to dashboard
-      const redirectTo = returnTo ? decodeURIComponent(returnTo) : '/profil'
+      const redirectTo = returnTo
+        ? decodeURIComponent(returnTo)
+        : '/onboarding?next=%2Fprofil&source=registration'
       router.push(redirectTo)
     }
     // Error handling is done via toasts in AuthContext

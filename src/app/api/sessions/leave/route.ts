@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
+import { loggerFor } from '@/lib/logger'
+
+const log = loggerFor('api-sessions-leave')
 
 /**
  * POST /api/sessions/leave
  * Leave a group session and mark participant as inactive
  */
 export async function POST(request: NextRequest) {
-  console.log('👋 [LEAVE SESSION] Request received')
+  log.info('👋 [LEAVE SESSION] Request received')
 
   try {
     const payload = await getPayload({ config })
@@ -17,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     // Check authentication
     if (!token) {
-      console.log('❌ [LEAVE SESSION] Not authenticated')
+      log.info('❌ [LEAVE SESSION] Not authenticated')
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
@@ -30,7 +33,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!user) {
-      console.log('❌ [LEAVE SESSION] User not found')
+      log.info('❌ [LEAVE SESSION] User not found')
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
@@ -38,11 +41,11 @@ export async function POST(request: NextRequest) {
     const { sessionId } = body
 
     if (!sessionId) {
-      console.log('❌ [LEAVE SESSION] No session ID provided')
+      log.info('❌ [LEAVE SESSION] No session ID provided')
       return NextResponse.json({ error: 'sessionId is required' }, { status: 400 })
     }
 
-    console.log('👤 [LEAVE SESSION] User:', user.id, 'Session:', sessionId)
+    log.info('👤 [LEAVE SESSION] User:', user.id, 'Session:', sessionId)
 
     // Find the participant record for this user and session
     const participants = await payload.find({
@@ -54,7 +57,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (participants.totalDocs === 0) {
-      console.log('⚠️ [LEAVE SESSION] Participant not found')
+      log.info('⚠️ [LEAVE SESSION] Participant not found')
       return NextResponse.json(
         { error: 'You are not a participant in this session' },
         { status: 404 },
@@ -62,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     const participant = participants.docs[0]
-    console.log('📝 [LEAVE SESSION] Found participant:', participant.id)
+    log.info('📝 [LEAVE SESSION] Found participant:', participant.id)
 
     // Mark participant as inactive
     await payload.update({
@@ -88,10 +91,10 @@ export async function POST(request: NextRequest) {
           participantCount: newCount,
         },
       })
-      console.log('📊 [LEAVE SESSION] Updated participant count:', newCount)
+      log.info('📊 [LEAVE SESSION] Updated participant count:', newCount)
     }
 
-    console.log('✅ [LEAVE SESSION] Successfully left session')
+    log.info('✅ [LEAVE SESSION] Successfully left session')
 
     return NextResponse.json(
       {
@@ -101,7 +104,7 @@ export async function POST(request: NextRequest) {
       { status: 200 },
     )
   } catch (error) {
-    console.error('❌ [LEAVE SESSION] Error:', error)
+    log.error('❌ [LEAVE SESSION] Error:', error)
     return NextResponse.json(
       {
         error: 'Failed to leave session',
