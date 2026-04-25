@@ -449,11 +449,11 @@ export default async function WineDetailPage({ params }: PageProps) {
               {/* Header */}
               <div>
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
-                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words">
+                  <h1 className="text-2xl sm:text-3xl text-foreground break-words">
                     {wine.name}{wine.vintage ? <span className="text-muted-foreground font-normal"> · {wine.vintage}</span> : ''}
                   </h1>
                   {Number(wine.price) ? (
-                    <div className="text-xl font-bold text-[#FB914C]">
+                    <div className="text-brand-gradient text-xl font-bold">
                       {formatPrice(Number(wine.price))}
                     </div>
                   ) : null}
@@ -482,7 +482,7 @@ export default async function WineDetailPage({ params }: PageProps) {
               {/* Badges */}
               <div className="flex flex-wrap gap-2">
                 {review ? (
-                  <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30">
+                  <Badge className="bg-brand-300/10 text-brand-400 border-brand-300/30">
                     Verifierad recension
                   </Badge>
                 ) : null}
@@ -542,7 +542,7 @@ export default async function WineDetailPage({ params }: PageProps) {
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-[#FB914C] hover:underline underline-offset-2"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-400 hover:underline underline-offset-2"
                     >
                       Köp på Systembolaget
                       <ExternalLink className="h-3.5 w-3.5" />
@@ -722,16 +722,18 @@ export default async function WineDetailPage({ params }: PageProps) {
       {relatedVinprovningar.length > 0 ? (
         <div className="mt-10">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#FDBA75]/10 to-[#FB914C]/10 border border-[#FDBA75]/20 mb-4">
-              <Sparkles className="h-4 w-4 text-[#FB914C]" />
-              <span className="text-sm font-medium text-[#FB914C]">Vinprovningar med detta vin</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/30 mb-4">
+              <Sparkles className="h-4 w-4 text-brand-400" />
+              <span className="text-sm font-medium text-brand-400">Vinprovningar med detta vin</span>
             </div>
           </div>
           <div className="space-y-4">
             {relatedVinprovningar.map((v: any) => (
-              <div key={v.id} className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FDBA75] via-[#FB914C] to-[#FDBA75] rounded-2xl opacity-50 blur group-hover:opacity-80 transition duration-500" />
-                <div className="relative bg-card rounded-2xl overflow-hidden border border-border">
+              <div
+                key={v.id}
+                className="bg-brand-gradient-tri group rounded-2xl p-0.5 shadow-brand-glow transition-shadow duration-500 hover:shadow-brand-glow-lg"
+              >
+                <div className="bg-card rounded-[14px] overflow-hidden">
                   <div className="flex flex-col sm:flex-row gap-0">
                     {v.featuredImage?.url ? (
                       <div className="relative h-48 sm:h-auto sm:w-56 flex-shrink-0">
@@ -748,7 +750,7 @@ export default async function WineDetailPage({ params }: PageProps) {
                       <div className="space-y-3">
                         <div className="flex items-center gap-3">
                           {v.level ? (
-                            <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30">
+                            <Badge className="bg-brand-300/10 text-brand-400 border-brand-300/30">
                               {v.level === 'beginner'
                                 ? 'Nybörjare'
                                 : v.level === 'intermediate'
@@ -757,7 +759,7 @@ export default async function WineDetailPage({ params }: PageProps) {
                             </Badge>
                           ) : null}
                         </div>
-                        <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                        <h3 className="text-xl sm:text-2xl font-medium text-foreground">
                           {v.title}
                         </h3>
                         {v.description ? (
