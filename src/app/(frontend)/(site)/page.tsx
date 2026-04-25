@@ -4,7 +4,6 @@ import config from '@/payload.config'
 import { getSiteURL } from '@/lib/site-url'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
   Clock,
   BookOpen,
@@ -121,7 +120,7 @@ export default async function HomePage() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/20 mb-6">
               <span className="text-sm font-medium text-brand-400">Enkelt & intuitivt</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">Så fungerar det</h2>
+            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl mb-4">Så fungerar det</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Fyra enkla steg till en minnesvärd vinupplevelse
             </p>
@@ -176,7 +175,7 @@ export default async function HomePage() {
                     <div className="inline-block px-3 py-1 rounded-full bg-brand-300/10 border border-brand-300/20">
                       <span className="text-xs font-semibold text-brand-400">STEG {step.step}</span>
                     </div>
-                    <h3 className="text-xl font-semibold">{step.title}</h3>
+                    <h3 className="text-xl font-medium">{step.title}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {step.description}
                     </p>
@@ -274,7 +273,7 @@ export default async function HomePage() {
                 <BookOpen className="h-4 w-4 text-brand-400" />
                 <span className="text-sm font-medium text-brand-400">Från vår blogg</span>
               </div>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">
+              <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl mb-4">
                 Senaste artiklarna
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -343,15 +342,12 @@ export default async function HomePage() {
             </div>
 
             <div className="text-center mt-12">
-              <Link href="/artiklar">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="group border-brand-400/30 hover:border-brand-400 hover:bg-brand-300/5"
-                >
-                  Se alla artiklar
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
+              <Link
+                href="/artiklar"
+                className="group inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium transition-colors hover:border-brand-400/50 hover:bg-brand-300/5"
+              >
+                Se alla artiklar
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
           </div>
@@ -373,7 +369,7 @@ export default async function HomePage() {
               <Wine className="h-4 w-4 text-brand-400" />
               <span className="text-sm font-medium text-brand-400">Vår historia</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">Om Vinakademin</h2>
+            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl mb-4">Om Vinakademin</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Vi gör vinkunskap enkelt & opretentiöst
             </p>
@@ -393,7 +389,7 @@ export default async function HomePage() {
                           <Play className="w-8 h-8 text-white ml-1" />
                         </div>
                         <div className="text-center space-y-2">
-                          <p className="font-semibold text-lg">Vi är Fredrik & Max</p>
+                          <p className="font-medium text-lg">Vi är Fredrik & Max</p>
                           <p className="text-sm text-muted-foreground px-4">
                             Låt oss berätta om vår vision för Vinakademin
                           </p>
@@ -462,14 +458,11 @@ export default async function HomePage() {
                   Upptäck vinprovningar
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
-                <Link href="/om-oss" className="flex-1">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full border-brand-400/30 hover:border-brand-400 hover:bg-brand-300/5"
-                  >
-                    Läs mer om oss
-                  </Button>
+                <Link
+                  href="/om-oss"
+                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium transition-colors hover:border-brand-400/50 hover:bg-brand-300/5"
+                >
+                  Läs mer om oss
                 </Link>
               </div>
             </div>
@@ -490,7 +483,7 @@ export default async function HomePage() {
               <Users className="h-4 w-4 text-brand-400" />
               <span className="text-sm font-medium text-brand-400">Medlemmar</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">Vad andra säger</h2>
+            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl mb-4">Vad andra säger</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Våra medlemmar delar sina erfarenheter
             </p>
@@ -604,7 +597,7 @@ export default async function HomePage() {
                   <span className="text-sm font-medium text-brand-400">Nyhetsbrev</span>
                 </div>
 
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">
+                <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl mb-4">
                   Håll dig uppdaterad
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
@@ -665,7 +658,7 @@ export default async function HomePage() {
                       <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-brand-300/20 to-brand-400/20 mb-2">
                         <benefit.icon className="h-6 w-6 text-brand-400" />
                       </div>
-                      <h3 className="font-semibold text-foreground">{benefit.title}</h3>
+                      <h3 className="font-medium text-foreground">{benefit.title}</h3>
                       <p className="text-sm text-muted-foreground">{benefit.description}</p>
                     </div>
                   ))}
@@ -694,7 +687,7 @@ export default async function HomePage() {
             </div>
 
             {/* Heading */}
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium mb-6">Redo att börja?</h2>
+            <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl mb-6">Redo att börja?</h2>
 
             {/* Description */}
             <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
@@ -708,14 +701,11 @@ export default async function HomePage() {
                 Utforska vinprovningar
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
-              <Link href="/om-oss">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-base px-8 py-6 border-brand-400/30 hover:border-brand-400 hover:bg-brand-300/5"
-                >
-                  Läs mer om oss
-                </Button>
+              <Link
+                href="/om-oss"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium transition-colors hover:border-brand-400/50 hover:bg-brand-300/5"
+              >
+                Läs mer om oss
               </Link>
             </div>
 
@@ -724,18 +714,18 @@ export default async function HomePage() {
               {[
                 {
                   icon: CheckCircle2,
-                  title: 'Gratis att prova',
+                  title: 'Prova gratis',
                   description: 'Testa varje vinprovning innan du köper',
                 },
                 {
                   icon: Wine,
-                  title: '30-dagars garanti',
-                  description: '100% pengarna tillbaka, inga frågor ställs',
+                  title: 'Livstidsåtkomst',
+                  description: 'Köp en gång — ha den för alltid',
                 },
                 {
                   icon: Users,
-                  title: '300+ nöjda medlemmar',
-                  description: 'Gå med i vår växande community',
+                  title: '300+ prenumeranter',
+                  description: 'I vårt nyhetsbrev — lär dig något nytt varje vecka',
                 },
               ].map((feature, index) => (
                 <div key={index} className="flex flex-col items-center text-center space-y-3">
@@ -743,7 +733,7 @@ export default async function HomePage() {
                     <feature.icon className="h-7 w-7 text-brand-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground mb-1">{feature.title}</h3>
+                    <h3 className="font-medium text-foreground mb-1">{feature.title}</h3>
                     <p className="text-sm text-muted-foreground">{feature.description}</p>
                   </div>
                 </div>
