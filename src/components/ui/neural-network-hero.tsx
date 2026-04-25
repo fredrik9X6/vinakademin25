@@ -417,25 +417,25 @@ export default function Hero({
         <div className="absolute bottom-1/4 left-10 w-72 h-72 bg-brand-400/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative mx-auto flex max-w-7xl flex-col items-start gap-7 px-6 pb-24 pt-20 sm:gap-9 sm:pt-28 md:px-10 lg:px-16 z-10">
+      <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-7 px-6 pb-24 pt-20 text-center sm:gap-9 sm:pt-28 md:px-10 lg:px-16">
         {/* Hidden badge ref — kept for GSAP timeline compatibility */}
         <div ref={badgeRef} className="hidden" aria-hidden="true" />
 
         <h1
           ref={headerRef}
-          className="invisible max-w-3xl text-left text-5xl leading-[1.05] text-foreground sm:text-6xl md:text-7xl lg:text-8xl"
+          className="invisible max-w-4xl text-5xl leading-[1.05] text-foreground sm:text-6xl md:text-7xl lg:text-[7rem]"
         >
           {title}
         </h1>
 
         <p
           ref={paraRef}
-          className="max-w-2xl text-left text-lg font-normal leading-relaxed text-muted-foreground sm:text-xl opacity-0"
+          className="max-w-2xl text-lg font-normal leading-relaxed text-muted-foreground opacity-0 sm:text-xl"
         >
           {description}
         </p>
 
-        <div ref={ctaRef} className="flex flex-wrap items-center gap-4 pt-4 opacity-0">
+        <div ref={ctaRef} className="flex flex-wrap items-center justify-center gap-4 pt-4 opacity-0">
           {ctaButtons.map((button, index) =>
             button.primary ? (
               <a key={index} href={button.href} className="btn-brand btn-brand-lg">
@@ -445,7 +445,7 @@ export default function Hero({
               <a
                 key={index}
                 href={button.href}
-                className="group relative rounded-md border-2 border-border bg-background/40 px-8 py-4 text-base font-medium tracking-tight text-foreground backdrop-blur-sm transition-colors duration-300 hover:border-brand-400/50 hover:bg-brand-300/5 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-background/40 px-8 text-base font-medium text-foreground backdrop-blur-sm transition-colors duration-300 hover:border-brand-400/50 hover:bg-brand-300/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {button.text}
               </a>
@@ -453,10 +453,10 @@ export default function Hero({
           )}
         </div>
 
-        {/* Trust indicators with orange accents */}
+        {/* Trust indicators */}
         <div
           ref={microRef}
-          className="mt-12 flex flex-wrap items-center gap-8 border-t border-border/50 pt-8"
+          className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 border-t border-border/50 pt-8"
         >
           {microDetails.map((detail, index) => {
             const refMap = [microItem1Ref, microItem2Ref, microItem3Ref]
