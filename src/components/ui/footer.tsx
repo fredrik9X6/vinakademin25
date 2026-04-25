@@ -1,10 +1,9 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import Link from 'next/link'
-import { Instagram, Linkedin, Music2, CheckCircle, Loader2 } from 'lucide-react'
 import { useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { Instagram, Linkedin, Music2, Check, Loader2, ArrowRight } from 'lucide-react'
 
 const socialLinks = [
   { icon: Instagram, href: 'https://www.instagram.com/vinakademin.se/', label: 'Instagram' },
@@ -14,17 +13,18 @@ const socialLinks = [
 
 const exploreLinks = [
   { label: 'Vinprovningar', href: '/vinprovningar' },
+  { label: 'Vinkompass', href: '/vinkompass' },
+  { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },
-  { label: 'Nyhetsbrev', href: '/nyhetsbrev' },
 ]
 
 const aboutLinks = [
   { label: 'Om oss', href: '/om-oss' },
   { label: 'Kontakt', href: '/kontakt' },
-  { label: 'Varumärke', href: '/styleguide' },
+  { label: 'Designsystem', href: '/styleguide' },
 ]
 
-const resourcesLinks = [
+const supportLinks = [
   { label: 'Hjälp', href: '/hjalp' },
   { label: 'Användarvillkor', href: '/villkor' },
   { label: 'Integritetspolicy', href: '/integritetspolicy' },
@@ -68,8 +68,8 @@ function FooterNewsletter() {
 
   if (status === 'success') {
     return (
-      <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-        <CheckCircle className="h-5 w-5 flex-shrink-0" />
+      <div className="flex items-center gap-2 text-sm text-[#16a34a] dark:text-[#4ade80]">
+        <Check className="h-4 w-4 flex-shrink-0" />
         <span>{message}</span>
       </div>
     )
@@ -77,128 +77,159 @@ function FooterNewsletter() {
 
   return (
     <div>
-      <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-stretch min-w-0">
-        <Input
+      <div className="flex w-full flex-col gap-2 sm:flex-row">
+        <input
           type="email"
-          placeholder="Din e-postadress"
+          placeholder="din@e-post.se"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmit() } }}
-          className="h-12 w-full min-w-0 text-base sm:h-10 sm:flex-1 sm:text-sm"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleSubmit()
+            }
+          }}
+          className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm outline-none transition focus:border-brand-400/60 focus:ring-1 focus:ring-brand-400/40 disabled:opacity-50"
           disabled={status === 'loading'}
+          aria-label="E-postadress"
         />
-        <Button type="button" className="h-12 w-full sm:h-10 sm:w-auto" variant="secondary" disabled={status === 'loading'} onClick={handleSubmit}>
-          {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Prenumerera'}
-        </Button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={status === 'loading'}
+          className="btn-brand h-10 px-4 text-sm sm:flex-shrink-0"
+        >
+          {status === 'loading' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              Prenumerera
+              <ArrowRight className="h-3.5 w-3.5" />
+            </>
+          )}
+        </button>
       </div>
       {status === 'error' && message && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{message}</p>
+        <p className="mt-2 text-xs text-[#dc2626] dark:text-[#f87171]">{message}</p>
       )}
+      {status !== 'error' && (
+        <p className="mt-2 text-xs text-muted-foreground">Vi skickar aldrig spam.</p>
+      )}
+    </div>
+  )
+}
+
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string
+  links: ReadonlyArray<{ label: string; href: string }>
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {title}
+      </div>
+      <ul className="mt-4 flex flex-col items-center space-y-3 sm:items-start">
+        {links.map((link) => (
+          <li key={link.label}>
+            <Link
+              href={link.href}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
 
 export function Footer() {
   return (
-    <footer className="bg-background border-t border-border">
-      <div className="mx-auto max-w-7xl px-6 py-12 min-w-0 overflow-x-hidden">
-        <div className="grid grid-cols-1 items-center gap-8 text-center sm:grid-cols-2 sm:items-start sm:text-left lg:grid-cols-5">
-          {/* Utforska Column */}
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-foreground">Utforska</h3>
-            <ul className="mt-4 flex flex-col items-center space-y-3 sm:items-start">
-              {exploreLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+    <footer className="relative border-t border-border bg-background">
+      {/* Soft brand-tint blob — signature decorative pattern */}
+      <div
+        className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[28rem] -translate-x-1/2 rounded-full blur-3xl"
+        aria-hidden
+        style={{ background: 'hsl(var(--brand-300))', opacity: 0.04 }}
+      />
 
-          {/* Om Vinakademin Column */}
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-foreground">Om Vinakademin</h3>
-            <ul className="mt-4 flex flex-col items-center space-y-3 sm:items-start">
-              {aboutLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+      <div className="relative mx-auto min-w-0 max-w-7xl overflow-x-hidden px-6 py-16 lg:py-20">
+        {/* Top grid: brand column + 3 link columns + newsletter */}
+        <div className="grid grid-cols-1 gap-10 text-center sm:grid-cols-2 sm:gap-8 sm:text-left lg:grid-cols-12">
+          {/* Brand column */}
+          <div className="min-w-0 space-y-5 sm:col-span-2 lg:col-span-4">
+            <Link
+              href="/"
+              className="inline-flex items-center"
+              aria-label="Vinakademin — startsida"
+            >
+              {/* Light-mode wordmark (dark text, hidden in dark mode) */}
+              <Image
+                src="/brand/Vinakademin_logo_lockup.svg"
+                alt="Vinakademin"
+                width={180}
+                height={32}
+                className="block h-7 w-auto dark:hidden"
+                priority={false}
+              />
+              {/* Dark-mode wordmark (white text, hidden in light mode) */}
+              <Image
+                src="/brand/vinakademin_logo_lockup_darkmode.svg"
+                alt="Vinakademin"
+                width={180}
+                height={32}
+                className="hidden h-7 w-auto dark:block"
+                priority={false}
+              />
+            </Link>
+            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground sm:mx-0 mx-auto">
+              Vi gör vinkunskap enkelt &amp; opretentiöst. Guidade provningar hemma, med vänner,
+              när det passar dig.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3 sm:justify-start">
+              {socialLinks.map((social) => {
+                const Icon = social.icon
+                return (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.label}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-brand-300/15 hover:text-brand-400"
                   >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Resurser Column */}
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-foreground">Resurser</h3>
-            <ul className="mt-4 flex flex-col items-center space-y-3 sm:items-start">
-              {resourcesLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Newsletter & Social Column */}
-          <div className="min-w-0 lg:col-span-2">
-            <h3 className="text-sm font-semibold text-foreground">Följ oss & Nyhetsbrev</h3>
-            <div className="mt-4">
-              <FooterNewsletter />
-              <div className="mt-6 flex flex-wrap justify-center gap-4 sm:justify-start">
-                {socialLinks.map((social) => {
-                  const Icon = social.icon
-                  return (
-                    <a
-                      key={social.label}
-                      href={social.href}
-                      className="rounded-full bg-muted p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                      aria-label={social.label}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </a>
-                  )
-                })}
-              </div>
+                    <Icon className="h-4 w-4" />
+                  </a>
+                )
+              })}
             </div>
+          </div>
+
+          {/* Link columns */}
+          <FooterColumn title="Utforska" links={exploreLinks} />
+          <FooterColumn title="Om oss" links={aboutLinks} />
+          <FooterColumn title="Support" links={supportLinks} />
+
+          {/* Newsletter */}
+          <div className="min-w-0 sm:col-span-2 lg:col-span-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              Nyhetsbrev
+            </div>
+            <p className="mt-4 mb-3 text-sm leading-relaxed text-muted-foreground">
+              Veckans bästa vintips, smaknoter och artiklar — direkt i din inbox.
+            </p>
+            <FooterNewsletter />
           </div>
         </div>
 
-        {/* Legal Section */}
-        <div className="mt-12 border-t border-border pt-8">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Vinakademin. Alla rättigheter förbehållna.
-            </p>
-            <div className="flex gap-4">
-              <Link
-                href="/villkor"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Användarvillkor
-              </Link>
-              <Link
-                href="/integritetspolicy"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Integritetspolicy
-              </Link>
-            </div>
-          </div>
+        {/* Bottom strip */}
+        <div className="mt-16 flex flex-col items-center justify-between gap-3 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row">
+          <span>© {new Date().getFullYear()} Vinakademin AB. Alla rättigheter förbehållna.</span>
+          <span>Med kärlek från Stockholm.</span>
         </div>
       </div>
     </footer>
