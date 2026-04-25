@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Instagram, Linkedin, Music2, Check, Loader2, ArrowRight } from 'lucide-react'
 
 const socialLinks = [
@@ -131,7 +130,7 @@ function FooterColumn({
       <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {title}
       </div>
-      <ul className="mt-4 flex flex-col items-center space-y-3 sm:items-start">
+      <ul className="mt-5 flex flex-col gap-3">
         {links.map((link) => (
           <li key={link.label}>
             <Link
@@ -154,43 +153,35 @@ export function Footer() {
       <div
         className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[28rem] -translate-x-1/2 rounded-full blur-3xl"
         aria-hidden
-        style={{ background: 'hsl(var(--brand-300))', opacity: 0.04 }}
+        style={{ background: 'hsl(var(--brand-300))', opacity: 0.05 }}
       />
 
-      <div className="relative mx-auto min-w-0 max-w-7xl overflow-x-hidden px-6 py-16 lg:py-20">
-        {/* Top grid: brand column + 3 link columns + newsletter */}
-        <div className="grid grid-cols-1 gap-10 text-center sm:grid-cols-2 sm:gap-8 sm:text-left lg:grid-cols-12">
-          {/* Brand column */}
-          <div className="min-w-0 space-y-5 sm:col-span-2 lg:col-span-4">
+      <div className="relative mx-auto max-w-7xl px-6 py-16 lg:py-20">
+        <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5 lg:gap-12">
+          {/* Brand column — spans 2 on lg */}
+          <div className="space-y-6 lg:col-span-2">
             <Link
               href="/"
-              className="inline-flex items-center"
               aria-label="Vinakademin — startsida"
+              className="text-brand-gradient inline-block font-heading text-3xl leading-none sm:text-4xl"
             >
-              {/* Light-mode wordmark (dark text, hidden in dark mode) */}
-              <Image
-                src="/brand/Vinakademin_logo_lockup.svg"
-                alt="Vinakademin"
-                width={180}
-                height={32}
-                className="block h-7 w-auto dark:hidden"
-                priority={false}
-              />
-              {/* Dark-mode wordmark (white text, hidden in light mode) */}
-              <Image
-                src="/brand/vinakademin_logo_lockup_darkmode.svg"
-                alt="Vinakademin"
-                width={180}
-                height={32}
-                className="hidden h-7 w-auto dark:block"
-                priority={false}
-              />
+              Vinakademin
             </Link>
-            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground sm:mx-0 mx-auto">
+            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
               Vi gör vinkunskap enkelt &amp; opretentiöst. Guidade provningar hemma, med vänner,
               när det passar dig.
             </p>
-            <div className="flex flex-wrap justify-center gap-3 sm:justify-start">
+
+            {/* Newsletter — sits under the brand statement */}
+            <div className="max-w-md">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Nyhetsbrev
+              </div>
+              <FooterNewsletter />
+            </div>
+
+            {/* Social */}
+            <div className="flex flex-wrap gap-3">
               {socialLinks.map((social) => {
                 const Icon = social.icon
                 return (
@@ -209,21 +200,10 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Link columns */}
+          {/* Link columns — 1 col each */}
           <FooterColumn title="Utforska" links={exploreLinks} />
           <FooterColumn title="Om oss" links={aboutLinks} />
           <FooterColumn title="Support" links={supportLinks} />
-
-          {/* Newsletter */}
-          <div className="min-w-0 sm:col-span-2 lg:col-span-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Nyhetsbrev
-            </div>
-            <p className="mt-4 mb-3 text-sm leading-relaxed text-muted-foreground">
-              Veckans bästa vintips, smaknoter och artiklar — direkt i din inbox.
-            </p>
-            <FooterNewsletter />
-          </div>
         </div>
 
         {/* Bottom strip */}

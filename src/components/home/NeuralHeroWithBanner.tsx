@@ -13,9 +13,8 @@ export function NeuralHeroWithBanner({ featuredCourse }: NeuralHeroWithBannerPro
     <NeuralNetworkHero
       title={
         <>
-          Vinprovningar hemma,
-          <br />
-          <span className="text-brand-gradient">enkelt &amp; opretentiöst.</span>
+          <span className="block">Vinprovningar hemma,</span>
+          <span className="text-brand-gradient block">enkelt &amp; opretentiöst.</span>
         </>
       }
       description="Guidade vinprovningar du kan göra hemma, med vänner, när det passar dig. Lär dig om vin genom att dofta, smaka och prata."
