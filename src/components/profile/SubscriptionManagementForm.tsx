@@ -262,7 +262,7 @@ export function SubscriptionManagementForm({
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-lg capitalize">{currentSubscription.plan}</h3>
+                <h3 className="font-medium text-lg capitalize">{currentSubscription.plan}</h3>
                 <p className="text-sm text-muted-foreground">
                   {formatPrice(currentSubscription.price)}
                 </p>
@@ -358,7 +358,7 @@ export function SubscriptionManagementForm({
                 <CardHeader>
                   <CardTitle className="text-center">{plan.name}</CardTitle>
                   <div className="text-center">
-                    <span className="text-3xl font-bold">{plan.price.amount}</span>
+                    <span className="text-3xl font-medium text-brand-gradient">{plan.price.amount}</span>
                     <span className="text-muted-foreground ml-1">
                       {plan.price.currency}/{plan.price.interval === 'month' ? 'mån' : 'år'}
                     </span>

@@ -35,7 +35,7 @@ export function ProvningCard({ course }: ProvningCardProps) {
   }
 
   return (
-    <Card className="group overflow-hidden border-border hover:border-[#FB914C]/40 transition-colors bg-card">
+    <Card className="group overflow-hidden border-border hover:border-brand-400/40 transition-colors bg-card">
       {/* Image area */}
       <div className="relative aspect-video bg-muted overflow-hidden">
         {imageUrl ? (
@@ -63,7 +63,7 @@ export function ProvningCard({ course }: ProvningCardProps) {
         {percentage > 0 && (
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
             <div
-              className="h-full bg-[#FB914C] transition-all"
+              className="h-full bg-brand-400 transition-all"
               style={{ width: `${percentage}%` }}
             />
           </div>
@@ -72,7 +72,7 @@ export function ProvningCard({ course }: ProvningCardProps) {
 
       <CardContent className="p-4 space-y-3">
         {/* Title */}
-        <h3 className="font-semibold text-base line-clamp-2 leading-snug">{course.title}</h3>
+        <h3 className="font-medium text-base line-clamp-2 leading-snug">{course.title}</h3>
 
         {/* Progress info */}
         <div className="space-y-1.5">

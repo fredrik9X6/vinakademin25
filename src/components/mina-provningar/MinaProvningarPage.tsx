@@ -76,7 +76,7 @@ export function MinaProvningarPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Mina Provningar</h1>
+        <h1 className="text-3xl md:text-4xl font-heading">Mina Provningar</h1>
         <p className="mt-2 text-muted-foreground">
           Här hittar du dina köpta vinprovningar och kan följa dina framsteg.
         </p>
@@ -101,7 +101,7 @@ export function MinaProvningarPage() {
           <div className="rounded-full bg-muted p-6 mb-6">
             <Wine className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">Inga provningar ännu</h2>
+          <h2 className="text-xl font-medium mb-2">Inga provningar ännu</h2>
           <p className="text-muted-foreground mb-6 max-w-md">
             Du har inte köpt några vinprovningar ännu. Utforska våra provningar och börja din vinresa!
           </p>

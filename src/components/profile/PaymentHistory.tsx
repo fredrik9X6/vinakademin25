@@ -312,7 +312,7 @@ export function PaymentHistory({ userId }: PaymentHistoryProps) {
                               {formatPrice(order.amount + order.discountAmount, order.currency)}
                             </div>
                           ) : null}
-                          <span className="font-bold text-lg sm:text-base">
+                          <span className="font-medium text-lg sm:text-base">
                             {formatPrice(order.amount, order.currency)}
                           </span>
                         </div>
