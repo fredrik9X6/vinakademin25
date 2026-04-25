@@ -136,10 +136,10 @@ export function RequestPasswordResetForm({
             />
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <button type="submit" disabled={isLoading} className="btn-brand w-full">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {isLoading ? 'Skickar...' : 'Skicka återställnings-e-post'}
-            </Button>
+            </button>
             <Link href={loginHref} className="w-full">
               <Button variant="outline" className="w-full">
                 <ArrowLeft className="mr-2 h-4 w-4" />

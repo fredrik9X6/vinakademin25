@@ -108,10 +108,10 @@ export function LoginForm({ className, returnTo, ...props }: LoginFormProps) {
                     </FormItem>
                   )}
                 />
-                <Button variant={'default'} type="submit" className="w-full" disabled={isLoading}>
+                <button type="submit" disabled={isLoading} className="btn-brand w-full">
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {isLoading ? 'Loggar in...' : 'Logga in'}
-                </Button>
+                </button>
               </div>
               <div className="text-center text-sm">
                 Har du inget konto?{' '}

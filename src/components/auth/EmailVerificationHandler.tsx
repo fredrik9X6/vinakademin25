@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Loader2, CheckCircle, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -106,13 +105,17 @@ export function EmailVerificationHandler({ token }: EmailVerificationHandlerProp
 
         {!isLoading && (error || successMessage) && (
           <div className="text-center pt-4">
-            <Button
+            <button
+              type="button"
               onClick={() => router.push('/logga-in')}
-              className="w-full"
-              variant={error ? 'outline' : 'default'}
+              className={
+                error
+                  ? 'inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium hover:border-brand-400/50 hover:bg-brand-300/5'
+                  : 'btn-brand w-full'
+              }
             >
               Gå till inloggning
-            </Button>
+            </button>
           </div>
         )}
       </CardContent>

@@ -316,13 +316,23 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
           )}
           <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:justify-end">
             {step < STEP_COUNT - 1 ? (
-              <Button type="button" onClick={goNext} disabled={isSubmitting} className="sm:min-w-[8rem]">
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={isSubmitting}
+                className="btn-brand sm:min-w-[8rem]"
+              >
                 {step === 0 ? 'Kom igång' : 'Nästa'}
-              </Button>
+              </button>
             ) : (
-              <Button type="button" onClick={() => submit('complete')} disabled={isSubmitting} className="sm:min-w-[8rem]">
+              <button
+                type="button"
+                onClick={() => submit('complete')}
+                disabled={isSubmitting}
+                className="btn-brand sm:min-w-[8rem]"
+              >
                 {isSubmitting ? 'Sparar…' : 'Spara och gå vidare'}
-              </Button>
+              </button>
             )}
           </div>
         </div>

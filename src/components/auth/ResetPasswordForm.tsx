@@ -118,7 +118,9 @@ export function ResetPasswordForm({ token, onSuccess }: ResetPasswordFormProps) 
         </CardHeader>
         <CardFooter>
           <Link href="/logga-in" className="w-full">
-            <Button className="w-full">Gå till inloggning</Button>
+            <button type="button" className="btn-brand w-full">
+              Gå till inloggning
+            </button>
           </Link>
         </CardFooter>
       </Card>
@@ -172,10 +174,10 @@ export function ResetPasswordForm({ token, onSuccess }: ResetPasswordFormProps) 
             />
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <button type="submit" disabled={isLoading} className="btn-brand w-full">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {isLoading ? 'Återställer...' : 'Återställ lösenord'}
-            </Button>
+            </button>
             <Link href="/logga-in" className="w-full">
               <Button variant="outline" className="w-full">
                 <ArrowLeft className="mr-2 h-4 w-4" />
