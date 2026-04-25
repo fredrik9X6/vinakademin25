@@ -88,7 +88,7 @@ function FooterNewsletter() {
               handleSubmit()
             }
           }}
-          className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm outline-none transition focus:border-brand-400/60 focus:ring-1 focus:ring-brand-400/40 disabled:opacity-50"
+          className="h-12 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-base outline-none transition focus:border-brand-400/60 focus:ring-1 focus:ring-brand-400/40 disabled:opacity-50 sm:h-10 sm:text-sm"
           disabled={status === 'loading'}
           aria-label="E-postadress"
         />
@@ -96,7 +96,7 @@ function FooterNewsletter() {
           type="button"
           onClick={handleSubmit}
           disabled={status === 'loading'}
-          className="btn-brand h-10 w-full px-4 text-sm sm:w-auto sm:flex-shrink-0"
+          className="btn-brand h-12 w-full px-4 text-base sm:h-10 sm:w-auto sm:flex-shrink-0 sm:text-sm"
         >
           {status === 'loading' ? (
             <Loader2 className="h-4 w-4 animate-spin" />
