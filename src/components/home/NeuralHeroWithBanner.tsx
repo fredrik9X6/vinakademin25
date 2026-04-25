@@ -13,7 +13,8 @@ export function NeuralHeroWithBanner({ featuredCourse }: NeuralHeroWithBannerPro
     <NeuralNetworkHero
       title={
         <>
-          Vinprovningar hemma,{' '}
+          Vinprovningar hemma,
+          <br />
           <span className="text-brand-gradient">enkelt &amp; opretentiöst.</span>
         </>
       }
@@ -22,7 +23,7 @@ export function NeuralHeroWithBanner({ featuredCourse }: NeuralHeroWithBannerPro
         { text: 'Kom igång', href: `/vinprovningar/${featuredSlug}`, primary: true },
         { text: 'Se alla vinprovningar', href: '/vinprovningar' },
       ]}
-      microDetails={['300+ nöjda medlemmar', 'Prova gratis', 'Avsluta när du vill']}
+      microDetails={['300+ prenumeranter', 'Prova gratis', 'Livstidsåtkomst']}
     />
   )
 }
