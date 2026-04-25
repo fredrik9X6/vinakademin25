@@ -2,7 +2,6 @@ import { Metadata } from 'next'
 import { getSiteURL } from '@/lib/site-url'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
   Heart,
@@ -49,7 +48,7 @@ const values = [
 const stats = [
   { number: '2M+', label: 'Visningar i sociala medier' },
   { number: '15k+', label: 'Följare' },
-  { number: '300+', label: 'prenumeranter' },
+  { number: '300+', label: 'Prenumeranter' },
   { number: '100+', label: 'Videos producerade' },
 ]
 
@@ -82,29 +81,44 @@ const milestones = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4">
+    <div className="relative min-h-screen bg-background">
+      {/* Decorative orange blobs — signature pattern */}
+      <div
+        className="pointer-events-none absolute left-10 top-32 h-72 w-72 rounded-full blur-3xl"
+        aria-hidden
+        style={{ background: 'hsl(var(--brand-300))', opacity: 0.05 }}
+      />
+      <div
+        className="pointer-events-none absolute right-10 top-[40rem] h-72 w-72 rounded-full blur-3xl"
+        aria-hidden
+        style={{ background: 'hsl(var(--brand-400))', opacity: 0.05 }}
+      />
+
+      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         {/* Header */}
-        <div className="text-center mb-12 max-w-3xl mx-auto">
-          <Badge variant="secondary" className="mb-4">
-            <Heart className="h-3.5 w-3.5 mr-1" />
+        <div className="mx-auto mb-16 max-w-3xl text-center">
+          <Badge
+            variant="outline"
+            className="mb-4 border-brand-300/40 bg-brand-300/10 text-brand-400"
+          >
+            <Heart className="mr-1.5 h-3.5 w-3.5" />
             Vår historia
           </Badge>
-          <h1 className="text-3xl md:text-4xl font-medium tracking-tight mb-4">Om Vinakademin</h1>
-          <p className="text-xl text-muted-foreground">
-            Vi gör vinkunskap enkelt, opretentiöst och roligt – genom att smaka, uppleva och dela
+          <h1 className="mb-5 text-4xl leading-[1.05] text-foreground md:text-5xl lg:text-6xl">
+            Om <span className="text-brand-gradient">Vinakademin</span>
+          </h1>
+          <p className="text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            Vi gör vinkunskap enkelt, opretentiöst och roligt — genom att smaka, uppleva och dela
             vårt intresse för vin.
           </p>
         </div>
 
-        {/* Hero image placeholder hidden until real photo is available */}
-
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+        <div className="mb-20 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
           {stats.map((stat) => (
-            <Card key={stat.label}>
+            <Card key={stat.label} className="border-border bg-card">
               <CardContent className="p-6 text-center">
-                <div className="text-3xl md:text-4xl font-bold text-orange-600 dark:text-orange-400 mb-2">
+                <div className="text-brand-gradient mb-2 font-heading text-4xl md:text-5xl">
                   {stat.number}
                 </div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
@@ -114,19 +128,19 @@ export default function AboutPage() {
         </div>
 
         {/* Our Story */}
-        <div className="max-w-4xl mx-auto mb-16">
+        <div className="mx-auto mb-20 max-w-4xl">
           <div className="space-y-8">
-            <div className="text-center space-y-3">
-              <h2 className="text-3xl font-medium tracking-tight">Vår resa</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <div className="space-y-3 text-center">
+              <h2 className="text-3xl font-medium md:text-4xl">Vår resa</h2>
+              <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
                 Från första Instagram-inlägget till att lansera vår egen plattform för digitala
                 vinprovningar
               </p>
             </div>
 
-            <Card>
+            <Card className="border-border bg-card shadow-sm">
               <CardContent className="p-8 md:p-12">
-                <Quote className="h-8 w-8 text-orange-500/50 mb-6" />
+                <Quote className="mb-6 h-8 w-8 text-brand-400/60" />
                 <div className="space-y-6 text-lg leading-relaxed">
                   <p>
                     Vi fastnade för vin och hur mycket bättre det smakar när man förstår vad man
@@ -141,9 +155,9 @@ export default function AboutPage() {
                   <p>
                     De senaste tre åren har vi delat vårt vinintresse via Instagram och TikTok,
                     skapat hundratals videos, och lärt oss mer om vin varje dag. Men tanken har
-                    alltid varit densamma: göra vinkunskap tillgängligt genom att smaka och uppleva.
-                    Vinprovningar blir det självklara svaret – men hur kan vi göra dem bättre?
-                    Roligare, enklare, mer tillgängliga. Det är det vi löser med Vinakademin.
+                    alltid varit densamma: göra vinkunskap tillgängligt genom att smaka och
+                    uppleva. Vinprovningar blir det självklara svaret — men hur kan vi göra dem
+                    bättre? Roligare, enklare, mer tillgängliga. Det är det vi löser med Vinakademin.
                   </p>
                 </div>
               </CardContent>
@@ -152,9 +166,9 @@ export default function AboutPage() {
         </div>
 
         {/* Timeline */}
-        <div className="max-w-4xl mx-auto mb-16">
-          <div className="text-center space-y-3 mb-12">
-            <h2 className="text-3xl font-medium tracking-tight">Milstolpar</h2>
+        <div className="mx-auto mb-20 max-w-4xl">
+          <div className="mb-12 space-y-3 text-center">
+            <h2 className="text-3xl font-medium md:text-4xl">Milstolpar</h2>
             <p className="text-lg text-muted-foreground">Vår utveckling från start till idag</p>
           </div>
 
@@ -162,21 +176,32 @@ export default function AboutPage() {
             {milestones.map((milestone, index) => (
               <div key={milestone.year} className="relative">
                 {index < milestones.length - 1 && (
-                  <div className="absolute left-[19px] top-12 bottom-0 w-0.5 bg-orange-200 dark:bg-border -mb-8" />
+                  <div
+                    className="absolute -mb-8 w-0.5"
+                    aria-hidden
+                    style={{
+                      left: '19px',
+                      top: '40px',
+                      bottom: 0,
+                      background:
+                        'linear-gradient(to bottom, hsl(var(--brand-400)) 0%, hsl(var(--border)) 100%)',
+                      opacity: 0.6,
+                    }}
+                  />
                 )}
-                <div className="flex gap-6 items-start">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-100 dark:bg-muted border-2 border-orange-500 flex items-center justify-center font-bold text-sm text-orange-600 dark:text-orange-400">
+                <div className="flex items-start gap-6">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-brand-400 bg-brand-300/10 text-sm font-semibold text-brand-400">
                     {milestone.year.slice(-2)}
                   </div>
-                  <Card className="flex-1">
+                  <Card className="flex-1 border-border bg-card">
                     <CardContent className="p-6">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
                         <Badge variant="outline" className="text-xs">
                           {milestone.year}
                         </Badge>
-                        <h3 className="font-semibold text-lg">{milestone.title}</h3>
+                        <h3 className="text-lg font-medium">{milestone.title}</h3>
                       </div>
-                      <p className="text-muted-foreground leading-relaxed">
+                      <p className="leading-relaxed text-muted-foreground">
                         {milestone.description}
                       </p>
                     </CardContent>
@@ -188,24 +213,27 @@ export default function AboutPage() {
         </div>
 
         {/* Values */}
-        <div className="mb-16">
-          <div className="text-center space-y-3 mb-12">
-            <h2 className="text-3xl font-medium tracking-tight">Våra värderingar</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        <div className="mb-20">
+          <div className="mb-12 space-y-3 text-center">
+            <h2 className="text-3xl font-medium md:text-4xl">Våra värderingar</h2>
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
               Dessa principer guidar allt vi gör
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {values.map((value) => (
-              <Card key={value.title} className="text-center">
-                <CardContent className="p-6 space-y-4">
-                  <div className="inline-flex p-3 rounded-lg bg-orange-100 dark:bg-muted">
-                    <value.icon className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              <Card
+                key={value.title}
+                className="border-border bg-card text-center transition-shadow hover:shadow-lg"
+              >
+                <CardContent className="space-y-4 p-6">
+                  <div className="inline-flex rounded-lg bg-brand-300/10 p-3">
+                    <value.icon className="h-6 w-6 text-brand-400" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="font-semibold">{value.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <h3 className="font-medium">{value.title}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
                       {value.description}
                     </p>
                   </div>
@@ -215,43 +243,47 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Founders Section */}
-        <div className="max-w-4xl mx-auto mb-16">
-          <div className="text-center space-y-3 mb-12">
-            <h2 className="text-3xl font-medium tracking-tight">Grundarna</h2>
+        {/* Founders */}
+        <div className="mx-auto mb-20 max-w-4xl">
+          <div className="mb-12 space-y-3 text-center">
+            <h2 className="text-3xl font-medium md:text-4xl">Grundarna</h2>
             <p className="text-lg text-muted-foreground">Bakom (och framför) kulisserna</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid gap-8 md:grid-cols-2">
             {/* Founder 1 */}
-            <Card>
-              <CardContent className="p-8 text-center space-y-4">
-                <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-orange-100 to-orange-50 dark:from-muted dark:to-muted/50 flex items-center justify-center">
-                  <Users className="h-12 w-12 text-orange-500/50" />
+            <Card className="border-border bg-card">
+              <CardContent className="space-y-4 p-8 text-center">
+                <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-brand-gradient-diagonal p-0.5">
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
+                    <Users className="h-12 w-12 text-brand-400/70" />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">Fredrik Gustafson</h3>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">Bakom kulisserna</p>
+                  <h3 className="text-xl font-medium">Fredrik Gustafson</h3>
+                  <p className="text-sm font-medium text-brand-400">Bakom kulisserna</p>
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Med intresse för video, teknik och vin skapar Fredrik allt som behövs för att
-                  Vinakademin ska fungera. Ibland dyker han upp i videos, men mestadels är han bakom
-                  kameran.
+                  Vinakademin ska fungera. Ibland dyker han upp i videos, men mestadels är han
+                  bakom kameran.
                 </p>
               </CardContent>
             </Card>
 
             {/* Founder 2 */}
-            <Card>
-              <CardContent className="p-8 text-center space-y-4">
-                <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-orange-100 to-orange-50 dark:from-muted dark:to-muted/50 flex items-center justify-center">
-                  <Users className="h-12 w-12 text-orange-500/50" />
+            <Card className="border-border bg-card">
+              <CardContent className="space-y-4 p-8 text-center">
+                <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-brand-gradient-diagonal p-0.5">
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
+                    <Users className="h-12 w-12 text-brand-400/70" />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">Max Eriksson</h3>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">Framför kameran</p>
+                  <h3 className="text-xl font-medium">Max Eriksson</h3>
+                  <p className="text-sm font-medium text-brand-400">Framför kameran</p>
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Med ett stort intresse för vin och författande skapar Max videos, artiklar,
                   vinprovningar och mer eller mindre allt innehåll som Vinakademin producerar.
                 </p>
@@ -261,38 +293,41 @@ export default function AboutPage() {
         </div>
 
         {/* Vision */}
-        <div className="max-w-3xl mx-auto mb-16">
-          <Card className="border-2 border-orange-200 dark:border-border bg-gradient-to-br from-orange-50/50 to-transparent dark:from-muted/30">
-            <CardContent className="p-8 md:p-12 text-center space-y-6">
-              <div className="inline-flex p-4 rounded-full bg-orange-100 dark:bg-muted">
-                <Sparkles className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-2xl md:text-3xl font-medium tracking-tight">Vår vision</h2>
-                <p className="text-lg leading-relaxed text-muted-foreground">
-                  Vi vill göra vinkunskap enkelt och opretentiöst för alla. En plats där du lär dig
-                  genom att smaka, uppleva och utforska vinets värld. Vinprovningar ska vara roliga,
-                  tillgängliga och minnesvärda. Vinakademin ska vara den självklara platsen för alla
-                  som vill upptäcka vinvärlden och lära sig mer om vin.
-                </p>
-              </div>
-              <Separator className="my-6" />
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild size="lg">
-                  <Link href="/vinprovningar">
-                    <BookOpen className="mr-2 h-4 w-4" />
+        <div className="mx-auto max-w-3xl">
+          <div className="bg-brand-gradient-tri rounded-2xl p-0.5 shadow-brand-glow">
+            <div className="rounded-[14px] bg-card">
+              <CardContent className="space-y-6 p-8 text-center md:p-12">
+                <div className="inline-flex rounded-full bg-brand-gradient-diagonal p-0.5">
+                  <div className="rounded-full bg-card p-3.5">
+                    <Sparkles className="h-7 w-7 text-brand-400" />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-medium md:text-3xl">Vår vision</h2>
+                  <p className="text-lg leading-relaxed text-muted-foreground">
+                    Vi vill göra vinkunskap enkelt och opretentiöst för alla. En plats där du lär
+                    dig genom att smaka, uppleva och utforska vinets värld. Vinprovningar ska vara
+                    roliga, tillgängliga och minnesvärda. Vinakademin ska vara den självklara
+                    platsen för alla som vill upptäcka vinvärlden och lära sig mer om vin.
+                  </p>
+                </div>
+                <Separator className="my-6" />
+                <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+                  <Link href="/vinprovningar" className="btn-brand btn-brand-lg">
+                    <BookOpen className="mr-1 h-4 w-4" />
                     Utforska våra vinprovningar
                   </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/kontakt">
+                  <Link
+                    href="/kontakt"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium transition-colors hover:border-brand-400/50 hover:bg-brand-300/5"
+                  >
                     Kontakta oss
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </div>
+          </div>
         </div>
       </div>
     </div>

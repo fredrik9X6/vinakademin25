@@ -774,15 +774,13 @@ export default async function WineDetailPage({ params }: PageProps) {
                       </div>
                       <div className="pt-2 border-t border-border flex items-center justify-between gap-4">
                         {Number(v.price) > 0 ? (
-                          <span className="text-2xl font-bold bg-gradient-to-r from-[#FB914C] to-[#FDBA75] bg-clip-text text-transparent">
+                          <span className="text-brand-gradient text-2xl font-bold">
                             {formatPrice(Number(v.price))}
                           </span>
                         ) : null}
-                        <Link href={`/vinprovningar/${v.slug}`}>
-                          <Button className="bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white border-0 shadow-lg shadow-[#FB914C]/20 group/btn transition-all duration-300">
-                            Läs mer
-                            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
-                          </Button>
+                        <Link href={`/vinprovningar/${v.slug}`} className="btn-brand">
+                          Läs mer
+                          <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                       </div>
                     </div>

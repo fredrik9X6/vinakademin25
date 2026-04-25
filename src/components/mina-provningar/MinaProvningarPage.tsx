@@ -105,10 +105,7 @@ export function MinaProvningarPage() {
           <p className="text-muted-foreground mb-6 max-w-md">
             Du har inte köpt några vinprovningar ännu. Utforska våra provningar och börja din vinresa!
           </p>
-          <Link
-            href="/vinprovningar"
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#FB914C] to-[#FDBA75] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
-          >
+          <Link href="/vinprovningar" className="btn-brand">
             Utforska vinprovningar
           </Link>
         </div>

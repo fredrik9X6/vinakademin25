@@ -182,13 +182,13 @@ export function ReviewSubmissionForm({
             </div>
           )}
 
-          <Button
+          <button
             type="submit"
             disabled={!rating || !content.trim() || isSubmitting}
-            className="w-full bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white"
+            className="btn-brand w-full"
           >
             {isSubmitting ? 'Skickar...' : 'Skicka recension'}
-          </Button>
+          </button>
         </form>
       </CardContent>
     </Card>

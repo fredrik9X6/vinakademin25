@@ -195,6 +195,68 @@
   .shadow-brand-glow-lg {
     box-shadow: 0 15px 28px -8px hsl(var(--brand-400) / 0.35);
   }
+
+  /* Primary brand CTA. The whole pill / button.
+   *
+   * Why this exists: CSS can't animate background-image (linear-gradient)
+   * smoothly. Swapping gradient direction via Tailwind's
+   * `hover:bg-brand-gradient-reverse` looks like a hard cut. This utility
+   * uses a 3-stop gradient at 200% width and animates background-position
+   * on hover — the gradient *slides* under the button, which feels smooth.
+   *
+   * Usage: <button class="btn-brand">Kom igång</button>. Combine with
+   * sizing utilities (h-11 px-6 / h-12 px-8) as needed; defaults match
+   * the styleguide's 40px height. */
+  .btn-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    height: 2.5rem;
+    padding-inline: 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: white;
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--brand-400)),
+      hsl(var(--brand-300)),
+      hsl(var(--brand-400))
+    );
+    background-size: 200% 100%;
+    background-position: 0% 50%;
+    box-shadow: 0 10px 20px -5px hsl(var(--brand-400) / 0.25);
+    transition:
+      background-position 600ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 300ms ease,
+      transform 200ms ease;
+    cursor: pointer;
+  }
+  .btn-brand:hover {
+    background-position: 100% 50%;
+    box-shadow: 0 15px 28px -8px hsl(var(--brand-400) / 0.35);
+  }
+  .btn-brand:active {
+    transform: scale(0.98);
+  }
+  .btn-brand:focus-visible {
+    outline: 2px solid hsl(var(--brand-400));
+    outline-offset: 2px;
+  }
+  .btn-brand:disabled,
+  .btn-brand[aria-disabled='true'] {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  /* Variant: large hero size. Same animation, taller + bigger text. */
+  .btn-brand-lg {
+    height: 3rem;
+    padding-inline: 2rem;
+    font-size: 1rem;
+  }
 }
 
 @theme inline {
