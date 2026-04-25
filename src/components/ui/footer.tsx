@@ -96,7 +96,7 @@ function FooterNewsletter() {
           type="button"
           onClick={handleSubmit}
           disabled={status === 'loading'}
-          className="btn-brand h-10 px-4 text-sm sm:flex-shrink-0"
+          className="btn-brand h-10 w-full px-4 text-sm sm:w-auto sm:flex-shrink-0"
         >
           {status === 'loading' ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -148,8 +148,10 @@ function FooterColumn({
 
 export function Footer() {
   return (
-    <footer className="relative border-t border-border bg-background">
-      {/* Soft brand-tint blob — signature decorative pattern */}
+    <footer className="relative overflow-hidden border-t border-border bg-background">
+      {/* Soft brand-tint blob — signature decorative pattern. Footer is
+       * overflow-hidden so the blur halo doesn't trigger horizontal scroll
+       * on narrow viewports. */}
       <div
         className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[28rem] -translate-x-1/2 rounded-full blur-3xl"
         aria-hidden
