@@ -14,7 +14,7 @@ export default function IntegritetspolicyPage() {
       <div className="container mx-auto px-4 py-16 max-w-4xl">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Integritetspolicy</h1>
+          <h1 className="text-4xl md:text-5xl font-heading mb-4">Integritetspolicy</h1>
           <p className="text-lg text-muted-foreground">
             Senast uppdaterad:{' '}
             {new Date().toLocaleDateString('sv-SE', {
@@ -68,7 +68,7 @@ export default function IntegritetspolicyPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Uppgifter du ger oss</h3>
+                <h3 className="text-lg font-medium mb-2">Uppgifter du ger oss</h3>
                 <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                   <li>
                     <strong>Kontoinformation:</strong> Namn, e-postadress, lösenord (krypterat)
@@ -90,7 +90,7 @@ export default function IntegritetspolicyPage() {
               <Separator />
 
               <div>
-                <h3 className="text-lg font-semibold mb-2">Uppgifter vi samlar in automatiskt</h3>
+                <h3 className="text-lg font-medium mb-2">Uppgifter vi samlar in automatiskt</h3>
                 <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                   <li>
                     <strong>Användningsdata:</strong> Vilka sidor du besöker, hur länge, vilka
@@ -123,7 +123,7 @@ export default function IntegritetspolicyPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2">För att tillhandahålla tjänsten</h3>
+                <h3 className="text-lg font-medium mb-2">För att tillhandahålla tjänsten</h3>
                 <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                   <li>Skapa och hantera ditt konto</li>
                   <li>Ge dig åtkomst till köpta vinprovningar</li>
@@ -135,7 +135,7 @@ export default function IntegritetspolicyPage() {
               <Separator />
 
               <div>
-                <h3 className="text-lg font-semibold mb-2">För att hantera betalningar</h3>
+                <h3 className="text-lg font-medium mb-2">För att hantera betalningar</h3>
                 <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                   <li>Behandla köp och prenumerationer</li>
                   <li>Skicka kvitton och fakturor</li>
@@ -147,7 +147,7 @@ export default function IntegritetspolicyPage() {
               <Separator />
 
               <div>
-                <h3 className="text-lg font-semibold mb-2">För att förbättra tjänsten</h3>
+                <h3 className="text-lg font-medium mb-2">För att förbättra tjänsten</h3>
                 <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                   <li>Analysera hur användare interagerar med plattformen</li>
                   <li>Identifiera och åtgärda tekniska problem</li>
@@ -159,7 +159,7 @@ export default function IntegritetspolicyPage() {
               <Separator />
 
               <div>
-                <h3 className="text-lg font-semibold mb-2">För marknadsföring</h3>
+                <h3 className="text-lg font-medium mb-2">För marknadsföring</h3>
                 <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                   <li>Skicka nyhetsbrev (om du har godkänt det)</li>
                   <li>Informera om nya vinprovningar och funktioner</li>

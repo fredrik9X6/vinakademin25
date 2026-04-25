@@ -118,7 +118,7 @@ export function HelpPageClient() {
     <div className="container mx-auto px-4 py-10 min-w-0 max-w-5xl">
       {/* Header */}
       <div className="mb-10 space-y-2">
-        <h1 className="text-4xl md:text-5xl font-bold">Hjälpcenter</h1>
+        <h1 className="text-4xl md:text-5xl font-heading">Hjälpcenter</h1>
         <p className="text-lg text-muted-foreground max-w-3xl">
           Hitta svar på vanliga frågor eller kontakta oss om du behöver mer hjälp.
         </p>

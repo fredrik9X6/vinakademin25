@@ -61,7 +61,7 @@ export default function NewsletterPage() {
       <div className="container mx-auto px-4 py-8 min-w-0">
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-medium text-foreground mb-4">Nyhetsbrev</h1>
+            <h1 className="text-3xl md:text-4xl font-heading text-foreground mb-4">Nyhetsbrev</h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
               Lär dig om vin utan flum. Varje mail innehåller konkreta tips som gör dig till en
               bättre vinälskare.
@@ -87,7 +87,7 @@ export default function NewsletterPage() {
               <Card key={index} className="bg-card border border-border">
                 <CardContent className="p-6 text-center">
                   <feature.icon className="h-8 w-8 text-secondary mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-2">{feature.title}</h3>
                   <p className="text-muted-foreground text-sm">{feature.description}</p>
                 </CardContent>
               </Card>
@@ -100,14 +100,14 @@ export default function NewsletterPage() {
       <div className="bg-background py-16">
         <div className="container mx-auto px-4 min-w-0">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-medium text-center text-foreground mb-12">
+            <h2 className="text-3xl font-heading text-center text-foreground mb-12">
               Vad får du i varje nyhetsbrev?
             </h2>
 
             <div className="space-y-6">
               <div className="flex items-start gap-5">
-                <div className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20 border border-orange-200/50 dark:border-orange-800/50">
-                  <Wine className="h-6 w-6 text-[#FB914C]" />
+                <div className="flex-shrink-0 p-3 rounded-xl bg-brand-300/15 border border-brand-400/30">
+                  <Wine className="h-6 w-6 text-brand-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-medium text-foreground mb-2">
@@ -121,8 +121,8 @@ export default function NewsletterPage() {
               </div>
 
               <div className="flex items-start gap-5">
-                <div className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20 border border-orange-200/50 dark:border-orange-800/50">
-                  <UtensilsCrossed className="h-6 w-6 text-[#FB914C]" />
+                <div className="flex-shrink-0 p-3 rounded-xl bg-brand-300/15 border border-brand-400/30">
+                  <UtensilsCrossed className="h-6 w-6 text-brand-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-medium text-foreground mb-2">Mat- och vinkombos</h3>
@@ -134,8 +134,8 @@ export default function NewsletterPage() {
               </div>
 
               <div className="flex items-start gap-5">
-                <div className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20 border border-orange-200/50 dark:border-orange-800/50">
-                  <Quote className="h-6 w-6 text-[#FB914C]" />
+                <div className="flex-shrink-0 p-3 rounded-xl bg-brand-300/15 border border-brand-400/30">
+                  <Quote className="h-6 w-6 text-brand-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-medium text-foreground mb-2">
@@ -183,7 +183,7 @@ export default function NewsletterPage() {
       <div className="py-16 bg-background">
         <div className="container mx-auto px-4 text-center min-w-0">
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-medium mb-6">Redo att gå med?</h2>
+            <h2 className="text-3xl font-heading mb-6">Redo att gå med?</h2>
             <p className="text-lg mb-8 text-muted-foreground">
               Skriv upp dig och gå med i vår community av vinentusiaster.
             </p>

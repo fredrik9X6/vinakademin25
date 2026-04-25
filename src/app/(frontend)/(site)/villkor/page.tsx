@@ -15,7 +15,7 @@ export default function VillkorPage() {
       <div className="container mx-auto px-4 py-16 max-w-4xl">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Användarvillkor</h1>
+          <h1 className="text-4xl md:text-5xl font-heading mb-4">Användarvillkor</h1>
           <p className="text-lg text-muted-foreground">
             Senast uppdaterad:{' '}
             {new Date().toLocaleDateString('sv-SE', {
@@ -62,7 +62,7 @@ export default function VillkorPage() {
               <CardTitle className="text-2xl">2. Användarkonto</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <h3 className="text-lg font-semibold">Registrering</h3>
+              <h3 className="text-lg font-medium">Registrering</h3>
               <p className="text-base leading-7">
                 För att använda vissa funktioner måste du skapa ett konto. Du ansvarar för att:
               </p>
@@ -75,7 +75,7 @@ export default function VillkorPage() {
 
               <Separator className="my-4" />
 
-              <h3 className="text-lg font-semibold">Kontosäkerhet</h3>
+              <h3 className="text-lg font-medium">Kontosäkerhet</h3>
               <p className="text-base leading-7">
                 Du är ansvarig för all aktivitet som sker under ditt konto. Vi rekommenderar att du
                 använder ett starkt, unikt lösenord och aktiverar tvåfaktorsautentisering där det är
@@ -90,7 +90,7 @@ export default function VillkorPage() {
               <CardTitle className="text-2xl">3. Köp och betalning</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <h3 className="text-lg font-semibold">Priser</h3>
+              <h3 className="text-lg font-medium">Priser</h3>
               <p className="text-base leading-7">
                 Alla priser anges i svenska kronor (SEK) och inkluderar moms där det är tillämpligt.
                 Vi förbehåller oss rätten att ändra priser när som helst, men ändringar påverkar
@@ -99,7 +99,7 @@ export default function VillkorPage() {
 
               <Separator className="my-4" />
 
-              <h3 className="text-lg font-semibold">Betalningsmetoder</h3>
+              <h3 className="text-lg font-medium">Betalningsmetoder</h3>
               <p className="text-base leading-7">
                 Vi accepterar betalning via kreditkort, betalkort och andra metoder som erbjuds
                 genom vår betalpartner Stripe. All betalningsinformation hanteras säkert och vi
@@ -108,7 +108,7 @@ export default function VillkorPage() {
 
               <Separator className="my-4" />
 
-              <h3 className="text-lg font-semibold">Pengarna-tillbaka-garanti</h3>
+              <h3 className="text-lg font-medium">Pengarna-tillbaka-garanti</h3>
               <p className="text-base leading-7">
                 Vi erbjuder 30 dagars pengarna-tillbaka-garanti på alla köp, utan krångliga frågor.
                 Om du av någon anledning inte är nöjd med din vinprovning inom 30 dagar från
@@ -128,7 +128,7 @@ export default function VillkorPage() {
               <CardTitle className="text-2xl">4. Licens och användningsrättigheter</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <h3 className="text-lg font-semibold">Vad du får göra</h3>
+              <h3 className="text-lg font-medium">Vad du får göra</h3>
               <p className="text-base leading-7">
                 När du köper en vinprovning får du en personlig, icke-överförbar, icke-exklusiv
                 licens att:
@@ -142,7 +142,7 @@ export default function VillkorPage() {
 
               <Separator className="my-4" />
 
-              <h3 className="text-lg font-semibold">Vad du inte får göra</h3>
+              <h3 className="text-lg font-medium">Vad du inte får göra</h3>
               <p className="text-base leading-7">Du får inte:</p>
               <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                 <li>Kopiera, ladda ner eller distribuera vårt innehåll utan tillstånd</li>

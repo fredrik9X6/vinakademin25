@@ -15,7 +15,7 @@ export default function CookiesPage() {
       <div className="container mx-auto px-4 py-16 max-w-4xl">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Cookiepolicy</h1>
+          <h1 className="text-4xl md:text-5xl font-heading mb-4">Cookiepolicy</h1>
           <p className="text-lg text-muted-foreground">
             Senast uppdaterad:{' '}
             {new Date().toLocaleDateString('sv-SE', {
@@ -64,7 +64,7 @@ export default function CookiesPage() {
             <CardContent className="space-y-6">
               {/* Nödvändiga cookies */}
               <div>
-                <h3 className="text-lg font-semibold mb-2">Nödvändiga cookies</h3>
+                <h3 className="text-lg font-medium mb-2">Nödvändiga cookies</h3>
                 <p className="text-base leading-7 mb-3">
                   Dessa cookies är avgörande för att webbplatsen ska fungera korrekt. De möjliggör
                   grundläggande funktioner som säkerhet, nätverkshantering och tillgänglighet.
@@ -87,7 +87,7 @@ export default function CookiesPage() {
 
               {/* Funktionella cookies */}
               <div>
-                <h3 className="text-lg font-semibold mb-2">Funktionella cookies</h3>
+                <h3 className="text-lg font-medium mb-2">Funktionella cookies</h3>
                 <p className="text-base leading-7 mb-3">
                   Dessa cookies gör det möjligt för oss att komma ihåg dina val och preferenser för
                   att ge dig en bättre och mer personlig upplevelse.
@@ -106,7 +106,7 @@ export default function CookiesPage() {
 
               {/* Analytiska cookies */}
               <div>
-                <h3 className="text-lg font-semibold mb-2">Analytiska cookies</h3>
+                <h3 className="text-lg font-medium mb-2">Analytiska cookies</h3>
                 <p className="text-base leading-7 mb-3">
                   Vi använder analytiska cookies för att förstå hur besökare interagerar med vår
                   webbplats. Detta hjälper oss att förbättra innehåll och funktionalitet.

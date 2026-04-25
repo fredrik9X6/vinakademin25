@@ -103,7 +103,7 @@ export function ContactForm() {
             <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-2xl font-bold">Tack för ditt meddelande!</h3>
+            <h3 className="text-2xl font-medium">Tack för ditt meddelande!</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
               Vi har tagit emot ditt meddelande och återkommer inom 24 timmar på vardagar.
             </p>
@@ -227,11 +227,10 @@ export function ContactForm() {
 
             {/* Submit Button */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button
+              <button
                 type="submit"
-                size="lg"
                 disabled={isSubmitting}
-                className="flex-1 sm:flex-none"
+                className="btn-brand flex-1 sm:flex-none"
               >
                 {isSubmitting ? (
                   <>
@@ -244,7 +243,7 @@ export function ContactForm() {
                     Skicka meddelande
                   </>
                 )}
-              </Button>
+              </button>
               <Button
                 type="button"
                 variant="outline"
