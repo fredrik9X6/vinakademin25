@@ -62,8 +62,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WebSiteJsonLd siteURL={siteURL} />
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <AnalyticsProvider>
