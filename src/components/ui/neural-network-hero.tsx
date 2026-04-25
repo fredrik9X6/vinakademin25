@@ -423,7 +423,7 @@ export default function Hero({
 
         <h1
           ref={headerRef}
-          className="invisible max-w-4xl text-5xl leading-[1.05] text-foreground sm:text-6xl md:text-7xl lg:text-[7rem]"
+          className="invisible text-balance text-4xl leading-[1.05] text-foreground sm:text-5xl md:text-6xl lg:text-7xl"
         >
           {title}
         </h1>

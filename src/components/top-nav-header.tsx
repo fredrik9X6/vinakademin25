@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Switch } from '@/components/ui/switch'
@@ -58,24 +57,13 @@ export function TopNavHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 lg:px-6">
-        {/* Left: Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Image
-            src="/brand/vinakademin_logo_lockup_darkmode.svg"
-            alt="Vinakademin"
-            width={160}
-            height={32}
-            className="hidden dark:block"
-            priority
-          />
-          <Image
-            src="/brand/Vinakademin_logo_lockup.svg"
-            alt="Vinakademin"
-            width={160}
-            height={32}
-            className="block dark:hidden"
-            priority
-          />
+        {/* Left: Wordmark — Coolvetica with brand gradient */}
+        <Link
+          href="/"
+          aria-label="Vinakademin — startsida"
+          className="text-brand-gradient shrink-0 font-heading text-2xl leading-none sm:text-[28px]"
+        >
+          Vinakademin
         </Link>
 
         {/* Center: Nav links (hidden on mobile) */}
