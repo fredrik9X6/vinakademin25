@@ -436,22 +436,21 @@ export default function Hero({
         </p>
 
         <div ref={ctaRef} className="flex flex-wrap items-center gap-4 pt-4 opacity-0">
-          {ctaButtons.map((button, index) => (
-            <a
-              key={index}
-              href={button.href}
-              className={`group relative rounded-md px-8 py-4 text-base font-medium tracking-tight transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                button.primary
-                  ? 'bg-brand-gradient hover:bg-brand-gradient-reverse text-white shadow-brand-glow hover:shadow-brand-glow-lg hover:scale-[1.02] border-0'
-                  : 'text-foreground border-2 border-border hover:border-brand-400/50 hover:bg-brand-300/5 backdrop-blur-sm'
-              }`}
-            >
-              {button.text}
-              {button.primary && (
-                <span className="absolute inset-0 rounded-md bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              )}
-            </a>
-          ))}
+          {ctaButtons.map((button, index) =>
+            button.primary ? (
+              <a key={index} href={button.href} className="btn-brand btn-brand-lg">
+                {button.text}
+              </a>
+            ) : (
+              <a
+                key={index}
+                href={button.href}
+                className="group relative rounded-md border-2 border-border bg-background/40 px-8 py-4 text-base font-medium tracking-tight text-foreground backdrop-blur-sm transition-colors duration-300 hover:border-brand-400/50 hover:bg-brand-300/5 focus:outline-none focus:ring-2 focus:ring-offset-2"
+              >
+                {button.text}
+              </a>
+            ),
+          )}
         </div>
 
         {/* Trust indicators with orange accents */}

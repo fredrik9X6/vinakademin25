@@ -82,14 +82,11 @@ export function ProvningCard({ course }: ProvningCardProps) {
             </span>
             <span className="font-medium text-foreground">{percentage}%</span>
           </div>
-          <Progress value={percentage} className="h-1.5 [&>div]:bg-[#FB914C]" />
+          <Progress value={percentage} className="h-1.5 [&>div]:bg-brand-400" />
         </div>
 
         {/* CTA Button */}
-        <Link
-          href={`/vinprovningar/${course.slug}`}
-          className="flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-to-r from-[#FB914C] to-[#FDBA75] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
-        >
+        <Link href={`/vinprovningar/${course.slug}`} className="btn-brand w-full">
           <CtaIcon className="h-4 w-4" />
           {ctaText}
         </Link>

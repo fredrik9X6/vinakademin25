@@ -120,14 +120,10 @@ export default function VinkompassClient() {
 
             {/* CTA Button */}
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                onClick={handleStartQuiz}
-                size="lg"
-                className="text-base px-8 py-6 bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white shadow-lg shadow-[#FB914C]/25 hover:shadow-xl hover:shadow-[#FB914C]/30 hover:scale-[1.02] transition-all"
-              >
+              <button onClick={handleStartQuiz} className="btn-brand btn-brand-lg">
                 Börja testet
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              </button>
             </motion.div>
 
             {/* Trust indicators */}
@@ -477,14 +473,10 @@ export default function VinkompassClient() {
               whileInView="visible"
               viewport={{ once: true }}
             >
-              <Button
-                onClick={handleStartQuiz}
-                size="lg"
-                className="text-base px-8 py-6 bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white shadow-lg shadow-[#FB914C]/25 hover:shadow-xl hover:shadow-[#FB914C]/30 hover:scale-[1.02] transition-all"
-              >
+              <button onClick={handleStartQuiz} className="btn-brand btn-brand-lg">
                 Börja testet nu
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              </button>
             </motion.div>
 
             {/* Trust indicators */}

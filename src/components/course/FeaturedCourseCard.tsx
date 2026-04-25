@@ -216,9 +216,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                   </div>
 
                   {/* CTA (visual only — card is the link) */}
-                  <span
-                    className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md px-8 text-sm font-medium text-white bg-brand-gradient shadow-brand-glow transition-all duration-300 group-hover:bg-brand-gradient-reverse"
-                  >
+                  <span className="btn-brand w-full">
                     {freeItems > 0 ? 'Prova gratis' : 'Läs mer'}
                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </span>

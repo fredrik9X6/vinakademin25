@@ -458,14 +458,9 @@ export default async function HomePage() {
 
               {/* CTA */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/vinprovningar" className="flex-1">
-                  <Button
-                    size="lg"
-                    className="w-full bg-brand-gradient hover:bg-brand-gradient-reverse text-white shadow-brand-glow hover:shadow-brand-glow-lg"
-                  >
-                    Upptäck vinprovningar
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
+                <Link href="/vinprovningar" className="btn-brand btn-brand-lg flex-1">
+                  Upptäck vinprovningar
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link href="/om-oss" className="flex-1">
                   <Button
@@ -709,14 +704,9 @@ export default async function HomePage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Link href="/vinprovningar">
-                <Button
-                  size="lg"
-                  className="text-base px-8 py-6 bg-brand-gradient hover:bg-brand-gradient-reverse text-white shadow-brand-glow hover:shadow-brand-glow-lg hover:scale-[1.02] transition-all"
-                >
-                  Utforska vinprovningar
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+              <Link href="/vinprovningar" className="btn-brand btn-brand-lg">
+                Utforska vinprovningar
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link href="/om-oss">
                 <Button
