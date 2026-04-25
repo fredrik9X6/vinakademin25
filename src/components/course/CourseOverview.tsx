@@ -348,7 +348,7 @@ export default function CourseOverview({
                   )}
 
                   {/* Title */}
-                  <h1 className="text-3xl lg:text-5xl font-bold leading-tight">{course.title}</h1>
+                  <h1 className="text-3xl lg:text-5xl leading-tight">{course.title}</h1>
 
                   {/* Description */}
                   {course.shortDescription && (
@@ -358,13 +358,19 @@ export default function CourseOverview({
                   )}
 
                   {/* Price */}
-                  <div className="text-3xl font-bold">{formatPrice(course.price || 0)}</div>
+                  <div className="text-brand-gradient text-3xl font-bold">
+                    {formatPrice(course.price || 0)}
+                  </div>
 
                   {/* CTA Buttons */}
                   <div className="space-y-3">
-                    <Button onClick={continueCourse} size="lg" className="w-full text-base py-6">
+                    <button
+                      type="button"
+                      onClick={continueCourse}
+                      className="btn-brand btn-brand-lg w-full"
+                    >
                       Prova gratis
-                    </Button>
+                    </button>
 
                     <PurchaseButton
                       course={{

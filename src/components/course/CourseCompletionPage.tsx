@@ -64,7 +64,7 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            <h1 className="text-4xl md:text-5xl">
               Grattis! Du är klar! 🎉
             </h1>
             <p className="text-xl text-muted-foreground">Du har slutfört {course.title}</p>
@@ -111,7 +111,7 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{completedDate}</p>
+                    <p className="text-sm font-medium">{completedDate}</p>
                     <p className="text-sm text-muted-foreground">Slutförd</p>
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
 
         {/* Certificate Section */}
         {progressData?.certificateIssued && (
-          <Card className="mb-8 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+          <Card className="mb-8 border-2 border-brand-400/20 bg-gradient-to-br from-brand-300/5 to-brand-400/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Award className="h-5 w-5" />

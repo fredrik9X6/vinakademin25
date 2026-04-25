@@ -283,7 +283,7 @@ export default function ReviewComparison({
     return (
       <Card
         key={review.id}
-        className={review.isVerified ? 'border-[#FDBA75] dark:border-[#FB914C] border-2' : ''}
+        className={review.isVerified ? 'border-brand-300 dark:border-brand-400 border-2' : ''}
       >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">

@@ -506,7 +506,7 @@ export function WineReviewForm({
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold">Din smaknotering är inskickad!</h3>
+            <h3 className="text-xl font-medium">Din smaknotering är inskickad!</h3>
             <p className="text-muted-foreground">
               Din vinrecension har sparats. Scrolla ned för att se och jämföra alla deltagarnas
               svar.
@@ -549,7 +549,7 @@ export function WineReviewForm({
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold">Din smaknotering är inskickad!</h3>
+              <h3 className="text-xl font-medium">Din smaknotering är inskickad!</h3>
               <p className="text-muted-foreground">
                 {hasReference
                   ? 'Din vinrecension har sparats. Scrolla ned för att jämföra med Vinakademins smaknotering och dina tidigare inskick.'
@@ -719,7 +719,7 @@ export function WineReviewForm({
                 </Select>
               </InputRow>
               <InputRow label="Betyg" error={errors['rating']} attemptSubmit={attemptSubmit}>
-                <div className="p-4 bg-gradient-to-br from-orange-50/30 via-white to-orange-50/10 dark:from-orange-950/10 dark:via-background dark:to-orange-950/5 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="p-4 bg-gradient-to-br from-brand-300/10 via-card to-brand-300/5 rounded-lg border border-brand-300/30">
                   <StarRating
                     value={rating}
                     onChange={setRating}
@@ -1129,7 +1129,7 @@ export function WineReviewForm({
                 </Select>
               </InputRow>
               <InputRow label="Betyg" error={errors['rating']} attemptSubmit={attemptSubmit}>
-                <div className="p-4 bg-gradient-to-br from-orange-50/30 via-white to-orange-50/10 dark:from-orange-950/10 dark:via-background dark:to-orange-950/5 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="p-4 bg-gradient-to-br from-brand-300/10 via-card to-brand-300/5 rounded-lg border border-brand-300/30">
                   <StarRating
                     value={rating}
                     onChange={setRating}

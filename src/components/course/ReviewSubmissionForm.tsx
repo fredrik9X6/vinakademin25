@@ -138,7 +138,7 @@ export function ReviewSubmissionForm({
                   <Star
                     className={`h-8 w-8 transition-colors ${
                       star <= (hoverRating || rating)
-                        ? 'fill-[#FB914C] text-[#FB914C]'
+                        ? 'fill-brand-400 text-brand-400'
                         : 'text-muted-foreground/30'
                     }`}
                   />
