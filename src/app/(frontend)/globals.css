@@ -210,3 +210,17 @@
     }
   }
 }
+
+/* Scroll-hint indicator: small dot drifts down inside the mouse-shaped track. */
+@keyframes scroll-hint {
+  0% { transform: translateY(0); opacity: 0; }
+  30% { opacity: 1; }
+  80% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(10px); opacity: 0; }
+}
+
+@layer utilities {
+  .animate-scroll-hint {
+    animation: scroll-hint 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
