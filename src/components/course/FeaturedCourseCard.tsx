@@ -68,27 +68,27 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
     <section className="py-16 lg:py-24 relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FDBA75]/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-300/5 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#FDBA75]/10 to-[#FB914C]/10 border border-[#FDBA75]/20 mb-6">
-            <Sparkles className="h-4 w-4 text-[#FB914C]" />
-            <span className="text-sm font-medium text-[#FB914C]">Rekommenderad vinprovning</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-300/10 to-brand-400/10 border border-brand-300/20 mb-6">
+            <Sparkles className="h-4 w-4 text-brand-400" />
+            <span className="text-sm font-medium text-brand-400">Rekommenderad vinprovning</span>
           </div>
         </div>
 
-        {/* Featured Course Card — entire card links to the wine tasting */}
+        {/* Featured Course Card — entire card links to the wine tasting.
+         * Pattern: clean 2px gradient border via padding + soft drop shadow.
+         * Matches the styleguide; cleaner than the older blur-halo approach. */}
         <Link
           href={`/vinprovningar/${course.slug || course.id}`}
-          className="relative group block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[#FB914C] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="group block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          {/* Gradient border wrapper */}
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FDBA75] via-[#FB914C] to-[#FDBA75] rounded-2xl opacity-75 blur group-hover:opacity-100 transition duration-500" />
-
-          <div className="relative bg-card rounded-2xl overflow-hidden border border-border">
+          <div className="bg-brand-gradient-tri rounded-2xl p-0.5 shadow-brand-glow transition-shadow duration-500 group-hover:shadow-brand-glow-lg">
+          <div className="bg-card rounded-[14px] overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
               {/* Image Section */}
               {featuredImageUrl && (
@@ -105,18 +105,18 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                 <div className="space-y-4">
                   {/* Level Badge */}
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30 hover:bg-[#FDBA75]/20">
+                    <Badge className="bg-brand-300/10 text-brand-400 border-brand-300/30 hover:bg-brand-300/20">
                       {course.level === 'beginner'
                         ? 'Nybörjare'
                         : course.level === 'intermediate'
                           ? 'Fortsättning'
                           : 'Avancerad'}
                     </Badge>
-                    <div className="h-1 w-1 rounded-full bg-[#FB914C]/40" />
+                    <div className="h-1 w-1 rounded-full bg-brand-400/40" />
                     <span className="text-sm text-muted-foreground">Populärast just nu</span>
                     {reviewData && (
                       <>
-                        <div className="h-1 w-1 rounded-full bg-[#FB914C]/40" />
+                        <div className="h-1 w-1 rounded-full bg-brand-400/40" />
                         <div className="flex items-center gap-1">
                           <div className="flex gap-0.5">
                             {[1, 2, 3, 4, 5].map((s) => (
@@ -124,7 +124,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                                 key={s}
                                 className={`h-3.5 w-3.5 ${
                                   s <= Math.round(reviewData.averageRating)
-                                    ? 'fill-[#FB914C] text-[#FB914C]'
+                                    ? 'fill-brand-400 text-brand-400'
                                     : 'text-muted-foreground/20'
                                 }`}
                               />
@@ -139,7 +139,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
 
                   {/* Title & Description */}
                   <div className="space-y-3">
-                    <h3 className="text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight text-foreground">
+                    <h3 className="font-heading text-2xl lg:text-3xl xl:text-4xl text-foreground">
                       {course.title}
                     </h3>
                     <p className="text-base text-muted-foreground leading-relaxed line-clamp-3">
@@ -150,8 +150,8 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                   {/* Course Meta Info */}
                   <div className="grid grid-cols-2 gap-4 pt-2">
                     <div className="flex items-center gap-2 text-sm">
-                      <div className="p-2 rounded-lg bg-[#FDBA75]/10">
-                        <BookOpen className="h-4 w-4 text-[#FB914C]" />
+                      <div className="p-2 rounded-lg bg-brand-300/10">
+                        <BookOpen className="h-4 w-4 text-brand-400" />
                       </div>
                       <div>
                         <div className="font-semibold text-foreground">{totalItems}</div>
@@ -160,8 +160,8 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                     </div>
                     {course.duration && (
                       <div className="flex items-center gap-2 text-sm">
-                        <div className="p-2 rounded-lg bg-[#FDBA75]/10">
-                          <Clock className="h-4 w-4 text-[#FB914C]" />
+                        <div className="p-2 rounded-lg bg-brand-300/10">
+                          <Clock className="h-4 w-4 text-brand-400" />
                         </div>
                         <div>
                           <div className="font-semibold text-foreground">{course.duration}h</div>
@@ -176,7 +176,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                     <div className="pt-2">
                       <Badge
                         variant="outline"
-                        className="pointer-events-none border-[#FDBA75]/30 bg-[#FDBA75]/10 text-[#FB914C] hover:bg-[#FDBA75]/10"
+                        className="pointer-events-none border-brand-300/30 bg-brand-300/10 text-brand-400 hover:bg-brand-300/10"
                       >
                         <Play className="h-3 w-3 mr-1" />
                         {freeItems} gratis moment
@@ -186,11 +186,11 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
 
                   {/* Instructor */}
                   <div className="flex items-center gap-3 pt-2 pb-4 border-t border-border">
-                    <Avatar className="h-12 w-12 border border-border bg-[#FDBA75]/10">
+                    <Avatar className="h-12 w-12 border border-border bg-brand-300/10">
                       {instructorAvatarUrl ? (
                         <AvatarImage src={instructorAvatarUrl} alt={instructorName} />
                       ) : null}
-                      <AvatarFallback className="bg-[#FDBA75]/10 text-[#FB914C]">
+                      <AvatarFallback className="bg-brand-300/10 text-brand-400">
                         {instructorInitials}
                       </AvatarFallback>
                     </Avatar>
@@ -207,7 +207,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                 <div className="space-y-4 pt-4 border-t border-border">
                   {/* Price */}
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-[#FB914C] to-[#FDBA75] bg-clip-text text-transparent">
+                    <span className="text-brand-gradient text-3xl lg:text-4xl font-bold">
                       {formatPrice(course.price)}
                     </span>
                     {course.price > 0 && (
@@ -217,7 +217,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
 
                   {/* CTA (visual only — card is the link) */}
                   <span
-                    className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md px-8 text-sm font-medium text-white bg-gradient-to-r from-[#FB914C] to-[#FDBA75] shadow-lg shadow-[#FB914C]/20 transition-all duration-300 group-hover:from-[#FDBA75] group-hover:to-[#FB914C]"
+                    className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md px-8 text-sm font-medium text-white bg-brand-gradient shadow-brand-glow transition-all duration-300 group-hover:bg-brand-gradient-reverse"
                   >
                     {freeItems > 0 ? 'Prova gratis' : 'Läs mer'}
                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -225,6 +225,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </Link>
       </div>
