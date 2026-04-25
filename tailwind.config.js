@@ -16,6 +16,12 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       colors: {
+        // Brand orange — mode-independent, defined in globals.css :root.
+        // Use as text-brand-400, bg-brand-300/10, border-brand-400, etc.
+        brand: {
+          300: 'hsl(var(--brand-300))', // #FDBA75 — paired in gradients & glow
+          400: 'hsl(var(--brand-400))', // #FB914C — primary CTA endpoint
+        },
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
