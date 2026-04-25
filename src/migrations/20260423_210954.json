@@ -1,5 +1,5 @@
 {
-  "id": "7448f252-1b31-4c06-8a3d-f66ea0c45ac3",
+  "id": "b8e6deab-24a5-4534-a855-f4a8527ccef7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -704,6 +704,32 @@
         "subscription_expiry": {
           "name": "subscription_expiry",
           "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "onboarding_goal": {
+          "name": "onboarding_goal",
+          "type": "enum_users_onboarding_goal",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "onboarding_completed_at": {
+          "name": "onboarding_completed_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "onboarding_skipped_at": {
+          "name": "onboarding_skipped_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "onboarding_source": {
+          "name": "onboarding_source",
+          "type": "enum_users_onboarding_source",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
@@ -1466,6 +1492,31 @@
           "primaryKey": false,
           "notNull": false
         },
+        "seo_title": {
+          "name": "seo_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seo_description": {
+          "name": "seo_description",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seo_image_id": {
+          "name": "seo_image_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "noindex": {
+          "name": "noindex",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp(3) with time zone",
@@ -1540,6 +1591,21 @@
           "columns": [
             {
               "expression": "instructor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "vinprovningar_seo_image_idx": {
+          "name": "vinprovningar_seo_image_idx",
+          "columns": [
+            {
+              "expression": "seo_image_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1629,6 +1695,19 @@
           "tableTo": "users",
           "columnsFrom": [
             "instructor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "vinprovningar_seo_image_id_media_id_fk": {
+          "name": "vinprovningar_seo_image_id_media_id_fk",
+          "tableFrom": "vinprovningar",
+          "tableTo": "media",
+          "columnsFrom": [
+            "seo_image_id"
           ],
           "columnsTo": [
             "id"
@@ -1982,6 +2061,31 @@
           "primaryKey": false,
           "notNull": false
         },
+        "version_seo_title": {
+          "name": "version_seo_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version_seo_description": {
+          "name": "version_seo_description",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version_seo_image_id": {
+          "name": "version_seo_image_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version_noindex": {
+          "name": "version_noindex",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
         "version_updated_at": {
           "name": "version_updated_at",
           "type": "timestamp(3) with time zone",
@@ -2095,6 +2199,21 @@
           "columns": [
             {
               "expression": "version_instructor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_vinprovningar_v_version_version_seo_image_idx": {
+          "name": "_vinprovningar_v_version_version_seo_image_idx",
+          "columns": [
+            {
+              "expression": "version_seo_image_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2257,6 +2376,19 @@
           "tableTo": "users",
           "columnsFrom": [
             "version_instructor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "_vinprovningar_v_version_seo_image_id_media_id_fk": {
+          "name": "_vinprovningar_v_version_seo_image_id_media_id_fk",
+          "tableFrom": "_vinprovningar_v",
+          "tableTo": "media",
+          "columnsFrom": [
+            "version_seo_image_id"
           ],
           "columnsTo": [
             "id"
@@ -4799,6 +4931,24 @@
           "notNull": false,
           "default": false
         },
+        "review_tracking_review_threshold_reached_at": {
+          "name": "review_tracking_review_threshold_reached_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_tracking_review_email_sent_at": {
+          "name": "review_tracking_review_email_sent_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_tracking_review_email_token": {
+          "name": "review_tracking_review_email_token",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
         "notes_admin_notes": {
           "name": "notes_admin_notes",
           "type": "jsonb",
@@ -5234,6 +5384,31 @@
           "primaryKey": false,
           "notNull": false
         },
+        "seo_title": {
+          "name": "seo_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seo_description": {
+          "name": "seo_description",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seo_image_id": {
+          "name": "seo_image_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "noindex": {
+          "name": "noindex",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp(3) with time zone",
@@ -5310,6 +5485,21 @@
           "method": "btree",
           "with": {}
         },
+        "wines_seo_image_idx": {
+          "name": "wines_seo_image_idx",
+          "columns": [
+            {
+              "expression": "seo_image_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "wines_updated_at_idx": {
           "name": "wines_updated_at_idx",
           "columns": [
@@ -5374,6 +5564,19 @@
           "tableTo": "media",
           "columnsFrom": [
             "image_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "wines_seo_image_id_media_id_fk": {
+          "name": "wines_seo_image_id_media_id_fk",
+          "tableFrom": "wines",
+          "tableTo": "media",
+          "columnsFrom": [
+            "seo_image_id"
           ],
           "columnsTo": [
             "id"
@@ -7049,7 +7252,7 @@
           "name": "slug",
           "type": "varchar",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "created_by_id": {
           "name": "created_by_id",
@@ -7068,6 +7271,31 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
+        },
+        "seo_title": {
+          "name": "seo_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seo_description": {
+          "name": "seo_description",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seo_image_id": {
+          "name": "seo_image_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "noindex": {
+          "name": "noindex",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -7145,6 +7373,21 @@
           "method": "btree",
           "with": {}
         },
+        "countries_seo_image_idx": {
+          "name": "countries_seo_image_idx",
+          "columns": [
+            {
+              "expression": "seo_image_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "countries_updated_at_idx": {
           "name": "countries_updated_at_idx",
           "columns": [
@@ -7202,6 +7445,19 @@
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
+        },
+        "countries_seo_image_id_media_id_fk": {
+          "name": "countries_seo_image_id_media_id_fk",
+          "tableFrom": "countries",
+          "tableTo": "media",
+          "columnsFrom": [
+            "seo_image_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -7230,7 +7486,7 @@
           "name": "slug",
           "type": "varchar",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "country_id": {
           "name": "country_id",
@@ -7255,6 +7511,31 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
+        },
+        "seo_title": {
+          "name": "seo_title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seo_description": {
+          "name": "seo_description",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seo_image_id": {
+          "name": "seo_image_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "noindex": {
+          "name": "noindex",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -7347,6 +7628,21 @@
           "method": "btree",
           "with": {}
         },
+        "regions_seo_image_idx": {
+          "name": "regions_seo_image_idx",
+          "columns": [
+            {
+              "expression": "seo_image_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "regions_updated_at_idx": {
           "name": "regions_updated_at_idx",
           "columns": [
@@ -7411,6 +7707,19 @@
           "tableTo": "users",
           "columnsFrom": [
             "updated_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "regions_seo_image_id_media_id_fk": {
+          "name": "regions_seo_image_id_media_id_fk",
+          "tableFrom": "regions",
+          "tableTo": "media",
+          "columnsFrom": [
+            "seo_image_id"
           ],
           "columnsTo": [
             "id"
@@ -8487,170 +8796,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.course_reviews_pros": {
-      "name": "course_reviews_pros",
-      "schema": "",
-      "columns": {
-        "_order": {
-          "name": "_order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "_parent_id": {
-          "name": "_parent_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "id": {
-          "name": "id",
-          "type": "varchar",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "point": {
-          "name": "point",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "course_reviews_pros_order_idx": {
-          "name": "course_reviews_pros_order_idx",
-          "columns": [
-            {
-              "expression": "_order",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "course_reviews_pros_parent_id_idx": {
-          "name": "course_reviews_pros_parent_id_idx",
-          "columns": [
-            {
-              "expression": "_parent_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "course_reviews_pros_parent_id_fk": {
-          "name": "course_reviews_pros_parent_id_fk",
-          "tableFrom": "course_reviews_pros",
-          "tableTo": "course_reviews",
-          "columnsFrom": [
-            "_parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.course_reviews_cons": {
-      "name": "course_reviews_cons",
-      "schema": "",
-      "columns": {
-        "_order": {
-          "name": "_order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "_parent_id": {
-          "name": "_parent_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "id": {
-          "name": "id",
-          "type": "varchar",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "point": {
-          "name": "point",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "course_reviews_cons_order_idx": {
-          "name": "course_reviews_cons_order_idx",
-          "columns": [
-            {
-              "expression": "_order",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "course_reviews_cons_parent_id_idx": {
-          "name": "course_reviews_cons_parent_id_idx",
-          "columns": [
-            {
-              "expression": "_parent_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "course_reviews_cons_parent_id_fk": {
-          "name": "course_reviews_cons_parent_id_fk",
-          "tableFrom": "course_reviews_cons",
-          "tableTo": "course_reviews",
-          "columnsFrom": [
-            "_parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.course_reviews": {
       "name": "course_reviews",
       "schema": "",
@@ -8665,7 +8810,7 @@
           "name": "title",
           "type": "varchar",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "course_id": {
           "name": "course_id",
@@ -8687,7 +8832,7 @@
         },
         "content": {
           "name": "content",
-          "type": "jsonb",
+          "type": "varchar",
           "primaryKey": false,
           "notNull": true
         },
@@ -8697,7 +8842,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "'published'"
         },
         "is_verified_purchase": {
           "name": "is_verified_purchase",
@@ -8706,49 +8851,8 @@
           "notNull": false,
           "default": false
         },
-        "completion_status": {
-          "name": "completion_status",
-          "type": "enum_course_reviews_completion_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'not_started'"
-        },
-        "helpful_votes": {
-          "name": "helpful_votes",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "total_votes": {
-          "name": "total_votes",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "moderator_notes": {
-          "name": "moderator_notes",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata_device_type": {
-          "name": "metadata_device_type",
-          "type": "enum_course_reviews_metadata_device_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata_user_agent": {
-          "name": "metadata_user_agent",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata_location": {
-          "name": "metadata_location",
+        "review_token": {
+          "name": "review_token",
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
@@ -8789,6 +8893,21 @@
           "columns": [
             {
               "expression": "author_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "course_reviews_review_token_idx": {
+          "name": "course_reviews_review_token_idx",
+          "columns": [
+            {
+              "expression": "review_token",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -8934,6 +9053,19 @@
           "primaryKey": false,
           "notNull": false
         },
+        "seo_image_id": {
+          "name": "seo_image_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "noindex": {
+          "name": "noindex",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp(3) with time zone",
@@ -9008,6 +9140,21 @@
           "columns": [
             {
               "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "blog_posts_seo_image_idx": {
+          "name": "blog_posts_seo_image_idx",
+          "columns": [
+            {
+              "expression": "seo_image_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -9097,6 +9244,19 @@
           "tableTo": "blog_categories",
           "columnsFrom": [
             "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "blog_posts_seo_image_id_media_id_fk": {
+          "name": "blog_posts_seo_image_id_media_id_fk",
+          "tableFrom": "blog_posts",
+          "tableTo": "media",
+          "columnsFrom": [
+            "seo_image_id"
           ],
           "columnsTo": [
             "id"
@@ -9318,6 +9478,19 @@
           "primaryKey": false,
           "notNull": false
         },
+        "version_seo_image_id": {
+          "name": "version_seo_image_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version_noindex": {
+          "name": "version_noindex",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
         "version_updated_at": {
           "name": "version_updated_at",
           "type": "timestamp(3) with time zone",
@@ -9431,6 +9604,21 @@
           "columns": [
             {
               "expression": "version_category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_blog_posts_v_version_version_seo_image_idx": {
+          "name": "_blog_posts_v_version_version_seo_image_idx",
+          "columns": [
+            {
+              "expression": "version_seo_image_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -9593,6 +9781,19 @@
           "tableTo": "blog_categories",
           "columnsFrom": [
             "version_category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "_blog_posts_v_version_seo_image_id_media_id_fk": {
+          "name": "_blog_posts_v_version_seo_image_id_media_id_fk",
+          "tableFrom": "_blog_posts_v",
+          "tableTo": "media",
+          "columnsFrom": [
+            "version_seo_image_id"
           ],
           "columnsTo": [
             "id"
@@ -11905,7 +12106,8 @@
         "sparkling",
         "rose",
         "sweet",
-        "fortified"
+        "fortified",
+        "natural"
       ]
     },
     "public.enum_users_wine_preferences_discovery_preferences": {
@@ -11957,6 +12159,24 @@
         "none",
         "monthly",
         "annual"
+      ]
+    },
+    "public.enum_users_onboarding_goal": {
+      "name": "enum_users_onboarding_goal",
+      "schema": "public",
+      "values": [
+        "learn_basics",
+        "pairing_confident",
+        "explore_regions",
+        "deep_knowledge"
+      ]
+    },
+    "public.enum_users_onboarding_source": {
+      "name": "enum_users_onboarding_source",
+      "schema": "public",
+      "values": [
+        "registration",
+        "guest_checkout"
       ]
     },
     "public.enum_users_wine_preferences_tasting_experience": {
@@ -12665,26 +12885,7 @@
       "schema": "public",
       "values": [
         "published",
-        "pending",
-        "rejected"
-      ]
-    },
-    "public.enum_course_reviews_completion_status": {
-      "name": "enum_course_reviews_completion_status",
-      "schema": "public",
-      "values": [
-        "not_started",
-        "in_progress",
-        "completed"
-      ]
-    },
-    "public.enum_course_reviews_metadata_device_type": {
-      "name": "enum_course_reviews_metadata_device_type",
-      "schema": "public",
-      "values": [
-        "desktop",
-        "mobile",
-        "tablet"
+        "pending"
       ]
     },
     "public.enum_blog_posts_status": {
