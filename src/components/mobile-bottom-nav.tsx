@@ -34,7 +34,7 @@ export function MobileBottomNav() {
               key={tab.label}
               href={href}
               className={`flex flex-col items-center justify-center gap-1 min-w-[64px] py-1 rounded-md transition-colors ${
-                isActive ? 'text-[#FB914C]' : 'text-muted-foreground'
+                isActive ? 'text-brand-400' : 'text-muted-foreground'
               }`}
             >
               <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />

@@ -51,7 +51,7 @@ export function ActiveSessionBanner() {
         role="banner"
         aria-label="Active group session"
       >
-        <div className="bg-gradient-to-br from-[#FB914C] to-[#FDBA75] text-white rounded-xl shadow-2xl border border-white/20 backdrop-blur-sm overflow-hidden">
+        <div className="bg-brand-gradient-diagonal overflow-hidden rounded-xl border border-white/20 text-white shadow-2xl backdrop-blur-sm">
           {/* Header with close button */}
           <div className="px-3 sm:px-4 py-2.5 sm:py-3 flex items-start justify-between gap-2 sm:gap-3">
             <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
@@ -59,7 +59,7 @@ export function ActiveSessionBanner() {
                 <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-xs sm:text-sm leading-tight">Aktiv session</p>
+                <p className="font-medium text-xs sm:text-sm leading-tight">Aktiv session</p>
                 <p className="text-xs opacity-90 mt-0.5 truncate">
                   {activeSession.sessionName || activeSession.courseName}
                 </p>
@@ -84,7 +84,7 @@ export function ActiveSessionBanner() {
             <Button
               onClick={handleReturnToSession}
               size="sm"
-              className="w-full bg-white text-[#FB914C] hover:bg-white/90 font-semibold shadow-sm text-xs sm:text-sm h-8 sm:h-9"
+              className="w-full bg-white text-brand-400 hover:bg-white/90 font-medium shadow-sm text-xs sm:text-sm h-8 sm:h-9"
             >
               Återgå till session
             </Button>
