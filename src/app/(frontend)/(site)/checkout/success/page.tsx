@@ -104,7 +104,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
           <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 rounded-full mb-6 shadow-lg">
             <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 dark:text-green-400" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-green-600 to-green-700 dark:from-green-400 dark:to-green-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl font-heading mb-3 bg-gradient-to-r from-green-600 to-green-700 dark:from-green-400 dark:to-green-500 bg-clip-text text-transparent">
             Betalning genomförd!
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -135,9 +135,9 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2 mb-2">
                     <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                    <h2 className="text-xl sm:text-2xl font-bold">Du har nu tillgång till:</h2>
+                    <h2 className="text-xl sm:text-2xl font-heading">Du har nu tillgång till:</h2>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold mb-2">{course.title}</h3>
+                  <h3 className="text-lg sm:text-xl font-medium mb-2">{course.title}</h3>
                   {course.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2">{course.description}</p>
                   )}
@@ -163,7 +163,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                       ) : null}
                       <div className="mt-1 flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Totalt betalat:</span>
-                        <span className="font-semibold text-lg text-green-600 dark:text-green-400">
+                        <span className="font-medium text-lg text-green-600 dark:text-green-400">
                           {formatPrice(order.amount || 0)}
                         </span>
                       </div>
@@ -177,13 +177,13 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
           <div className="p-6 sm:p-8 space-y-8">
             {/* Next Steps */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Clock className="w-5 h-5 text-orange-500" />
+              <h3 className="text-lg font-medium flex items-center gap-2">
+                <Clock className="w-5 h-5 text-brand-400" />
                 Vad händer nu?
               </h3>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="flex flex-col items-start sm:items-center text-center sm:text-center p-4 rounded-lg bg-muted/50 border border-border">
-                  <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3 text-green-600 dark:text-green-400 font-bold text-lg">
+                  <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3 text-green-600 dark:text-green-400 font-medium text-lg">
                     1
                   </div>
                   <Mail className="w-5 h-5 text-muted-foreground mb-2 mx-auto sm:mx-auto" />
@@ -193,7 +193,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                   </p>
                 </div>
                 <div className="flex flex-col items-start sm:items-center text-center sm:text-center p-4 rounded-lg bg-muted/50 border border-border">
-                  <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3 text-green-600 dark:text-green-400 font-bold text-lg">
+                  <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3 text-green-600 dark:text-green-400 font-medium text-lg">
                     2
                   </div>
                   <BookOpen className="w-5 h-5 text-muted-foreground mb-2 mx-auto sm:mx-auto" />
@@ -203,7 +203,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                   </p>
                 </div>
                 <div className="flex flex-col items-start sm:items-center text-center sm:text-center p-4 rounded-lg bg-muted/50 border border-border">
-                  <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3 text-green-600 dark:text-green-400 font-bold text-lg">
+                  <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3 text-green-600 dark:text-green-400 font-medium text-lg">
                     3
                   </div>
                   <Shield className="w-5 h-5 text-muted-foreground mb-2 mx-auto sm:mx-auto" />
@@ -218,31 +218,29 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             {/* Action Buttons */}
             {user && enrollment ? (
               <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-border">
-                <Link href={`/vinprovningar/${course?.slug}`} className="flex-1">
-                  <Button className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all" size="lg">
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    Börja vinprovningen nu
-                  </Button>
+                <Link href={`/vinprovningar/${course?.slug}`} className="btn-brand-lg flex-1">
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  Börja vinprovningen nu
                 </Link>
-                <Link href="/mina-provningar" className="flex-1">
-                  <Button variant="outline" className="w-full h-12 text-base font-semibold" size="lg">
-                    <ArrowRight className="w-5 h-5 mr-2" />
-                    Gå till mina vinprovningar
-                  </Button>
+                <Link
+                  href="/mina-provningar"
+                  className="inline-flex flex-1 h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium hover:border-brand-400/50 hover:bg-brand-300/5"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  Gå till mina vinprovningar
                 </Link>
               </div>
             ) : !user && isGuestOrder ? (
               <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-border">
-                <Link href={activationHref} className="flex-1">
-                  <Button className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all" size="lg">
-                    <ArrowRight className="w-5 h-5 mr-2" />
-                    Aktivera konto och se mina vinprovningar
-                  </Button>
+                <Link href={activationHref} className="btn-brand-lg flex-1">
+                  <ArrowRight className="w-5 h-5 mr-2" />
+                  Aktivera konto och se mina vinprovningar
                 </Link>
-                <Link href={`/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-provningar&source=guest_checkout')}`} className="flex-1">
-                  <Button variant="outline" className="w-full h-12 text-base font-semibold" size="lg">
-                    Jag har redan konto
-                  </Button>
+                <Link
+                  href={`/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-provningar&source=guest_checkout')}`}
+                  className="inline-flex flex-1 h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium hover:border-brand-400/50 hover:bg-brand-300/5"
+                >
+                  Jag har redan konto
                 </Link>
               </div>
             ) : (
@@ -252,7 +250,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                     <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold mb-2 text-amber-900 dark:text-amber-100">
+                    <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">
                       Din beställning behandlas
                     </h4>
                     <p className="text-sm text-amber-800 dark:text-amber-200 mb-4">
@@ -282,7 +280,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
               </p>
               <a
                 href="mailto:support@vinakademin.se"
-                className="text-sm font-medium text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center gap-1"
+                className="text-sm font-medium text-brand-400 hover:underline inline-flex items-center gap-1"
               >
                 <Mail className="w-4 h-4" />
                 support@vinakademin.se

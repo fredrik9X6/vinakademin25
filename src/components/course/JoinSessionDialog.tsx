@@ -142,7 +142,7 @@ export default function JoinSessionDialog({
             </p>
           </div>
 
-          <Button type="submit" size="lg" className="w-full" disabled={loading || !joinCode}>
+          <button type="submit" disabled={loading || !joinCode} className="btn-brand-lg w-full">
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -151,7 +151,7 @@ export default function JoinSessionDialog({
             ) : (
               'Gå med i sessionen'
             )}
-          </Button>
+          </button>
         </form>
       </div>
     )
@@ -203,7 +203,7 @@ export default function JoinSessionDialog({
             >
               Avbryt
             </Button>
-            <Button type="submit" className="flex-1" disabled={loading || !joinCode}>
+            <button type="submit" disabled={loading || !joinCode} className="btn-brand flex-1">
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -212,7 +212,7 @@ export default function JoinSessionDialog({
               ) : (
                 'Gå med'
               )}
-            </Button>
+            </button>
           </div>
         </form>
       </DialogContent>
