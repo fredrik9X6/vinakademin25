@@ -1,9 +1,10 @@
 'use client'
 
-import { useRef, useMemo, useState, useEffect } from 'react'
+import { useRef, useMemo, useState, useEffect, type ReactNode } from 'react'
 import { Canvas, useFrame, extend } from '@react-three/fiber'
 import { shaderMaterial } from '@react-three/drei'
 import * as THREE from 'three'
+import { ChevronDown } from 'lucide-react'
 
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
@@ -303,7 +304,7 @@ function ShaderBackground() {
 
 // ===================== HERO =====================
 interface HeroProps {
-  title: string
+  title: ReactNode
   description: string
   badgeText?: string
   badgeLabel?: string
@@ -412,8 +413,8 @@ export default function Hero({
 
       {/* Decorative orange accents */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/4 right-10 w-96 h-96 bg-[#FDBA75]/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-10 w-72 h-72 bg-[#FB914C]/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 right-10 w-96 h-96 bg-brand-300/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-10 w-72 h-72 bg-brand-400/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative mx-auto flex max-w-7xl flex-col items-start gap-7 px-6 pb-24 pt-20 sm:gap-9 sm:pt-28 md:px-10 lg:px-16 z-10">
@@ -422,7 +423,7 @@ export default function Hero({
 
         <h1
           ref={headerRef}
-          className="max-w-3xl text-left text-5xl font-semibold leading-[1.1] tracking-wide text-foreground sm:text-6xl md:text-7xl lg:text-8xl invisible"
+          className="invisible max-w-3xl text-left text-5xl leading-[1.05] text-foreground sm:text-6xl md:text-7xl lg:text-8xl"
         >
           {title}
         </h1>
@@ -441,8 +442,8 @@ export default function Hero({
               href={button.href}
               className={`group relative rounded-md px-8 py-4 text-base font-medium tracking-tight transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 button.primary
-                  ? 'bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white shadow-lg shadow-[#FB914C]/25 hover:shadow-xl hover:shadow-[#FB914C]/30 hover:scale-[1.02] border-0'
-                  : 'text-foreground border-2 border-border hover:border-[#FB914C]/50 hover:bg-[#FDBA75]/5 backdrop-blur-sm'
+                  ? 'bg-brand-gradient hover:bg-brand-gradient-reverse text-white shadow-brand-glow hover:shadow-brand-glow-lg hover:scale-[1.02] border-0'
+                  : 'text-foreground border-2 border-border hover:border-brand-400/50 hover:bg-brand-300/5 backdrop-blur-sm'
               }`}
             >
               {button.text}
@@ -466,7 +467,7 @@ export default function Hero({
                 ref={refMap[index]}
                 className="flex items-center gap-2.5 text-sm font-medium text-foreground opacity-0"
               >
-                <div className="h-2 w-2 rounded-full bg-gradient-to-r from-[#FB914C] to-[#FDBA75]" />
+                <div className="h-2 w-2 rounded-full bg-brand-gradient" />
                 {detail}
               </div>
             )
@@ -475,6 +476,30 @@ export default function Hero({
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background via-background/50 to-transparent" />
+
+      {/* Scroll indicator */}
+      <button
+        type="button"
+        aria-label="Scrolla till nästa sektion"
+        onClick={() => {
+          if (typeof window === 'undefined') return
+          const header = sectionRef.current
+          if (!header) return
+          const target = header.nextElementSibling as HTMLElement | null
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          } else {
+            window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })
+          }
+        }}
+        className="group absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2 text-muted-foreground opacity-80 transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em]">Scrolla</span>
+        <span className="flex h-9 w-6 items-start justify-center rounded-full border border-border/70 p-1.5">
+          <span className="h-1.5 w-1 rounded-full bg-brand-400 motion-safe:animate-scroll-hint" />
+        </span>
+        <ChevronDown className="h-4 w-4 motion-safe:animate-bounce" strokeWidth={2} aria-hidden />
+      </button>
     </section>
   )
 }
