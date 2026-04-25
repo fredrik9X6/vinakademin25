@@ -248,7 +248,7 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
                       <div className="flex-1 space-y-4">
                         <div>
                           <div className="flex items-start justify-between mb-2">
-                            <h3 className="text-lg font-semibold">{course.title}</h3>
+                            <h3 className="text-lg font-medium">{course.title}</h3>
                             <div className="flex items-center space-x-2">
                               <Badge className={getLevelColor(course.level)}>
                                 {getLevelText(course.level)}

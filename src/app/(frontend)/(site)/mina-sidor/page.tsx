@@ -34,7 +34,7 @@ function DashboardContent() {
 
   return (
     <div className="container max-w-5xl mx-auto py-10 px-4 sm:px-6">
-      <h1 className="text-3xl md:text-4xl font-medium mb-8">Mina Sidor</h1>
+      <h1 className="text-3xl md:text-4xl font-heading mb-8">Mina Sidor</h1>
 
       <Card className="mb-8">
         <CardHeader>
@@ -56,7 +56,7 @@ function DashboardContent() {
               )}
             </Avatar>
             <div>
-              <h2 className="text-xl font-semibold">{user.firstName || 'Användare'}</h2>
+              <h2 className="text-xl font-medium">{user.firstName || 'Användare'}</h2>
               <p className="text-muted-foreground">{user.email}</p>
             </div>
           </div>

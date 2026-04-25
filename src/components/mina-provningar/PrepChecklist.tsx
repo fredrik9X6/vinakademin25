@@ -16,11 +16,11 @@ const CHECKLIST_ITEMS = [
 
 export function PrepChecklist({ onDismiss }: PrepChecklistProps) {
   return (
-    <Card className="border-[#FB914C]/20 bg-[#FDBA75]/5">
+    <Card className="border-brand-400/20 bg-brand-300/5">
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="font-semibold text-base">Forbredelser for din provning</h3>
+            <h3 className="font-medium text-base">Forbredelser for din provning</h3>
             <p className="text-sm text-muted-foreground mt-0.5">
               Se till att du har allt infor din vinprovning.
             </p>
@@ -38,9 +38,9 @@ export function PrepChecklist({ onDismiss }: PrepChecklistProps) {
           {CHECKLIST_ITEMS.map((item) => (
             <div
               key={item.label}
-              className="flex items-start gap-3 rounded-lg border border-[#FB914C]/10 bg-background p-3"
+              className="flex items-start gap-3 rounded-lg border border-brand-400/10 bg-background p-3"
             >
-              <CheckCircle2 className="h-5 w-5 text-[#FB914C] shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-brand-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium">{item.label}</p>
                 <p className="text-xs text-muted-foreground">{item.description}</p>
