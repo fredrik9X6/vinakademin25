@@ -304,7 +304,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
                 post.author.avatar.url ? (
                   <AvatarImage src={post.author.avatar.url} alt={authorName} />
                 ) : null}
-                <AvatarFallback className="bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 font-semibold">
+                <AvatarFallback className="bg-brand-300/15 text-brand-400 font-semibold">
                   {authorInitials}
                 </AvatarFallback>
               </Avatar>
@@ -341,7 +341,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
                 {/* Category badge */}
                 {post.category && typeof post.category === 'object' && (
                   <div className="mt-1">
-                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 rounded">
+                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-brand-300/15 text-brand-400 rounded">
                       {post.category.name}
                     </span>
                   </div>

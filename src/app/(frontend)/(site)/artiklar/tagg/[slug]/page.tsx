@@ -215,7 +215,7 @@ async function TagContent({ params, searchParams }: PageProps) {
         case 'pink':
           return 'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'
         default:
-          return 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+          return 'bg-brand-300/15 text-brand-400'
       }
     }
 
@@ -333,7 +333,7 @@ async function TagContent({ params, searchParams }: PageProps) {
                   href={`/artiklar/tagg/${slug}?${params.toString()}`}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-orange-600 text-white'
+                      ? 'bg-brand-400 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                   }`}
                 >
