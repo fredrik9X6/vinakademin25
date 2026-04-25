@@ -16,7 +16,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
@@ -175,10 +174,10 @@ export function RegistrationForm({ className, returnTo, ...props }: Registration
                     </FormItem>
                   )}
                 />
-                <Button variant={'default'} type="submit" className="w-full" disabled={isLoading}>
+                <button type="submit" disabled={isLoading} className="btn-brand w-full">
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {isLoading ? 'Skapar konto...' : 'Skapa konto'}
-                </Button>
+                </button>
               </div>
               <div className="text-center text-sm">
                 Har du redan ett konto?{' '}
