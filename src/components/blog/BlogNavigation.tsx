@@ -47,7 +47,7 @@ export async function BlogNavigation({ className }: BlogNavigationProps) {
         case 'pink':
           return 'bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900 dark:text-pink-300 dark:hover:bg-pink-800'
         default:
-          return 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900 dark:text-orange-300 dark:hover:bg-orange-800'
+          return 'bg-brand-300/15 text-brand-400 hover:bg-brand-300/25'
       }
     }
 
@@ -75,7 +75,7 @@ export async function BlogNavigation({ className }: BlogNavigationProps) {
                     </span>
                     <Badge
                       variant="secondary"
-                      className="text-xs bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+                      className="text-xs bg-brand-300/15 text-brand-400"
                     >
                       {/* Post count would be calculated here in a real implementation */}•
                     </Badge>
@@ -89,7 +89,7 @@ export async function BlogNavigation({ className }: BlogNavigationProps) {
               ))}
               <Link
                 href="/artiklar"
-                className="block p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm text-orange-600 dark:text-orange-400 font-medium"
+                className="block p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm text-brand-400 font-medium"
               >
                 Visa alla kategorier →
               </Link>
@@ -121,7 +121,7 @@ export async function BlogNavigation({ className }: BlogNavigationProps) {
               </div>
               <Link
                 href="/artiklar"
-                className="inline-block mt-3 text-sm text-orange-600 dark:text-orange-400 font-medium hover:underline"
+                className="inline-block mt-3 text-sm text-brand-400 font-medium hover:underline"
               >
                 Visa alla taggar →
               </Link>
