@@ -97,12 +97,12 @@ export function WineListBlock({
 
   if (displayStyle === 'compact') {
     return (
-      <Card className="my-6 border border-orange-200/60 dark:border-orange-900/30 bg-gradient-to-br from-orange-50/30 via-white to-orange-50/10 dark:from-orange-950/10 dark:via-background dark:to-orange-950/5 shadow-md hover:shadow-lg transition-all duration-200">
+      <Card className="my-6 border border-brand-300/30 bg-gradient-to-br from-brand-300/10 via-card to-brand-300/5 shadow-md transition-all duration-200 hover:shadow-lg">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2 mb-1.5">
-                <WineIcon className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+              <CardTitle className="text-lg font-medium flex items-center gap-2 mb-1.5">
+                <WineIcon className="h-4 w-4 text-brand-400 flex-shrink-0" />
                 <span className="line-clamp-2">{title}</span>
               </CardTitle>
               {description && (
@@ -114,7 +114,7 @@ export function WineListBlock({
             {showTotalPrice && showPrices && totalPrice > 0 && (
               <Badge
                 variant="secondary"
-                className="text-sm font-semibold px-2.5 py-1 bg-gradient-to-r from-orange-100 to-orange-50 dark:from-orange-950/40 dark:to-orange-900/20 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 flex-shrink-0"
+                className="text-sm font-semibold px-2.5 py-1 bg-brand-300/15 border border-brand-300/30 text-brand-400 flex-shrink-0"
               >
                 {formatPrice(totalPrice)}
               </Badge>
@@ -130,14 +130,14 @@ export function WineListBlock({
                 <Link
                   key={wine.id}
                   href={wineHref}
-                  className="group flex items-center justify-between gap-3 p-2.5 rounded-md border border-border/30 bg-background/50 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-transparent dark:hover:from-orange-950/20 dark:hover:to-transparent hover:border-orange-300/50 dark:hover:border-orange-700/50 transition-all duration-150"
+                  className="group flex items-center justify-between gap-3 p-2.5 rounded-md border border-border/30 bg-background/50 hover:bg-brand-300/10 hover:border-brand-400/40 transition-all duration-150"
                 >
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-md bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20 flex items-center justify-center font-semibold text-orange-600 dark:text-orange-400 text-xs">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-md bg-brand-300/15 flex items-center justify-center font-semibold text-brand-400 text-xs">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-foreground group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-1">
+                      <h4 className="text-sm font-medium text-foreground group-hover:text-brand-400 transition-colors line-clamp-1">
                         {wine.name}
                       </h4>
                       <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
@@ -165,7 +165,7 @@ export function WineListBlock({
                   </div>
                   {showPrices && wine.price && (
                     <div className="flex-shrink-0 flex items-center gap-1.5">
-                      <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+                      <span className="text-sm font-semibold text-brand-400">
                         {formatPrice(wine.price)}
                       </span>
                     </div>
@@ -200,9 +200,9 @@ export function WineListBlock({
         <div className="mb-8">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex-1">
-              <h3 className="text-2xl md:text-3xl font-bold flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20">
-                  <WineIcon className="h-6 w-6 md:h-7 md:w-7 text-orange-600 dark:text-orange-400" />
+              <h3 className="text-2xl md:text-3xl font-medium flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-xl bg-brand-300/15">
+                  <WineIcon className="h-6 w-6 md:h-7 md:w-7 text-brand-400" />
                 </div>
                 {title}
               </h3>
@@ -214,11 +214,11 @@ export function WineListBlock({
             </div>
           </div>
           {showTotalPrice && showPrices && totalPrice > 0 && (
-            <div className="inline-flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-orange-100 to-orange-50 dark:from-orange-950/40 dark:to-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800 shadow-sm">
-              <Sparkles className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            <div className="inline-flex items-center gap-3 px-5 py-3 bg-brand-300/15 rounded-xl border border-brand-300/30 shadow-sm">
+              <Sparkles className="h-5 w-5 text-brand-400" />
               <div>
                 <span className="text-xs text-muted-foreground font-medium block">Totalpris</span>
-                <span className="text-xl md:text-2xl font-bold text-orange-600 dark:text-orange-400">
+                <span className="text-brand-gradient text-xl md:text-2xl font-bold">
                   {formatPrice(totalPrice)}
                 </span>
               </div>
@@ -238,7 +238,7 @@ export function WineListBlock({
                 href={wineHref}
                 className="group relative block"
               >
-                <Card className="h-full overflow-hidden border-2 border-border/50 bg-background group-hover:border-orange-300 dark:group-hover:border-orange-700 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
+                <Card className="h-full overflow-hidden border-2 border-border/50 bg-card group-hover:border-brand-400/40 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
                   <CardContent className="p-0">
                     {showImages && (
                       <div className="relative w-full h-56 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden">
@@ -252,7 +252,7 @@ export function WineListBlock({
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <div className="p-6 rounded-full bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20">
+                            <div className="p-6 rounded-full bg-brand-300/15">
                               <WineIcon className="w-16 h-16 text-muted-foreground/40" />
                             </div>
                           </div>
@@ -263,7 +263,7 @@ export function WineListBlock({
                     )}
                     <div className="p-5 space-y-3">
                       <div>
-                        <span className="font-bold text-lg text-foreground group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2 block mb-2">
+                        <span className="font-medium text-lg text-foreground group-hover:text-brand-400 transition-colors line-clamp-2 block mb-2">
                           {wine.name}
                         </span>
                         {wine.winery && (
@@ -280,7 +280,7 @@ export function WineListBlock({
                       </div>
                       {showPrices && wine.price && (
                         <div className="pt-2 border-t border-border/50">
-                          <span className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                          <span className="text-brand-gradient text-xl font-bold">
                             {formatPrice(wine.price)}
                           </span>
                         </div>
@@ -316,9 +316,9 @@ export function WineListBlock({
     <div className="my-10">
       {/* Header Section */}
       <div className="mb-8">
-        <h3 className="text-2xl md:text-3xl font-bold flex items-center gap-3 mb-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20">
-            <WineIcon className="h-6 w-6 md:h-7 md:w-7 text-orange-600 dark:text-orange-400" />
+        <h3 className="text-2xl md:text-3xl font-medium flex items-center gap-3 mb-3">
+          <div className="p-2.5 rounded-xl bg-brand-300/15">
+            <WineIcon className="h-6 w-6 md:h-7 md:w-7 text-brand-400" />
           </div>
           {title}
         </h3>
@@ -337,7 +337,7 @@ export function WineListBlock({
 
           return (
             <Link key={wine.id} href={wineHref} className="group block">
-              <Card className="overflow-hidden border-2 border-border/50 bg-background group-hover:border-orange-300 dark:group-hover:border-orange-700 transition-all duration-300 group-hover:shadow-lg">
+              <Card className="overflow-hidden border-2 border-border/50 bg-card group-hover:border-brand-400/40 transition-all duration-300 group-hover:shadow-lg">
                 <CardContent className="p-0">
                   <div className="flex flex-col sm:flex-row gap-0">
                     {showImages && (
@@ -352,7 +352,7 @@ export function WineListBlock({
                           />
                         ) : (
                           <div className="p-4">
-                            <div className="p-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20">
+                            <div className="p-4 rounded-lg bg-brand-300/15">
                               <WineIcon className="w-12 h-12 text-muted-foreground/40" />
                             </div>
                           </div>
@@ -366,23 +366,23 @@ export function WineListBlock({
                             <div className="flex items-center gap-3 mb-2">
                               <Badge
                                 variant="outline"
-                                className="text-xs font-bold px-2.5 py-0.5 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300"
+                                className="text-xs font-bold px-2.5 py-0.5 bg-brand-300/10 border-brand-300/30 text-brand-400"
                               >
                                 #{index + 1}
                               </Badge>
-                              <span className="text-xl md:text-2xl font-bold text-foreground group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2">
+                              <span className="text-xl md:text-2xl font-medium text-foreground group-hover:text-brand-400 transition-colors line-clamp-2">
                                 {wine.name}
                               </span>
                             </div>
                             {wine.winery && (
-                              <p className="text-base font-semibold text-muted-foreground mb-3">
+                              <p className="text-base font-medium text-muted-foreground mb-3">
                                 {wine.winery}
                               </p>
                             )}
                           </div>
                           {showPrices && wine.price && (
                             <div className="flex-shrink-0 text-right">
-                              <span className="text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400">
+                              <span className="text-brand-gradient text-2xl md:text-3xl font-bold">
                                 {formatPrice(wine.price)}
                               </span>
                             </div>
@@ -427,20 +427,20 @@ export function WineListBlock({
 
       {/* Total Price Footer */}
       {showTotalPrice && showPrices && totalPrice > 0 && (
-        <Card className="mt-8 border-2 border-orange-200 dark:border-orange-900/40 bg-gradient-to-br from-orange-50/50 via-white to-orange-50/30 dark:from-orange-950/20 dark:via-background dark:to-orange-950/10 shadow-lg">
+        <Card className="mt-8 border-2 border-brand-300/30 bg-gradient-to-br from-brand-300/15 via-card to-brand-300/10 shadow-lg">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <span className="text-lg md:text-xl font-bold text-foreground block mb-1">
+                <span className="text-lg md:text-xl font-medium text-foreground block mb-1">
                   Total kostnad för alla viner
                 </span>
                 <p className="text-sm text-muted-foreground">
                   Ungefärlig totalkostnad för att köpa alla viner som behövs för denna vinprovning.
                 </p>
               </div>
-              <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-orange-100 to-orange-50 dark:from-orange-950/40 dark:to-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
-                <Sparkles className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                <span className="text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400">
+              <div className="flex items-center gap-3 px-5 py-3 bg-brand-300/15 rounded-xl border border-brand-300/30">
+                <Sparkles className="h-5 w-5 text-brand-400" />
+                <span className="text-brand-gradient text-2xl md:text-3xl font-bold">
                   {formatPrice(totalPrice)}
                 </span>
               </div>
