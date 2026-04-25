@@ -59,6 +59,11 @@
     --sidebar-accent-foreground: 240 10% 3.9%;
     --sidebar-border: 240 5.9% 90%;
     --sidebar-ring: 240 5.9% 10%;
+
+    /* Brand orange — mode-independent. Use these instead of inline hex.
+     * Tailwind exposes them as bg-brand-300 / text-brand-400 / etc. */
+    --brand-300: 27 96% 77%; /* #FDBA75 — lighter, paired in gradients & glow */
+    --brand-400: 24 95% 64%; /* #FB914C — darker, primary CTA endpoint */
   }
   .dark {
     --background: 0 0% 9%;
@@ -99,9 +104,13 @@
   * {
     @apply border-border;
   }
-  /* Apply Coolvetica (font-heading) only to h1 */
+  /* Apply Coolvetica (font-heading) only to h1.
+   * -0.015em matches the design — Tailwind's tracking-tight (-0.025em) is too
+   * aggressive for this display face. Per-page utility classes (tracking-*)
+   * still win over this default if needed. */
   h1 {
     @apply font-heading;
+    letter-spacing: -0.015em;
   }
   /* Coolvetica is a single-weight display face. Body's font-feature-settings
    * (rlig + calt) cascades to h1/.font-heading and can cause character
@@ -130,6 +139,61 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Brand gradient utilities — single source of truth for the orange→orange
+   * gradient used on CTAs, prices, premium card borders, etc. */
+  .bg-brand-gradient {
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--brand-400)),
+      hsl(var(--brand-300))
+    );
+  }
+  /* Reversed direction — apply on hover to flip the gradient. */
+  .bg-brand-gradient-reverse {
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--brand-300)),
+      hsl(var(--brand-400))
+    );
+  }
+  /* Diagonal — used for icon-chip rings and avatar backgrounds. */
+  .bg-brand-gradient-diagonal {
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--brand-300)),
+      hsl(var(--brand-400))
+    );
+  }
+  /* Three-stop gradient — used for premium card borders & shine animations. */
+  .bg-brand-gradient-tri {
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--brand-300)),
+      hsl(var(--brand-400)),
+      hsl(var(--brand-300))
+    );
+  }
+  /* Text gradient — set background + clip text to transparent. */
+  .text-brand-gradient {
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--brand-400)),
+      hsl(var(--brand-300))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Soft brand-orange glow shadow — for primary CTAs only. */
+  .shadow-brand-glow {
+    box-shadow: 0 10px 20px -5px hsl(var(--brand-400) / 0.25);
+  }
+  .shadow-brand-glow-lg {
+    box-shadow: 0 15px 28px -8px hsl(var(--brand-400) / 0.35);
   }
 }
 
