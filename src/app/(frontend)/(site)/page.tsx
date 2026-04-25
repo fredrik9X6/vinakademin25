@@ -453,14 +453,17 @@ export default async function HomePage() {
               </div>
 
               {/* CTA */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/vinprovningar" className="btn-brand btn-brand-lg flex-1">
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                <Link
+                  href="/vinprovningar"
+                  className="btn-brand btn-brand-lg w-full sm:flex-1"
+                >
                   Upptäck vinprovningar
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link
                   href="/om-oss"
-                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium transition-colors hover:border-brand-400/50 hover:bg-brand-300/5"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium transition-colors hover:border-brand-400/50 hover:bg-brand-300/5 sm:flex-1"
                 >
                   Läs mer om oss
                 </Link>
@@ -696,14 +699,17 @@ export default async function HomePage() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Link href="/vinprovningar" className="btn-brand btn-brand-lg">
+            <div className="mx-auto mb-12 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:gap-4">
+              <Link
+                href="/vinprovningar"
+                className="btn-brand btn-brand-lg w-full sm:w-auto"
+              >
                 Utforska vinprovningar
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
                 href="/om-oss"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium transition-colors hover:border-brand-400/50 hover:bg-brand-300/5"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium transition-colors hover:border-brand-400/50 hover:bg-brand-300/5 sm:w-auto"
               >
                 Läs mer om oss
               </Link>

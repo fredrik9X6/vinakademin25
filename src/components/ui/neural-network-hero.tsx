@@ -435,17 +435,24 @@ export default function Hero({
           {description}
         </p>
 
-        <div ref={ctaRef} className="flex flex-wrap items-center justify-center gap-4 pt-4 opacity-0">
+        <div
+          ref={ctaRef}
+          className="flex w-full flex-col items-stretch gap-3 pt-4 opacity-0 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-4"
+        >
           {ctaButtons.map((button, index) =>
             button.primary ? (
-              <a key={index} href={button.href} className="btn-brand btn-brand-lg">
+              <a
+                key={index}
+                href={button.href}
+                className="btn-brand btn-brand-lg w-full sm:w-auto"
+              >
                 {button.text}
               </a>
             ) : (
               <a
                 key={index}
                 href={button.href}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-background/40 px-8 text-base font-medium text-foreground backdrop-blur-sm transition-colors duration-300 hover:border-brand-400/50 hover:bg-brand-300/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-border bg-background/40 px-8 text-base font-medium text-foreground backdrop-blur-sm transition-colors duration-300 hover:border-brand-400/50 hover:bg-brand-300/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
               >
                 {button.text}
               </a>
