@@ -131,15 +131,15 @@ export default async function RegionDetailPage({ params }: PageProps) {
 
       <header className="mb-8">
         <div className="flex items-center gap-3 mb-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-400/20 dark:to-orange-500/20">
-            <MapPin className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+          <div className="p-2.5 rounded-xl bg-brand-300/15">
+            <MapPin className="h-6 w-6 text-brand-400" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">{region.name}</h1>
+            <h1 className="text-3xl">{region.name}</h1>
             {country && (
               <Link
                 href={`/lander/${country.slug}`}
-                className="text-muted-foreground hover:text-orange-500 transition-colors"
+                className="text-muted-foreground hover:text-brand-400 transition-colors"
               >
                 {country.name}
               </Link>
@@ -158,8 +158,8 @@ export default async function RegionDetailPage({ params }: PageProps) {
       {/* Wines from this region */}
       {wines.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <WineIcon className="h-5 w-5 text-orange-500" />
+          <h2 className="text-2xl font-medium mb-4 flex items-center gap-2">
+            <WineIcon className="h-5 w-5 text-brand-400" />
             Viner från {region.name}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -169,7 +169,7 @@ export default async function RegionDetailPage({ params }: PageProps) {
               const isExternal = !!wine.systembolagetUrl
 
               return (
-                <Card key={wine.id} className="group hover:border-orange-300 dark:hover:border-orange-700 transition-all">
+                <Card key={wine.id} className="group hover:border-brand-400/40 transition-all">
                   <CardContent className="p-0">
                     {wineImage?.url && (
                       <div className="relative h-40 bg-muted/30">
@@ -188,7 +188,7 @@ export default async function RegionDetailPage({ params }: PageProps) {
                           href={href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-semibold text-foreground hover:text-orange-500 transition-colors line-clamp-2"
+                          className="font-medium text-foreground hover:text-brand-400 transition-colors line-clamp-2"
                         >
                           {wine.name}
                           <ExternalLink className="inline h-3 w-3 ml-1" />
@@ -196,7 +196,7 @@ export default async function RegionDetailPage({ params }: PageProps) {
                       ) : (
                         <Link
                           href={href}
-                          className="font-semibold text-foreground hover:text-orange-500 transition-colors line-clamp-2"
+                          className="font-medium text-foreground hover:text-brand-400 transition-colors line-clamp-2"
                         >
                           {wine.name}
                         </Link>
@@ -205,7 +205,7 @@ export default async function RegionDetailPage({ params }: PageProps) {
                         <p className="text-sm text-muted-foreground mt-1">{wine.winery}</p>
                       )}
                       {wine.price && (
-                        <p className="text-sm font-semibold text-orange-600 dark:text-orange-400 mt-2">
+                        <p className="text-sm font-medium text-brand-400 mt-2">
                           {formatPrice(wine.price)}
                         </p>
                       )}
@@ -221,15 +221,15 @@ export default async function RegionDetailPage({ params }: PageProps) {
       {/* Related vinprovningar */}
       {vinprovningar.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">Vinprovningar</h2>
+          <h2 className="text-2xl font-medium mb-4">Vinprovningar</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {vinprovningar.map((v: any) => (
               <Link
                 key={v.id}
                 href={`/vinprovningar/${v.slug}`}
-                className="block p-4 rounded-lg border border-border/50 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-all"
+                className="block p-4 rounded-lg border border-border/50 hover:border-brand-400/40 hover:bg-brand-300/10 transition-all"
               >
-                <h3 className="font-semibold">{v.title}</h3>
+                <h3 className="font-medium">{v.title}</h3>
                 {v.description && (
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{v.description}</p>
                 )}
@@ -242,15 +242,15 @@ export default async function RegionDetailPage({ params }: PageProps) {
       {/* Related blog posts */}
       {blogPosts.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">Artiklar</h2>
+          <h2 className="text-2xl font-medium mb-4">Artiklar</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {blogPosts.map((post: any) => (
               <Link
                 key={post.id}
                 href={`/artiklar/${post.slug}`}
-                className="block p-4 rounded-lg border border-border/50 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-all"
+                className="block p-4 rounded-lg border border-border/50 hover:border-brand-400/40 hover:bg-brand-300/10 transition-all"
               >
-                <h3 className="font-semibold">{post.title}</h3>
+                <h3 className="font-medium">{post.title}</h3>
                 {post.excerpt && (
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{post.excerpt}</p>
                 )}

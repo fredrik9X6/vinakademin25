@@ -120,7 +120,7 @@ export default async function KurserPage() {
       <div className="container mx-auto py-8 px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-medium tracking-tight mb-4">Vinprovningar</h1>
+          <h1 className="text-3xl md:text-4xl mb-4">Vinprovningar</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             En flaska vin, några glas och ett par vänner – mer behövs inte för en minnesvärd kväll.
             Våra guidade vinprovningar leder dig genom smaker och berättelser, direkt hem till ditt
@@ -219,7 +219,7 @@ export default async function KurserPage() {
                                   key={s}
                                   className={`h-3.5 w-3.5 ${
                                     s <= Math.round(courseReviewMap.get(course.id)!.averageRating)
-                                      ? 'fill-[#FB914C] text-[#FB914C]'
+                                      ? 'fill-brand-400 text-brand-400'
                                       : 'text-muted-foreground/20'
                                   }`}
                                 />
