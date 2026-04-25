@@ -112,16 +112,16 @@ export default async function HomePage() {
       <section className="py-16 lg:py-24 relative overflow-hidden">
         {/* Background decorative elements */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-[#FDBA75]/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#FB914C]/5 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-10 w-72 h-72 bg-brand-300/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-brand-400/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-              <span className="text-sm font-medium text-[#FB914C]">Enkelt & intuitivt</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/20 mb-6">
+              <span className="text-sm font-medium text-brand-400">Enkelt & intuitivt</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Så fungerar det</h2>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">Så fungerar det</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Fyra enkla steg till en minnesvärd vinupplevelse
             </p>
@@ -130,7 +130,7 @@ export default async function HomePage() {
           {/* Desktop: Steps with connecting line */}
           <div className="hidden lg:block relative">
             {/* Connecting line */}
-            <div className="absolute top-12 left-0 right-0 h-0.5 bg-gradient-to-r from-[#FDBA75] via-[#FB914C] to-[#FDBA75] opacity-20" />
+            <div className="absolute top-12 left-0 right-0 h-0.5 bg-brand-gradient-tri opacity-20" />
 
             <div className="grid grid-cols-4 gap-8">
               {[
@@ -165,16 +165,16 @@ export default async function HomePage() {
               ].map((step, index) => (
                 <div key={index} className="relative">
                   {/* Step number circle */}
-                  <div className="relative z-10 mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] p-0.5 mb-6 group hover:scale-110 transition-transform duration-300">
+                  <div className="relative z-10 mx-auto w-24 h-24 rounded-full bg-brand-gradient-diagonal p-0.5 mb-6 group hover:scale-110 transition-transform duration-300">
                     <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                      <step.icon className="h-10 w-10 text-[#FB914C]" />
+                      <step.icon className="h-10 w-10 text-brand-400" />
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="text-center space-y-3">
-                    <div className="inline-block px-3 py-1 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20">
-                      <span className="text-xs font-semibold text-[#FB914C]">STEG {step.step}</span>
+                    <div className="inline-block px-3 py-1 rounded-full bg-brand-300/10 border border-brand-300/20">
+                      <span className="text-xs font-semibold text-brand-400">STEG {step.step}</span>
                     </div>
                     <h3 className="text-xl font-semibold">{step.title}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
@@ -220,21 +220,21 @@ export default async function HomePage() {
             ].map((step, index) => (
               <Card
                 key={index}
-                className="relative overflow-hidden border-l-4 border-l-[#FB914C] hover:shadow-xl transition-all duration-300 group"
+                className="relative overflow-hidden border-l-4 border-l-brand-400 hover:shadow-xl transition-all duration-300 group"
               >
                 <CardHeader>
                   <div className="flex items-start gap-4">
                     {/* Icon circle */}
-                    <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] p-0.5 group-hover:scale-110 transition-transform duration-300">
+                    <div className="flex-shrink-0 w-16 h-16 rounded-full bg-brand-gradient-diagonal p-0.5 group-hover:scale-110 transition-transform duration-300">
                       <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                        <step.icon className="h-7 w-7 text-[#FB914C]" />
+                        <step.icon className="h-7 w-7 text-brand-400" />
                       </div>
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 space-y-2">
-                      <div className="inline-block px-3 py-1 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20">
-                        <span className="text-xs font-semibold text-[#FB914C]">
+                      <div className="inline-block px-3 py-1 rounded-full bg-brand-300/10 border border-brand-300/20">
+                        <span className="text-xs font-semibold text-brand-400">
                           STEG {step.step}
                         </span>
                       </div>
@@ -246,7 +246,7 @@ export default async function HomePage() {
                   </div>
 
                   {/* Decorative step number */}
-                  <div className="absolute top-4 right-4 text-7xl font-bold text-[#FDBA75]/5 select-none">
+                  <div className="absolute top-4 right-4 text-7xl font-bold text-brand-300/5 select-none">
                     {step.step}
                   </div>
                 </CardHeader>
@@ -264,17 +264,17 @@ export default async function HomePage() {
         <section className="py-16 lg:py-24 relative overflow-hidden">
           {/* Background decorative elements */}
           <div className="absolute inset-0 -z-10">
-            <div className="absolute top-20 right-10 w-96 h-96 bg-[#FDBA75]/5 rounded-full blur-3xl" />
-            <div className="absolute bottom-20 left-10 w-72 h-72 bg-[#FB914C]/5 rounded-full blur-3xl" />
+            <div className="absolute top-20 right-10 w-96 h-96 bg-brand-300/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-20 left-10 w-72 h-72 bg-brand-400/5 rounded-full blur-3xl" />
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-                <BookOpen className="h-4 w-4 text-[#FB914C]" />
-                <span className="text-sm font-medium text-[#FB914C]">Från vår blogg</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/20 mb-6">
+                <BookOpen className="h-4 w-4 text-brand-400" />
+                <span className="text-sm font-medium text-brand-400">Från vår blogg</span>
               </div>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">
                 Senaste artiklarna
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -291,7 +291,7 @@ export default async function HomePage() {
 
                 return (
                   <Link key={post.id} href={`/artiklar/${post.slug}`} className="group">
-                    <Card className="h-full hover:shadow-xl transition-all duration-300 border-border hover:border-[#FB914C]/20 overflow-hidden">
+                    <Card className="h-full hover:shadow-xl transition-all duration-300 border-border hover:border-brand-400/20 overflow-hidden">
                       {featuredImageUrl && (
                         <div className="relative w-full aspect-video overflow-hidden">
                           <Image
@@ -301,13 +301,13 @@ export default async function HomePage() {
                             className="object-cover group-hover:scale-110 transition-transform duration-500"
                           />
                           {/* Orange overlay on hover */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#FB914C]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-brand-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         </div>
                       )}
                       <CardHeader className="space-y-3">
                         <div className="flex items-center justify-between gap-2">
                           {post.category && typeof post.category === 'object' && (
-                            <Badge className="bg-[#FDBA75]/10 text-[#FB914C] border-[#FDBA75]/30 hover:bg-[#FDBA75]/20">
+                            <Badge className="bg-brand-300/10 text-brand-400 border-brand-300/30 hover:bg-brand-300/20">
                               {post.category.name}
                             </Badge>
                           )}
@@ -321,7 +321,7 @@ export default async function HomePage() {
                             </span>
                           )}
                         </div>
-                        <CardTitle className="line-clamp-2 group-hover:text-[#FB914C] transition-colors duration-300">
+                        <CardTitle className="line-clamp-2 group-hover:text-brand-400 transition-colors duration-300">
                           {post.title}
                         </CardTitle>
                         {post.excerpt && (
@@ -331,7 +331,7 @@ export default async function HomePage() {
                         )}
                       </CardHeader>
                       <CardContent>
-                        <div className="flex items-center gap-2 text-sm font-medium text-[#FB914C] group-hover:gap-3 transition-all">
+                        <div className="flex items-center gap-2 text-sm font-medium text-brand-400 group-hover:gap-3 transition-all">
                           Läs artikel
                           <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                         </div>
@@ -347,7 +347,7 @@ export default async function HomePage() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="group border-[#FB914C]/30 hover:border-[#FB914C] hover:bg-[#FDBA75]/5"
+                  className="group border-brand-400/30 hover:border-brand-400 hover:bg-brand-300/5"
                 >
                   Se alla artiklar
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -362,18 +362,18 @@ export default async function HomePage() {
       <section className="py-16 lg:py-24 relative overflow-hidden">
         {/* Background decorative elements */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#FDBA75]/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-10 w-72 h-72 bg-[#FB914C]/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/4 left-10 w-96 h-96 bg-brand-300/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-10 w-72 h-72 bg-brand-400/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-              <Wine className="h-4 w-4 text-[#FB914C]" />
-              <span className="text-sm font-medium text-[#FB914C]">Vår historia</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/20 mb-6">
+              <Wine className="h-4 w-4 text-brand-400" />
+              <span className="text-sm font-medium text-brand-400">Vår historia</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Om Vinakademin</h2>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">Om Vinakademin</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Vi gör vinkunskap enkelt & opretentiöst
             </p>
@@ -384,12 +384,12 @@ export default async function HomePage() {
             <div className="order-first lg:order-first">
               <div className="relative group">
                 {/* Video Container with Orange Border Gradient */}
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-transparent bg-gradient-to-br from-[#FDBA75] via-[#FB914C] to-[#FDBA75] p-[2px]">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-transparent bg-gradient-to-br from-brand-300 via-brand-400 to-brand-300 p-[2px]">
                   <div className="bg-background rounded-2xl overflow-hidden">
                     <div className="aspect-video bg-gradient-to-br from-muted to-muted/50 relative">
                       {/* Video Placeholder - Replace with actual video URL */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#FDBA75]/10 to-[#FB914C]/10">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 cursor-pointer">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-brand-300/10 to-brand-400/10">
+                        <div className="w-20 h-20 rounded-full bg-brand-gradient-diagonal flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 cursor-pointer">
                           <Play className="w-8 h-8 text-white ml-1" />
                         </div>
                         <div className="text-center space-y-2">
@@ -422,8 +422,8 @@ export default async function HomePage() {
                 </div>
 
                 {/* Decorative elements around video */}
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-[#FDBA75]/20 rounded-full blur-2xl -z-10" />
-                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-[#FB914C]/20 rounded-full blur-2xl -z-10" />
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-brand-300/20 rounded-full blur-2xl -z-10" />
+                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-brand-400/20 rounded-full blur-2xl -z-10" />
               </div>
             </div>
 
@@ -431,10 +431,10 @@ export default async function HomePage() {
             <div className="space-y-8">
               {/* Mission Statement */}
               <div className="relative">
-                <div className="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-[#FDBA75] via-[#FB914C] to-[#FDBA75] rounded-full" />
+                <div className="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-brand-300 via-brand-400 to-brand-300 rounded-full" />
                 <blockquote className="text-xl md:text-2xl font-medium leading-relaxed text-foreground pl-4">
                   "Vi skapade Vinakademin för att vi själva{' '}
-                  <span className="text-[#FB914C]">inte kunde hitta det</span> vi letade efter."
+                  <span className="text-brand-400">inte kunde hitta det</span> vi letade efter."
                 </blockquote>
               </div>
 
@@ -461,7 +461,7 @@ export default async function HomePage() {
                 <Link href="/vinprovningar" className="flex-1">
                   <Button
                     size="lg"
-                    className="w-full bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white shadow-lg shadow-[#FB914C]/25 hover:shadow-xl hover:shadow-[#FB914C]/30"
+                    className="w-full bg-brand-gradient hover:bg-brand-gradient-reverse text-white shadow-brand-glow hover:shadow-brand-glow-lg"
                   >
                     Upptäck vinprovningar
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -471,7 +471,7 @@ export default async function HomePage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full border-[#FB914C]/30 hover:border-[#FB914C] hover:bg-[#FDBA75]/5"
+                    className="w-full border-brand-400/30 hover:border-brand-400 hover:bg-brand-300/5"
                   >
                     Läs mer om oss
                   </Button>
@@ -485,17 +485,17 @@ export default async function HomePage() {
       {/* Testimonials Section - Hidden until we have real testimonials */}
       {/* <section className="py-16 lg:py-24 relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/3 right-10 w-96 h-96 bg-[#FDBA75]/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/3 left-10 w-72 h-72 bg-[#FB914C]/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/3 right-10 w-96 h-96 bg-brand-300/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/3 left-10 w-72 h-72 bg-brand-400/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-              <Users className="h-4 w-4 text-[#FB914C]" />
-              <span className="text-sm font-medium text-[#FB914C]">Medlemmar</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/20 mb-6">
+              <Users className="h-4 w-4 text-brand-400" />
+              <span className="text-sm font-medium text-brand-400">Medlemmar</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Vad andra säger</h2>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">Vad andra säger</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Våra medlemmar delar sina erfarenheter
             </p>
@@ -527,12 +527,12 @@ export default async function HomePage() {
             ].map((testimonial, index) => (
               <Card
                 key={index}
-                className="group relative hover:shadow-2xl transition-all duration-300 border-border hover:border-[#FB914C]/20 overflow-hidden"
+                className="group relative hover:shadow-2xl transition-all duration-300 border-border hover:border-brand-400/20 overflow-hidden"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#FDBA75]/20 to-transparent rounded-bl-full opacity-50 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-300/20 to-transparent rounded-bl-full opacity-50 group-hover:opacity-100 transition-opacity" />
 
                 <CardContent className="pt-8 pb-6 px-6 relative">
-                  <div className="absolute top-4 left-4 text-6xl font-serif text-[#FDBA75]/20 leading-none">
+                  <div className="absolute top-4 left-4 text-6xl font-serif text-brand-300/20 leading-none">
                     "
                   </div>
 
@@ -540,7 +540,7 @@ export default async function HomePage() {
                     {Array.from({ length: testimonial.rating }).map((_, i) => (
                       <Star
                         key={i}
-                        className="h-5 w-5 fill-[#FB914C] text-[#FB914C] group-hover:scale-110 transition-transform"
+                        className="h-5 w-5 fill-brand-400 text-brand-400 group-hover:scale-110 transition-transform"
                         style={{ transitionDelay: `${i * 50}ms` }}
                       />
                     ))}
@@ -550,11 +550,11 @@ export default async function HomePage() {
                     {testimonial.quote}
                   </p>
 
-                  <div className="flex items-center gap-4 pt-6 border-t border-[#FDBA75]/20">
+                  <div className="flex items-center gap-4 pt-6 border-t border-brand-300/20">
                     <div className="relative flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] p-[2px]">
+                      <div className="w-12 h-12 rounded-full bg-brand-gradient-diagonal p-[2px]">
                         <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                          <User className="h-6 w-6 text-[#FB914C]" />
+                          <User className="h-6 w-6 text-brand-400" />
                         </div>
                       </div>
                     </div>
@@ -569,12 +569,12 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-12 text-center">
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-[#FDBA75]/5 border border-[#FDBA75]/20">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-brand-300/5 border border-brand-300/20">
               <div className="flex -space-x-2">
                 {[1, 2, 3, 4].map((i) => (
                   <div
                     key={i}
-                    className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] border-2 border-background flex items-center justify-center"
+                    className="w-8 h-8 rounded-full bg-brand-gradient-diagonal border-2 border-background flex items-center justify-center"
                   >
                     <User className="h-4 w-4 text-white" />
                   </div>
@@ -593,23 +593,23 @@ export default async function HomePage() {
       <section className="py-16 lg:py-24 relative overflow-hidden">
         {/* Background decorative elements */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FDBA75]/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-300/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Premium Card Container */}
-          <Card className="relative overflow-hidden border-2 border-[#FB914C]/20 shadow-2xl">
+          <Card className="relative overflow-hidden border-2 border-brand-400/20 shadow-2xl">
             {/* Orange gradient border accent */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#FDBA75]/5 via-transparent to-[#FB914C]/5 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-300/5 via-transparent to-brand-400/5 pointer-events-none" />
 
             <CardContent className="p-8 md:p-12 relative">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-                  <Sparkles className="h-4 w-4 text-[#FB914C]" />
-                  <span className="text-sm font-medium text-[#FB914C]">Nyhetsbrev</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/20 mb-6">
+                  <Sparkles className="h-4 w-4 text-brand-400" />
+                  <span className="text-sm font-medium text-brand-400">Nyhetsbrev</span>
                 </div>
 
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4">
                   Håll dig uppdaterad
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
@@ -619,14 +619,14 @@ export default async function HomePage() {
                 {/* Trust indicators with orange accents */}
                 <div className="flex flex-wrap justify-center gap-8 mb-8">
                   <div className="flex items-center gap-2 text-sm">
-                    <div className="w-8 h-8 rounded-full bg-[#FDBA75]/20 flex items-center justify-center">
-                      <Users className="h-4 w-4 text-[#FB914C]" />
+                    <div className="w-8 h-8 rounded-full bg-brand-300/20 flex items-center justify-center">
+                      <Users className="h-4 w-4 text-brand-400" />
                     </div>
                     <span className="text-foreground font-medium">300+ prenumeranter</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <div className="w-8 h-8 rounded-full bg-[#FDBA75]/20 flex items-center justify-center">
-                      <Star className="h-4 w-4 text-[#FB914C] fill-[#FB914C]" />
+                    <div className="w-8 h-8 rounded-full bg-brand-300/20 flex items-center justify-center">
+                      <Star className="h-4 w-4 text-brand-400 fill-brand-400" />
                     </div>
                     <span className="text-foreground font-medium">80%+ öppningsfrekvens</span>
                   </div>
@@ -647,7 +647,7 @@ export default async function HomePage() {
               </div>
 
               {/* Benefits List */}
-              <div className="mt-10 pt-8 border-t border-[#FDBA75]/20">
+              <div className="mt-10 pt-8 border-t border-brand-300/20">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
                   {[
                     {
@@ -667,8 +667,8 @@ export default async function HomePage() {
                     },
                   ].map((benefit, index) => (
                     <div key={index} className="text-center space-y-2">
-                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-[#FDBA75]/20 to-[#FB914C]/20 mb-2">
-                        <benefit.icon className="h-6 w-6 text-[#FB914C]" />
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-brand-300/20 to-brand-400/20 mb-2">
+                        <benefit.icon className="h-6 w-6 text-brand-400" />
                       </div>
                       <h3 className="font-semibold text-foreground">{benefit.title}</h3>
                       <p className="text-sm text-muted-foreground">{benefit.description}</p>
@@ -685,21 +685,21 @@ export default async function HomePage() {
       <section className="py-20 lg:py-32 relative overflow-hidden">
         {/* Background decorative elements - more prominent for final CTA */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#FDBA75]/5 via-transparent to-[#FB914C]/5" />
-          <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-[#FDBA75]/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-[#FB914C]/10 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-300/5 via-transparent to-brand-400/5" />
+          <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-brand-300/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-brand-400/10 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-              <Sparkles className="h-4 w-4 text-[#FB914C]" />
-              <span className="text-sm font-medium text-[#FB914C]">Börja din vinresa</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/20 mb-6">
+              <Sparkles className="h-4 w-4 text-brand-400" />
+              <span className="text-sm font-medium text-brand-400">Börja din vinresa</span>
             </div>
 
             {/* Heading */}
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Redo att börja?</h2>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium mb-6">Redo att börja?</h2>
 
             {/* Description */}
             <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
@@ -712,7 +712,7 @@ export default async function HomePage() {
               <Link href="/vinprovningar">
                 <Button
                   size="lg"
-                  className="text-base px-8 py-6 bg-gradient-to-r from-[#FB914C] to-[#FDBA75] hover:from-[#FDBA75] hover:to-[#FB914C] text-white shadow-lg shadow-[#FB914C]/25 hover:shadow-xl hover:shadow-[#FB914C]/30 hover:scale-[1.02] transition-all"
+                  className="text-base px-8 py-6 bg-brand-gradient hover:bg-brand-gradient-reverse text-white shadow-brand-glow hover:shadow-brand-glow-lg hover:scale-[1.02] transition-all"
                 >
                   Utforska vinprovningar
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -722,7 +722,7 @@ export default async function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="text-base px-8 py-6 border-[#FB914C]/30 hover:border-[#FB914C] hover:bg-[#FDBA75]/5"
+                  className="text-base px-8 py-6 border-brand-400/30 hover:border-brand-400 hover:bg-brand-300/5"
                 >
                   Läs mer om oss
                 </Button>
@@ -730,7 +730,7 @@ export default async function HomePage() {
             </div>
 
             {/* Feature highlights with orange accents */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-8 border-t border-[#FDBA75]/20">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-8 border-t border-brand-300/20">
               {[
                 {
                   icon: CheckCircle2,
@@ -749,8 +749,8 @@ export default async function HomePage() {
                 },
               ].map((feature, index) => (
                 <div key={index} className="flex flex-col items-center text-center space-y-3">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FDBA75]/20 to-[#FB914C]/20 flex items-center justify-center">
-                    <feature.icon className="h-7 w-7 text-[#FB914C]" />
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-300/20 to-brand-400/20 flex items-center justify-center">
+                    <feature.icon className="h-7 w-7 text-brand-400" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">{feature.title}</h3>
