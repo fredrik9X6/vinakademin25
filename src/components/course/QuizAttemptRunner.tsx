@@ -291,7 +291,7 @@ export default function QuizAttemptRunner({ quiz, onPassed, onNavigateNext }: Qu
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-medium">Quiz: {quiz.title}</CardTitle>
+          <CardTitle className="text-xl font-medium">{quiz.title}</CardTitle>
           {!attemptId && !result && !loadingLastAttempt && (
             <Button
               variant="secondary"

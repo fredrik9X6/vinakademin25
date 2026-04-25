@@ -313,7 +313,7 @@ export default function LessonViewer({
                   <Badge variant="outline">{module.title}</Badge>
                   {lesson.isFree && <Badge variant="secondary">Gratis</Badge>}
                 </div>
-                <h1 className="text-2xl md:text-3xl font-bold">{lesson.title}</h1>
+                <h1 className="text-2xl md:text-3xl font-heading">{lesson.title}</h1>
                 {lesson.description && (
                   <div className="text-base md:text-lg text-muted-foreground">
                     <RichTextRenderer content={lesson.description} />
@@ -338,10 +338,7 @@ export default function LessonViewer({
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" /> Föregående
                 </Button>
-                <Button
-                  onClick={goToNextLesson}
-                  className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/25"
-                >
+                <button type="button" onClick={goToNextLesson} className="btn-brand">
                   {isLastLessonItem ? (
                     <>
                       Betygsätt vinprovningen <ChevronRight className="w-4 h-4 ml-1" />
@@ -351,7 +348,7 @@ export default function LessonViewer({
                       Nästa <ChevronRight className="w-4 h-4 ml-1" />
                     </>
                   )}
-                </Button>
+                </button>
               </div>
             </div>
 
@@ -553,16 +550,16 @@ export default function LessonViewer({
           <div className="text-sm text-muted-foreground px-2">
             {currentItemIndex + 1} / {allItems.length}
           </div>
-          <Button
-            size="lg"
+          <button
+            type="button"
             onClick={goToNextLesson}
-            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+            className="btn-brand flex-1"
           >
             <span className="hidden xs:inline">
               {isLastLessonItem ? 'Betygsätt' : 'Nästa'}
             </span>
             <ChevronRight className="w-5 h-5 ml-1" />
-          </Button>
+          </button>
         </div>
       </div>
 
