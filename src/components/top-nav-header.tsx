@@ -61,7 +61,7 @@ export function TopNavHeader() {
         <Link
           href="/"
           aria-label="Vinakademin — startsida"
-          className="text-brand-gradient shrink-0 font-heading text-2xl leading-none sm:text-[28px]"
+          className="text-brand-gradient shrink-0 font-heading text-2xl leading-none transition-opacity hover:opacity-80 sm:text-[28px]"
         >
           Vinakademin
         </Link>
@@ -75,10 +75,10 @@ export function TopNavHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'text-[#FB914C] bg-[#FB914C]/10'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    ? 'bg-brand-400/10 text-brand-400'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
                 {link.label}
@@ -97,7 +97,7 @@ export function TopNavHeader() {
                 checked={theme === 'dark'}
                 onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
                 aria-label="Toggle theme"
-                className="data-[state=checked]:bg-[#FB914C]"
+                className="data-[state=checked]:bg-brand-400"
               />
               {theme === 'light' ? (
                 <SunIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -116,7 +116,9 @@ export function TopNavHeader() {
                 <button className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors outline-none">
                   <Avatar className="h-7 w-7 rounded-full">
                     <AvatarImage src={avatarUrl} alt={userName} />
-                    <AvatarFallback className="text-xs">{fallbackInitial}</AvatarFallback>
+                    <AvatarFallback className="bg-brand-300/15 text-xs font-medium text-brand-400">
+                      {fallbackInitial}
+                    </AvatarFallback>
                   </Avatar>
                   <span className="hidden lg:inline max-w-[120px] truncate">{userName}</span>
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
