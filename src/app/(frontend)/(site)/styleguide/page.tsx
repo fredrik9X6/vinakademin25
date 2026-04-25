@@ -20,30 +20,24 @@ import {
   Instagram,
   Music2,
   Loader2,
-  AlertTriangle,
   Calendar,
-  Image as ImageIcon,
-  Palette as PaletteIcon,
-  Type as TypeIcon,
-  MousePointer2,
-  MessagesSquare,
-  Grid as GridIcon,
 } from 'lucide-react'
 import { getSiteURL } from '@/lib/site-url'
 
 export const metadata: Metadata = {
   title: 'Designsystem | Vinakademin',
   description:
-    'Foundations, components and brand patterns for Vinakademin — typography, palette, spacing, buttons, cards, forms, iconography and logo usage.',
+    'Grunder och komponenter för Vinakademin — typografi, palett, spacing, knappar, kort, formulär, ikoner och logotyp.',
   alternates: { canonical: `${getSiteURL()}/styleguide` },
   robots: { index: false, follow: false },
 }
 
 const ORANGE_300 = '#FDBA75'
 const ORANGE_400 = '#FB914C'
+const GRADIENT = `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`
 
 const sections = [
-  { id: 'logo', label: 'Logo' },
+  { id: 'logo', label: 'Logotyp' },
   { id: 'typography', label: 'Typografi' },
   { id: 'palette', label: 'Palett' },
   { id: 'spacing', label: 'Spacing & form' },
@@ -52,6 +46,15 @@ const sections = [
   { id: 'forms', label: 'Formulär' },
   { id: 'icons', label: 'Ikoner' },
 ]
+
+/* ========================================================================== */
+/* SHARED                                                                     */
+/* ========================================================================== */
+
+// Coolvetica RG.TTF is loaded as a single-weight face. Using font-bold here
+// would trigger browser faux-bolding (which crams + overlaps glyphs at large
+// sizes). Display titles use the natural weight via font-heading only.
+const HEADING = 'font-heading tracking-tight leading-[1]'
 
 function SectionHead({
   eyebrow,
@@ -67,9 +70,7 @@ function SectionHead({
       <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {eyebrow}
       </span>
-      <h2 className="font-heading text-4xl font-bold leading-[1] tracking-tight md:text-5xl">
-        {title}
-      </h2>
+      <h2 className={`${HEADING} text-4xl md:text-5xl`}>{title}</h2>
       <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-muted-foreground">
         {subtitle}
       </p>
@@ -77,7 +78,13 @@ function SectionHead({
   )
 }
 
-function Eyebrow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+function Eyebrow({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
     <span
       className={`text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground ${className}`}
@@ -95,7 +102,9 @@ function Panel({
   className?: string
 }) {
   return (
-    <div className={`rounded-2xl border border-border bg-card p-7 ${className}`}>{children}</div>
+    <div className={`rounded-2xl border border-border bg-card p-7 shadow-sm ${className}`}>
+      {children}
+    </div>
   )
 }
 
@@ -107,7 +116,7 @@ function LogoSection() {
   return (
     <section id="logo" className="scroll-mt-24">
       <SectionHead
-        eyebrow="Brand · Logo"
+        eyebrow="Brand · Logotyp"
         title={
           <>
             Vinakademin,
@@ -115,7 +124,7 @@ function LogoSection() {
             alltid i ett stycke
           </>
         }
-        subtitle="The wordmark is the primary mark. The logomark — a single wine glass with an orange accent drop — is reserved for favicons, avatars, and tight square spots. Never invert colors or stack a mark on a surface that fights its contrast."
+        subtitle="Wordmarken är den primära logotypen. Logomärket — ett enkelt vinglas med en orange droppe — är reserverat för favicons, avatarer och trånga kvadratiska ytor. Invertera aldrig färgerna och placera aldrig märket på en yta som tappar kontrasten."
       />
 
       <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
@@ -130,7 +139,7 @@ function LogoSection() {
           />
           <Image
             src="/brand/vinakademin_logo_lockup_darkmode.svg"
-            alt="Vinakademin lockup on dark"
+            alt="Vinakademin lockup på mörk bakgrund"
             width={520}
             height={260}
             className="relative z-10 max-h-[260px] w-auto max-w-[58%]"
@@ -139,8 +148,14 @@ function LogoSection() {
 
         <div className="grid grid-cols-2 gap-4">
           <LogoTile bg="bg-[#fafafa]" border="border-[#e5e5e5]" capColor="text-[#666]">
-            <Image src="/brand/Vinakademin_logo_lockup.svg" alt="Lockup on light" width={130} height={80} className="max-h-[80px] w-auto max-w-[130px] object-contain" />
-            <span className="font-mono text-[11px]">Light surface</span>
+            <Image
+              src="/brand/Vinakademin_logo_lockup.svg"
+              alt="Logotyp på ljus yta"
+              width={130}
+              height={80}
+              className="max-h-[80px] w-auto max-w-[130px] object-contain"
+            />
+            <span className="font-mono text-[11px]">Ljus yta</span>
           </LogoTile>
 
           <LogoTile
@@ -148,24 +163,42 @@ function LogoSection() {
             border="border-[rgba(253,186,117,0.3)]"
             capColor="text-[#8a5a2a]"
           >
-            <Image src="/brand/Vinakademin_logo_lockup.svg" alt="Lockup on cream" width={130} height={80} className="max-h-[80px] w-auto max-w-[130px] object-contain" />
-            <span className="font-mono text-[11px]">Cream accent</span>
+            <Image
+              src="/brand/Vinakademin_logo_lockup.svg"
+              alt="Logotyp på cremegul yta"
+              width={130}
+              height={80}
+              className="max-h-[80px] w-auto max-w-[130px] object-contain"
+            />
+            <span className="font-mono text-[11px]">Crèmeaccent</span>
           </LogoTile>
 
           <LogoTile bg="" border="border-0" capColor="text-white" gradient>
-            <Image src="/brand/vinakademin_logo_lockup_darkmode.svg" alt="Lockup on orange" width={130} height={80} className="max-h-[80px] w-auto max-w-[130px] object-contain" />
+            <Image
+              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              alt="Logotyp på orange yta"
+              width={130}
+              height={80}
+              className="max-h-[80px] w-auto max-w-[130px] object-contain"
+            />
             <span className="font-mono text-[11px]">Brand orange</span>
           </LogoTile>
 
           <LogoTile bg="bg-[#1a1a1a]" border="border-border" capColor="text-muted-foreground">
-            <Image src="/brand/vinakademin_logo_lockup_darkmode.svg" alt="Lockup on dark" width={130} height={80} className="max-h-[80px] w-auto max-w-[130px] object-contain" />
-            <span className="font-mono text-[11px]">Dark (default)</span>
+            <Image
+              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              alt="Logotyp på mörk yta"
+              width={130}
+              height={80}
+              className="max-h-[80px] w-auto max-w-[130px] object-contain"
+            />
+            <span className="font-mono text-[11px]">Mörkt (standard)</span>
           </LogoTile>
         </div>
       </div>
 
       <Panel className="mt-8">
-        <Eyebrow className="mb-5 block">Logomark</Eyebrow>
+        <Eyebrow className="mb-5 block">Logomärke</Eyebrow>
         <div className="flex flex-wrap items-center gap-4">
           {[
             { size: 'h-16 w-16 p-3', bg: 'bg-[#1a1a1a]', border: 'border-border' },
@@ -194,7 +227,7 @@ function LogoSection() {
                     ? '/brand/vinakademin_logomark_favicon.svg'
                     : '/brand/vinakademin_logomark.svg'
                 }
-                alt="Logomark"
+                alt="Logomärke"
                 width={48}
                 height={48}
                 className="h-full w-full object-contain"
@@ -203,31 +236,71 @@ function LogoSection() {
           ))}
         </div>
         <p className="mt-5 text-[13px] leading-relaxed text-muted-foreground">
-          A single wine glass silhouette with a small orange drop at the rim — the &ldquo;academy&rdquo;
-          mark. Use for favicons, avatars, app icons, and whenever the full lockup would shrink
-          smaller than 24px tall.
+          Ett vinglas i siluett med en liten orange droppe vid kanten — &ldquo;academy&rdquo;-märket.
+          Använd för favicons, avatarer, app-ikoner och alltid när hela lockupen skulle bli mindre
+          än 24 px hög.
         </p>
       </Panel>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <DoDontCard tone="good" head="Do — breathing room" note="Min clear space = 1× the mark's height on all sides. Full lockup above 80px wide; logomark only below.">
+        <DoDontCard
+          tone="good"
+          head="Gör — andas runt märket"
+          note="Minsta luftrum = 1× märkets höjd på alla sidor. Hela lockupen från 80 px bredd och uppåt; därunder bara logomärket."
+        >
           <div className="flex h-[110px] items-center justify-center rounded-xl border border-border bg-[#1a1a1a] p-4">
-            <Image src="/brand/vinakademin_logo_lockup_darkmode.svg" alt="" width={150} height={60} className="max-h-[80%] w-auto" />
+            <Image
+              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              alt=""
+              width={150}
+              height={60}
+              className="max-h-[80%] w-auto"
+            />
           </div>
         </DoDontCard>
-        <DoDontCard tone="bad" head="Don't — crowd" note="Don't crowd it or shrink the lockup under 80px. Switch to the logomark instead.">
+        <DoDontCard
+          tone="bad"
+          head="Undvik — för trångt"
+          note="Pressa inte ihop märket eller krymp under 80 px. Byt till logomärket istället."
+        >
           <div className="flex h-[110px] items-center justify-center rounded-xl border border-border bg-[#1a1a1a] p-0.5">
-            <Image src="/brand/vinakademin_logo_lockup_darkmode.svg" alt="" width={300} height={120} className="max-h-full w-full object-contain" />
+            <Image
+              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              alt=""
+              width={300}
+              height={120}
+              className="max-h-full w-full object-contain"
+            />
           </div>
         </DoDontCard>
-        <DoDontCard tone="good" head="Do — matched surface" note="Light variant on light, dark on dark. Never re-color the wordmark.">
+        <DoDontCard
+          tone="good"
+          head="Gör — matcha ytan"
+          note="Ljus variant på ljust, mörk på mörkt. Färglägg aldrig om wordmarken."
+        >
           <div className="flex h-[110px] items-center justify-center rounded-xl border border-[#e5e5e5] bg-[#fafafa] p-4">
-            <Image src="/brand/Vinakademin_logo_lockup.svg" alt="" width={150} height={60} className="max-h-[80%] w-auto" />
+            <Image
+              src="/brand/Vinakademin_logo_lockup.svg"
+              alt=""
+              width={150}
+              height={60}
+              className="max-h-[80%] w-auto"
+            />
           </div>
         </DoDontCard>
-        <DoDontCard tone="bad" head="Don't — busy bg" note="No placement over busy imagery or competing gradients — low contrast kills the mark.">
+        <DoDontCard
+          tone="bad"
+          head="Undvik — stökig bakgrund"
+          note="Placera inte märket över livliga bilder eller konkurrerande gradienter — låg kontrast dödar märket."
+        >
           <div className="flex h-[110px] items-center justify-center rounded-xl bg-[linear-gradient(45deg,#ff006e,#8338ec,#3a86ff)] p-4">
-            <Image src="/brand/vinakademin_logo_lockup_darkmode.svg" alt="" width={150} height={60} className="max-h-[80%] w-auto" />
+            <Image
+              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              alt=""
+              width={150}
+              height={60}
+              className="max-h-[80%] w-auto"
+            />
           </div>
         </DoDontCard>
       </div>
@@ -283,7 +356,7 @@ function DoDontCard({
     >
       <span
         className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${
-          tone === 'good' ? 'text-[#4ade80]' : 'text-[#f87171]'
+          tone === 'good' ? 'text-[#16a34a]' : 'text-[#dc2626]'
         }`}
       >
         {head}
@@ -302,7 +375,7 @@ function TypographySection() {
   return (
     <section id="typography" className="scroll-mt-24">
       <SectionHead
-        eyebrow="Typography"
+        eyebrow="Typografi"
         title={
           <>
             Vänligt men
@@ -310,7 +383,7 @@ function TypographySection() {
             bestämt
           </>
         }
-        subtitle="Coolvetica does the heavy lifting on H1s and the wordmark — warm, rounded, a little bit quirky. Everything else is Inter, set in font-medium (never bold) for a quiet, editorial hierarchy."
+        subtitle="Coolvetica drar tunga lasset på H1 och i wordmarken — varm, rundad och lite egensinnig. Allt annat är Inter, satt i font-medium (aldrig fet) för en stilla, redaktionell hierarki."
       />
 
       <div className="grid gap-10">
@@ -318,15 +391,13 @@ function TypographySection() {
           {
             meta: 'H1 Hero · Coolvetica 72/72',
             demo: (
-              <div className="font-heading text-[clamp(40px,6vw,72px)] font-bold leading-[1] tracking-[-0.015em]">
+              <div className={`${HEADING} text-[clamp(40px,6vw,72px)]`}>
                 Vinprovningar
                 <br />
                 hemma,{' '}
                 <span
                   className="bg-clip-text text-transparent"
-                  style={{
-                    backgroundImage: `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`,
-                  }}
+                  style={{ backgroundImage: GRADIENT }}
                 >
                   enkelt &amp; opretentiöst.
                 </span>
@@ -336,7 +407,7 @@ function TypographySection() {
           {
             meta: 'H1 · Coolvetica 56/60',
             demo: (
-              <div className="font-heading text-[clamp(36px,5vw,56px)] font-bold leading-[1.05] tracking-[-0.015em]">
+              <div className={`${HEADING} text-[clamp(36px,5vw,56px)]`}>
                 Så fungerar en vinprovning
               </div>
             ),
@@ -369,7 +440,7 @@ function TypographySection() {
             ),
           },
           {
-            meta: 'Body · Inter 16/28',
+            meta: 'Brödtext · Inter 16/28',
             demo: (
               <div className="max-w-[56ch] text-base leading-[1.75]">
                 Vi gör vinkunskap enkelt &amp; opretentiöst. Våra guidade provningar leder dig
@@ -380,19 +451,17 @@ function TypographySection() {
             ),
           },
           {
-            meta: 'Eyebrow · 11 uppercase',
+            meta: 'Eyebrow · 11 versaler',
             demo: <Eyebrow>Rekommenderad vinprovning · Steg 01 · Instruktör</Eyebrow>,
           },
           {
-            meta: 'Emphasis color',
+            meta: 'Markeringsfärg',
             demo: (
               <div className="text-base leading-[1.75]">
                 Priser skrivs i brand-gradient:{' '}
                 <span
-                  className="bg-clip-text text-[28px] font-bold text-transparent"
-                  style={{
-                    backgroundImage: `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`,
-                  }}
+                  className="bg-clip-text text-[28px] font-medium text-transparent"
+                  style={{ backgroundImage: GRADIENT }}
                 >
                   399 kr
                 </span>
@@ -448,7 +517,7 @@ function PaletteSection() {
   return (
     <section id="palette" className="scroll-mt-24">
       <SectionHead
-        eyebrow="Colors"
+        eyebrow="Färger"
         title={
           <>
             Svart kök.
@@ -456,7 +525,7 @@ function PaletteSection() {
             Varm glöd.
           </>
         }
-        subtitle="Neutral near-black surfaces, warm off-white text, and a single brand orange (two shades) that carries every CTA, glow and accent. Neutrals lean warm — never slate or steel."
+        subtitle="Neutrala, nästan svarta ytor, varmt benvitt för text och en enda brand orange (i två toner) som bär varje CTA, glöd och accent. Neutrala toner lutar varmt — aldrig blågrått."
       />
 
       <Eyebrow className="mb-3 mt-8 block">Brand</Eyebrow>
@@ -468,10 +537,10 @@ function PaletteSection() {
             color: '#1a0f06',
           }}
         >
-          <div className="font-heading text-3xl">Vinakademin Orange</div>
+          <div className={`${HEADING} text-3xl`}>Vinakademin Orange</div>
           <div className="font-mono text-[11px] opacity-75">
-            <div>Gradient · used on primary CTAs, price, premium borders</div>
-            <div>from #FB914C → to #FDBA75</div>
+            <div>Gradient · CTA, priser, premiumramar</div>
+            <div>från #FB914C → till #FDBA75</div>
           </div>
         </div>
         <div
@@ -484,7 +553,7 @@ function PaletteSection() {
             <br />
             HSL 24 95 64
             <br />
-            dark-mode CTA
+            CTA i mörkt läge
           </div>
         </div>
         <div
@@ -497,41 +566,41 @@ function PaletteSection() {
             <br />
             HSL 27 96 77
             <br />
-            light-mode CTA
+            CTA i ljust läge
           </div>
         </div>
       </div>
 
-      <Eyebrow className="mb-3 mt-8 block">Neutrals — Dark (default)</Eyebrow>
+      <Eyebrow className="mb-3 mt-8 block">Neutrala — mörkt (standard)</Eyebrow>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Swatch bg="#171717" name="Background" value="#171717 · 0 0% 9%" />
+        <Swatch bg="#171717" name="Bakgrund" value="#171717 · 0 0% 9%" />
         <Swatch
           bg="#fafafa"
-          name="Foreground"
+          name="Förgrund"
           value="#FAFAFA · 0 6% 98%"
           swatchClass="border-b border-border"
         />
-        <Swatch bg="#2a2a2a" name="Muted / Border" value="#2A2A2A · 240 4% 16%" />
-        <Swatch bg="#2a2622" name="Accent (warm)" value="#2A2622 · 30 16% 16%" />
+        <Swatch bg="#2a2a2a" name="Muted / kant" value="#2A2A2A · 240 4% 16%" />
+        <Swatch bg="#2a2622" name="Accent (varm)" value="#2A2622 · 30 16% 16%" />
       </div>
 
-      <Eyebrow className="mb-3 mt-8 block">Neutrals — Light</Eyebrow>
+      <Eyebrow className="mb-3 mt-8 block">Neutrala — ljust</Eyebrow>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Swatch
           bg="#ffffff"
-          name="Background"
+          name="Bakgrund"
           value="#FFFFFF · 0 0% 100%"
           swatchClass="border-b border-border"
         />
-        <Swatch bg="#0a0a0b" name="Foreground" value="#0A0A0B · 240 10% 4%" />
+        <Swatch bg="#0a0a0b" name="Förgrund" value="#0A0A0B · 240 10% 4%" />
         <Swatch bg="#f1f1f3" name="Muted" value="#F1F1F3 · 240 5% 96%" />
-        <Swatch bg="#FFF7EE" name="Accent cream" value="#FFF7EE · 32 100% 97%" />
+        <Swatch bg="#FFF7EE" name="Accent crème" value="#FFF7EE · 32 100% 97%" />
       </div>
 
       <div className="mt-9 grid gap-4 md:grid-cols-2">
         <Panel>
-          <Eyebrow>Usage ratio</Eyebrow>
-          <div className="mt-3 font-heading text-[40px] tracking-tight">
+          <Eyebrow>Användningsförhållande</Eyebrow>
+          <div className={`${HEADING} mt-3 text-[40px]`}>
             70 / 25 / <span style={{ color: ORANGE_400 }}>5</span>
           </div>
           <div
@@ -541,16 +610,16 @@ function PaletteSection() {
             }}
           />
           <p className="text-[13px] leading-relaxed text-muted-foreground">
-            Dark neutral carries 70% of any surface; warm off-white text and muted chips carry 25%;
-            brand orange is reserved for 5% — the single thing you want clicked.
+            Mörk neutral bär 70 % av varje yta. Varmt benvitt för text och muted-chips bär 25 %.
+            Brand orange är reserverat för 5 % — det enda du faktiskt vill att någon ska klicka på.
           </p>
         </Panel>
         <Panel>
-          <Eyebrow>Don&rsquo;t</Eyebrow>
+          <Eyebrow>Undvik</Eyebrow>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-[13px] leading-relaxed text-muted-foreground">
-            <li>No gradient wallpapers. Use soft orange blur-blobs behind sections instead.</li>
-            <li>No cool neutrals (slate/zinc). Grays lean warm toward the cream accent.</li>
-            <li>Never stack orange-on-orange. The glow is the accent — don&rsquo;t build on it.</li>
+            <li>Inga gradient-tapeter. Använd mjuka orange blur-blobbar bakom sektioner.</li>
+            <li>Inga kalla neutraler (slate/zinc). Gråtoner lutar varmt mot crèmeaccenten.</li>
+            <li>Stapla aldrig orange på orange. Glöden är accenten — bygg inte ovanpå den.</li>
           </ul>
         </Panel>
       </div>
@@ -582,13 +651,13 @@ function SpacingSection() {
   return (
     <section id="spacing" className="scroll-mt-24">
       <SectionHead
-        eyebrow="Spacing · Radius · Shadow"
+        eyebrow="Spacing · radie · skugga"
         title="Lugnt och luftigt"
-        subtitle="Tailwind's default scale, dialed warm. Corners are gently rounded (never pills except for badges), shadows are soft and diffuse, and brand glow is reserved for the CTA."
+        subtitle="Tailwinds standardskala, varmare i tonen. Hörn är mjukt rundade (aldrig piller utom badges), skuggor är mjuka och diffusa, och brand-glöden är reserverad för CTA:n."
       />
 
       <Panel className="mb-5">
-        <Eyebrow className="mb-3 block">Radius ramp</Eyebrow>
+        <Eyebrow className="mb-3 block">Radieramp</Eyebrow>
         <div className="flex flex-wrap items-end gap-4">
           {radii.map((r) => (
             <div
@@ -603,62 +672,62 @@ function SpacingSection() {
             className="flex h-[72px] w-[120px] items-end justify-center bg-muted pb-2 font-mono text-[11px] text-muted-foreground"
             style={{ borderRadius: '9999px' }}
           >
-            full · pill
+            full · piller
           </div>
         </div>
         <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
-          Buttons &amp; inputs <code className="rounded bg-muted px-1.5">md</code> · Cards{' '}
-          <code className="rounded bg-muted px-1.5">xl</code> · Hero cards / premium{' '}
-          <code className="rounded bg-muted px-1.5">2xl</code> · Badges &amp; avatars{' '}
+          Knappar &amp; inputs <code className="rounded bg-muted px-1.5">md</code> · Kort{' '}
+          <code className="rounded bg-muted px-1.5">xl</code> · Hjältekort / premium{' '}
+          <code className="rounded bg-muted px-1.5">2xl</code> · Badges &amp; avatarer{' '}
           <code className="rounded bg-muted px-1.5">full</code>
         </p>
       </Panel>
 
       <Panel className="mb-5">
-        <Eyebrow className="mb-3 block">Shadow ramp</Eyebrow>
+        <Eyebrow className="mb-3 block">Skuggramp</Eyebrow>
         <div className="flex flex-wrap gap-7">
           <div>
             <div className="min-w-[150px] rounded-xl border border-border bg-card p-4 shadow-sm">
               shadow-sm
             </div>
-            <p className="mt-2 font-mono text-[12px] text-muted-foreground">hairline lift</p>
+            <p className="mt-2 font-mono text-[12px] text-muted-foreground">hårfin lyft</p>
           </div>
           <div>
             <div className="min-w-[150px] rounded-xl border border-border bg-card p-4 shadow">
               shadow
             </div>
-            <p className="mt-2 font-mono text-[12px] text-muted-foreground">card rest</p>
+            <p className="mt-2 font-mono text-[12px] text-muted-foreground">kort i vila</p>
           </div>
           <div>
             <div className="min-w-[150px] rounded-xl border border-border bg-card p-4 shadow-lg">
               shadow-lg
             </div>
-            <p className="mt-2 font-mono text-[12px] text-muted-foreground">card hover</p>
+            <p className="mt-2 font-mono text-[12px] text-muted-foreground">kort vid hover</p>
           </div>
           <div>
             <div className="min-w-[150px] rounded-xl border border-border bg-card p-4 shadow-xl">
               shadow-xl
             </div>
-            <p className="mt-2 font-mono text-[12px] text-muted-foreground">floating panel</p>
+            <p className="mt-2 font-mono text-[12px] text-muted-foreground">flytande panel</p>
           </div>
           <div>
             <div
               className="min-w-[150px] rounded-xl p-4 text-[#1a0f06]"
               style={{
-                background: `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`,
+                background: GRADIENT,
                 boxShadow: `0 10px 25px -5px rgba(251,145,76,0.25)`,
               }}
             >
-              brand glow
+              brand-glöd
             </div>
-            <p className="mt-2 font-mono text-[12px] text-muted-foreground">CTA only</p>
+            <p className="mt-2 font-mono text-[12px] text-muted-foreground">endast CTA</p>
           </div>
         </div>
       </Panel>
 
       <div className="grid gap-5 md:grid-cols-2">
         <Panel>
-          <Eyebrow className="mb-3 block">Spacing scale (Tailwind)</Eyebrow>
+          <Eyebrow className="mb-3 block">Spacing-skala (Tailwind)</Eyebrow>
           <div className="mt-3 flex flex-col gap-2.5">
             {space.map((s) => (
               <div key={s.tag} className="flex items-center gap-4">
@@ -667,37 +736,34 @@ function SpacingSection() {
                 </span>
                 <div
                   className="h-3.5 rounded"
-                  style={{
-                    width: s.w,
-                    background: `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`,
-                  }}
+                  style={{ width: s.w, background: GRADIENT }}
                 />
               </div>
             ))}
           </div>
           <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
-            Section vertical rhythm uses <code className="rounded bg-muted px-1.5">py-16</code> /{' '}
-            <code className="rounded bg-muted px-1.5">lg:py-24</code>. Final CTA section goes{' '}
-            <code className="rounded bg-muted px-1.5">py-32</code>.
+            Sektionsrytm i höjdled använder <code className="rounded bg-muted px-1.5">py-16</code>{' '}
+            / <code className="rounded bg-muted px-1.5">lg:py-24</code>. Sista CTA-sektionen går
+            upp till <code className="rounded bg-muted px-1.5">py-32</code>.
           </p>
         </Panel>
 
         <Panel>
-          <Eyebrow className="mb-3 block">Container widths</Eyebrow>
+          <Eyebrow className="mb-3 block">Containerbredder</Eyebrow>
           <div className="mt-3 rounded-2xl border border-dashed border-border p-5">
             <div className="mb-1.5 font-mono text-[11px] text-muted-foreground">
-              max-w-7xl · 1280 — sections
+              max-w-7xl · 1280 — sektioner
             </div>
             <div className="mb-2 h-4 rounded bg-muted" />
             <div className="mb-2 h-4 w-4/5 rounded bg-muted" />
             <div className="mb-2 h-4 w-3/5 rounded bg-muted" />
             <div className="mb-1.5 mt-3 font-mono text-[11px] text-muted-foreground">
-              max-w-5xl · 1024 — hero text
+              max-w-5xl · 1024 — hjältetext
             </div>
             <div className="mb-2 h-4 w-[70%] rounded bg-muted" />
             <div className="mb-2 h-4 w-[55%] rounded bg-muted" />
             <div className="mb-1.5 mt-3 font-mono text-[11px] text-muted-foreground">
-              max-w-2xl · 672 — paragraphs
+              max-w-2xl · 672 — paragrafer
             </div>
             <div className="h-4 w-[45%] rounded bg-muted" />
           </div>
@@ -729,7 +795,11 @@ function PreviewBtn({
   hover?: boolean
 }) {
   const sizeClass =
-    size === 'sm' ? 'h-8 px-3.5 text-[13px]' : size === 'lg' ? 'h-12 px-7 text-[15px]' : 'h-10 px-6 text-[14px]'
+    size === 'sm'
+      ? 'h-8 px-3.5 text-[13px]'
+      : size === 'lg'
+        ? 'h-12 px-7 text-[15px]'
+        : 'h-10 px-6 text-[14px]'
   const base =
     'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all whitespace-nowrap'
   let style: React.CSSProperties = {}
@@ -738,7 +808,7 @@ function PreviewBtn({
     style = {
       background: hover
         ? `linear-gradient(90deg, ${ORANGE_300}, ${ORANGE_400})`
-        : `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`,
+        : GRADIENT,
       color: '#fff',
       boxShadow: hover
         ? '0 15px 28px -8px rgba(251,145,76,0.35)'
@@ -751,10 +821,10 @@ function PreviewBtn({
     style = {
       background: 'rgba(251,145,76,0.12)',
       borderColor: 'rgba(251,145,76,0.25)',
-      color: ORANGE_300,
+      color: ORANGE_400,
     }
   } else if (variant === 'default') {
-    style = { background: '#fcfafa', color: '#333' }
+    cls = 'border border-border bg-foreground text-background'
   } else if (variant === 'outline') {
     cls = 'border bg-transparent text-foreground'
     style = { borderColor: 'rgba(251,145,76,0.3)' }
@@ -789,9 +859,9 @@ function Badge({
   const styles: Record<string, string> = {
     brand:
       'bg-[rgba(253,186,117,0.1)] text-[#FB914C] border-[rgba(253,186,117,0.3)] border',
-    green: 'bg-[rgba(34,197,94,0.15)] text-[#4ade80]',
-    yellow: 'bg-[rgba(234,179,8,0.15)] text-[#facc15]',
-    red: 'bg-[rgba(239,68,68,0.15)] text-[#f87171]',
+    green: 'bg-[rgba(34,197,94,0.15)] text-[#16a34a] dark:text-[#4ade80]',
+    yellow: 'bg-[rgba(234,179,8,0.15)] text-[#a16207] dark:text-[#facc15]',
+    red: 'bg-[rgba(239,68,68,0.15)] text-[#b91c1c] dark:text-[#f87171]',
     neutral: 'bg-muted text-foreground',
     outline: 'border border-border text-muted-foreground',
   }
@@ -808,7 +878,7 @@ function ButtonsSection() {
   return (
     <section id="buttons" className="scroll-mt-24">
       <SectionHead
-        eyebrow="Components · Buttons & Badges"
+        eyebrow="Komponenter · knappar & badges"
         title={
           <>
             Endast en
@@ -816,12 +886,12 @@ function ButtonsSection() {
             viktig knapp
           </>
         }
-        subtitle="The orange gradient is the single thing we want clicked on any screen. Everything else is neutral or outline. Arrows translate 3px right on hover; gradients flip direction."
+        subtitle="Den orange gradienten är det enda vi vill att någon ska klicka på en skärm. Allt annat är neutralt eller outline. Pilen rör sig 3 px åt höger vid hover; gradienten vänder riktning."
       />
 
       <div className="grid gap-5 md:grid-cols-2">
         <Panel>
-          <Eyebrow className="mb-2 block">Primary — brand gradient</Eyebrow>
+          <Eyebrow className="mb-2 block">Primär — brand-gradient</Eyebrow>
           <div className="flex flex-wrap items-center gap-2.5">
             <PreviewBtn>
               Kom igång <ArrowRight className="h-3.5 w-3.5" />
@@ -832,12 +902,12 @@ function ButtonsSection() {
             <PreviewBtn size="sm">Prova gratis</PreviewBtn>
           </div>
           <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-            Used sparingly — the #1 action on any screen. Only one per viewport.
+            Används sparsamt — den primära handlingen på varje skärm. Endast en per vy.
           </p>
         </Panel>
 
         <Panel>
-          <Eyebrow className="mb-2 block">Secondary / Default</Eyebrow>
+          <Eyebrow className="mb-2 block">Sekundär / standard</Eyebrow>
           <div className="flex flex-wrap items-center gap-2.5">
             <PreviewBtn variant="secondary">Gå med</PreviewBtn>
             <PreviewBtn variant="default">Logga in</PreviewBtn>
@@ -846,20 +916,20 @@ function ButtonsSection() {
             <PreviewBtn variant="link">Glömt lösenord?</PreviewBtn>
           </div>
           <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-            Secondary is a soft orange-tinted chip — present but quieter than the primary gradient.
-            Default is a neutral swap; outline borders tint orange on hover.
+            Sekundär är ett mjukt orange-tintat chip — på plats men tystare än den primära
+            gradienten. Standard är en neutral knapp; outline-kanter får orange ton vid hover.
           </p>
         </Panel>
 
         <Panel>
-          <Eyebrow className="mb-3 block">States</Eyebrow>
+          <Eyebrow className="mb-3 block">Tillstånd</Eyebrow>
           <div className="flex flex-col gap-3">
             {[
-              { label: 'Rest', node: <PreviewBtn>Kom igång</PreviewBtn> },
+              { label: 'Vila', node: <PreviewBtn>Kom igång</PreviewBtn> },
               { label: 'Hover', node: <PreviewBtn hover>Kom igång</PreviewBtn> },
-              { label: 'Focus', node: <PreviewBtn focused>Kom igång</PreviewBtn> },
-              { label: 'Disabled', node: <PreviewBtn disabled>Kom igång</PreviewBtn> },
-              { label: 'Loading', node: <PreviewBtn loading>Laddar…</PreviewBtn> },
+              { label: 'Fokus', node: <PreviewBtn focused>Kom igång</PreviewBtn> },
+              { label: 'Inaktiv', node: <PreviewBtn disabled>Kom igång</PreviewBtn> },
+              { label: 'Laddar', node: <PreviewBtn loading>Laddar…</PreviewBtn> },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-3">
                 <span className="min-w-[80px] font-mono text-[11px] tracking-wide text-muted-foreground">
@@ -893,8 +963,8 @@ function ButtonsSection() {
             </Badge>
           </div>
           <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-            All badges use sentence case; level badges use the brand-tint pair; status badges use
-            semantic tints in dark mode.
+            Alla badges följer mening (sentence case). Nivå-badges använder brand-tinten;
+            statusbadges använder semantiska toner.
           </p>
         </Panel>
       </div>
@@ -910,7 +980,7 @@ function CardsSection() {
   return (
     <section id="cards" className="scroll-mt-24">
       <SectionHead
-        eyebrow="Components · Cards"
+        eyebrow="Komponenter · kort"
         title={
           <>
             En stjärna,
@@ -918,27 +988,31 @@ function CardsSection() {
             resten stilla
           </>
         }
-        subtitle="One featured card per page gets the premium gradient border. Everything else is a hairline on warm neutral. Mobile step cards use a left-accent border + ghost display number — don't reach for this pattern anywhere else."
+        subtitle="Ett kort per sida får den premium-orange gradientramen. Allt annat är en hårfin kant på varm neutral yta. Mobilstegens kort använder vänster-accent + spöksiffra — undvik det mönstret någon annanstans."
       />
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        {/* Featured card */}
-        <div
-          className="relative rounded-[20px] p-0.5"
-          style={{
-            background: `linear-gradient(90deg, ${ORANGE_300}, ${ORANGE_400}, ${ORANGE_300})`,
-            boxShadow: '0 0 60px -10px rgba(251,145,76,0.35)',
-          }}
-        >
-          <div className="grid grid-cols-1 overflow-hidden rounded-[18px] bg-[#1a1a1a] md:grid-cols-[1fr_1.1fr]">
+        {/* Featured card — matches FeaturedCourseCard.tsx homepage pattern */}
+        <div className="relative">
+          <div
+            className="absolute -inset-0.5 rounded-2xl opacity-75 blur"
+            style={{
+              background: `linear-gradient(90deg, ${ORANGE_300}, ${ORANGE_400}, ${ORANGE_300})`,
+            }}
+          />
+          <div className="relative grid grid-cols-1 overflow-hidden rounded-2xl border border-border bg-card md:grid-cols-[1fr_1.1fr]">
             <div
-              className="relative flex min-h-[420px] items-end p-6"
+              className="relative flex min-h-[320px] items-end overflow-hidden p-6"
               style={{ background: 'linear-gradient(135deg, #3a1f11, #6b3a1e)' }}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-black/70" />
-              <Wine className="relative z-10 h-32 w-32" style={{ color: ORANGE_300 }} strokeWidth={1.2} />
+              <Wine
+                className="relative z-10 h-32 w-32"
+                style={{ color: ORANGE_300 }}
+                strokeWidth={1.2}
+              />
             </div>
-            <div className="flex flex-col gap-4 p-8">
+            <div className="flex flex-col gap-4 p-6 sm:p-8">
               <div className="flex flex-wrap items-center gap-2.5 text-[13px] text-muted-foreground">
                 <Badge tone="brand">Nybörjare</Badge>
                 <span className="h-[3px] w-[3px] rounded-full bg-[rgba(251,145,76,0.5)]" />
@@ -951,7 +1025,7 @@ function CardsSection() {
                 <span>(127)</span>
               </div>
               <div>
-                <h3 className="font-heading text-[34px] font-bold leading-[1.05] tracking-tight">
+                <h3 className={`${HEADING} text-[28px] sm:text-[32px]`}>
                   Världens klassiska druvor — en rundresa i ditt eget vardagsrum
                 </h3>
                 <p className="mt-2.5 text-[15px] leading-relaxed text-muted-foreground">
@@ -990,7 +1064,7 @@ function CardsSection() {
               </div>
               <div className="flex items-center gap-3 border-t border-border pt-3.5">
                 <div
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-[14px] font-semibold text-[#1a0f06]"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-[14px] font-semibold text-[#1a0f06]"
                   style={{ background: `linear-gradient(135deg, ${ORANGE_300}, ${ORANGE_400})` }}
                 >
                   FM
@@ -1004,19 +1078,17 @@ function CardsSection() {
               </div>
               <div className="flex items-baseline gap-2.5 border-t border-border pt-3.5">
                 <span
-                  className="bg-clip-text font-heading text-[36px] font-bold text-transparent"
-                  style={{
-                    backgroundImage: `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`,
-                  }}
+                  className={`${HEADING} bg-clip-text text-[36px] text-transparent`}
+                  style={{ backgroundImage: GRADIENT }}
                 >
                   399 kr
                 </span>
                 <span className="text-[13px] text-muted-foreground">engångskostnad</span>
               </div>
               <div
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg text-[15px] font-medium text-white"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg px-6 text-[15px] font-medium text-white"
                 style={{
-                  background: `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`,
+                  background: GRADIENT,
                   boxShadow: '0 10px 20px -5px rgba(251,145,76,0.3)',
                 }}
               >
@@ -1026,9 +1098,9 @@ function CardsSection() {
           </div>
         </div>
 
-        {/* Right column */}
+        {/* Right column — uses theme tokens so it adapts to light/dark */}
         <div className="flex flex-col gap-5">
-          <div className="overflow-hidden rounded-2xl border border-border bg-[#1a1a1a]">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <div
               className="relative aspect-video"
               style={{ background: 'linear-gradient(135deg, #2d1f36, #6b4a8c)' }}
@@ -1043,9 +1115,7 @@ function CardsSection() {
                 </span>
               </div>
               <div>
-                <h3 className="font-heading text-[22px] font-bold leading-[1.1] tracking-tight">
-                  Bubbel bortom Champagne
-                </h3>
+                <h3 className={`${HEADING} text-[22px]`}>Bubbel bortom Champagne</h3>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
                   Cava, crémant, pet-nat och Franciacorta — fyra glas, fyra helt olika sätt att
                   göra bubbel.
@@ -1066,12 +1136,12 @@ function CardsSection() {
           </div>
 
           <div
-            className="relative overflow-hidden rounded-2xl border border-border bg-[#1a1a1a] p-5"
+            className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm"
             style={{ borderLeft: `4px solid ${ORANGE_400}` }}
           >
             <div
-              className="pointer-events-none absolute right-3 top-2 select-none font-heading text-[70px] font-bold leading-[1]"
-              style={{ color: 'rgba(253,186,117,0.06)' }}
+              className="pointer-events-none absolute right-3 top-2 select-none font-heading text-[70px] leading-[1]"
+              style={{ color: 'rgba(253,186,117,0.10)' }}
             >
               01
             </div>
@@ -1080,7 +1150,7 @@ function CardsSection() {
               style={{ background: `linear-gradient(135deg, ${ORANGE_300}, ${ORANGE_400})` }}
             >
               <div
-                className="flex h-full w-full items-center justify-center rounded-full bg-[#1a1a1a]"
+                className="flex h-full w-full items-center justify-center rounded-full bg-card"
                 style={{ color: ORANGE_400 }}
               >
                 <Calendar className="h-4 w-4" />
@@ -1112,7 +1182,7 @@ function FormsSection() {
   return (
     <section id="forms" className="scroll-mt-24">
       <SectionHead
-        eyebrow="Components · Forms"
+        eyebrow="Komponenter · formulär"
         title={
           <>
             Lite friktion,
@@ -1120,13 +1190,13 @@ function FormsSection() {
             mycket varsamhet
           </>
         }
-        subtitle="Hairline 1px inputs, subtle orange focus ring, and never-angry error states. The session-code input (uppercase, monospace, centered) is a signature micro-pattern worth reusing in any 'join with a code' flow."
+        subtitle="1 px hårfina inputs, mjuk orange fokusring och aldrig arga felmeddelanden. Sessionskoden (versaler, monospace, centrerad) är ett signaturmönster värt att återanvända i alla &ldquo;gå med via kod&rdquo;-flöden."
       />
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Auth */}
         <Panel>
-          <Eyebrow className="mb-2 block">Auth / sign-in</Eyebrow>
+          <Eyebrow className="mb-2 block">Inloggning</Eyebrow>
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-medium">E-post</label>
             <input
@@ -1166,9 +1236,9 @@ function FormsSection() {
             </a>
           </div>
           <button
-            className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-md text-[14px] font-medium text-white"
+            className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md px-6 text-[14px] font-medium text-white"
             style={{
-              background: `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`,
+              background: GRADIENT,
               boxShadow: '0 8px 16px -4px rgba(251,145,76,0.3)',
             }}
           >
@@ -1183,7 +1253,7 @@ function FormsSection() {
             Skriv in koden från din värd så går du in i sessionen.
           </p>
           <div
-            className="mt-4 flex items-center gap-3.5 rounded-xl p-4"
+            className="mt-4 flex flex-wrap items-center gap-3.5 rounded-xl p-4"
             style={{
               border: '2px solid transparent',
               background:
@@ -1206,23 +1276,23 @@ function FormsSection() {
             </button>
           </div>
           <p className="mt-3 text-[12px] text-muted-foreground">
-            6 tecken, versaler, monospace — signaturpattern för alla &ldquo;join via kod&rdquo;-flöden.
+            6 tecken, versaler, monospace — signaturmönster för alla &ldquo;gå med via kod&rdquo;-flöden.
           </p>
         </Panel>
 
         {/* States */}
         <Panel>
-          <Eyebrow className="mb-3 block">States</Eyebrow>
+          <Eyebrow className="mb-3 block">Tillstånd</Eyebrow>
           <div className="flex flex-col gap-3.5">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium">Rest</label>
+              <label className="text-[13px] font-medium">Vila</label>
               <input
                 placeholder="Ditt namn"
                 className="h-9 rounded-md border border-border bg-transparent px-3 text-[14px] outline-none"
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium">Focus</label>
+              <label className="text-[13px] font-medium">Fokus</label>
               <input
                 defaultValue="Fredrik"
                 className="h-9 rounded-md border bg-transparent px-3 text-[14px] outline-none"
@@ -1233,25 +1303,31 @@ function FormsSection() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium">Error</label>
+              <label className="text-[13px] font-medium">Fel</label>
               <input
                 defaultValue="fredrik@"
                 className="h-9 rounded-md border bg-transparent px-3 text-[14px] outline-none"
-                style={{ borderColor: '#7f1d1d' }}
+                style={{ borderColor: '#dc2626' }}
               />
-              <span className="inline-flex items-center gap-1 text-[12px]" style={{ color: '#f87171' }}>
+              <span
+                className="inline-flex items-center gap-1 text-[12px]"
+                style={{ color: '#dc2626' }}
+              >
                 <Info className="h-3 w-3" />
                 Kontrollera e-postadressen.
               </span>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium">Success</label>
+              <label className="text-[13px] font-medium">Klart</label>
               <input
                 defaultValue="Fredrik Mortensen"
                 className="h-9 rounded-md border bg-transparent px-3 text-[14px] outline-none"
                 style={{ borderColor: 'rgba(34,197,94,0.5)' }}
               />
-              <span className="inline-flex items-center gap-1 text-[12px]" style={{ color: '#4ade80' }}>
+              <span
+                className="inline-flex items-center gap-1 text-[12px]"
+                style={{ color: '#16a34a' }}
+              >
                 <Check className="h-3 w-3" />
                 Ser bra ut.
               </span>
@@ -1261,7 +1337,7 @@ function FormsSection() {
 
         {/* Controls */}
         <Panel>
-          <Eyebrow className="mb-3 block">Controls</Eyebrow>
+          <Eyebrow className="mb-3 block">Kontroller</Eyebrow>
           <div className="flex flex-col gap-4">
             <div>
               <div className="mb-2.5 text-[13px] font-medium">Nivå</div>
@@ -1308,11 +1384,9 @@ function FormsSection() {
               <div className="relative h-1 rounded bg-border">
                 <div
                   className="absolute left-0 top-0 h-1 w-[65%] rounded"
-                  style={{ background: `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})` }}
+                  style={{ background: GRADIENT }}
                 />
-                <div
-                  className="absolute -top-[7px] left-[65%] h-[18px] w-[18px] -translate-x-1/2 rounded-full bg-white shadow-md"
-                />
+                <div className="absolute -top-[7px] left-[65%] h-[18px] w-[18px] -translate-x-1/2 rounded-full bg-white shadow-md" />
               </div>
               <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
                 <span>Knastertorr</span>
@@ -1385,7 +1459,7 @@ function IconsSection() {
   return (
     <section id="icons" className="scroll-mt-24">
       <SectionHead
-        eyebrow="Brand · Iconography"
+        eyebrow="Brand · ikoner"
         title={
           <>
             Alltid Lucide.
@@ -1393,11 +1467,11 @@ function IconsSection() {
             Aldrig emoji.
           </>
         }
-        subtitle="Lucide is the single icon library. Two strokes — 2px inline with text and in feature chips, 1.5px for very dense interfaces. Icons always pair with a word or sit inside a clearly meaningful container; decorative-only icons don't exist here."
+        subtitle="Lucide är vårt enda ikon-bibliotek. Två linjer — 2 px inline med text och i feature-chips, 1,5 px för täta gränssnitt. Ikoner paras alltid med ett ord eller sitter i en tydligt meningsbärande behållare; rent dekorativa ikoner finns inte här."
       />
 
       <Panel className="mb-5">
-        <Eyebrow className="mb-4 block">Common icons (Lucide, 2px stroke, 22px)</Eyebrow>
+        <Eyebrow className="mb-4 block">Vanliga ikoner (Lucide, 2 px linje, 22 px)</Eyebrow>
         <div className="grid grid-cols-3 gap-3.5 sm:grid-cols-4 md:grid-cols-6">
           {icons.map((it) => (
             <div
@@ -1413,7 +1487,7 @@ function IconsSection() {
 
       <div className="grid gap-5 md:grid-cols-[1.1fr_1fr]">
         <Panel>
-          <Eyebrow className="mb-4 block">Icon chip patterns</Eyebrow>
+          <Eyebrow className="mb-4 block">Chip-mönster</Eyebrow>
           <div className="flex flex-wrap items-end gap-5">
             <div className="flex flex-col items-center gap-2">
               <div
@@ -1427,7 +1501,7 @@ function IconsSection() {
                   <Wine className="h-7 w-7" />
                 </div>
               </div>
-              <span className="font-mono text-[11px] text-muted-foreground">Hero · 72</span>
+              <span className="font-mono text-[11px] text-muted-foreground">Hjälte · 72</span>
             </div>
             <div className="flex flex-col items-center gap-2">
               <div
@@ -1446,13 +1520,13 @@ function IconsSection() {
             </div>
           </div>
           <p className="mt-5 text-[12px] leading-relaxed text-muted-foreground">
-            Hero chips use a 2px orange gradient ring around a bg-matched inner — the orange shows
-            through around the rim. Meta chips are flat orange tint. Social chips are neutral muted.
+            Hjälte-chips har en 2 px orange gradientring runt en bg-matchad insida — orangen syns
+            som en ram. Meta-chips är platt orange ton. Sociala chips är neutralt muted.
           </p>
         </Panel>
 
         <Panel>
-          <Eyebrow className="mb-4 block">Inline with text</Eyebrow>
+          <Eyebrow className="mb-4 block">Inline med text</Eyebrow>
           <div className="flex flex-col gap-3.5 text-[14px]">
             {[
               { Icon: BookOpen, text: '12 moment' },
@@ -1471,14 +1545,14 @@ function IconsSection() {
             ))}
           </div>
           <p className="mt-5 text-[12px] leading-relaxed text-muted-foreground">
-            16px inline, vertically centered with the cap-height of the adjacent text. Icon tints
-            brand orange when it&rsquo;s the semantic anchor.
+            16 px inline, vertikalt centrerade mot höjden av angränsande text. Ikonen färgas brand
+            orange när den är den semantiska ankaren.
           </p>
         </Panel>
       </div>
 
       <Panel className="mt-5">
-        <Eyebrow className="mb-4 block">Stroke consistency</Eyebrow>
+        <Eyebrow className="mb-4 block">Linjekonsistens</Eyebrow>
         <div className="grid gap-3.5 md:grid-cols-3">
           <div
             className="flex flex-col items-center gap-2 rounded-xl border bg-card p-5"
@@ -1486,9 +1560,9 @@ function IconsSection() {
           >
             <span
               className="text-[10px] font-semibold uppercase tracking-[0.08em]"
-              style={{ color: '#4ade80' }}
+              style={{ color: '#16a34a' }}
             >
-              Do
+              Gör
             </span>
             <div className="flex gap-3.5">
               <Wine className="h-[22px] w-[22px]" />
@@ -1496,7 +1570,7 @@ function IconsSection() {
               <ArrowRight className="h-[22px] w-[22px]" />
             </div>
             <span className="text-center text-[11px] text-muted-foreground">
-              Same family, same stroke, same size within a screen.
+              Samma familj, samma linje, samma storlek inom en skärm.
             </span>
           </div>
           <div
@@ -1505,9 +1579,9 @@ function IconsSection() {
           >
             <span
               className="text-[10px] font-semibold uppercase tracking-[0.08em]"
-              style={{ color: '#f87171' }}
+              style={{ color: '#dc2626' }}
             >
-              Don&rsquo;t — mix families
+              Undvik — blanda familjer
             </span>
             <div className="flex items-center gap-3.5">
               <Wine className="h-[22px] w-[22px]" fill="currentColor" />
@@ -1515,7 +1589,7 @@ function IconsSection() {
               <span className="text-[20px]">🍷</span>
             </div>
             <span className="text-center text-[11px] text-muted-foreground">
-              No mixing filled + outline, no emoji in the product UI.
+              Blanda inte fyllda och konturade ikoner — använd aldrig emoji i produkten.
             </span>
           </div>
           <div
@@ -1524,9 +1598,9 @@ function IconsSection() {
           >
             <span
               className="text-[10px] font-semibold uppercase tracking-[0.08em]"
-              style={{ color: '#f87171' }}
+              style={{ color: '#dc2626' }}
             >
-              Don&rsquo;t — hand-drawn SVG
+              Undvik — egen ritad SVG
             </span>
             <svg width="40" height="40" viewBox="0 0 40 40">
               <path
@@ -1538,7 +1612,7 @@ function IconsSection() {
               <circle cx="20" cy="18" r="5" fill={ORANGE_300} opacity="0.5" />
             </svg>
             <span className="text-center text-[11px] text-muted-foreground">
-              Don&rsquo;t invent custom SVG illustrations. Use placeholders or real photography.
+              Hitta inte på egna SVG-illustrationer. Använd platshållare eller riktig fotografi.
             </span>
           </div>
         </div>
@@ -1570,21 +1644,15 @@ export default function StyleguidePage() {
           <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             Vinakademin · Designsystem
           </span>
-          <h1 className="mt-2 font-heading text-5xl font-bold leading-[1] tracking-tight md:text-6xl">
-            Enkelt &amp;{' '}
-            <span
-              className="bg-clip-text text-transparent"
-              style={{
-                backgroundImage: `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`,
-              }}
-            >
-              opretentiöst
-            </span>
-            .
+          <h1
+            className={`${HEADING} mt-2 bg-clip-text text-5xl text-transparent md:text-6xl`}
+            style={{ backgroundImage: GRADIENT }}
+          >
+            Enkelt &amp; opretentiöst.
           </h1>
           <p className="mt-5 max-w-[60ch] text-[18px] leading-relaxed text-muted-foreground">
-            Foundations and components that make Vinakademin look and sound like Vinakademin —
-            warm, editorial and zero pretension. One brand orange. One quiet hierarchy. Endast en
+            Grunder och komponenter som gör att Vinakademin ser ut och låter som Vinakademin —
+            varmt, redaktionellt och utan tillgjordhet. En orange. En stilla hierarki. Endast en
             viktig knapp.
           </p>
         </header>
