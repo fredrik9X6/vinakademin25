@@ -51,10 +51,12 @@ const sections = [
 /* SHARED                                                                     */
 /* ========================================================================== */
 
-// Coolvetica RG.TTF is loaded as a single-weight face. Using font-bold here
-// would trigger browser faux-bolding (which crams + overlaps glyphs at large
-// sizes). Display titles use the natural weight via font-heading only.
-const HEADING = 'font-heading tracking-tight leading-[1]'
+// Coolvetica RG.TTF is a single-weight display face. Avoid font-bold (which
+// would faux-bold and overlap glyphs) and use only mild negative tracking
+// (-0.015em) — Tailwind's `tracking-tight` is -0.025em, too aggressive for
+// this typeface and the source of the cramming we saw earlier.
+const HEADING = 'font-heading tracking-[-0.015em] leading-[1.05]'
+const HEADING_HERO = 'font-heading tracking-[-0.015em] leading-[1]'
 
 function SectionHead({
   eyebrow,
@@ -391,7 +393,7 @@ function TypographySection() {
           {
             meta: 'H1 Hero · Coolvetica 72/72',
             demo: (
-              <div className={`${HEADING} text-[clamp(40px,6vw,72px)]`}>
+              <div className={`${HEADING_HERO} text-[clamp(40px,6vw,72px)]`}>
                 Vinprovningar
                 <br />
                 hemma,{' '}
@@ -992,15 +994,15 @@ function CardsSection() {
       />
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        {/* Featured card — matches FeaturedCourseCard.tsx homepage pattern */}
-        <div className="relative">
-          <div
-            className="absolute -inset-0.5 rounded-2xl opacity-75 blur"
-            style={{
-              background: `linear-gradient(90deg, ${ORANGE_300}, ${ORANGE_400}, ${ORANGE_300})`,
-            }}
-          />
-          <div className="relative grid grid-cols-1 overflow-hidden rounded-2xl border border-border bg-card md:grid-cols-[1fr_1.1fr]">
+        {/* Featured card — clean 2px gradient border via padding, soft drop shadow underneath. */}
+        <div
+          className="rounded-[20px] p-0.5"
+          style={{
+            background: `linear-gradient(90deg, ${ORANGE_300}, ${ORANGE_400}, ${ORANGE_300})`,
+            boxShadow: '0 0 40px -16px rgba(251,145,76,0.20)',
+          }}
+        >
+          <div className="grid grid-cols-1 overflow-hidden rounded-[18px] bg-card md:grid-cols-[1fr_1.1fr]">
             <div
               className="relative flex min-h-[320px] items-end overflow-hidden p-6"
               style={{ background: 'linear-gradient(135deg, #3a1f11, #6b3a1e)' }}
