@@ -114,12 +114,14 @@
   }
   /* Coolvetica is a single-weight display face. Body's font-feature-settings
    * (rlig + calt) cascades to h1/.font-heading and can cause character
-   * overlap on display sizes. Override with kerning only and disable
-   * synthesis so the renderer never tries to fake bold over the file. */
+   * overlap on display sizes. Override with kerning only, disable synthesis
+   * so the renderer never tries to fake bold, and apply the design's
+   * tracking to every Coolvetica heading consistently (was on h1 only). */
   h1,
   .font-heading {
     font-feature-settings: 'kern' 1;
     font-synthesis: none;
+    letter-spacing: -0.015em;
   }
   body {
     /* Remove @apply bg-background to let layout utilities control body background */
