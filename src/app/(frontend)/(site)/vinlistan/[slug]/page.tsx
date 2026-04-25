@@ -463,7 +463,7 @@ export default async function WineDetailPage({ params }: PageProps) {
                   {wine.region?.name ? (
                     <>
                       {' · '}
-                      <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                      <Link href={`/regioner/${wine.region.slug}`} className="hover:text-brand-400 transition-colors underline-offset-2 hover:underline">
                         {wine.region.name}
                       </Link>
                     </>
@@ -471,7 +471,7 @@ export default async function WineDetailPage({ params }: PageProps) {
                   {wine.country?.name ? (
                     <>
                       {', '}
-                      <Link href={`/lander/${wine.country.slug}`} className="hover:text-orange-500 transition-colors underline-offset-2 hover:underline">
+                      <Link href={`/lander/${wine.country.slug}`} className="hover:text-brand-400 transition-colors underline-offset-2 hover:underline">
                         {wine.country.name}
                       </Link>
                     </>

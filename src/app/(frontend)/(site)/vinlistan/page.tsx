@@ -215,7 +215,7 @@ function WineCard({ item }: { item: any }) {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(price)
 
-  const getWineType = (w: any): { label: string; className: string } | null => {
+  const getWineType = (w: any): string | null => {
     const name: string = String(w?.name || '').toLowerCase()
     const region: string = String(w?.region?.name || '').toLowerCase()
     const winery: string = String(w?.winery || '').toLowerCase()
@@ -229,11 +229,7 @@ function WineCard({ item }: { item: any }) {
       name.includes('prosecco') ||
       region.includes('champagne') ||
       winery.includes('prosecco')
-    if (isSparkling)
-      return {
-        label: 'Mousserande',
-        className: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
-      }
+    if (isSparkling) return 'Mousserande'
     const redHints = [
       'pinot noir',
       'cabernet',
@@ -244,31 +240,25 @@ function WineCard({ item }: { item: any }) {
       'sangiovese',
     ]
     const whiteHints = ['chardonnay', 'sauvignon', 'riesling', 'pinot gris', 'grüner', 'chenin']
-    if (gLower.some((g) => redHints.some((h) => g.includes(h))))
-      return {
-        label: 'Rött',
-        className: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
-      }
-    if (gLower.some((g) => whiteHints.some((h) => g.includes(h))))
-      return {
-        label: 'Vitt',
-        className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-      }
+    if (gLower.some((g) => redHints.some((h) => g.includes(h)))) return 'Rött'
+    if (gLower.some((g) => whiteHints.some((h) => g.includes(h)))) return 'Vitt'
     return null
   }
-  const typeBadge = getWineType(wine)
+  const typeLabel = getWineType(wine)
 
   return (
     <Link href={href} className="block">
       <Card className="h-full hover:shadow-md transition-shadow">
         <CardHeader className="p-3">
           <div className="flex items-start justify-between mb-1">
-            {typeBadge ? (
-              <Badge className={typeBadge.className}>{typeBadge.label}</Badge>
+            {typeLabel ? (
+              <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">
+                {typeLabel}
+              </Badge>
             ) : (
               <span />
             )}
-            <div className="text-sm font-semibold text-primary">
+            <div className="text-sm font-medium text-brand-gradient">
               {Number(wine.price) ? formatPrice(Number(wine.price)) : ''}
             </div>
           </div>

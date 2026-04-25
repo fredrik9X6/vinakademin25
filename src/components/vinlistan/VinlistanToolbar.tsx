@@ -27,7 +27,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+
+function FilterPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors',
+        active
+          ? 'border-brand-400/30 bg-brand-300/15 text-brand-400'
+          : 'border-border bg-background text-foreground hover:border-brand-400/50 hover:bg-brand-300/5',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
 
 export function VinlistanToolbar({ q, sort }: { q: string; sort: string }) {
   const [value, setValue] = React.useState(q)
@@ -229,48 +254,42 @@ export function VinlistanToolbar({ q, sort }: { q: string; sort: string }) {
           </Dialog>
 
           {/* Quick chips next to icon */}
-          <Button
-            variant={(searchParams?.getAll('type') || []).includes('red') ? 'default' : 'outline'}
-            size="sm"
+          <FilterPill
+            active={(searchParams?.getAll('type') || []).includes('red')}
             onClick={() => {
               setValue('')
               applyQuick('type', 'red')
             }}
           >
             Rött vin
-          </Button>
-          <Button
-            variant={(searchParams?.getAll('type') || []).includes('white') ? 'default' : 'outline'}
-            size="sm"
+          </FilterPill>
+          <FilterPill
+            active={(searchParams?.getAll('type') || []).includes('white')}
             onClick={() => {
               setValue('')
               applyQuick('type', 'white')
             }}
           >
             Vitt vin
-          </Button>
-          <Button
-            variant={
-              (searchParams?.getAll('type') || []).includes('sparkling') ? 'default' : 'outline'
-            }
-            size="sm"
+          </FilterPill>
+          <FilterPill
+            active={(searchParams?.getAll('type') || []).includes('sparkling')}
             onClick={() => {
               setValue('')
               applyQuick('type', 'sparkling')
             }}
           >
             Mousserande vin
-          </Button>
-          <Button
-            variant={(searchParams?.get('priceMax') || '') === '150' ? 'default' : 'outline'}
-            size="sm"
+          </FilterPill>
+          <FilterPill
+            active={(searchParams?.get('priceMax') || '') === '150'}
             onClick={() => {
               setValue('')
               applyQuick('priceMax', '150')
             }}
           >
-            Under 150kr
-          </Button>
+            Under 150 kr
+          </FilterPill>
         </div>
 
         <div className="flex items-center gap-2">
@@ -334,17 +353,20 @@ export function VinlistanToolbar({ q, sort }: { q: string; sort: string }) {
           <div className="flex items-center justify-between gap-2">
             <div className="flex flex-wrap gap-2">
               {active.map((p, i) => (
-                <Badge key={`${p.key}-${i}`} variant="secondary" className="px-2">
+                <span
+                  key={`${p.key}-${i}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-brand-400/20 bg-brand-300/10 px-3 py-1 text-xs font-medium text-brand-400"
+                >
                   <span>{p.label}</span>
                   <button
                     type="button"
                     aria-label={`Ta bort ${p.label}`}
                     onClick={() => (p.value ? clearParamValue(p.key, p.value) : clearParam(p.key))}
-                    className="ml-1 inline-flex items-center hover:opacity-80"
+                    className="ml-1 inline-flex items-center rounded-full p-0.5 hover:bg-brand-400/15"
                   >
                     <X className="h-3 w-3" />
                   </button>
-                </Badge>
+                </span>
               ))}
             </div>
             <Button

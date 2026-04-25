@@ -155,7 +155,7 @@ export default function CourseQuizViewer({
                       <HelpCircle className="h-3 w-3" /> Quiz
                     </Badge>
                   </div>
-                  <h1 className="text-3xl font-bold">{quiz.title}</h1>
+                  <h1 className="text-3xl font-heading">{quiz.title}</h1>
                 </div>
                 {/* Desktop navigation */}
                 <div className="hidden md:flex items-center gap-2">
@@ -175,9 +175,10 @@ export default function CourseQuizViewer({
                   >
                     <ChevronLeft className="w-4 h-4 mr-1" /> Föregående
                   </Button>
-                  <Button
+                  <button
+                    type="button"
                     onClick={() => void handleQuizNextOrReview()}
-                    className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/25"
+                    className="btn-brand"
                   >
                     {isLastQuizItem ? (
                       <>
@@ -188,7 +189,7 @@ export default function CourseQuizViewer({
                         Nästa <ChevronRight className="w-4 h-4 ml-1" />
                       </>
                     )}
-                  </Button>
+                  </button>
                 </div>
               </div>
 
@@ -317,16 +318,16 @@ export default function CourseQuizViewer({
           <div className="text-sm text-muted-foreground px-2">
             {currentItemIndex + 1} / {allItems.length}
           </div>
-          <Button
-            size="lg"
+          <button
+            type="button"
             onClick={() => void handleQuizNextOrReview()}
-            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+            className="btn-brand flex-1"
           >
             <span className="hidden xs:inline">
               {isLastQuizItem ? 'Betygsätt' : 'Nästa'}
             </span>
             <ChevronRight className="w-5 h-5 ml-1" />
-          </Button>
+          </button>
         </div>
       </div>
 
