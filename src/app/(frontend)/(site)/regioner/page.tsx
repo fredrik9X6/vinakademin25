@@ -46,7 +46,7 @@ export default async function RegionsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">Vinregioner</h1>
+      <h1 className="text-3xl mb-2">Vinregioner</h1>
       <p className="text-muted-foreground mb-8">
         Utforska vinregioner från hela världen.
       </p>
@@ -54,11 +54,11 @@ export default async function RegionsPage() {
       <div className="space-y-8">
         {sortedCountries.map(([countryName, { country, regions: countryRegions }]) => (
           <div key={countryName}>
-            <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+            <h2 className="text-xl font-medium mb-3 flex items-center gap-2">
               {country?.slug ? (
                 <Link
                   href={`/lander/${country.slug}`}
-                  className="hover:text-orange-500 transition-colors"
+                  className="hover:text-brand-400 transition-colors"
                 >
                   {countryName}
                 </Link>
@@ -71,9 +71,9 @@ export default async function RegionsPage() {
                 <Link
                   key={region.id}
                   href={`/regioner/${region.slug}`}
-                  className="flex items-center gap-2 p-3 rounded-lg border border-border/50 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-all"
+                  className="flex items-center gap-2 p-3 rounded-lg border border-border/50 hover:border-brand-400/40 hover:bg-brand-300/10 transition-all"
                 >
-                  <MapPin className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                  <MapPin className="h-4 w-4 text-brand-400 flex-shrink-0" />
                   <span className="font-medium">{region.name}</span>
                 </Link>
               ))}

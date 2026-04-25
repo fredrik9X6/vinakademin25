@@ -82,8 +82,8 @@ export default function VinkompassClient() {
       <section className="relative overflow-hidden py-20 lg:py-32">
         {/* Background decorative elements */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-[#FDBA75]/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#FB914C]/5 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-10 w-72 h-72 bg-brand-300/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-brand-400/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -95,16 +95,16 @@ export default function VinkompassClient() {
           >
             {/* Badge */}
             <motion.div variants={itemVariants} className="mb-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20">
-                <Sparkles className="h-4 w-4 text-[#FB914C]" />
-                <span className="text-sm font-medium text-[#FB914C]">Upptäck din vinprofil</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/30">
+                <Sparkles className="h-4 w-4 text-brand-400" />
+                <span className="text-sm font-medium text-brand-400">Upptäck din vinprofil</span>
               </div>
             </motion.div>
 
             {/* Heading */}
             <motion.h1
               variants={itemVariants}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
+              className="text-4xl md:text-5xl lg:text-6xl mb-6 leading-tight"
             >
               Vinkompassen
             </motion.h1>
@@ -132,15 +132,15 @@ export default function VinkompassClient() {
               className="mt-12 flex flex-wrap justify-center items-center gap-6 text-sm text-muted-foreground"
             >
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-[#FB914C]" />
+                <Clock className="h-4 w-4 text-brand-400" />
                 <span>Tar cirka 5 minuter</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-[#FB914C]" />
+                <CheckCircle2 className="h-4 w-4 text-brand-400" />
                 <span>100% gratis</span>
               </div>
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-[#FB914C]" />
+                <Users className="h-4 w-4 text-brand-400" />
                 <span>1000+ har redan testat</span>
               </div>
             </motion.div>
@@ -151,8 +151,8 @@ export default function VinkompassClient() {
       {/* What You'll Get Section */}
       <section className="py-16 lg:py-24 relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 right-10 w-96 h-96 bg-[#FDBA75]/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 left-10 w-72 h-72 bg-[#FB914C]/5 rounded-full blur-3xl" />
+          <div className="absolute top-20 right-10 w-96 h-96 bg-brand-300/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 left-10 w-72 h-72 bg-brand-400/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -163,11 +163,11 @@ export default function VinkompassClient() {
             variants={fadeInUp}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-              <Target className="h-4 w-4 text-[#FB914C]" />
-              <span className="text-sm font-medium text-[#FB914C]">Vad du får</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/30 mb-6">
+              <Target className="h-4 w-4 text-brand-400" />
+              <span className="text-sm font-medium text-brand-400">Vad du får</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl mb-4">
               Personliga vinrekommendationer
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -204,12 +204,12 @@ export default function VinkompassClient() {
               },
             ].map((benefit, index) => (
               <motion.div key={index} variants={itemVariants}>
-                <Card className="h-full hover:shadow-xl transition-all duration-300 border-border hover:border-[#FB914C]/20">
+                <Card className="h-full hover:shadow-xl transition-all duration-300 border-border hover:border-brand-400/20">
                   <CardContent className="p-8 text-center space-y-4">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#FDBA75]/20 to-[#FB914C]/20 mb-4">
-                      <benefit.icon className="h-8 w-8 text-[#FB914C]" />
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-brand-300/20 to-brand-400/20 mb-4">
+                      <benefit.icon className="h-8 w-8 text-brand-400" />
                     </div>
-                    <h3 className="text-xl font-semibold">{benefit.title}</h3>
+                    <h3 className="text-xl font-medium">{benefit.title}</h3>
                     <p className="text-muted-foreground leading-relaxed">{benefit.description}</p>
                   </CardContent>
                 </Card>
@@ -222,8 +222,8 @@ export default function VinkompassClient() {
       {/* How It Works Section */}
       <section className="py-16 lg:py-24 relative overflow-hidden bg-muted/30">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#FDBA75]/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-10 w-72 h-72 bg-[#FB914C]/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/4 left-10 w-96 h-96 bg-brand-300/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-10 w-72 h-72 bg-brand-400/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -234,11 +234,11 @@ export default function VinkompassClient() {
             variants={fadeInUp}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-              <Zap className="h-4 w-4 text-[#FB914C]" />
-              <span className="text-sm font-medium text-[#FB914C]">Så fungerar det</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/30 mb-6">
+              <Zap className="h-4 w-4 text-brand-400" />
+              <span className="text-sm font-medium text-brand-400">Så fungerar det</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl mb-4">
               Enkelt och snabbt
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -248,7 +248,7 @@ export default function VinkompassClient() {
 
           {/* Desktop: Steps with connecting line */}
           <div className="hidden lg:block relative">
-            <div className="absolute top-12 left-0 right-0 h-0.5 bg-gradient-to-r from-[#FDBA75] via-[#FB914C] to-[#FDBA75] opacity-20" />
+            <div className="absolute top-12 left-0 right-0 h-0.5 bg-brand-gradient-tri opacity-20" />
 
             <motion.div
               initial="hidden"
@@ -284,17 +284,17 @@ export default function VinkompassClient() {
                 },
               ].map((step, index) => (
                 <motion.div key={index} variants={itemVariants} className="relative">
-                  <div className="relative z-10 mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] p-0.5 mb-6 group hover:scale-110 transition-transform duration-300">
+                  <div className="relative z-10 mx-auto w-24 h-24 rounded-full bg-brand-gradient-diagonal p-0.5 mb-6 group hover:scale-110 transition-transform duration-300">
                     <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                      <step.icon className="h-10 w-10 text-[#FB914C]" />
+                      <step.icon className="h-10 w-10 text-brand-400" />
                     </div>
                   </div>
 
                   <div className="text-center space-y-3">
-                    <div className="inline-block px-3 py-1 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20">
-                      <span className="text-xs font-semibold text-[#FB914C]">STEG {step.step}</span>
+                    <div className="inline-block px-3 py-1 rounded-full bg-brand-300/10 border border-brand-300/30">
+                      <span className="text-xs font-semibold text-brand-400">STEG {step.step}</span>
                     </div>
-                    <h3 className="text-xl font-semibold">{step.title}</h3>
+                    <h3 className="text-xl font-medium">{step.title}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {step.description}
                     </p>
@@ -339,21 +339,21 @@ export default function VinkompassClient() {
                 },
               ].map((step, index) => (
                 <motion.div key={index} variants={itemVariants}>
-                  <Card className="relative overflow-hidden border-l-4 border-l-[#FB914C] hover:shadow-xl transition-all duration-300 group">
+                  <Card className="relative overflow-hidden border-l-4 border-l-brand-400 hover:shadow-xl transition-all duration-300 group">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-[#FDBA75] to-[#FB914C] p-0.5 group-hover:scale-110 transition-transform duration-300">
+                        <div className="flex-shrink-0 w-16 h-16 rounded-full bg-brand-gradient-diagonal p-0.5 group-hover:scale-110 transition-transform duration-300">
                           <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                            <step.icon className="h-7 w-7 text-[#FB914C]" />
+                            <step.icon className="h-7 w-7 text-brand-400" />
                           </div>
                         </div>
                         <div className="flex-1 space-y-2">
-                          <div className="inline-block px-3 py-1 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20">
-                            <span className="text-xs font-semibold text-[#FB914C]">
+                          <div className="inline-block px-3 py-1 rounded-full bg-brand-300/10 border border-brand-300/30">
+                            <span className="text-xs font-semibold text-brand-400">
                               STEG {step.step}
                             </span>
                           </div>
-                          <h3 className="text-xl font-semibold">{step.title}</h3>
+                          <h3 className="text-xl font-medium">{step.title}</h3>
                           <p className="text-muted-foreground leading-relaxed">{step.description}</p>
                         </div>
                       </div>
@@ -369,7 +369,7 @@ export default function VinkompassClient() {
       {/* Social Proof Section */}
       <section className="py-16 lg:py-24 relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 right-10 w-96 h-96 bg-[#FDBA75]/5 rounded-full blur-3xl" />
+          <div className="absolute top-20 right-10 w-96 h-96 bg-brand-300/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -380,11 +380,11 @@ export default function VinkompassClient() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-              <Star className="h-4 w-4 text-[#FB914C] fill-[#FB914C]" />
-              <span className="text-sm font-medium text-[#FB914C]">Vad andra säger</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/30 mb-6">
+              <Star className="h-4 w-4 text-brand-400 fill-brand-400" />
+              <span className="text-sm font-medium text-brand-400">Vad andra säger</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl mb-4">
               Nöjda användare
             </h2>
           </motion.div>
@@ -417,18 +417,18 @@ export default function VinkompassClient() {
               },
             ].map((testimonial, index) => (
               <motion.div key={index} variants={itemVariants}>
-                <Card className="h-full hover:shadow-xl transition-all duration-300 border-border hover:border-[#FB914C]/20">
+                <Card className="h-full hover:shadow-xl transition-all duration-300 border-border hover:border-brand-400/20">
                   <CardContent className="p-6 space-y-4">
                     <div className="flex gap-1">
                       {Array.from({ length: testimonial.rating }).map((_, i) => (
                         <Star
                           key={i}
-                          className="h-4 w-4 fill-[#FB914C] text-[#FB914C]"
+                          className="h-4 w-4 fill-brand-400 text-brand-400"
                         />
                       ))}
                     </div>
                     <p className="text-muted-foreground leading-relaxed">{testimonial.quote}</p>
-                    <p className="text-sm font-semibold">{testimonial.author}</p>
+                    <p className="text-sm font-medium">{testimonial.author}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -440,9 +440,9 @@ export default function VinkompassClient() {
       {/* Final CTA Section */}
       <section className="py-20 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#FDBA75]/5 via-transparent to-[#FB914C]/5" />
-          <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-[#FDBA75]/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-[#FB914C]/10 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-300/5 via-transparent to-brand-400/5" />
+          <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-brand-300/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-brand-400/10 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -453,9 +453,9 @@ export default function VinkompassClient() {
             variants={fadeInUp}
             className="text-center"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FDBA75]/10 border border-[#FDBA75]/20 mb-6">
-              <Sparkles className="h-4 w-4 text-[#FB914C]" />
-              <span className="text-sm font-medium text-[#FB914C]">Redo att börja?</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/30 mb-6">
+              <Sparkles className="h-4 w-4 text-brand-400" />
+              <span className="text-sm font-medium text-brand-400">Redo att börja?</span>
             </div>
 
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
@@ -485,7 +485,7 @@ export default function VinkompassClient() {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-8 border-t border-[#FDBA75]/20"
+              className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-8 border-t border-brand-300/20"
             >
               {[
                 {
@@ -505,8 +505,8 @@ export default function VinkompassClient() {
                 },
               ].map((feature, index) => (
                 <motion.div key={index} variants={itemVariants} className="text-center space-y-3">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-[#FDBA75]/20 to-[#FB914C]/20">
-                    <feature.icon className="h-7 w-7 text-[#FB914C]" />
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-brand-300/20 to-brand-400/20">
+                    <feature.icon className="h-7 w-7 text-brand-400" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">{feature.title}</h3>
