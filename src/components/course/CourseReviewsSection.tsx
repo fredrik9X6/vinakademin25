@@ -29,7 +29,7 @@ function StarDisplay({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'l
         <Star
           key={star}
           className={`${starSize} ${
-            star <= rating ? 'fill-[#FB914C] text-[#FB914C]' : 'text-muted-foreground/20'
+            star <= rating ? 'fill-brand-400 text-brand-400' : 'text-muted-foreground/20'
           }`}
         />
       ))}
@@ -42,10 +42,10 @@ function RatingBar({ stars, count, total }: { stars: number; count: number; tota
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className="w-3 text-right text-muted-foreground">{stars}</span>
-      <Star className="h-3 w-3 fill-[#FB914C] text-[#FB914C]" />
+      <Star className="h-3 w-3 fill-brand-400 text-brand-400" />
       <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-[#FB914C] to-[#FDBA75] rounded-full transition-all duration-500"
+          className="h-full bg-brand-gradient rounded-full transition-all duration-500"
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -103,7 +103,7 @@ export function CourseReviewsSection({ courseId }: CourseReviewsSectionProps) {
     <div className="space-y-6" id="recensioner">
       {/* Section Header */}
       <div className="flex items-center gap-2">
-        <MessageSquare className="h-5 w-5 text-[#FB914C]" />
+        <MessageSquare className="h-5 w-5 text-brand-400" />
         <h2 className="text-xl font-medium">Recensioner</h2>
       </div>
 

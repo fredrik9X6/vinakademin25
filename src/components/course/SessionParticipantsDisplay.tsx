@@ -87,8 +87,8 @@ export function SessionParticipantsDisplay({
 
   const getAvatarColor = (index: number) => {
     const colors = [
-      'bg-[#FB914C]',
-      'bg-[#FDBA75]',
+      'bg-brand-400',
+      'bg-brand-300',
       'bg-blue-500',
       'bg-green-500',
       'bg-purple-500',
@@ -132,14 +132,14 @@ export function SessionParticipantsDisplay({
   }
 
   return (
-    <Card className="border-[#FB914C]/20">
+    <Card className="border-brand-400/20">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-[#FB914C]" />
+            <Users className="h-5 w-5 text-brand-400" />
             Deltagare i session
           </CardTitle>
-          <Badge variant="secondary" className="bg-[#FDBA75]/10 text-[#FB914C]">
+          <Badge variant="secondary" className="bg-brand-300/10 text-brand-400">
             <UserCheck className="h-3 w-3 mr-1" />
             {participants.length} aktiva
           </Badge>
@@ -179,7 +179,7 @@ export function SessionParticipantsDisplay({
               return (
                 <div
                   key={participant.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-[#FB914C]/30 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-brand-400/30 transition-colors"
                 >
                   <Avatar className={avatarUrl ? '' : `${avatarBg} text-white`}>
                     {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
@@ -210,9 +210,9 @@ export function SessionParticipantsDisplay({
         </div>
 
         {sessionInfo?.joinCode && (
-          <div className="mt-4 p-3 rounded-lg bg-[#FDBA75]/5 border border-[#FDBA75]/20">
+          <div className="mt-4 p-3 rounded-lg bg-brand-300/5 border border-brand-300/20">
             <p className="text-xs text-muted-foreground mb-1">Sessionskod:</p>
-            <p className="font-mono text-lg font-bold text-[#FB914C] tracking-widest">
+            <p className="font-mono text-lg font-bold text-brand-400 tracking-widest">
               {sessionInfo.joinCode}
             </p>
           </div>

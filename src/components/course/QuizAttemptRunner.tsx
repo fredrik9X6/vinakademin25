@@ -291,7 +291,7 @@ export default function QuizAttemptRunner({ quiz, onPassed, onNavigateNext }: Qu
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold tracking-tight">Quiz: {quiz.title}</CardTitle>
+          <CardTitle className="text-xl font-medium">Quiz: {quiz.title}</CardTitle>
           {!attemptId && !result && !loadingLastAttempt && (
             <Button
               variant="secondary"
@@ -326,7 +326,7 @@ export default function QuizAttemptRunner({ quiz, onPassed, onNavigateNext }: Qu
               </div>
             </div>
             <div className="space-y-2">
-              <div className="text-lg font-semibold text-foreground">Beräknar ditt resultat...</div>
+              <div className="text-lg font-medium text-foreground">Beräknar ditt resultat...</div>
               <div className="text-sm text-muted-foreground">Detta tar bara några sekunder</div>
             </div>
           </div>
@@ -350,7 +350,7 @@ export default function QuizAttemptRunner({ quiz, onPassed, onNavigateNext }: Qu
             </div>
 
             <div className="space-y-3">
-              <div className="text-lg font-semibold tracking-tight text-center">{q?.title}</div>
+              <div className="text-lg font-medium text-center">{q?.title}</div>
               {q?.content && (
                 <div className="prose max-w-none text-center mx-auto">
                   <RichTextRenderer content={q.content} />

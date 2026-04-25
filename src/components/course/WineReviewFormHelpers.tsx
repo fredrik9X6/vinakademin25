@@ -7,8 +7,10 @@ import React from 'react'
 
 export const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
-    <div className="bg-gradient-to-r from-orange-50/50 to-transparent dark:from-orange-950/20 dark:to-transparent border-b border-border px-4 py-3">
-      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</h3>
+    <div className="bg-gradient-to-r from-brand-300/10 to-transparent border-b border-border px-4 py-3">
+      <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {title}
+      </h3>
     </div>
     <div className="divide-y divide-border">{children}</div>
   </div>
