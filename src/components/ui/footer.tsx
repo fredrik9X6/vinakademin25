@@ -88,7 +88,7 @@ function FooterNewsletter() {
               handleSubmit()
             }
           }}
-          className="h-12 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-base outline-none transition focus:border-brand-400/60 focus:ring-1 focus:ring-brand-400/40 disabled:opacity-50 sm:h-10 sm:text-sm"
+          className="h-12 min-w-0 flex-1 rounded-md border border-border bg-background px-4 text-base leading-none outline-none transition focus:border-brand-400/60 focus:ring-1 focus:ring-brand-400/40 disabled:opacity-50 sm:h-10 sm:px-3 sm:text-sm"
           disabled={status === 'loading'}
           aria-label="E-postadress"
         />
