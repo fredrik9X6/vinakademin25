@@ -6,6 +6,8 @@ import { headers } from 'next/headers'
 import crypto from 'crypto'
 import { getSiteURL } from '@/lib/site-url'
 import { loggerFor } from '@/lib/logger'
+import { sendTeamNotification } from '@/lib/notify-team'
+import { buildOrderPaidEmail } from '@/lib/team-emails/order-paid'
 
 const log = loggerFor('stripe-webhook')
 
@@ -603,6 +605,38 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
           subject: `Kvitto - ${course.title} - Vinakademin`,
           html: emailHTML,
         })
+
+        // Internal heads-up to the team. Fire-and-forget; never blocks the webhook.
+        void (async () => {
+          try {
+            const team = buildOrderPaidEmail({
+              orderId: updatedOrder.id,
+              orderNumber: (updatedOrder as any).orderNumber,
+              email: resolvedCheckout.email,
+              customerName:
+                [resolvedCheckout.user.firstName, resolvedCheckout.user.lastName]
+                  .filter(Boolean)
+                  .join(' ')
+                  .trim() || undefined,
+              courseTitle: course.title,
+              amount: updatedOrder.amount || 0,
+              currency: (updatedOrder as any).currency,
+              discountAmount: updatedOrder.discountAmount || 0,
+              discountCode: updatedOrder.discountCode || undefined,
+              paidAt: updatedOrder.paidAt || new Date().toISOString(),
+              checkoutMode: resolvedCheckout.checkoutMode,
+              isNewUser: resolvedCheckout.isNewUser,
+            })
+            await sendTeamNotification({
+              payload,
+              subject: team.subject,
+              html: team.html,
+              replyTo: resolvedCheckout.email,
+            })
+          } catch (notifyErr) {
+            log.error({ err: notifyErr }, 'order_paid_team_notify_failed')
+          }
+        })()
 
         if (resolvedCheckout.checkoutMode === 'guest') {
           await payload.forgotPassword({

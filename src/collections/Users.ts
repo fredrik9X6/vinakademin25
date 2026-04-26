@@ -7,6 +7,11 @@ import {
 } from '../lib/email-cta'
 import { getSiteURL, getCookieDomain } from '../lib/site-url'
 import { adminFieldLevel, adminOrInstructorFieldLevel } from '../lib/access'
+import { sendTeamNotification } from '../lib/notify-team'
+import { buildUserRegisteredEmail } from '../lib/team-emails/user-registered'
+import { loggerFor } from '../lib/logger'
+
+const usersHookLog = loggerFor('collections-users-hooks')
 
 type User = {
   id: string
@@ -777,6 +782,40 @@ export const Users: CollectionConfig = {
   ],
   timestamps: true,
   hooks: {
+    afterChange: [
+      async ({ req, doc, operation }) => {
+        // Only react to new accounts; updates are handled elsewhere.
+        if (operation !== 'create') return doc
+
+        // Fire-and-forget — never block the create response on a notification.
+        void (async () => {
+          try {
+            const marketingOptIn =
+              (doc as any)?.notifications?.email?.newsletter ?? undefined
+            const source = (doc as any)?.onboarding?.source || 'registration'
+            const { subject, html } = buildUserRegisteredEmail({
+              userId: doc.id,
+              email: doc.email,
+              firstName: (doc as any).firstName,
+              lastName: (doc as any).lastName,
+              source,
+              marketingOptIn,
+              registeredAt: (doc as any).createdAt || new Date().toISOString(),
+            })
+            await sendTeamNotification({
+              payload: req.payload,
+              subject,
+              html,
+              replyTo: doc.email,
+            })
+          } catch (err) {
+            usersHookLog.error({ err, userId: doc.id }, 'user_registered_notify_failed')
+          }
+        })()
+
+        return doc
+      },
+    ],
     // TEMPORARILY DISABLED - Testing if hooks are causing the 'lockedState' error
     // beforeChange: [
     //   async ({ req, operation, originalDoc, data }) => {
