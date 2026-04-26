@@ -34,6 +34,7 @@ import { BlogCategories } from './collections/BlogCategories'
 import { BlogTags } from './collections/BlogTags'
 import { CourseSessions } from './collections/CourseSessions'
 import { SessionParticipants } from './collections/SessionParticipants'
+import { Subscribers } from './collections/Subscribers'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -208,6 +209,7 @@ export default buildConfig({
     BlogTags,
     CourseSessions,
     SessionParticipants,
+    Subscribers,
   ],
   editor: lexicalEditor(),
   secret: payloadSecret,

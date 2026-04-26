@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
@@ -28,6 +29,7 @@ const RegistrationSchema = z
     email: z.string().email({ message: 'Ogiltig e-postadress.' }),
     password: z.string().min(8, { message: 'Lösenordet måste vara minst 8 tecken.' }),
     confirmPassword: z.string().min(1, { message: 'Bekräfta lösenord krävs.' }),
+    acceptsMarketing: z.boolean().default(false),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Lösenorden matchar inte.',
@@ -52,19 +54,26 @@ export function RegistrationForm({ className, returnTo, ...props }: Registration
       email: '',
       password: '',
       confirmPassword: '',
+      acceptsMarketing: false,
     },
   })
 
   async function onSubmit(values: RegistrationFormValues) {
-    // Transform the form data to match the expected API structure
+    // Transform the form data to match the expected API structure.
+    // Pass notifications explicitly so the user's choice overrides the default-true on the field.
     const userData = {
       firstName: values.firstName,
       lastName: values.lastName,
       email: values.email,
       password: values.password,
+      notifications: {
+        email: {
+          newsletter: values.acceptsMarketing,
+        },
+      },
     }
 
-    const success = await registerUser(userData)
+    const success = await registerUser(userData as any)
     if (success) {
       // Show success message and redirect to email verification, passing along returnTo
       const verificationUrl = returnTo
@@ -171,6 +180,30 @@ export function RegistrationForm({ className, returnTo, ...props }: Registration
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="acceptsMarketing"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start gap-3 rounded-md border border-border bg-muted/40 p-3">
+                      <FormControl>
+                        <Checkbox
+                          id="acceptsMarketing"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isLoading}
+                          className="mt-0.5"
+                        />
+                      </FormControl>
+                      <label
+                        htmlFor="acceptsMarketing"
+                        className="text-sm leading-snug text-muted-foreground cursor-pointer select-none"
+                      >
+                        Skicka mig vintips och nyhetsbrev från Vinakademin. Du kan avsluta när du
+                        vill.
+                      </label>
                     </FormItem>
                   )}
                 />

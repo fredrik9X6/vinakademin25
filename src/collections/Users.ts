@@ -9,6 +9,7 @@ import { getSiteURL, getCookieDomain } from '../lib/site-url'
 import { adminFieldLevel, adminOrInstructorFieldLevel } from '../lib/access'
 import { sendTeamNotification } from '../lib/notify-team'
 import { buildUserRegisteredEmail } from '../lib/team-emails/user-registered'
+import { subscribeAndMirror, unsubscribeAndMirror } from '../lib/subscribers'
 import { loggerFor } from '../lib/logger'
 
 const usersHookLog = loggerFor('collections-users-hooks')
@@ -783,35 +784,105 @@ export const Users: CollectionConfig = {
   timestamps: true,
   hooks: {
     afterChange: [
-      async ({ req, doc, operation }) => {
-        // Only react to new accounts; updates are handled elsewhere.
-        if (operation !== 'create') return doc
+      async ({ req, doc, operation, previousDoc }) => {
+        if (operation === 'create') {
+          // Heads-up email + Beehiiv subscribe (if user opted into marketing).
+          void (async () => {
+            try {
+              const marketingOptIn =
+                (doc as any)?.notifications?.email?.newsletter ?? undefined
+              const source = (doc as any)?.onboarding?.source || 'registration'
 
-        // Fire-and-forget — never block the create response on a notification.
-        void (async () => {
-          try {
-            const marketingOptIn =
-              (doc as any)?.notifications?.email?.newsletter ?? undefined
-            const source = (doc as any)?.onboarding?.source || 'registration'
-            const { subject, html } = buildUserRegisteredEmail({
-              userId: doc.id,
-              email: doc.email,
-              firstName: (doc as any).firstName,
-              lastName: (doc as any).lastName,
-              source,
-              marketingOptIn,
-              registeredAt: (doc as any).createdAt || new Date().toISOString(),
-            })
-            await sendTeamNotification({
-              payload: req.payload,
-              subject,
-              html,
-              replyTo: doc.email,
-            })
-          } catch (err) {
-            usersHookLog.error({ err, userId: doc.id }, 'user_registered_notify_failed')
+              const { subject, html } = buildUserRegisteredEmail({
+                userId: doc.id,
+                email: doc.email,
+                firstName: (doc as any).firstName,
+                lastName: (doc as any).lastName,
+                source,
+                marketingOptIn,
+                registeredAt: (doc as any).createdAt || new Date().toISOString(),
+              })
+              await sendTeamNotification({
+                payload: req.payload,
+                subject,
+                html,
+                replyTo: doc.email,
+              })
+            } catch (err) {
+              usersHookLog.error({ err, userId: doc.id }, 'user_registered_notify_failed')
+            }
+
+            if ((doc as any)?.notifications?.email?.newsletter === true) {
+              try {
+                await subscribeAndMirror({
+                  payload: req.payload,
+                  email: doc.email,
+                  source: 'registration',
+                  relatedUserId: doc.id,
+                })
+              } catch (err) {
+                usersHookLog.error({ err, userId: doc.id }, 'user_registered_beehiiv_failed')
+              }
+            }
+          })()
+
+          return doc
+        }
+
+        if (operation === 'update') {
+          // Sync Beehiiv when the marketing flag flips. We only run this when
+          // there's a real change to avoid a flood of no-op API calls.
+          const before = (previousDoc as any)?.notifications?.email?.newsletter
+          const after = (doc as any)?.notifications?.email?.newsletter
+          const emailChanged =
+            (previousDoc as any)?.email && (previousDoc as any).email !== doc.email
+
+          if (before !== after) {
+            void (async () => {
+              try {
+                if (after === true) {
+                  await subscribeAndMirror({
+                    payload: req.payload,
+                    email: doc.email,
+                    source: 'profile',
+                    relatedUserId: doc.id,
+                  })
+                } else {
+                  await unsubscribeAndMirror({
+                    payload: req.payload,
+                    email: doc.email,
+                  })
+                }
+              } catch (err) {
+                usersHookLog.error(
+                  { err, userId: doc.id, before, after },
+                  'user_marketing_sync_failed',
+                )
+              }
+            })()
           }
-        })()
+
+          // If the user changed their email and they're currently opted-in,
+          // unsubscribe the old address from Beehiiv. We don't auto-subscribe
+          // the new one — the user can re-confirm via profile if they want.
+          if (emailChanged && before === true) {
+            void (async () => {
+              try {
+                await unsubscribeAndMirror({
+                  payload: req.payload,
+                  email: (previousDoc as any).email,
+                })
+              } catch (err) {
+                usersHookLog.error(
+                  { err, userId: doc.id },
+                  'user_email_change_beehiiv_cleanup_failed',
+                )
+              }
+            })()
+          }
+
+          return doc
+        }
 
         return doc
       },
