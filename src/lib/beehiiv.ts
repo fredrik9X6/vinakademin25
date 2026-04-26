@@ -87,6 +87,7 @@ export async function subscribe(
       const detail = data?.errors?.[0]?.detail || data?.error || ''
       const alreadySubscribed = String(detail).toLowerCase().includes('already subscribed')
       if (alreadySubscribed) {
+        log.info({ email }, 'beehiiv_already_subscribed')
         return { ok: true, alreadySubscribed: true }
       }
       log.error({ status: res.status, data }, 'beehiiv_subscribe_failed')
@@ -101,6 +102,7 @@ export async function subscribe(
       )
     }
 
+    log.info({ email, beehiivId, source: options.source }, 'beehiiv_subscribed')
     return { ok: true, beehiivId }
   } catch (err) {
     log.error({ err, email }, 'beehiiv_subscribe_exception')
@@ -148,6 +150,7 @@ export async function unsubscribe(email: string): Promise<BeehiivUnsubscribeResu
       return { ok: false, error: data?.errors?.[0]?.detail || `HTTP ${res.status}` }
     }
 
+    log.info({ email }, 'beehiiv_unsubscribed')
     return { ok: true }
   } catch (err) {
     log.error({ err, email }, 'beehiiv_unsubscribe_exception')
