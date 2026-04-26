@@ -93,6 +93,7 @@ export interface Config {
     'course-sessions': CourseSession;
     'session-participants': SessionParticipant;
     subscribers: Subscriber;
+    events: Event;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -125,6 +126,7 @@ export interface Config {
     'course-sessions': CourseSessionsSelect<false> | CourseSessionsSelect<true>;
     'session-participants': SessionParticipantsSelect<false> | SessionParticipantsSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -2635,6 +2637,61 @@ export interface Subscriber {
   createdAt: string;
 }
 /**
+ * Activity timeline used by the internal CRM
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  type:
+    | 'newsletter_subscribed'
+    | 'newsletter_unsubscribed'
+    | 'account_created'
+    | 'account_verified'
+    | 'onboarding_completed'
+    | 'marketing_opt_in_changed'
+    | 'order_paid'
+    | 'order_refunded'
+    | 'enrollment_started'
+    | 'course_completed'
+    | 'quiz_passed'
+    | 'review_submitted'
+    | 'wine_added_to_list'
+    | 'login';
+  /**
+   * The merge key for the timeline. Lower-cased on write so anonymous Subscribers and registered Users align.
+   */
+  contactEmail: string;
+  /**
+   * Short human-readable label rendered in the timeline.
+   */
+  label: string;
+  /**
+   * Linked user, when known.
+   */
+  user?: (number | null) | User;
+  /**
+   * Linked subscriber, when known.
+   */
+  subscriber?: (number | null) | Subscriber;
+  /**
+   * Free-form payload (order id, course slug, score, etc.).
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  source?: ('web' | 'webhook' | 'system' | 'cron' | 'manual') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
@@ -2744,6 +2801,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'subscribers';
         value: number | Subscriber;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: number | Event;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -3675,6 +3736,21 @@ export interface SubscribersSelect<T extends boolean = true> {
   subscribedAt?: T;
   unsubscribedAt?: T;
   lastSyncError?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  type?: T;
+  contactEmail?: T;
+  label?: T;
+  user?: T;
+  subscriber?: T;
+  metadata?: T;
+  source?: T;
   updatedAt?: T;
   createdAt?: T;
 }

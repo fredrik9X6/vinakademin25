@@ -35,6 +35,7 @@ import { BlogTags } from './collections/BlogTags'
 import { CourseSessions } from './collections/CourseSessions'
 import { SessionParticipants } from './collections/SessionParticipants'
 import { Subscribers } from './collections/Subscribers'
+import { Events } from './collections/Events'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -210,6 +211,7 @@ export default buildConfig({
     CourseSessions,
     SessionParticipants,
     Subscribers,
+    Events,
   ],
   editor: lexicalEditor(),
   secret: payloadSecret,

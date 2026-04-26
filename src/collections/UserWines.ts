@@ -206,8 +206,39 @@ export const UserWines: CollectionConfig = {
   ],
   hooks: {
     afterChange: [
-      async ({ req, doc }) => {
-        // This hook could be used to update user stats or trigger notifications
+      async ({ req, doc, operation }) => {
+        if (operation !== 'create') return doc
+
+        void (async () => {
+          const { recordEvent } = await import('../lib/events')
+          const userId = typeof doc.user === 'object' ? (doc.user as any)?.id : doc.user
+          let email: string | null =
+            typeof doc.user === 'object' ? (doc.user as any)?.email || null : null
+          if (!email && userId) {
+            try {
+              const u = await req.payload.findByID({
+                collection: 'users',
+                id: userId,
+                depth: 0,
+              })
+              email = (u as any)?.email || null
+            } catch {
+              // ignore
+            }
+          }
+          if (!email) return
+          const wineId = typeof doc.wine === 'object' ? (doc.wine as any)?.id : doc.wine
+          await recordEvent({
+            payload: req.payload,
+            type: 'wine_added_to_list',
+            contactEmail: email,
+            label: `Added wine to "${doc.status || 'list'}"`,
+            userId: userId ?? null,
+            source: 'system',
+            metadata: { wineId, status: doc.status },
+          })
+        })()
+
         return doc
       },
     ],

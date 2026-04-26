@@ -391,6 +391,47 @@ export const UserProgress: CollectionConfig = {
         return data
       },
     ],
+    afterChange: [
+      async ({ req, doc, previousDoc, operation }) => {
+        // Emit `course_completed` exactly once — when status transitions to 'completed'.
+        const before = (previousDoc as any)?.status
+        const after = (doc as any)?.status
+        if (operation === 'update' && before !== 'completed' && after === 'completed') {
+          void (async () => {
+            const { recordEvent } = await import('../lib/events')
+            const userId = typeof doc.user === 'object' ? (doc.user as any)?.id : doc.user
+            let email: string | null =
+              typeof doc.user === 'object' ? (doc.user as any)?.email || null : null
+            if (!email && userId) {
+              try {
+                const u = await req.payload.findByID({
+                  collection: 'users',
+                  id: userId,
+                  depth: 0,
+                })
+                email = (u as any)?.email || null
+              } catch {
+                // ignore
+              }
+            }
+            if (!email) return
+            await recordEvent({
+              payload: req.payload,
+              type: 'course_completed',
+              contactEmail: email,
+              label: doc.courseTitle ? `Completed: ${doc.courseTitle}` : 'Course completed',
+              userId: userId ?? null,
+              source: 'system',
+              metadata: {
+                courseId: typeof doc.course === 'object' ? (doc.course as any)?.id : doc.course,
+                courseTitle: doc.courseTitle,
+                progressPercentage: doc.progressPercentage,
+              },
+            })
+          })()
+        }
+      },
+    ],
   },
   timestamps: true,
 }

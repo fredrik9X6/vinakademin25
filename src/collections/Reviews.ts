@@ -121,6 +121,48 @@ export const Reviews: CollectionConfig = {
         return data
       },
     ],
+    afterChange: [
+      async ({ req, doc, operation }) => {
+        if (operation !== 'create') return
+        void (async () => {
+          const { recordEvent } = await import('../lib/events')
+          const userId = typeof doc.user === 'object' ? (doc.user as any)?.id : doc.user
+          let email: string | null =
+            typeof doc.user === 'object' ? (doc.user as any)?.email || null : null
+          if (!email && userId) {
+            try {
+              const u = await req.payload.findByID({
+                collection: 'users',
+                id: userId,
+                depth: 0,
+              })
+              email = (u as any)?.email || null
+            } catch {
+              // ignore
+            }
+          }
+          // Skip when there's no user (sessionParticipant-only review) — those
+          // belong to a different timeline (anonymous tasting attendee).
+          if (!email) return
+          const wineId = typeof doc.wine === 'object' ? (doc.wine as any)?.id : doc.wine
+          await recordEvent({
+            payload: req.payload,
+            type: 'review_submitted',
+            contactEmail: email,
+            label: `Wine review (${doc.rating ?? '–'}/5)`,
+            userId: userId ?? null,
+            source: 'system',
+            metadata: {
+              kind: 'wine',
+              reviewId: doc.id,
+              wineId,
+              rating: doc.rating,
+              isTrusted: doc.isTrusted,
+            },
+          })
+        })()
+      },
+    ],
     beforeRead: [
       async ({ doc, req }) => {
         // Ensure title is populated for existing reviews that might not have it

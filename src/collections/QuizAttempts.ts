@@ -353,5 +353,49 @@ export const QuizAttempts: CollectionConfig = {
         return data
       },
     ],
+    afterChange: [
+      async ({ req, doc, previousDoc, operation }) => {
+        // Emit `quiz_passed` once — when scoring.passed transitions to true.
+        const before = (previousDoc as any)?.scoring?.passed
+        const after = (doc as any)?.scoring?.passed
+        if (operation !== 'create' && before === after) return
+        if (after !== true) return
+
+        void (async () => {
+          const { recordEvent } = await import('../lib/events')
+          const userId = typeof doc.user === 'object' ? (doc.user as any)?.id : doc.user
+          let email: string | null =
+            typeof doc.user === 'object' ? (doc.user as any)?.email || null : null
+          if (!email && userId) {
+            try {
+              const u = await req.payload.findByID({
+                collection: 'users',
+                id: userId,
+                depth: 0,
+              })
+              email = (u as any)?.email || null
+            } catch {
+              // ignore
+            }
+          }
+          if (!email) return
+          const quizId = typeof doc.quiz === 'object' ? (doc.quiz as any)?.id : doc.quiz
+          await recordEvent({
+            payload: req.payload,
+            type: 'quiz_passed',
+            contactEmail: email,
+            label: `Quiz passed${doc.scoring?.score != null ? ` (${doc.scoring.score}%)` : ''}`,
+            userId: userId ?? null,
+            source: 'system',
+            metadata: {
+              quizId,
+              attemptId: doc.id,
+              score: doc.scoring?.score,
+              grade: doc.scoring?.grade,
+            },
+          })
+        })()
+      },
+    ],
   },
 }

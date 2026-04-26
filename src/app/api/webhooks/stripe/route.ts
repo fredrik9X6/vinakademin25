@@ -8,6 +8,7 @@ import { getSiteURL } from '@/lib/site-url'
 import { loggerFor } from '@/lib/logger'
 import { sendTeamNotification } from '@/lib/notify-team'
 import { buildOrderPaidEmail } from '@/lib/team-emails/order-paid'
+import { recordEvent } from '@/lib/events'
 
 const log = loggerFor('stripe-webhook')
 
@@ -606,7 +607,8 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
           html: emailHTML,
         })
 
-        // Internal heads-up to the team. Fire-and-forget; never blocks the webhook.
+        // Internal heads-up to the team + CRM timeline event.
+        // Fire-and-forget; never blocks the webhook.
         void (async () => {
           try {
             const team = buildOrderPaidEmail({
@@ -636,6 +638,28 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
           } catch (notifyErr) {
             log.error({ err: notifyErr }, 'order_paid_team_notify_failed')
           }
+
+          await recordEvent({
+            payload,
+            type: 'order_paid',
+            contactEmail: resolvedCheckout.email,
+            label: `Köp: ${course.title}`,
+            userId: userIdInt,
+            source: 'webhook',
+            metadata: {
+              orderId: updatedOrder.id,
+              orderNumber: (updatedOrder as any).orderNumber,
+              courseId: courseIdInt,
+              courseSlug: course.slug,
+              amount: updatedOrder.amount,
+              currency: (updatedOrder as any).currency,
+              discountAmount: updatedOrder.discountAmount,
+              discountCode: updatedOrder.discountCode,
+              checkoutMode: resolvedCheckout.checkoutMode,
+              isNewUser: resolvedCheckout.isNewUser,
+              stripeSessionId: session.id,
+            },
+          })
         })()
 
         if (resolvedCheckout.checkoutMode === 'guest') {

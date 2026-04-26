@@ -10,6 +10,7 @@ import { adminFieldLevel, adminOrInstructorFieldLevel } from '../lib/access'
 import { sendTeamNotification } from '../lib/notify-team'
 import { buildUserRegisteredEmail } from '../lib/team-emails/user-registered'
 import { subscribeAndMirror, unsubscribeAndMirror } from '../lib/subscribers'
+import { recordEvent } from '../lib/events'
 import { loggerFor } from '../lib/logger'
 
 const usersHookLog = loggerFor('collections-users-hooks')
@@ -786,13 +787,14 @@ export const Users: CollectionConfig = {
     afterChange: [
       async ({ req, doc, operation, previousDoc }) => {
         if (operation === 'create') {
-          // Heads-up email + Beehiiv subscribe (if user opted into marketing).
+          // Heads-up email + Beehiiv subscribe (if user opted into marketing) +
+          // CRM timeline entry.
           void (async () => {
-            try {
-              const marketingOptIn =
-                (doc as any)?.notifications?.email?.newsletter ?? undefined
-              const source = (doc as any)?.onboarding?.source || 'registration'
+            const marketingOptIn =
+              (doc as any)?.notifications?.email?.newsletter ?? undefined
+            const source = (doc as any)?.onboarding?.source || 'registration'
 
+            try {
               const { subject, html } = buildUserRegisteredEmail({
                 userId: doc.id,
                 email: doc.email,
@@ -812,6 +814,16 @@ export const Users: CollectionConfig = {
               usersHookLog.error({ err, userId: doc.id }, 'user_registered_notify_failed')
             }
 
+            await recordEvent({
+              payload: req.payload,
+              type: 'account_created',
+              contactEmail: doc.email,
+              label: 'Account created',
+              userId: doc.id,
+              source: 'web',
+              metadata: { source, marketingOptIn },
+            })
+
             if ((doc as any)?.notifications?.email?.newsletter === true) {
               try {
                 await subscribeAndMirror({
@@ -830,6 +842,20 @@ export const Users: CollectionConfig = {
         }
 
         if (operation === 'update') {
+          // Email-verification flip → CRM event.
+          const verifiedBefore = (previousDoc as any)?._verified
+          const verifiedAfter = (doc as any)?._verified
+          if (!verifiedBefore && verifiedAfter) {
+            void recordEvent({
+              payload: req.payload,
+              type: 'account_verified',
+              contactEmail: doc.email,
+              label: 'Email verified',
+              userId: doc.id,
+              source: 'system',
+            })
+          }
+
           // Sync Beehiiv when the marketing flag flips. We only run this when
           // there's a real change to avoid a flood of no-op API calls.
           const before = (previousDoc as any)?.notifications?.email?.newsletter
@@ -859,6 +885,16 @@ export const Users: CollectionConfig = {
                   'user_marketing_sync_failed',
                 )
               }
+
+              await recordEvent({
+                payload: req.payload,
+                type: 'marketing_opt_in_changed',
+                contactEmail: doc.email,
+                label: after === true ? 'Opted in to marketing' : 'Opted out of marketing',
+                userId: doc.id,
+                source: 'web',
+                metadata: { before, after },
+              })
             })()
           }
 
