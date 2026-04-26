@@ -92,6 +92,7 @@ export interface Config {
     'blog-tags': BlogTag;
     'course-sessions': CourseSession;
     'session-participants': SessionParticipant;
+    subscribers: Subscriber;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -123,6 +124,7 @@ export interface Config {
     'blog-tags': BlogTagsSelect<false> | BlogTagsSelect<true>;
     'course-sessions': CourseSessionsSelect<false> | CourseSessionsSelect<true>;
     'session-participants': SessionParticipantsSelect<false> | SessionParticipantsSelect<true>;
+    subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -2596,6 +2598,43 @@ export interface BlogTag {
   createdAt: string;
 }
 /**
+ * Newsletter / marketing contacts mirrored from Beehiiv
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers".
+ */
+export interface Subscriber {
+  id: number;
+  email: string;
+  status: 'subscribed' | 'unsubscribed' | 'pending';
+  source?: ('footer' | 'newsletter_page' | 'registration' | 'onboarding' | 'profile' | 'manual') | null;
+  /**
+   * Returned by Beehiiv on subscribe; used to look up status updates.
+   */
+  beehiivId?: string | null;
+  /**
+   * Linked when this email matches a registered user. Auto-populated on subscribe.
+   */
+  relatedUser?: (number | null) | User;
+  /**
+   * Manual tags for the lightweight CRM (e.g. "VIP", "press", "B2B-lead").
+   */
+  tags?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  subscribedAt?: string | null;
+  unsubscribedAt?: string | null;
+  /**
+   * Last error returned by Beehiiv when syncing this contact (if any).
+   */
+  lastSyncError?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
@@ -2701,6 +2740,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'session-participants';
         value: number | SessionParticipant;
+      } | null)
+    | ({
+        relationTo: 'subscribers';
+        value: number | Subscriber;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -3610,6 +3653,28 @@ export interface SessionParticipantsSelect<T extends boolean = true> {
   user?: T;
   isActive?: T;
   lastActivityAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers_select".
+ */
+export interface SubscribersSelect<T extends boolean = true> {
+  email?: T;
+  status?: T;
+  source?: T;
+  beehiivId?: T;
+  relatedUser?: T;
+  tags?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  subscribedAt?: T;
+  unsubscribedAt?: T;
+  lastSyncError?: T;
   updatedAt?: T;
   createdAt?: T;
 }

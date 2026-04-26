@@ -4,75 +4,55 @@ import config from '@/payload.config'
 import { loggerFor } from '@/lib/logger'
 import { sendTeamNotification } from '@/lib/notify-team'
 import { buildNewsletterSignupEmail } from '@/lib/team-emails/newsletter-signup'
+import {
+  findUserIdByEmail,
+  subscribeAndMirror,
+} from '@/lib/subscribers'
 
 const log = loggerFor('api-newsletter-subscribe')
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json()
+    const body = await request.json().catch(() => ({}))
+    const email: string = (body?.email || '').trim().toLowerCase()
+    const source = (body?.source as string | undefined) || 'footer'
 
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'Giltig e-postadress krävs' }, { status: 400 })
     }
 
-    // Check if Beehiiv API key is configured
-    const beehiivApiKey = process.env.BEEHIIV_API_KEY
-    const beehiivPublicationId = process.env.BEEHIIV_PUBLICATION_ID
+    const payload = await getPayload({ config })
+    const relatedUserId = await findUserIdByEmail(payload, email)
 
-    if (!beehiivApiKey || !beehiivPublicationId) {
-      log.error('Beehiiv credentials not configured')
-      return NextResponse.json(
-        { error: 'Nyhetsbrev-tjänsten är inte konfigurerad' },
-        { status: 500 },
-      )
-    }
+    const result = await subscribeAndMirror({
+      payload,
+      email,
+      source: source === 'newsletter_page' ? 'newsletter_page' : 'footer',
+      relatedUserId,
+    })
 
-    // Subscribe to Beehiiv
-    const beehiivResponse = await fetch(
-      `https://api.beehiiv.com/v2/publications/${beehiivPublicationId}/subscriptions`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${beehiivApiKey}`,
-        },
-        body: JSON.stringify({
-          email,
-          reactivate_existing: false,
-          send_welcome_email: true,
-          utm_source: 'vinakademin_website',
-          utm_medium: 'newsletter_signup',
-        }),
-      },
-    )
-
-    const beehiivData = await beehiivResponse.json()
-
-    if (!beehiivResponse.ok) {
-      log.error('Beehiiv API error:', beehiivData)
-
-      // Handle specific Beehiiv errors
-      if (beehiivData.errors?.[0]?.detail?.includes('already subscribed')) {
-        return NextResponse.json(
-          { error: 'Du är redan prenumerant på vårt nyhetsbrev!' },
-          { status: 409 },
-        )
-      }
-
+    if (!result.ok && !result.alreadySubscribed && !result.beehiivSkipped) {
+      log.error({ email, error: result.error }, 'newsletter_subscribe_failed')
       return NextResponse.json(
         { error: 'Kunde inte lägga till prenumeration. Försök igen senare.' },
         { status: 500 },
       )
     }
 
+    if (result.alreadySubscribed) {
+      return NextResponse.json(
+        { error: 'Du är redan prenumerant på vårt nyhetsbrev!' },
+        { status: 409 },
+      )
+    }
+
     // Fire-and-forget heads-up to the team. Never blocks the response.
-    void notifyTeam({ email, beehiivId: beehiivData.data?.id })
+    void notifyTeam({ payload, email, source })
 
     return NextResponse.json(
       {
         success: true,
         message: 'Tack för din prenumeration!',
-        subscription_id: beehiivData.data?.id,
       },
       { status: 200 },
     )
@@ -85,16 +65,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function notifyTeam(input: { email: string; beehiivId?: string }) {
+async function notifyTeam(input: {
+  payload: Awaited<ReturnType<typeof getPayload>>
+  email: string
+  source?: string
+}) {
   try {
-    const payload = await getPayload({ config })
     const { subject, html } = buildNewsletterSignupEmail({
       email: input.email,
-      source: 'newsletter_form',
-      beehiivId: input.beehiivId,
+      source: input.source || 'footer',
     })
     await sendTeamNotification({
-      payload,
+      payload: input.payload,
       subject,
       html,
       replyTo: input.email,
