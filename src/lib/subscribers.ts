@@ -1,6 +1,7 @@
 import type { Payload } from 'payload'
 import { loggerFor } from './logger'
 import { subscribe as beehiivSubscribe, unsubscribe as beehiivUnsubscribe } from './beehiiv'
+import { recordEvent } from './events'
 
 const log = loggerFor('lib-subscribers')
 
@@ -62,16 +63,38 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
       lastSyncError: beehiivResult.ok ? null : beehiivResult.error || null,
     }
 
+    let subscriberId: number | string | null = null
     if (existing.docs.length > 0) {
-      await payload.update({
+      const updated = await payload.update({
         collection: 'subscribers',
         id: existing.docs[0].id,
         data: baseData,
       })
+      subscriberId = updated.id
     } else {
-      await payload.create({
+      const created = await payload.create({
         collection: 'subscribers',
         data: baseData,
+      })
+      subscriberId = created.id
+    }
+
+    // Append to the CRM timeline. Skip when this was a no-op re-subscribe of
+    // an already-subscribed address (avoid noise when users repeatedly hit the form).
+    if (!beehiivResult.alreadySubscribed) {
+      await recordEvent({
+        payload,
+        type: 'newsletter_subscribed',
+        contactEmail: email,
+        label: `Subscribed via ${source}`,
+        userId: relatedUserId ?? null,
+        subscriberId,
+        source: 'system',
+        metadata: {
+          beehiivId: beehiivResult.beehiivId,
+          beehiivSkipped: !!beehiivResult.skipped,
+          source,
+        },
       })
     }
   } catch (err) {
@@ -105,8 +128,10 @@ export async function unsubscribeAndMirror(input: {
       limit: 1,
     })
 
+    let subscriberId: number | string | null = null
+    let relatedUserId: number | string | null = null
     if (existing.docs.length > 0) {
-      await payload.update({
+      const updated = await payload.update({
         collection: 'subscribers',
         id: existing.docs[0].id,
         data: {
@@ -115,7 +140,20 @@ export async function unsubscribeAndMirror(input: {
           lastSyncError: beehiivResult.ok ? null : beehiivResult.error || null,
         },
       })
+      subscriberId = updated.id
+      const rel = (updated as any).relatedUser
+      relatedUserId = typeof rel === 'object' ? rel?.id ?? null : rel ?? null
     }
+
+    await recordEvent({
+      payload,
+      type: 'newsletter_unsubscribed',
+      contactEmail: email,
+      label: 'Unsubscribed from newsletter',
+      userId: relatedUserId,
+      subscriberId,
+      source: 'system',
+    })
   } catch (err) {
     log.error({ err, email }, 'subscribers_local_unsubscribe_failed')
   }

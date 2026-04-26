@@ -518,6 +518,44 @@ export const Enrollments: CollectionConfig = {
             },
           })
         }
+
+        if (operation === 'create') {
+          const { recordEvent } = await import('../lib/events')
+          const userId = typeof doc.user === 'object' ? (doc.user as any)?.id : doc.user
+          const courseRef = typeof doc.course === 'object' ? (doc.course as any) : null
+          const courseId = courseRef?.id ?? doc.course
+          const courseTitle = courseRef?.title
+
+          // Resolve email — relationship may be id-only at this point.
+          let email: string | null = null
+          if (typeof doc.user === 'object') {
+            email = (doc.user as any)?.email || null
+          }
+          if (!email && userId) {
+            try {
+              const u = await req.payload.findByID({
+                collection: 'users',
+                id: userId,
+                depth: 0,
+              })
+              email = (u as any)?.email || null
+            } catch {
+              // ignore — recordEvent will skip without email
+            }
+          }
+
+          if (email) {
+            void recordEvent({
+              payload: req.payload,
+              type: 'enrollment_started',
+              contactEmail: email,
+              label: courseTitle ? `Started: ${courseTitle}` : 'Enrollment started',
+              userId: userId ?? null,
+              source: 'system',
+              metadata: { enrollmentId: doc.id, courseId, courseTitle },
+            })
+          }
+        }
       },
     ],
   },

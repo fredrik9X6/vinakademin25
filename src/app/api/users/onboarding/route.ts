@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { loggerFor } from '@/lib/logger'
+import { recordEvent } from '@/lib/events'
 
 const log = loggerFor('api-users-onboarding')
 
@@ -97,6 +98,20 @@ export async function PATCH(request: NextRequest) {
     logOnboardingEvent(action === 'skip' ? 'onboarding_skipped' : 'onboarding_completed', {
       userId: user.id,
       source: nextOnboardingData.source,
+    })
+
+    void recordEvent({
+      payload,
+      type: 'onboarding_completed',
+      contactEmail: (user as any).email,
+      label: action === 'skip' ? 'Onboarding skipped' : 'Onboarding completed',
+      userId: user.id,
+      source: 'web',
+      metadata: {
+        action,
+        goal: nextOnboardingData.goal,
+        source: nextOnboardingData.source,
+      },
     })
 
     return NextResponse.json({ success: true, onboarding: (updatedUser as any).onboarding })

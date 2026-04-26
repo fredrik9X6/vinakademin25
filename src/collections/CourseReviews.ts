@@ -134,6 +134,44 @@ export const CourseReviews: CollectionConfig = {
         return data
       },
     ],
+    afterChange: [
+      async ({ req, doc, operation }: any) => {
+        if (operation !== 'create') return
+        void (async () => {
+          const { recordEvent } = await import('../lib/events')
+          const userId = typeof doc.author === 'object' ? doc.author?.id : doc.author
+          let email: string | null =
+            typeof doc.author === 'object' ? doc.author?.email || null : null
+          if (!email && userId) {
+            try {
+              const u = await req.payload.findByID({
+                collection: 'users',
+                id: userId,
+                depth: 0,
+              })
+              email = (u as any)?.email || null
+            } catch {
+              // ignore
+            }
+          }
+          if (!email) return
+          await recordEvent({
+            payload: req.payload,
+            type: 'review_submitted',
+            contactEmail: email,
+            label: `Course review (${doc.rating ?? '–'}/5)`,
+            userId: userId ?? null,
+            source: 'system',
+            metadata: {
+              kind: 'course',
+              reviewId: doc.id,
+              courseId: typeof doc.course === 'object' ? doc.course?.id : doc.course,
+              rating: doc.rating,
+            },
+          })
+        })()
+      },
+    ],
   },
   timestamps: true,
 }
