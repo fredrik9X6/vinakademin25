@@ -1,9 +1,15 @@
 import * as migration_20260423_210954 from './20260423_210954';
+import * as migration_20260426_095502_add_subscribers_collection from './20260426_095502_add_subscribers_collection';
 
 export const migrations = [
   {
     up: migration_20260423_210954.up,
     down: migration_20260423_210954.down,
-    name: '20260423_210954'
+    name: '20260423_210954',
+  },
+  {
+    up: migration_20260426_095502_add_subscribers_collection.up,
+    down: migration_20260426_095502_add_subscribers_collection.down,
+    name: '20260426_095502_add_subscribers_collection'
   },
 ];
