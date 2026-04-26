@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getPayload } from 'payload'
+import config from '@/payload.config'
 import { loggerFor } from '@/lib/logger'
+import { sendTeamNotification } from '@/lib/notify-team'
+import { buildNewsletterSignupEmail } from '@/lib/team-emails/newsletter-signup'
 
 const log = loggerFor('api-newsletter-subscribe')
 
@@ -61,6 +65,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Fire-and-forget heads-up to the team. Never blocks the response.
+    void notifyTeam({ email, beehiivId: beehiivData.data?.id })
+
     return NextResponse.json(
       {
         success: true,
@@ -75,5 +82,24 @@ export async function POST(request: NextRequest) {
       { error: 'Ett oväntat fel uppstod. Försök igen senare.' },
       { status: 500 },
     )
+  }
+}
+
+async function notifyTeam(input: { email: string; beehiivId?: string }) {
+  try {
+    const payload = await getPayload({ config })
+    const { subject, html } = buildNewsletterSignupEmail({
+      email: input.email,
+      source: 'newsletter_form',
+      beehiivId: input.beehiivId,
+    })
+    await sendTeamNotification({
+      payload,
+      subject,
+      html,
+      replyTo: input.email,
+    })
+  } catch (err) {
+    log.error({ err, email: input.email }, 'newsletter_team_notify_failed')
   }
 }
