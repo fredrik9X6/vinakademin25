@@ -39,8 +39,15 @@ export function BreadcrumbBar() {
 
   // Resolved title for the detail page slug
   const [resolvedTitle, setResolvedTitle] = React.useState<string | null>(null)
+  // Resolved title for the lesson/quiz query param (course viewer)
+  const [resolvedItemTitle, setResolvedItemTitle] = React.useState<string | null>(null)
 
   const isHomepage = pathname === '/'
+
+  const lessonId = searchParams.get('lesson')
+  const quizId = searchParams.get('quiz')
+  const itemKind: 'lesson' | 'quiz' | null = lessonId ? 'lesson' : quizId ? 'quiz' : null
+  const itemId = lessonId || quizId
 
   // Fetch the real title for detail pages
   // IMPORTANT: This hook must always run (React rules of hooks) — the
@@ -93,6 +100,36 @@ export function BreadcrumbBar() {
     return () => controller.abort()
   }, [pathname, searchParams, isHomepage])
 
+  // Resolve the lesson/quiz title for the course viewer breadcrumb.
+  React.useEffect(() => {
+    if (!itemId) {
+      setResolvedItemTitle(null)
+      return
+    }
+    const controller = new AbortController()
+    ;(async () => {
+      try {
+        const url = new URL('/api/content-items/title', window.location.origin)
+        url.searchParams.set('id', itemId)
+        const res = await fetch(url.toString(), {
+          credentials: 'include',
+          signal: controller.signal,
+        })
+        if (!res.ok) {
+          setResolvedItemTitle(null)
+          return
+        }
+        const json = (await res.json().catch(() => null)) as any
+        const title = json?.title
+        setResolvedItemTitle(typeof title === 'string' && title.trim() ? title : null)
+      } catch (err) {
+        if ((err as any)?.name === 'AbortError') return
+        setResolvedItemTitle(null)
+      }
+    })()
+    return () => controller.abort()
+  }, [itemId])
+
   // Hide on homepage — AFTER all hooks have been called
   if (isHomepage) return null
 
@@ -142,7 +179,7 @@ export function BreadcrumbBar() {
         label = segment.charAt(0).toUpperCase() + segment.slice(1)
       }
 
-      const isCurrentPage = isLast && !searchParams.get('lesson')
+      const isCurrentPage = isLast && !itemKind
 
       breadcrumbs.push({
         label,
@@ -151,16 +188,19 @@ export function BreadcrumbBar() {
       })
     }
 
-    // Handle lesson parameter
-    const lessonId = searchParams.get('lesson')
+    // Append the active lesson / quiz inside the course viewer.
     if (
-      lessonId &&
+      itemKind &&
+      itemId &&
       (pathSegments[0] === 'kurser' || pathSegments[0] === 'vinprovningar') &&
       pathSegments[1]
     ) {
+      // Prefer the resolved content-item title; fall back to a numeric label
+      // until it loads (avoids a flash of "undefined").
+      const fallback = itemKind === 'quiz' ? `Quiz ${itemId}` : `Lektion ${itemId}`
       breadcrumbs.push({
-        label: `Lektion ${lessonId}`,
-        href: `${pathname}?lesson=${lessonId}`,
+        label: resolvedItemTitle ?? fallback,
+        href: `${pathname}?${itemKind}=${itemId}`,
         isCurrentPage: true,
       })
       if (breadcrumbs.length > 2) {
