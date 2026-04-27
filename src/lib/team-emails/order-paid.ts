@@ -29,7 +29,7 @@ export function buildOrderPaidEmail(input: OrderPaidNotificationInput): {
       label: 'Belopp',
       value:
         input.currency && input.currency.toUpperCase() !== 'SEK'
-          ? `${(input.amount / 100).toFixed(2)} ${input.currency.toUpperCase()}`
+          ? `${input.amount.toFixed(2)} ${input.currency.toUpperCase()}`
           : formatPriceSEK(input.amount),
     },
   ]
