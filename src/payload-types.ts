@@ -838,6 +838,10 @@ export interface Review {
    */
   user?: (number | null) | User;
   /**
+   * Captured at write-time from the linked user. Survives user deletion so the review keeps its attribution.
+   */
+  authorDisplayName?: string | null;
+  /**
    * Session participant who submitted this review (for guest reviews)
    */
   sessionParticipant?: (number | null) | SessionParticipant;
@@ -2439,7 +2443,11 @@ export interface CourseReview {
    */
   title?: string | null;
   course: number | Vinprovningar;
-  author: number | User;
+  author?: (number | null) | User;
+  /**
+   * Captured at write-time from the linked user. Survives user deletion so the review keeps its attribution.
+   */
+  authorDisplayName?: string | null;
   rating: number;
   content: string;
   status: 'published' | 'pending';
@@ -3568,6 +3576,7 @@ export interface ReviewsSelect<T extends boolean = true> {
   title?: T;
   wine?: T;
   user?: T;
+  authorDisplayName?: T;
   sessionParticipant?: T;
   session?: T;
   createdBy?: T;
@@ -3625,6 +3634,7 @@ export interface CourseReviewsSelect<T extends boolean = true> {
   title?: T;
   course?: T;
   author?: T;
+  authorDisplayName?: T;
   rating?: T;
   content?: T;
   status?: T;
