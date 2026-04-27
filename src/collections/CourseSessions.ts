@@ -44,7 +44,9 @@ export const CourseSessions: CollectionConfig = {
       name: 'host',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
+      // Required at application-write time; nullable in the DB so SET NULL on
+      // user delete preserves the session as a historical record.
+      required: false,
       admin: {
         description: 'User who created and hosts this session',
       },

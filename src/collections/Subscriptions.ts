@@ -45,7 +45,9 @@ export const Subscriptions: CollectionConfig = {
       name: 'user',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
+      // Required at application-write time; nullable in the DB so SET NULL on
+      // user delete preserves the subscription record for accounting.
+      required: false,
       admin: {
         description: 'Subscriber',
       },

@@ -1263,7 +1263,7 @@ export interface CourseSession {
   /**
    * User who created and hosts this session
    */
-  host: number | User;
+  host?: (number | null) | User;
   /**
    * 6-character code for participants to join (e.g., WINE42)
    */
@@ -2096,7 +2096,7 @@ export interface Transaction {
   /**
    * User associated with this transaction
    */
-  user: number | User;
+  user?: (number | null) | User;
   /**
    * Type of transaction
    */
@@ -2190,7 +2190,7 @@ export interface Subscription {
   /**
    * Subscriber
    */
-  user: number | User;
+  user?: (number | null) | User;
   /**
    * Current subscription status
    */
@@ -2318,7 +2318,7 @@ export interface Order {
   /**
    * Customer who placed the order
    */
-  user: number | User;
+  user?: (number | null) | User;
   /**
    * Current status of the order
    */

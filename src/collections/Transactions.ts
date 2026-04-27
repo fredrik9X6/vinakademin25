@@ -51,7 +51,9 @@ export const Transactions: CollectionConfig = {
       name: 'user',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
+      // Required at application-write time; nullable in the DB so SET NULL on
+      // user delete preserves the transaction as an anonymized financial record.
+      required: false,
       hasMany: false,
       admin: {
         description: 'User associated with this transaction',
