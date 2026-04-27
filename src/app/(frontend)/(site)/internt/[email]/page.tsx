@@ -247,7 +247,7 @@ function chipTone(type: EventDoc['type']): string {
 
 function formatSEK(amount?: number | null): string {
   if (!amount) return '—'
-  return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount / 100)
+  return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amount)
 }
 
 function relative(input: string): string {

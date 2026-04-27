@@ -92,10 +92,12 @@ function escapeAttr(input: string): string {
   return escapeHtml(input)
 }
 
-export function formatPriceSEK(amountInOre: number): string {
-  return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(
-    amountInOre / 100,
-  )
+/**
+ * Format an amount stored as whole SEK (the convention in our Orders collection).
+ * Stripe webhooks normalize amounts to SEK before persisting.
+ */
+export function formatPriceSEK(amountSEK: number): string {
+  return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(amountSEK)
 }
 
 export function formatDateSv(input: string | Date): string {
