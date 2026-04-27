@@ -44,9 +44,22 @@ export const CourseReviews: CollectionConfig = {
       name: 'author',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
+      // Required at application-write time; nullable in the DB so SET NULL on
+      // user delete preserves the review with its `authorDisplayName` snapshot.
+      required: false,
       label: 'Författare',
       index: true,
+    },
+    {
+      name: 'authorDisplayName',
+      type: 'text',
+      label: 'Författarens namn (snapshot)',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description:
+          'Captured at write-time from the linked user. Survives user deletion so the review keeps its attribution.',
+      },
     },
     {
       name: 'rating',
@@ -94,10 +107,31 @@ export const CourseReviews: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      ({ req, data }: any) => {
+      async ({ req, data, operation, originalDoc }: any) => {
         if (!data) return data
         if (!data.author && req?.user) {
           data.author = req.user.id
+        }
+
+        // Snapshot the author's display name on create so the review keeps its
+        // attribution even after the user is deleted. We only set it once —
+        // never overwrite an existing value, so the snapshot is point-in-time.
+        const existingSnapshot = originalDoc?.authorDisplayName || data.authorDisplayName
+        if (operation === 'create' && !existingSnapshot && data.author) {
+          try {
+            const authorId = typeof data.author === 'object' ? data.author.id : data.author
+            const u = await req.payload.findByID({
+              collection: 'users',
+              id: authorId,
+              depth: 0,
+            })
+            if (u) {
+              const name = [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
+              if (name) data.authorDisplayName = name
+            }
+          } catch {
+            // Snapshot is best-effort; never block the write.
+          }
         }
         return data
       },

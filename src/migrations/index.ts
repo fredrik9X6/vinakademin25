@@ -2,6 +2,7 @@ import * as migration_20260423_210954 from './20260423_210954';
 import * as migration_20260426_095502_add_subscribers_collection from './20260426_095502_add_subscribers_collection';
 import * as migration_20260426_100149_add_events_collection from './20260426_100149_add_events_collection';
 import * as migration_20260427_195730_fix_user_delete_constraints from './20260427_195730_fix_user_delete_constraints';
+import * as migration_20260427_201145_add_review_author_snapshots from './20260427_201145_add_review_author_snapshots';
 
 export const migrations = [
   {
@@ -22,6 +23,11 @@ export const migrations = [
   {
     up: migration_20260427_195730_fix_user_delete_constraints.up,
     down: migration_20260427_195730_fix_user_delete_constraints.down,
-    name: '20260427_195730_fix_user_delete_constraints'
+    name: '20260427_195730_fix_user_delete_constraints',
+  },
+  {
+    up: migration_20260427_201145_add_review_author_snapshots.up,
+    down: migration_20260427_201145_add_review_author_snapshots.down,
+    name: '20260427_201145_add_review_author_snapshots'
   },
 ];

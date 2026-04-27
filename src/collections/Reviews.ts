@@ -86,6 +86,35 @@ export const Reviews: CollectionConfig = {
         }
         return data
       },
+      // Snapshot the author's display name on create so the review keeps its
+      // attribution after the user is deleted. Set once; never overwrite.
+      async ({ data, req, operation, originalDoc }) => {
+        if (!data) return data
+        const existingSnapshot = (originalDoc as any)?.authorDisplayName || (data as any).authorDisplayName
+        if (operation === 'create' && !existingSnapshot && (data as any).user) {
+          try {
+            const userId =
+              typeof (data as any).user === 'object'
+                ? (data as any).user.id
+                : (data as any).user
+            const u = await req.payload.findByID({
+              collection: 'users',
+              id: userId,
+              depth: 0,
+            })
+            if (u) {
+              const name = [(u as any).firstName, (u as any).lastName]
+                .filter(Boolean)
+                .join(' ')
+                .trim()
+              if (name) (data as any).authorDisplayName = name
+            }
+          } catch {
+            // Snapshot is best-effort; never block the write.
+          }
+        }
+        return data
+      },
       // Generate title from wine name and rating
       async ({ data, req, operation }) => {
         if (!data) return data
@@ -250,6 +279,17 @@ export const Reviews: CollectionConfig = {
         description: 'User who wrote the review',
         readOnly: true,
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'authorDisplayName',
+      type: 'text',
+      label: 'Author display name (snapshot)',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description:
+          'Captured at write-time from the linked user. Survives user deletion so the review keeps its attribution.',
       },
     },
     {
