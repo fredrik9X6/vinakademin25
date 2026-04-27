@@ -45,7 +45,9 @@ export const Orders: CollectionConfig = {
       name: 'user',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
+      // Required at application-write time; kept nullable in the DB so deleting
+      // a user can SET NULL here and preserve the order as an anonymous record.
+      required: false,
       admin: {
         description: 'Customer who placed the order',
       },
