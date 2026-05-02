@@ -42,7 +42,7 @@ export function buildEbookGrundernaIVinEmail(input: EbookDeliveryEmailInput = {}
     '· Del 1: Vin för alla',
     '· Del 2: De 5 S:en — provningsmetoden',
     '· Del 3: Mat & Vin',
-    '· Del 4: BLIC — kvalitetskollen',
+    '· Del 4: BLIK — kvalitetskollen',
     '· Del 5: Din kickstart-lista',
     '',
     'Skål!',
@@ -122,7 +122,7 @@ export function buildEbookGrundernaIVinEmail(input: EbookDeliveryEmailInput = {}
                   ${chapterRow('01', 'Vin f&ouml;r alla', 'Varf&ouml;r vin inte beh&ouml;ver vara sv&aring;rt.')}
                   ${chapterRow('02', 'De 5 S:en', 'Se &middot; Snurra &middot; Sniffa &middot; Smaka &middot; Sammanfatta.')}
                   ${chapterRow('03', 'Mat &amp; Vin', 'Bortom &laquo;vitt till fisk, r&ouml;tt till k&ouml;tt&raquo;.')}
-                  ${chapterRow('04', 'BLIC', 'Fyra fr&aring;gor som skiljer ett bra vin fr&aring;n ett stort.')}
+                  ${chapterRow('04', 'BLIK', 'Fyra fr&aring;gor som skiljer ett bra vin fr&aring;n ett stort.')}
                   ${chapterRow('05', 'Kickstart-listan', '5 viner som bygger ditt referensbibliotek.')}
                 </table>
               </div>
