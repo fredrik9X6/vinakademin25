@@ -95,6 +95,23 @@ export async function POST(request: NextRequest) {
             relatedUserId,
             tags,
           })
+          // Backfill subscriberId on the Attempt so the CRM join works
+          // for logged-in users (the email-gate route does this for
+          // anonymous users at submit time).
+          const subscriberRes = await payload.find({
+            collection: 'subscribers',
+            where: { email: { equals: userEmail } },
+            limit: 1,
+            depth: 0,
+          })
+          const subscriberId = subscriberRes.docs[0]?.id ?? null
+          if (subscriberId) {
+            await payload.update({
+              collection: 'vinkompass-attempts',
+              id: created.id,
+              data: { subscriberId },
+            })
+          }
         } catch (err) {
           log.warn({ err }, 'vinkompassen_loggedin_subscribe_failed')
         }
