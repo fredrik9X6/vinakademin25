@@ -67,7 +67,7 @@ const chapters = [
     num: '04',
     icon: Award,
     eyebrow: 'Del 4',
-    title: 'BLIC — kvalitetskollen',
+    title: 'BLIK — kvalitetskollen',
     summary:
       'Balans · Längd · Intensitet · Komplexitet. Fyra frågor som skiljer ett enkelt vin från ett stort vin.',
   },
@@ -85,7 +85,7 @@ const benefits = [
   'Provningsmetoden proffsen använder',
   '"Färg-hacket" som låser upp doften',
   'Mat & vin utan klassiska regler',
-  'BLIC — fyra frågor för kvalitet',
+  'BLIK — fyra frågor för kvalitet',
   'Inköpslista med 5 viner & producenter',
   'Skrivet på begriplig svenska, utan flum',
 ]
