@@ -19,7 +19,7 @@ const STATIC_ROUTES: Array<{ path: string; changeFrequency: SitemapEntry['change
   { path: '/vinprovningar', changeFrequency: 'daily', priority: 0.9 },
   { path: '/vinlistan', changeFrequency: 'daily', priority: 0.9 },
   { path: '/artiklar', changeFrequency: 'daily', priority: 0.8 },
-  { path: '/vinkompass', changeFrequency: 'weekly', priority: 0.7 },
+  { path: '/vinkompassen', changeFrequency: 'weekly', priority: 0.7 },
   { path: '/regioner', changeFrequency: 'weekly', priority: 0.7 },
   { path: '/lander', changeFrequency: 'weekly', priority: 0.7 },
   { path: '/om-oss', changeFrequency: 'monthly', priority: 0.4 },
