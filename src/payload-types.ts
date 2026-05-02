@@ -2617,7 +2617,9 @@ export interface Subscriber {
   id: number;
   email: string;
   status: 'subscribed' | 'unsubscribed' | 'pending';
-  source?: ('footer' | 'newsletter_page' | 'registration' | 'onboarding' | 'profile' | 'manual') | null;
+  source?:
+    | ('footer' | 'newsletter_page' | 'registration' | 'onboarding' | 'profile' | 'manual' | 'vinkompassen')
+    | null;
   /**
    * Returned by Beehiiv on subscribe; used to look up status updates.
    */

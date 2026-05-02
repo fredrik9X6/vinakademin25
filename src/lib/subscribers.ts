@@ -12,6 +12,7 @@ type Source =
   | 'onboarding'
   | 'profile'
   | 'manual'
+  | 'vinkompassen'
 
 interface UpsertInput {
   payload: Payload
