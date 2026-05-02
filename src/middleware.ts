@@ -80,6 +80,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Redirect old /vinkompass slug to /vinkompassen (fresh feature).
+  if (pathname === '/vinkompass' || pathname.startsWith('/vinkompass/')) {
+    const target = pathname.replace(/^\/vinkompass/, '/vinkompassen')
+    url.pathname = target
+    return NextResponse.redirect(url, 301)
+  }
+
   // Skip middleware for API routes, static files, and public routes
   // Ensure public paths match renamed routes
   if (

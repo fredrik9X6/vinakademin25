@@ -12,6 +12,7 @@ type Source =
   | 'onboarding'
   | 'profile'
   | 'manual'
+  | 'vinkompassen'
 
 interface UpsertInput {
   payload: Payload
@@ -39,7 +40,7 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
   // 1) Push to Beehiiv first; we want the canonical beehiivId before the local write.
   const beehiivResult = await beehiivSubscribe(email, {
     source,
-    tags: ['user', source].filter(Boolean) as string[],
+    tags: ['user', source, ...(tags ?? [])].filter(Boolean) as string[],
   })
 
   // 2) Upsert local Subscribers row regardless of Beehiiv outcome — we want a
