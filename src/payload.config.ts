@@ -36,6 +36,9 @@ import { CourseSessions } from './collections/CourseSessions'
 import { SessionParticipants } from './collections/SessionParticipants'
 import { Subscribers } from './collections/Subscribers'
 import { Events } from './collections/Events'
+import { VinkompassQuestions } from './collections/VinkompassQuestions'
+import { VinkompassArchetypes } from './collections/VinkompassArchetypes'
+import { VinkompassAttempts } from './collections/VinkompassAttempts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -212,6 +215,9 @@ export default buildConfig({
     SessionParticipants,
     Subscribers,
     Events,
+    VinkompassQuestions,
+    VinkompassArchetypes,
+    VinkompassAttempts,
   ],
   editor: lexicalEditor(),
   secret: payloadSecret,

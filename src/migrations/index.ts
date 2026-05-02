@@ -4,6 +4,7 @@ import * as migration_20260426_100149_add_events_collection from './20260426_100
 import * as migration_20260427_195730_fix_user_delete_constraints from './20260427_195730_fix_user_delete_constraints';
 import * as migration_20260427_201145_add_review_author_snapshots from './20260427_201145_add_review_author_snapshots';
 import * as migration_20260502_102458_add_vinkompassen_to_subscribers_source from './20260502_102458_add_vinkompassen_to_subscribers_source';
+import * as migration_20260502_103451_add_vinkompassen_collections from './20260502_103451_add_vinkompassen_collections';
 
 export const migrations = [
   {
@@ -34,6 +35,11 @@ export const migrations = [
   {
     up: migration_20260502_102458_add_vinkompassen_to_subscribers_source.up,
     down: migration_20260502_102458_add_vinkompassen_to_subscribers_source.down,
-    name: '20260502_102458_add_vinkompassen_to_subscribers_source'
+    name: '20260502_102458_add_vinkompassen_to_subscribers_source',
+  },
+  {
+    up: migration_20260502_103451_add_vinkompassen_collections.up,
+    down: migration_20260502_103451_add_vinkompassen_collections.down,
+    name: '20260502_103451_add_vinkompassen_collections'
   },
 ];
