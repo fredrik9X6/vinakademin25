@@ -7,7 +7,7 @@ import type { VinkompassArchetype } from '@/payload-types'
 // applies in the result page.
 
 export const runtime = 'nodejs'
-export const revalidate = 60 * 60 * 24 // 24h
+export const revalidate = 86400 // 24h — Next.js segment config must be a literal
 
 export async function GET(
   _request: Request,
