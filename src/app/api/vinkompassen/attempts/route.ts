@@ -86,8 +86,7 @@ export async function POST(request: NextRequest) {
       // Fire-and-forget; do not block the response on Beehiiv
       void (async () => {
         try {
-          const beehiivTag = (archetype as { beehiivTag?: string }).beehiivTag || ''
-          const tags = ['vinkompassen', beehiivTag].filter(Boolean)
+          const tags = ['vinkompassen', archetype.beehiivTag].filter(Boolean)
           const relatedUserId = await findUserIdByEmail(payload, userEmail)
           await subscribeAndMirror({
             payload,
