@@ -1152,7 +1152,7 @@ export function QuadrantMini({ active, size = 200, className = '' }: Props) {
             key={c.key}
             className={
               isActive
-                ? 'rounded-md border border-[#FB914C] bg-[#FB914C]/15'
+                ? 'rounded-md border border-brand-400 bg-[#FB914C]/15'
                 : 'rounded-md border border-border bg-card/40'
             }
             aria-current={isActive ? 'true' : undefined}
@@ -1220,7 +1220,7 @@ export function WineGrid({ wines, archetypeKey }: Props) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => handleClick(wine)}
-            className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-[#FB914C]"
+            className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-brand-400"
           >
             <div className="relative h-44 w-full overflow-hidden rounded-xl bg-muted">
               {imageUrl ? (
@@ -1235,7 +1235,7 @@ export function WineGrid({ wines, archetypeKey }: Props) {
               {typeof wine.price === 'number' ? (
                 <span className="text-sm text-muted-foreground">{wine.price} kr</span>
               ) : null}
-              <span className="mt-2 text-sm font-medium text-[#FB914C] group-hover:underline">
+              <span className="mt-2 text-sm font-medium text-brand-400 group-hover:underline">
                 Köp på Systembolaget →
               </span>
             </div>
@@ -1423,7 +1423,7 @@ export function VinkompassenClient({ questions }: Props) {
         <p className="mt-5 max-w-[55ch] text-lg leading-relaxed text-muted-foreground">
           Svara på 8 korta frågor och få sex handplockade viner från Systembolaget — utvalda för just din smak.
         </p>
-        <Button onClick={start} className="mt-8" size="lg" style={{ background: '#FB914C' }}>
+        <Button onClick={start} className="mt-8" size="lg" className="... bg-brand-400 text-white">
           Starta testet
         </Button>
       </main>
@@ -1476,7 +1476,7 @@ export function VinkompassenClient({ questions }: Props) {
               key={a.id || i}
               onClick={() => pickAnswer(i)}
               disabled={submitting}
-              className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition hover:border-[#FB914C]"
+              className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition hover:border-brand-400"
             >
               {aImage?.url ? (
                 <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
@@ -1570,7 +1570,7 @@ export function EmailGate({ attemptId, archetypeKey }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="rounded-2xl border-2 border-[#FB914C] bg-card p-7 shadow-sm"
+      className="rounded-2xl border-2 border-brand-400 bg-card p-7 shadow-sm"
     >
       <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Dina viner väntar
@@ -1591,7 +1591,7 @@ export function EmailGate({ attemptId, archetypeKey }: Props) {
           className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-base"
           disabled={submitting}
         />
-        <Button type="submit" disabled={submitting} style={{ background: '#FB914C' }}>
+        <Button type="submit" disabled={submitting} className="... bg-brand-400 text-white">
           {submitting ? 'Skickar...' : 'Visa mina viner'}
         </Button>
       </div>
@@ -1775,7 +1775,7 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
             {recommendedVinprovning ? (
               <a
                 href={`/vinprovningar/${recommendedVinprovning.slug}`}
-                className="mt-10 flex flex-col gap-2 rounded-2xl border border-border bg-card p-7 shadow-sm transition hover:border-[#FB914C]"
+                className="mt-10 flex flex-col gap-2 rounded-2xl border border-border bg-card p-7 shadow-sm transition hover:border-brand-400"
               >
                 <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                   Provning för din typ
@@ -1783,7 +1783,7 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
                 <h3 className="font-heading text-2xl tracking-[-0.015em]">
                   {recommendedVinprovning.title}
                 </h3>
-                <span className="text-sm font-medium text-[#FB914C]">Se provningen →</span>
+                <span className="text-sm font-medium text-brand-400">Se provningen →</span>
               </a>
             ) : null}
           </>
@@ -1876,13 +1876,13 @@ export function VinprovningCard({ href, title, archetypeKey, vinprovningSlug }: 
           vinprovningSlug,
         })
       }
-      className="mt-10 flex flex-col gap-2 rounded-2xl border border-border bg-card p-7 shadow-sm transition hover:border-[#FB914C]"
+      className="mt-10 flex flex-col gap-2 rounded-2xl border border-border bg-card p-7 shadow-sm transition hover:border-brand-400"
     >
       <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Provning för din typ
       </span>
       <h3 className="font-heading text-2xl tracking-[-0.015em]">{title}</h3>
-      <span className="text-sm font-medium text-[#FB914C]">Se provningen →</span>
+      <span className="text-sm font-medium text-brand-400">Se provningen →</span>
     </a>
   )
 }
