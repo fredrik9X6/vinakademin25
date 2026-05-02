@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 
@@ -10,6 +11,10 @@ interface Props {
 
 export function ResultActions({ attemptId, archetypeKey }: Props) {
   const router = useRouter()
+
+  useEffect(() => {
+    posthog?.capture?.('vinkompass_archetype_revealed', { archetype: archetypeKey })
+  }, [archetypeKey])
 
   function handleShare(channel: string, href?: string) {
     posthog?.capture?.('vinkompass_shared', { archetype: archetypeKey, channel })
