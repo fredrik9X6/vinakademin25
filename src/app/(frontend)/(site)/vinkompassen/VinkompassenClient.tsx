@@ -119,7 +119,7 @@ export function VinkompassenClient({ questions }: Props) {
           Svara på 8 korta frågor och få sex handplockade viner från Systembolaget — utvalda för
           just din smak.
         </p>
-        <Button onClick={start} className="mt-8" size="lg" style={{ background: '#FB914C' }}>
+        <Button onClick={start} className="mt-8 bg-brand-400 text-white" size="lg">
           Starta testet
         </Button>
       </main>
@@ -143,8 +143,8 @@ export function VinkompassenClient({ questions }: Props) {
       <div className="mb-6">
         <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full transition-all"
-            style={{ width: `${(step / questions.length) * 100}%`, background: '#FB914C' }}
+            className="h-full bg-brand-400 transition-all"
+            style={{ width: `${(step / questions.length) * 100}%` }}
           />
         </div>
         <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
@@ -178,7 +178,7 @@ export function VinkompassenClient({ questions }: Props) {
               key={a.id || i}
               onClick={() => pickAnswer(i)}
               disabled={submitting}
-              className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition hover:border-[#FB914C]"
+              className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition hover:border-brand-400"
             >
               {aImage?.url ? (
                 <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-muted">

@@ -30,7 +30,7 @@ export function WineGrid({ wines, archetypeKey }: Props) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => handleClick(wine)}
-            className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-[#FB914C]"
+            className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:border-brand-400"
           >
             <div className="relative h-44 w-full overflow-hidden rounded-xl bg-muted">
               {imageUrl ? (
@@ -45,7 +45,7 @@ export function WineGrid({ wines, archetypeKey }: Props) {
               {typeof wine.price === 'number' ? (
                 <span className="text-sm text-muted-foreground">{wine.price} kr</span>
               ) : null}
-              <span className="mt-2 text-sm font-medium text-[#FB914C] group-hover:underline">
+              <span className="mt-2 text-sm font-medium text-brand-400 group-hover:underline">
                 Köp på Systembolaget →
               </span>
             </div>

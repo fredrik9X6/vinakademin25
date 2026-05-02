@@ -27,7 +27,7 @@ export function QuadrantMini({ active, size = 200, className = '' }: Props) {
             key={c.key}
             className={
               isActive
-                ? 'rounded-md border border-[#FB914C] bg-[#FB914C]/15'
+                ? 'rounded-md border border-brand-400 bg-brand-400/15'
                 : 'rounded-md border border-border bg-card/40'
             }
             aria-current={isActive ? 'true' : undefined}
