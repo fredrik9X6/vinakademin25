@@ -94,7 +94,7 @@ Three new Payload collections; no changes to existing collections except `Subscr
 - **8 questions** authored in `VinkompassQuestions`. Sweet spot — meaningful but ~90s to complete.
 - **4 answer options** per question.
 - **Scoring**: each answer carries `scoreBody` ∈ [−2..+2] and `scoreComfort` ∈ [−2..+2]. After all 8 answered: `scoreBody = Σ`, `scoreComfort = Σ`. Range is −16..+16 per axis.
-- **Quadrant rule**: `body = scoreBody >= 0 ? 'bold' : 'light'`, `comfort = scoreComfort >= 0 ? 'adventurous' : 'classic'`. Ties go to lighter / classic — safer landing for beginners.
+- **Quadrant rule**: `body = scoreBody > 0 ? 'bold' : 'light'`, `comfort = scoreComfort > 0 ? 'adventurous' : 'classic'`. Strict greater-than means ties (`score === 0`) go to lighter / classic — safer landing for beginners.
 - **Persistence during quiz**: answers stored in `localStorage` under key `vinkompassen.draft`. On submit: server creates Attempt, returns the attempt id, client stores `vinkompassen.lastAttemptId` and navigates to `/vinkompassen/resultat/[id]`.
 - **Question pool**: 8 fixed questions in v1; no randomization. Themes: weekend activity, food preference, music vibe, holiday destination, smell preference, summer drink, social style, "describe a perfect evening".
 - **Image policy**: questions and answers may include images. Image-driven where natural (food, scenes, color); word-driven where image would feel forced.
