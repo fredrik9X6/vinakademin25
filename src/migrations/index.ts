@@ -5,6 +5,7 @@ import * as migration_20260427_195730_fix_user_delete_constraints from './202604
 import * as migration_20260427_201145_add_review_author_snapshots from './20260427_201145_add_review_author_snapshots';
 import * as migration_20260502_102458_add_vinkompassen_to_subscribers_source from './20260502_102458_add_vinkompassen_to_subscribers_source';
 import * as migration_20260502_103451_add_vinkompassen_collections from './20260502_103451_add_vinkompassen_collections';
+import * as migration_20260502_112427_fix_vinkompass_attempts_archetype_constraint from './20260502_112427_fix_vinkompass_attempts_archetype_constraint';
 
 export const migrations = [
   {
@@ -40,6 +41,11 @@ export const migrations = [
   {
     up: migration_20260502_103451_add_vinkompassen_collections.up,
     down: migration_20260502_103451_add_vinkompassen_collections.down,
-    name: '20260502_103451_add_vinkompassen_collections'
+    name: '20260502_103451_add_vinkompassen_collections',
+  },
+  {
+    up: migration_20260502_112427_fix_vinkompass_attempts_archetype_constraint.up,
+    down: migration_20260502_112427_fix_vinkompass_attempts_archetype_constraint.down,
+    name: '20260502_112427_fix_vinkompass_attempts_archetype_constraint'
   },
 ];
