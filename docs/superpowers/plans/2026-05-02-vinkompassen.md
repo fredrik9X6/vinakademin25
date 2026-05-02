@@ -51,7 +51,7 @@
 ## Notes for the implementer
 
 - **Project has no test framework.** We add ONE test using Node's built-in `node --test` runner with `tsx` for TS support (already a transitive devDep — `npx tsx` works in `scripts/send-review-emails.ts`). Do not introduce vitest/jest.
-- **Schema is push-mode** (`postgresAdapter({ push: true })`). After adding/changing collections, restart the dev server and Payload pushes the schema. No migrations to write.
+- **Schema is migration-driven in production.** `postgresAdapter` is configured `{ push: process.env.PAYLOAD_DB_PUSH === 'true', prodMigrations: migrations }` — push is opt-in, prod runs registered migrations on init. **After every collection or enum change, generate a migration with `pnpm migrate:create -- "<name>"` and commit it.** Migrations live in `src/migrations/` and are registered in `src/migrations/index.ts` (Payload updates the index automatically when generating). Without the migration, fresh prod deploys will fail.
 - **Always run `pnpm generate:types`** after a collection change so `src/payload-types.ts` stays in sync. The plan calls this out at every step.
 - **Always run `pnpm generate:importmap`** after registering collections, so the admin import map picks up the new collections' admin components.
 - **Frequent commits**: each task ends in a `git commit`. If a task is interrupted, the next agent can pick up from a clean state.
@@ -132,10 +132,17 @@ Expected: prints `Types written to /…/src/payload-types.ts` and exits 0.
 Run: `pnpm lint`
 Expected: passes (no type errors). The `Source` type and the Subscribers `source` enum should now align.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Generate the schema migration**
+
+Run: `pnpm migrate:create -- "add_vinkompassen_to_subscribers_source"`
+Expected: creates a new file under `src/migrations/` (e.g. `20260502_*_add_vinkompassen_to_subscribers_source.ts` plus a `.json` snapshot) and updates `src/migrations/index.ts` to include it.
+
+Verify the migration's `up` function alters the existing enum — open the new `.ts` file; you should see something like `ALTER TYPE "public"."enum_subscribers_source" ADD VALUE 'vinkompassen';` (Payload generates this automatically from the enum diff). If the file is empty or unrelated, the schema diff didn't pick up the change — re-run `pnpm generate:types` first, then `pnpm migrate:create` again.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add src/lib/subscribers.ts src/collections/Subscribers.ts src/payload-types.ts
+git add src/lib/subscribers.ts src/collections/Subscribers.ts src/payload-types.ts src/migrations/
 git commit -m "feat(subscribers): allow vinkompassen as a subscription source"
 ```
 
@@ -517,14 +524,23 @@ Expected: writes `src/app/(payload)/admin/importMap.js`. No errors.
 Run: `pnpm lint`
 Expected: passes.
 
-- [ ] **Step 6: Smoke-test schema push by starting dev**
+- [ ] **Step 6: Generate the schema migration for the three new collections**
 
-Run: `pnpm dev` (background it or run in another terminal). Wait for "Ready" in the log, then verify the admin shows the three new collections under group "Vinkompassen". Stop the dev server.
+Run: `pnpm migrate:create -- "add_vinkompassen_collections"`
+Expected: creates a new migration file under `src/migrations/` (`.ts` + `.json`) plus an updated `src/migrations/index.ts`. Open the new `.ts` file and verify the `up` function creates the three tables: `vinkompass_questions`, `vinkompass_archetypes`, `vinkompass_attempts`, including the array sub-tables for `answers` and any enum types (e.g. `enum_vinkompass_archetypes_key`).
 
-- [ ] **Step 7: Commit**
+If the migration file is empty, types didn't sync — re-run `pnpm generate:types`, then `pnpm migrate:create` again.
+
+- [ ] **Step 7: Smoke-test by starting dev with PAYLOAD_DB_PUSH=true (local-only)**
+
+Run: `PAYLOAD_DB_PUSH=true pnpm dev` (background it, or run in another terminal). For local dev, push mode lets you skip running migrations; for prod the migration we just generated handles it. Wait for "Ready", verify the admin at `/admin` shows the three new collections under group "Vinkompassen". Stop the dev server.
+
+(Note: the project default is push=false. We use the env var only locally to avoid having to run `pnpm migrate` after every schema change during dev.)
+
+- [ ] **Step 8: Commit**
 
 ```bash
-git add src/payload.config.ts src/payload-types.ts src/app/\(payload\)/admin/importMap.js
+git add src/payload.config.ts src/payload-types.ts src/app/\(payload\)/admin/importMap.js src/migrations/
 git commit -m "feat(vinkompassen): register the three new collections"
 ```
 
