@@ -21,7 +21,7 @@
     "parse-prd": "node scripts/dev.js parse-prd",
     "sync-stripe": "cross-env NODE_OPTIONS=--no-deprecation node -r tsx scripts/sync-courses-with-stripe.js",
     "cleanup-media": "cross-env NODE_OPTIONS=--no-deprecation node -r tsx scripts/cleanup-missing-media.ts",
-    "send-review-emails": "npx tsx scripts/send-review-emails.ts",
+    "send-review-emails": "node --import tsx scripts/send-review-emails.ts",
     "test:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --test src/lib/vinkompassen/*.test.ts",
     "seed:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/seed-vinkompassen.ts"
   },
