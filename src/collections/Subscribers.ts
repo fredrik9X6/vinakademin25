@@ -51,6 +51,7 @@ export const Subscribers: CollectionConfig = {
         { label: 'Onboarding', value: 'onboarding' },
         { label: 'Profile settings', value: 'profile' },
         { label: 'Manual', value: 'manual' },
+        { label: 'Vinkompassen', value: 'vinkompassen' },
       ],
     },
     {

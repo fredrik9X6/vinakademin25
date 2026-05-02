@@ -94,6 +94,9 @@ export interface Config {
     'session-participants': SessionParticipant;
     subscribers: Subscriber;
     events: Event;
+    'vinkompass-questions': VinkompassQuestion;
+    'vinkompass-archetypes': VinkompassArchetype;
+    'vinkompass-attempts': VinkompassAttempt;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -127,6 +130,9 @@ export interface Config {
     'session-participants': SessionParticipantsSelect<false> | SessionParticipantsSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
+    'vinkompass-questions': VinkompassQuestionsSelect<false> | VinkompassQuestionsSelect<true>;
+    'vinkompass-archetypes': VinkompassArchetypesSelect<false> | VinkompassArchetypesSelect<true>;
+    'vinkompass-attempts': VinkompassAttemptsSelect<false> | VinkompassAttemptsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -2617,7 +2623,9 @@ export interface Subscriber {
   id: number;
   email: string;
   status: 'subscribed' | 'unsubscribed' | 'pending';
-  source?: ('footer' | 'newsletter_page' | 'registration' | 'onboarding' | 'profile' | 'manual') | null;
+  source?:
+    | ('footer' | 'newsletter_page' | 'registration' | 'onboarding' | 'profile' | 'manual' | 'vinkompassen')
+    | null;
   /**
    * Returned by Beehiiv on subscribe; used to look up status updates.
    */
@@ -2696,6 +2704,115 @@ export interface Event {
     | boolean
     | null;
   source?: ('web' | 'webhook' | 'system' | 'cron' | 'manual') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Quiz questions for the Vinkompassen lead-magnet
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vinkompass-questions".
+ */
+export interface VinkompassQuestion {
+  id: number;
+  /**
+   * Display order (1-based)
+   */
+  order: number;
+  question: string;
+  helperText?: string | null;
+  image?: (number | null) | Media;
+  /**
+   * Exactly four answers per question
+   */
+  answers: {
+    label: string;
+    image?: (number | null) | Media;
+    /**
+     * -2 = very light, +2 = very bold
+     */
+    scoreBody: number;
+    /**
+     * -2 = very classic, +2 = very adventurous
+     */
+    scoreComfort: number;
+    id?: string | null;
+  }[];
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * The four wine personality archetypes
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vinkompass-archetypes".
+ */
+export interface VinkompassArchetype {
+  id: number;
+  key: 'light-classic' | 'light-adventurous' | 'bold-classic' | 'bold-adventurous';
+  name: string;
+  tagline: string;
+  description: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  heroImage?: (number | null) | Media;
+  /**
+   * Curated bottle list (target 6, max 8). Order matters.
+   */
+  recommendedWines?: (number | Wine)[] | null;
+  /**
+   * Soft pitch on the result page
+   */
+  recommendedVinprovning?: (number | null) | Vinprovningar;
+  /**
+   * Tag sent to Beehiiv at subscribe (e.g. "vk-light-classic")
+   */
+  beehiivTag: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Anonymous Vinkompassen quiz submissions
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vinkompass-attempts".
+ */
+export interface VinkompassAttempt {
+  id: number;
+  /**
+   * Opaque token used in shareable URLs
+   */
+  attemptId: string;
+  answers: {
+    questionId: number | VinkompassQuestion;
+    answerIndex: number;
+    id?: string | null;
+  }[];
+  scoreBody: number;
+  scoreComfort: number;
+  archetype: number | VinkompassArchetype;
+  email?: string | null;
+  emailSubmittedAt?: string | null;
+  subscriberId?: (number | null) | Subscriber;
+  /**
+   * Set if user was logged in at submit
+   */
+  userId?: (number | null) | User;
+  userAgent?: string | null;
+  referer?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2813,6 +2930,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'events';
         value: number | Event;
+      } | null)
+    | ({
+        relationTo: 'vinkompass-questions';
+        value: number | VinkompassQuestion;
+      } | null)
+    | ({
+        relationTo: 'vinkompass-archetypes';
+        value: number | VinkompassArchetype;
+      } | null)
+    | ({
+        relationTo: 'vinkompass-attempts';
+        value: number | VinkompassAttempt;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -3761,6 +3890,69 @@ export interface EventsSelect<T extends boolean = true> {
   subscriber?: T;
   metadata?: T;
   source?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vinkompass-questions_select".
+ */
+export interface VinkompassQuestionsSelect<T extends boolean = true> {
+  order?: T;
+  question?: T;
+  helperText?: T;
+  image?: T;
+  answers?:
+    | T
+    | {
+        label?: T;
+        image?: T;
+        scoreBody?: T;
+        scoreComfort?: T;
+        id?: T;
+      };
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vinkompass-archetypes_select".
+ */
+export interface VinkompassArchetypesSelect<T extends boolean = true> {
+  key?: T;
+  name?: T;
+  tagline?: T;
+  description?: T;
+  heroImage?: T;
+  recommendedWines?: T;
+  recommendedVinprovning?: T;
+  beehiivTag?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vinkompass-attempts_select".
+ */
+export interface VinkompassAttemptsSelect<T extends boolean = true> {
+  attemptId?: T;
+  answers?:
+    | T
+    | {
+        questionId?: T;
+        answerIndex?: T;
+        id?: T;
+      };
+  scoreBody?: T;
+  scoreComfort?: T;
+  archetype?: T;
+  email?: T;
+  emailSubmittedAt?: T;
+  subscriberId?: T;
+  userId?: T;
+  userAgent?: T;
+  referer?: T;
   updatedAt?: T;
   createdAt?: T;
 }

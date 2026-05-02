@@ -58,7 +58,7 @@ Centralized in `src/lib/access.ts` and `src/lib/access-control.ts`. See `.cursor
 ### Config quirks worth knowing
 
 - `payload.config.ts` normalizes `PAYLOAD_PUBLIC_SERVER_URL` / `NEXT_PUBLIC_SITE_URL` to always include a protocol (Railway may strip it).
-- DB uses `postgresAdapter({ push: true })` — schema is pushed, not migration-driven. Treat schema changes carefully on shared envs.
+- DB is **migration-driven** in production. `postgresAdapter` is configured with `push: process.env.PAYLOAD_DB_PUSH === 'true'` (opt-in for local dev) and `prodMigrations: migrations` (runs on server init). After **any** collection or enum change, generate a migration with `pnpm migrate:create -- "<descriptive-name>"` and commit it alongside the collection change — otherwise prod deploys will fail. Files live in `src/migrations/`; index is `src/migrations/index.ts`.
 - Build uses `PAYLOAD_DROP_DATABASE=false` and `--experimental-build-mode compile` — don't change lightly.
 - Placeholder DB string and `PAYLOAD_SECRET` fallback exist so build works without env vars; real values required at runtime.
 
