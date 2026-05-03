@@ -84,8 +84,13 @@ export function VinlistanToolbar({ q, sort }: { q: string; sort: string }) {
     router.push(`/vinlistan?${params.toString()}`)
   }
 
-  // Debounced as-you-type search
+  // Debounced as-you-type search.
+  // Skip when `value` already matches the URL — otherwise navigation that
+  // doesn't change the search input (e.g. clicking pagination) would re-run
+  // this effect, strip `page`, and bounce the user back to page 1.
   React.useEffect(() => {
+    const currentQ = searchParams?.get('q') || ''
+    if (value === currentQ) return
     const t = setTimeout(() => {
       const params = new URLSearchParams(searchParams?.toString() || '')
       if (value) params.set('q', value)

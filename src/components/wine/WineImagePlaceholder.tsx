@@ -20,8 +20,8 @@ export function WineImagePlaceholder({ size = 'md', className }: WineImagePlaceh
     <div
       className={cn('absolute inset-0 w-full h-full flex items-center justify-center', className)}
     >
-      <div className={cn('bg-brand-300/15', s.rounded, s.container)}>
-        <WineIcon className={cn('text-muted-foreground/40', s.icon)} aria-hidden />
+      <div className={cn('bg-brand-300/25', s.rounded, s.container)}>
+        <WineIcon className={cn('text-brand-400/60', s.icon)} aria-hidden />
       </div>
     </div>
   )
