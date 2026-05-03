@@ -14,7 +14,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { ExternalLink, Clock, ArrowRight, CalendarDays, Sparkles, ShoppingBag } from 'lucide-react'
+import {
+  ExternalLink,
+  Clock,
+  ArrowRight,
+  CalendarDays,
+  Sparkles,
+  ShoppingBag,
+  BadgeCheck,
+} from 'lucide-react'
 import type { Metadata } from 'next'
 import { BlogPostCard } from '@/components/blog'
 import { getSiteURL } from '@/lib/site-url'
@@ -714,7 +722,7 @@ export default async function WineDetailPage({ params }: PageProps) {
         {visibleReviews.length === 0 ? (
           <div className="text-sm text-muted-foreground">Inga recensioner ännu.</div>
         ) : (
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full space-y-3">
             {visibleReviews.map((r: any) => {
               const wset = r.wsetTasting || {}
               const appearance = wset.appearance || {}
@@ -734,21 +742,78 @@ export default async function WineDetailPage({ params }: PageProps) {
                       reviewer.email ||
                       'Okänd'
                     : 'Okänd'
+              const reviewerInitial = reviewerName.trim().charAt(0).toUpperCase() || '?'
               return (
-                <AccordionItem key={r.id} value={String(r.id)}>
-                  <AccordionTrigger>
-                    <div className="flex items-center gap-2">
-                      {r.isTrusted ? <Badge variant="secondary">Verifierad</Badge> : null}
-                      {isOwn && !r.isTrusted ? <Badge variant="outline">Du</Badge> : null}
-                      <span className="font-medium">{reviewerName}</span>
-                      <span className="text-muted-foreground">• {r.rating ?? '—'}/5</span>
-                      <span className="text-muted-foreground">
-                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString('sv-SE') : ''}
-                      </span>
+                <AccordionItem
+                  key={r.id}
+                  value={String(r.id)}
+                  className="group/item overflow-hidden rounded-xl border border-border/60 bg-card transition-colors data-[state=open]:border-brand-300/40 hover:border-brand-300/40"
+                >
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline sm:px-5 sm:py-4">
+                    <div className="flex w-full items-center gap-3 text-left">
+                      {/* Avatar — BadgeCheck for trusted, initial otherwise */}
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                          r.isTrusted
+                            ? 'bg-brand-300/15 text-brand-400'
+                            : 'bg-muted text-muted-foreground',
+                        )}
+                      >
+                        {r.isTrusted ? (
+                          <BadgeCheck className="h-5 w-5" />
+                        ) : (
+                          <span>{reviewerInitial}</span>
+                        )}
+                      </div>
+
+                      {/* Name + meta */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-foreground">{reviewerName}</span>
+                          {r.isTrusted ? (
+                            <span className="inline-flex items-center gap-1 rounded-md border border-brand-300/30 bg-brand-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-400">
+                              <BadgeCheck className="h-3 w-3" />
+                              Verifierad
+                            </span>
+                          ) : null}
+                          {isOwn && !r.isTrusted ? (
+                            <span className="inline-flex items-center rounded-md border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              Du
+                            </span>
+                          ) : null}
+                        </div>
+                        {r.createdAt ? (
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {new Date(r.createdAt).toLocaleDateString('sv-SE', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Stars on right */}
+                      {r.rating ? (
+                        <div className="hidden shrink-0 sm:flex sm:items-center sm:gap-2">
+                          <StarsRow value={Number(r.rating)} />
+                          <span className="text-sm font-semibold text-brand-400">{r.rating}</span>
+                          <span className="text-xs text-muted-foreground">/ 5</span>
+                        </div>
+                      ) : null}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="space-y-5 rounded-md border p-4 sm:p-5">
+                    {/* Mobile-only star row inside the open state (since trigger hides them <sm) */}
+                    {r.rating ? (
+                      <div className="mb-4 flex items-center gap-2 px-4 sm:hidden sm:px-5">
+                        <StarsRow value={Number(r.rating)} />
+                        <span className="text-sm font-semibold text-brand-400">{r.rating}</span>
+                        <span className="text-xs text-muted-foreground">/ 5</span>
+                      </div>
+                    ) : null}
+                    <div className="space-y-5 border-t border-border/40 px-4 py-5 sm:px-5">
                       {/* 1. Review prose — the headline content */}
                       {r.reviewText?.root ? (
                         <div className="prose prose-sm dark:prose-invert max-w-none">
