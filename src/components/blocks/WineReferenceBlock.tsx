@@ -5,8 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '../ui/badge'
 import { Card, CardContent } from '../ui/card'
-import { ExternalLink, Wine as WineIcon } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import type { Wine, Media } from '../../payload-types'
+import { WineImagePlaceholder } from '../wine/WineImagePlaceholder'
 
 /** Resolve a media field that might be a populated object or just an ID */
 function useResolvedImageUrl(image: Media | number | string | null | undefined): string | null {
@@ -149,7 +150,7 @@ export function WineReferenceBlock({
                     priority={false}
                   />
                 ) : (
-                  <WineIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                  <WineImagePlaceholder size="sm" />
                 )}
               </div>
             )}

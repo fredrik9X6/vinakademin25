@@ -20,6 +20,7 @@ import { BlogPostCard } from '@/components/blog'
 import { getSiteURL } from '@/lib/site-url'
 import { resolveSeo } from '@/lib/seo'
 import { BreadcrumbJsonLd, WineProductJsonLd } from '@/components/seo/JsonLd'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -440,7 +441,9 @@ export default async function WineDetailPage({ params }: PageProps) {
               <div className="relative h-56 w-24 sm:h-64 sm:w-28 md:h-72 md:w-32">
                 {wine.image?.url ? (
                   <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
-                ) : null}
+                ) : (
+                  <WineImagePlaceholder size="lg" />
+                )}
               </div>
             </div>
 
