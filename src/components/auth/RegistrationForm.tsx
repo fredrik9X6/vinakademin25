@@ -187,14 +187,14 @@ export function RegistrationForm({ className, returnTo, ...props }: Registration
                   control={form.control}
                   name="acceptsMarketing"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 rounded-md border border-border bg-muted/40 p-3">
+                    <FormItem className="flex flex-row items-center gap-3 rounded-md border border-border bg-muted/40 p-3 space-y-0">
                       <FormControl>
                         <Checkbox
                           id="acceptsMarketing"
                           checked={field.value}
                           onCheckedChange={field.onChange}
                           disabled={isLoading}
-                          className="mt-0.5"
+                          className="shrink-0"
                         />
                       </FormControl>
                       <label
