@@ -3,9 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Progress } from '@/components/ui/progress'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -14,7 +12,7 @@ import {
   TASTING_EXPERIENCE_OPTIONS,
   WINE_STYLE_OPTIONS,
 } from '@/lib/wine-preferences-options'
-import { ChevronLeft, Sparkles } from 'lucide-react'
+import { ChevronLeft, Sparkles, Check } from 'lucide-react'
 
 const ONBOARDING_GOAL_OPTIONS = [
   {
@@ -58,7 +56,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
   const [courseProgress, setCourseProgress] = useState(true)
   const [newCourses, setNewCourses] = useState(true)
 
-  const progressPercent = Math.round(((step + 1) / STEP_COUNT) * 100)
+  const progressPercent = ((step + 1) / STEP_COUNT) * 100
 
   const toggleString = (arr: string[], value: string) =>
     arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]
@@ -107,29 +105,64 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
   const goBack = () => setStep((s) => Math.max(s - 1, 0))
 
   return (
-    <Card className="w-full max-w-lg border-0 bg-transparent shadow-none sm:max-w-xl">
-      <div className="mb-6 space-y-2">
-        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span>
-            Steg {step + 1} av {STEP_COUNT}
+    <div className="mx-auto w-full max-w-xl rounded-2xl border border-border/60 bg-card p-6 shadow-xl shadow-brand-400/5 sm:p-8">
+      <div className="mb-8 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Steg <span className="text-brand-400 font-semibold">{step + 1}</span>
+            <span className="opacity-60"> / {STEP_COUNT}</span>
           </span>
           <button
             type="button"
-            className="shrink-0 underline-offset-4 hover:underline"
+            className="shrink-0 text-xs text-muted-foreground underline-offset-4 hover:text-brand-400 hover:underline"
             onClick={() => submit('skip')}
             disabled={isSubmitting}
           >
             Hoppa över allt
           </button>
         </div>
-        <Progress value={progressPercent} className="h-1.5" />
+
+        {/* Custom branded progress bar — gradient fill, step markers, soft glow */}
+        <div className="relative">
+          <div className="relative h-2 w-full overflow-visible rounded-full bg-muted">
+            {/* Filled portion with gradient and glow */}
+            <div
+              className="absolute inset-y-0 left-0 rounded-full bg-brand-gradient shadow-[0_0_12px_-1px_hsl(var(--brand-400)/0.5)] transition-all duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          {/* Step markers sitting on top of the track */}
+          <div className="absolute inset-0 flex items-center justify-between px-0">
+            {Array.from({ length: STEP_COUNT }, (_, i) => {
+              const isComplete = i < step
+              const isCurrent = i === step
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    'h-3 w-3 shrink-0 rounded-full border-2 transition-all duration-300',
+                    isCurrent
+                      ? 'border-brand-400 bg-background ring-2 ring-brand-300/40 scale-125'
+                      : isComplete
+                        ? 'border-brand-400 bg-brand-400'
+                        : 'border-muted-foreground/30 bg-background',
+                    // First and last markers nudge so they don't get clipped by the track
+                    i === 0 && '-ml-0.5',
+                    i === STEP_COUNT - 1 && '-mr-0.5',
+                  )}
+                  aria-hidden
+                />
+              )
+            })}
+          </div>
+        </div>
       </div>
 
-      <CardContent className="space-y-8 px-0">
+      <div className="space-y-8">
         {step === 0 && (
           <div className="space-y-6 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-              <Sparkles className="h-7 w-7 text-primary" aria-hidden />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-gradient shadow-brand-glow">
+              <Sparkles className="h-8 w-8 text-white" aria-hidden />
             </div>
             <div className="space-y-2">
               <h1 className="text-2xl font-medium tracking-tight md:text-3xl">
@@ -158,10 +191,10 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
                     setGoal(opt.value)
                   }}
                   className={cn(
-                    'rounded-xl border-2 p-4 text-left transition-colors',
+                    'rounded-xl border-2 p-4 text-left transition-all',
                     goal === opt.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-transparent bg-muted/50 hover:bg-muted',
+                      ? 'border-brand-400 bg-brand-300/10 ring-2 ring-brand-300/20 shadow-sm'
+                      : 'border-transparent bg-muted/50 hover:bg-muted hover:border-brand-300/30',
                   )}
                 >
                   <div className="font-medium">{opt.label}</div>
@@ -185,10 +218,10 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
                   type="button"
                   onClick={() => setTastingExperience(level.value)}
                   className={cn(
-                    'rounded-xl border-2 p-4 text-left transition-colors',
+                    'rounded-xl border-2 p-4 text-left transition-all',
                     tastingExperience === level.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-transparent bg-muted/50 hover:bg-muted',
+                      ? 'border-brand-400 bg-brand-300/10 ring-2 ring-brand-300/20 shadow-sm'
+                      : 'border-transparent bg-muted/50 hover:bg-muted hover:border-brand-300/30',
                   )}
                 >
                   <div className="font-medium">{level.label}</div>
@@ -214,12 +247,13 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
                     type="button"
                     onClick={() => setPreferredStyles((c) => toggleString(c, style.value))}
                     className={cn(
-                      'rounded-full border px-3 py-1.5 text-sm transition-colors',
+                      'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all',
                       on
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border bg-background hover:bg-muted',
+                        ? 'border-brand-400 bg-brand-300/15 text-brand-400 shadow-sm'
+                        : 'border-border bg-background text-foreground hover:border-brand-300/40 hover:bg-brand-300/5',
                     )}
                   >
+                    {on ? <Check className="h-3.5 w-3.5" aria-hidden /> : null}
                     {style.label}
                   </button>
                 )
@@ -241,10 +275,10 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
                   type="button"
                   onClick={() => setPriceRange(range.value)}
                   className={cn(
-                    'rounded-xl border-2 p-4 text-left font-medium transition-colors',
+                    'rounded-xl border-2 p-4 text-left font-medium transition-all',
                     priceRange === range.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-transparent bg-muted/50 hover:bg-muted',
+                      ? 'border-brand-400 bg-brand-300/10 ring-2 ring-brand-300/20 shadow-sm'
+                      : 'border-transparent bg-muted/50 hover:bg-muted hover:border-brand-300/30',
                   )}
                 >
                   {range.label}
@@ -261,7 +295,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
               <p className="text-muted-foreground text-sm">Du kan ändra detta när som helst under Notiser i profilen.</p>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-muted/30 p-4 transition-colors hover:border-brand-300/40 hover:bg-brand-300/5">
                 <div className="space-y-0.5">
                   <Label htmlFor="onb-newsletter" className="text-base">
                     Nyhetsbrev
@@ -275,7 +309,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
                   disabled={isSubmitting}
                 />
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-muted/30 p-4 transition-colors hover:border-brand-300/40 hover:bg-brand-300/5">
                 <div className="space-y-0.5">
                   <Label htmlFor="onb-course" className="text-base">
                     Framsteg
@@ -289,7 +323,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
                   disabled={isSubmitting}
                 />
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-muted/30 p-4 transition-colors hover:border-brand-300/40 hover:bg-brand-300/5">
                 <div className="space-y-0.5">
                   <Label htmlFor="onb-new" className="text-base">
                     Nya vinprovningar
@@ -336,7 +370,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
