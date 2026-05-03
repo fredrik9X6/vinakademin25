@@ -4,85 +4,90 @@ import config from '@/payload.config'
 import crypto from 'crypto'
 import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
+import type { SessionParticipant } from '@/payload-types'
 
 const log = loggerFor('api-sessions-join')
 
-/**
- * Generate a unique participant token
- */
+const PARTICIPANT_COOKIE = 'vk_participant_token'
+const COOKIE_MAX_AGE_SECONDS = 24 * 60 * 60 // 24h
+
 function generateParticipantToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 /**
  * POST /api/sessions/join
- * Join a course session with a code (requires authentication)
+ *
+ * Joins a session by code. Both authenticated users and anonymous guests
+ * are supported.
  *
  * Body:
- * - joinCode: string (required) - 6-character session code
+ * - joinCode: string (required)
+ * - nickname?: string (required for guests, ignored for authed users)
+ * - email?: string (optional; used for the post-tasting account-claim flow)
+ *
+ * On success: returns participant + session info AND sets an httpOnly
+ * cookie `vk_participant_token` so subsequent reads on /api/sessions/[id]
+ * can identify the participant without query-param plumbing.
  */
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
-    const cookieStore = await cookies()
-    const token = cookieStore.get('payload-token')
-
-    // Check authentication
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Authentication required', requiresAuth: true },
-        { status: 401 },
-      )
-    }
-
-    // Get cookie string and verify user
     const cookieString = request.headers.get('cookie') || ''
     const { user } = await payload.auth({
-      headers: new Headers({
-        Cookie: cookieString,
-      }),
+      headers: new Headers({ Cookie: cookieString }),
     })
 
-    if (!user) {
+    const body = await request.json().catch(() => ({}))
+    const { joinCode, nickname: nicknameRaw, email: emailRaw } = body as {
+      joinCode?: string
+      nickname?: string
+      email?: string
+    }
+
+    if (!joinCode || typeof joinCode !== 'string') {
+      return NextResponse.json({ error: 'joinCode is required' }, { status: 400 })
+    }
+
+    const nickname = typeof nicknameRaw === 'string' ? nicknameRaw.trim().slice(0, 50) : ''
+    const email =
+      typeof emailRaw === 'string' && emailRaw.trim() ? emailRaw.trim().toLowerCase() : null
+
+    // Guests must supply a nickname; authed users default to their account name
+    if (!user && !nickname) {
       return NextResponse.json(
-        { error: 'Authentication required', requiresAuth: true },
-        { status: 401 },
+        { error: 'Ange ett namn för att gå med som gäst.' },
+        { status: 400 },
       )
     }
 
-    const body = await request.json()
-    const { joinCode } = body
-
-    if (!joinCode) {
-      return NextResponse.json({ error: 'joinCode is required' }, { status: 400 })
+    if (email && !EMAIL_RE.test(email)) {
+      return NextResponse.json({ error: 'Ange en giltig e-postadress.' }, { status: 400 })
     }
 
     // Find session by join code
     const sessionResult = await payload.find({
       collection: 'course-sessions',
-      where: {
-        joinCode: { equals: joinCode.toUpperCase() },
-      },
+      where: { joinCode: { equals: joinCode.toUpperCase() } },
       limit: 1,
     })
 
     if (sessionResult.totalDocs === 0) {
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Sessionen hittades inte' }, { status: 404 })
     }
 
     const session = sessionResult.docs[0]
 
-    // Check if session is active
     if (session.status !== 'active') {
-      return NextResponse.json({ error: 'Session is not active' }, { status: 400 })
+      return NextResponse.json({ error: 'Sessionen är inte aktiv' }, { status: 400 })
     }
 
-    // Check if session has expired
     if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
-      return NextResponse.json({ error: 'Session has expired' }, { status: 400 })
+      return NextResponse.json({ error: 'Sessionen har gått ut' }, { status: 400 })
     }
 
-    // Check if session is full
     const currentParticipants = Number(session.participantCount ?? 0)
     const maxParticipants =
       session.maxParticipants !== null && session.maxParticipants !== undefined
@@ -90,95 +95,132 @@ export async function POST(request: NextRequest) {
         : null
 
     if (maxParticipants !== null && currentParticipants >= maxParticipants) {
-      return NextResponse.json({ error: 'Session is full' }, { status: 400 })
+      return NextResponse.json({ error: 'Sessionen är full' }, { status: 400 })
     }
 
-    // Check if user is already a participant in this session
-    const existingParticipant = await payload.find({
-      collection: 'session-participants',
-      where: {
-        and: [{ session: { equals: session.id } }, { user: { equals: user.id } }],
-      },
-      limit: 1,
-    })
+    let participant: SessionParticipant | null = null
+    let isNewJoin = false
 
-    let participant
+    if (user) {
+      // Authed re-join: reactivate existing participant if present
+      const existing = await payload.find({
+        collection: 'session-participants',
+        where: {
+          and: [{ session: { equals: session.id } }, { user: { equals: user.id } }],
+        },
+        limit: 1,
+      })
 
-    if (existingParticipant.totalDocs > 0) {
-      // User already joined, reactivate if needed
-      participant = existingParticipant.docs[0]
-      if (!participant.isActive) {
-        participant = await payload.update({
+      if (existing.totalDocs > 0) {
+        participant = existing.docs[0]
+        if (!participant.isActive) {
+          participant = await payload.update({
+            collection: 'session-participants',
+            id: participant.id,
+            data: { isActive: true, lastActivityAt: new Date().toISOString() },
+          })
+        }
+      } else {
+        const displayName =
+          (user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : user.firstName || user.lastName || user.email?.split('@')[0]) || 'Anonym'
+        participant = await payload.create({
           collection: 'session-participants',
-          id: participant.id,
           data: {
+            session: session.id,
+            user: user.id,
+            nickname: displayName,
+            email: user.email?.toLowerCase() || undefined,
+            participantToken: generateParticipantToken(),
             isActive: true,
             lastActivityAt: new Date().toISOString(),
           },
         })
+        isNewJoin = true
       }
     } else {
-      // Generate unique participant token
-      const participantToken = generateParticipantToken()
+      // Guest re-join: try to recover via existing cookie token
+      const cookieStore = await cookies()
+      const existingToken = cookieStore.get(PARTICIPANT_COOKIE)?.value
+      let recovered = false
+      if (existingToken) {
+        const recoveredRes = await payload.find({
+          collection: 'session-participants',
+          where: {
+            and: [
+              { session: { equals: session.id } },
+              { participantToken: { equals: existingToken } },
+            ],
+          },
+          limit: 1,
+        })
+        if (recoveredRes.totalDocs > 0) {
+          participant = recoveredRes.docs[0]
+          if (!participant.isActive) {
+            participant = await payload.update({
+              collection: 'session-participants',
+              id: participant.id,
+              data: { isActive: true, lastActivityAt: new Date().toISOString() },
+            })
+          }
+          recovered = true
+        }
+      }
 
-      // Use user's name as display name
-      const displayName =
-        user.firstName && user.lastName
-          ? `${user.firstName} ${user.lastName}`
-          : user.firstName || user.lastName || user.email?.split('@')[0] || 'Anonymous'
+      if (!recovered) {
+        participant = await payload.create({
+          collection: 'session-participants',
+          data: {
+            session: session.id,
+            nickname,
+            email: email || undefined,
+            participantToken: generateParticipantToken(),
+            isActive: true,
+            lastActivityAt: new Date().toISOString(),
+          },
+        })
+        isNewJoin = true
+      }
+    }
 
-      // Create new participant
-      participant = await payload.create({
-        collection: 'session-participants',
-        data: {
-          session: session.id,
-          user: user.id,
-          nickname: displayName,
-          participantToken,
-          isActive: true,
-          lastActivityAt: new Date().toISOString(),
-        },
-      })
+    if (!participant) {
+      // Should be unreachable given the branches above, but keeps TS honest
+      return NextResponse.json({ error: 'Failed to attach participant' }, { status: 500 })
+    }
 
-      // Update session participant count only for new participants
+    if (isNewJoin) {
       await payload.update({
         collection: 'course-sessions',
         id: session.id,
-        data: {
-          participantCount: (session.participantCount || 0) + 1,
-        },
+        data: { participantCount: (session.participantCount || 0) + 1 },
       })
     }
 
-    // Get course info
     const courseId = typeof session.course === 'object' ? session.course.id : session.course
-    const course = await payload.findByID({
-      collection: 'vinprovningar',
-      id: courseId,
-    })
+    const course = await payload.findByID({ collection: 'vinprovningar', id: courseId })
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: true,
         participant: {
           id: participant.id,
           nickname: participant.nickname,
           participantToken: participant.participantToken,
+          isGuest: !user,
         },
-        user: {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-        },
+        user: user
+          ? {
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+            }
+          : null,
         session: {
           id: session.id,
           sessionName: session.sessionName,
-          course: {
-            id: course.id,
-            title: course.title,
-            slug: course.slug,
-          },
+          course: { id: course.id, title: course.title, slug: course.slug },
           currentActivity: session.currentActivity,
           currentLesson: session.currentLesson,
           currentQuiz: session.currentQuiz,
@@ -187,6 +229,16 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 },
     )
+
+    response.cookies.set(PARTICIPANT_COOKIE, participant.participantToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: COOKIE_MAX_AGE_SECONDS,
+    })
+
+    return response
   } catch (error) {
     log.error('Error joining session:', error)
     return NextResponse.json(

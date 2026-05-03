@@ -47,7 +47,15 @@ export const SessionParticipants: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       admin: {
-        description: 'Associated user account (if logged in)',
+        description: 'Associated user account (if logged in). Null for guest participants.',
+      },
+    },
+    {
+      name: 'email',
+      type: 'email',
+      admin: {
+        description:
+          'Optional email captured at guest join. Used for the post-tasting account-claim prompt and the personal summary email.',
       },
     },
     {

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('api-sessions-[sessionId]')
+
+const PARTICIPANT_COOKIE = 'vk_participant_token'
 
 /**
  * GET /api/sessions/[sessionId]
@@ -20,7 +23,11 @@ export async function GET(
     const payload = await getPayload({ config })
     const { sessionId } = await params
     const { searchParams } = new URL(request.url)
-    const participantToken = searchParams.get('participantToken')
+    // Cookie-set token wins; query param kept as a fallback for compatibility
+    // with older participant-display clients.
+    const cookieStore = await cookies()
+    const participantToken =
+      cookieStore.get(PARTICIPANT_COOKIE)?.value || searchParams.get('participantToken')
 
     // Find session
     const session = await payload.findByID({
