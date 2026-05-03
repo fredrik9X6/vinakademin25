@@ -150,7 +150,7 @@ export default function CourseViewer({
       {/* Course Header */}
       <div className="space-y-6">
         <div className="space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">{course.title}</h1>
+          <h1 className="text-4xl font-bold">{course.title}</h1>
           <p className="text-xl text-muted-foreground max-w-3xl">{course.description}</p>
         </div>
 
