@@ -278,6 +278,12 @@ export const Users: CollectionConfig = {
     },
   },
   access: {
+    // Restrict the Payload admin panel to admin-role users only.
+    // Without this, any authenticated user can enter /admin and browse
+    // collection lists (subject to per-collection read access).
+    // Note: this is a narrower type than collection CRUD access (must return
+    // boolean, not query constraints), so we inline rather than use adminOnly.
+    admin: ({ req }) => req.user?.role === 'admin',
     // Bare minimum access control - simplified
     read: ({ req }) => {
       // Allow admin to read all
