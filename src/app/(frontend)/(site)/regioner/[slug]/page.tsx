@@ -10,6 +10,7 @@ import type { Metadata } from 'next'
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { getSiteURL } from '@/lib/site-url'
 import { resolveSeo } from '@/lib/seo'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -171,8 +172,8 @@ export default async function RegionDetailPage({ params }: PageProps) {
               return (
                 <Card key={wine.id} className="group hover:border-brand-400/40 transition-all">
                   <CardContent className="p-0">
-                    {wineImage?.url && (
-                      <div className="relative h-40 bg-muted/30">
+                    <div className="relative h-40 bg-muted/30">
+                      {wineImage?.url ? (
                         <Image
                           src={wineImage.url}
                           alt={wine.name}
@@ -180,8 +181,10 @@ export default async function RegionDetailPage({ params }: PageProps) {
                           className="object-contain p-4"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
-                      </div>
-                    )}
+                      ) : (
+                        <WineImagePlaceholder size="md" />
+                      )}
+                    </div>
                     <div className="p-4">
                       {isExternal ? (
                         <a
