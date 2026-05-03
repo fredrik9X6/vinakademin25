@@ -1,12 +1,9 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import Image from 'next/image'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { VinlistanToolbar } from '@/components/vinlistan/VinlistanToolbar'
 import { VinlistanPagination } from '@/components/vinlistan/VinlistanPagination'
+import { VinlistanWineCard } from '@/components/vinlistan/VinlistanWineCard'
 import { getSiteURL } from '@/lib/site-url'
 
 export const metadata: Metadata = {
@@ -95,40 +92,26 @@ async function fetchWinesForVinlistan(params: SearchParams) {
     review: trustedReviewByWine.get(Number(wine.id)) || null,
   }))
 
-  // Helper: classify wine type
-  const classifyWine = (w: any): 'sparkling' | 'red' | 'white' | null => {
-    const name: string = String(w?.name || '').toLowerCase()
-    const regionName: string = String(w?.region?.name || '').toLowerCase()
-    const winery: string = String(w?.winery || '').toLowerCase()
-    const grapes: string[] = Array.isArray(w?.grapes)
-      ? (w.grapes as any[]).map((g) => (typeof g === 'object' ? String(g.name) : String(g)))
-      : []
-    const gLower = grapes.map((g) => g.toLowerCase())
-
-    const isSparkling =
-      name.includes('brut') ||
-      name.includes('cava') ||
-      name.includes('prosecco') ||
-      regionName.includes('champagne') ||
-      winery.includes('prosecco')
-    if (isSparkling) return 'sparkling'
-
-    const redHints = [
-      'pinot noir',
-      'cabernet',
-      'merlot',
-      'syrah',
-      'tempranillo',
-      'nebbiolo',
-      'sangiovese',
-    ]
-    const whiteHints = ['chardonnay', 'sauvignon', 'riesling', 'pinot gris', 'grüner', 'chenin']
-    if (gLower.some((g) => redHints.some((h) => g.includes(h)))) return 'red'
-    if (gLower.some((g) => whiteHints.some((h) => g.includes(h)))) return 'white'
-    return null
+  // Build distinct filter dimensions from the wines actually present
+  const countrySet = new Set<string>()
+  const regionSet = new Set<string>()
+  const grapeSet = new Set<string>()
+  for (const item of items) {
+    const w: any = item.wine
+    if (w?.country?.name) countrySet.add(String(w.country.name))
+    if (w?.region?.name) regionSet.add(String(w.region.name))
+    if (Array.isArray(w?.grapes)) {
+      for (const g of w.grapes) {
+        const name = typeof g === 'object' ? g?.name : g
+        if (name) grapeSet.add(String(name))
+      }
+    }
   }
+  const countryOptions = [...countrySet].sort((a, b) => a.localeCompare(b, 'sv'))
+  const regionOptions = [...regionSet].sort((a, b) => a.localeCompare(b, 'sv'))
+  const grapeOptions = [...grapeSet].sort((a, b) => a.localeCompare(b, 'sv'))
 
-  // Filtering
+  // Filtering — uses authoritative wine.type field and exact-match country/region/grape
   items = items.filter((item: any) => {
     const w = item.wine
     if (!w) return false
@@ -147,8 +130,7 @@ async function fetchWinesForVinlistan(params: SearchParams) {
     }
 
     if (filterTypes.length > 0) {
-      const t = classifyWine(w)
-      if (!t || !filterTypes.includes(t)) return false
+      if (!w?.type || !filterTypes.includes(String(w.type))) return false
     }
 
     if (filterPriceMax != null) {
@@ -158,19 +140,19 @@ async function fetchWinesForVinlistan(params: SearchParams) {
 
     if (filterCountry) {
       const c = String(w?.country?.name || '').toLowerCase()
-      if (!c.includes(filterCountry)) return false
+      if (c !== filterCountry) return false
     }
 
     if (filterRegion) {
       const rn = String(w?.region?.name || '').toLowerCase()
-      if (!rn.includes(filterRegion)) return false
+      if (rn !== filterRegion) return false
     }
 
     if (filterGrape) {
       const grapes: string[] = Array.isArray(w?.grapes)
         ? (w.grapes as any[]).map((g) => (typeof g === 'object' ? String(g.name) : String(g)))
         : []
-      const hit = grapes.some((g) => String(g).toLowerCase().includes(filterGrape))
+      const hit = grapes.some((g) => String(g).toLowerCase() === filterGrape)
       if (!hit) return false
     }
 
@@ -204,99 +186,9 @@ async function fetchWinesForVinlistan(params: SearchParams) {
   const end = start + limit
   items = items.slice(start, end)
 
-  return { items, total, page, pageCount }
+  return { items, total, page, pageCount, countryOptions, regionOptions, grapeOptions }
 }
 
-function WineCard({ item }: { item: any }) {
-  const wine = item?.wine || null
-  const review = item?.review || null
-  if (!wine) return null
-  const href = `/vinlistan/${wine.slug || wine.id}`
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(price)
-
-  const getWineType = (w: any): string | null => {
-    const name: string = String(w?.name || '').toLowerCase()
-    const region: string = String(w?.region?.name || '').toLowerCase()
-    const winery: string = String(w?.winery || '').toLowerCase()
-    const grapes: string[] = Array.isArray(w?.grapes)
-      ? (w.grapes as any[]).map((g) => (typeof g === 'object' ? String(g.name) : String(g)))
-      : []
-    const gLower = grapes.map((g) => g.toLowerCase())
-    const isSparkling =
-      name.includes('brut') ||
-      name.includes('cava') ||
-      name.includes('prosecco') ||
-      region.includes('champagne') ||
-      winery.includes('prosecco')
-    if (isSparkling) return 'Mousserande'
-    const redHints = [
-      'pinot noir',
-      'cabernet',
-      'merlot',
-      'syrah',
-      'tempranillo',
-      'nebbiolo',
-      'sangiovese',
-    ]
-    const whiteHints = ['chardonnay', 'sauvignon', 'riesling', 'pinot gris', 'grüner', 'chenin']
-    if (gLower.some((g) => redHints.some((h) => g.includes(h)))) return 'Rött'
-    if (gLower.some((g) => whiteHints.some((h) => g.includes(h)))) return 'Vitt'
-    return null
-  }
-  const typeLabel = getWineType(wine)
-
-  return (
-    <Link href={href} className="block">
-      <Card className="h-full hover:shadow-md transition-shadow">
-        <CardHeader className="p-3">
-          <div className="flex items-start justify-between mb-1">
-            {typeLabel ? (
-              <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">
-                {typeLabel}
-              </Badge>
-            ) : (
-              <span />
-            )}
-            <div className="text-sm font-medium text-brand-gradient">
-              {Number(wine.price) ? formatPrice(Number(wine.price)) : ''}
-            </div>
-          </div>
-          <CardTitle className="text-base font-medium line-clamp-2 break-words">
-            {wine.name} {wine.vintage ? `· ${wine.vintage}` : ''}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 pt-0">
-          <div className="flex items-center gap-3">
-            <div className="relative h-28 w-16 flex-shrink-0 rounded-md overflow-hidden bg-transparent">
-              {wine.image?.url ? (
-                <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
-              ) : null}
-            </div>
-            <div className="min-w-0 text-sm">
-              <div className="text-muted-foreground truncate">{wine.winery}</div>
-              <div className="truncate">
-                {wine.region?.name || ''}
-                {wine.country?.name ? `, ${wine.country.name}` : ''}
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-muted-foreground truncate">
-                  {Array.isArray(wine.grapes)
-                    ? (wine.grapes as any[])
-                        .slice(0, 2)
-                        .map((g: any) => (typeof g === 'object' ? g.name : g))
-                        .join(', ')
-                    : ''}
-                </span>
-              </div>
-              <div className="mt-1 text-xs">Betyg: {review?.rating ?? '-'}/5</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  )
-}
 
 export default async function VinlistanPage({
   searchParams,
@@ -304,7 +196,8 @@ export default async function VinlistanPage({
   searchParams: Promise<SearchParams>
 }) {
   const sp = await searchParams
-  const { items, total, page, pageCount } = await fetchWinesForVinlistan(sp || {})
+  const { items, page, pageCount, countryOptions, regionOptions, grapeOptions } =
+    await fetchWinesForVinlistan(sp || {})
   const q = sp?.q || ''
   const sort = sp?.sort || 'rating-desc'
 
@@ -320,7 +213,13 @@ export default async function VinlistanPage({
 
       {/* Toolbar */}
       <div className="mb-8">
-        <VinlistanToolbar q={q} sort={sort} />
+        <VinlistanToolbar
+          q={q}
+          sort={sort}
+          countryOptions={countryOptions}
+          regionOptions={regionOptions}
+          grapeOptions={grapeOptions}
+        />
       </div>
 
       {/* Gallery */}
@@ -331,7 +230,11 @@ export default async function VinlistanPage({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {items.map((item: any) => (
-            <WineCard key={String(item.wine?.id || item.id)} item={item} />
+            <VinlistanWineCard
+              key={String(item.wine?.id || item.id)}
+              wine={item.wine}
+              review={item.review}
+            />
           ))}
         </div>
       )}

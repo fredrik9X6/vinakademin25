@@ -68,7 +68,10 @@ export function EbookSignupForm({
     <form onSubmit={handleSubmit} className="w-full max-w-md">
       <div
         className={[
-          'flex flex-col gap-2 rounded-full p-1 sm:flex-row sm:items-center sm:gap-1',
+          // Mobile: stacked, use a softer radius so children's pill ends fit inside.
+          // sm+: single horizontal pill, rounded-full looks correct because the row
+          // is wide and short.
+          'flex flex-col gap-2 rounded-3xl p-1 sm:flex-row sm:items-center sm:gap-1 sm:rounded-full',
           isDark
             ? 'border border-white/10 bg-white/5 backdrop-blur'
             : 'border border-[#e9e1d3] bg-white shadow-sm',

@@ -54,7 +54,19 @@ function FilterPill({
   )
 }
 
-export function VinlistanToolbar({ q, sort }: { q: string; sort: string }) {
+export function VinlistanToolbar({
+  q,
+  sort,
+  countryOptions = [],
+  regionOptions = [],
+  grapeOptions = [],
+}: {
+  q: string
+  sort: string
+  countryOptions?: string[]
+  regionOptions?: string[]
+  grapeOptions?: string[]
+}) {
   const [value, setValue] = React.useState(q)
   const [sortVal, setSortVal] = React.useState(sort || 'rating-desc')
   const [country, setCountry] = React.useState<string>('')
@@ -84,8 +96,13 @@ export function VinlistanToolbar({ q, sort }: { q: string; sort: string }) {
     router.push(`/vinlistan?${params.toString()}`)
   }
 
-  // Debounced as-you-type search
+  // Debounced as-you-type search.
+  // Skip when `value` already matches the URL — otherwise navigation that
+  // doesn't change the search input (e.g. clicking pagination) would re-run
+  // this effect, strip `page`, and bounce the user back to page 1.
   React.useEffect(() => {
+    const currentQ = searchParams?.get('q') || ''
+    if (value === currentQ) return
     const t = setTimeout(() => {
       const params = new URLSearchParams(searchParams?.toString() || '')
       if (value) params.set('q', value)
@@ -171,23 +188,60 @@ export function VinlistanToolbar({ q, sort }: { q: string; sort: string }) {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="country">Land</Label>
-                  <TextInput
-                    id="country"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                  />
+                  <Select
+                    value={country || 'any'}
+                    onValueChange={(v) => setCountry(v === 'any' ? '' : v)}
+                  >
+                    <SelectTrigger id="country">
+                      <SelectValue placeholder="Alla länder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Alla länder</SelectItem>
+                      {countryOptions.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="region">Region</Label>
-                  <TextInput
-                    id="region"
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                  />
+                  <Select
+                    value={region || 'any'}
+                    onValueChange={(v) => setRegion(v === 'any' ? '' : v)}
+                  >
+                    <SelectTrigger id="region">
+                      <SelectValue placeholder="Alla regioner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Alla regioner</SelectItem>
+                      {regionOptions.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="grape">Druva</Label>
-                  <TextInput id="grape" value={grape} onChange={(e) => setGrape(e.target.value)} />
+                  <Select
+                    value={grape || 'any'}
+                    onValueChange={(v) => setGrape(v === 'any' ? '' : v)}
+                  >
+                    <SelectTrigger id="grape">
+                      <SelectValue placeholder="Alla druvor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Alla druvor</SelectItem>
+                      {grapeOptions.map((g) => (
+                        <SelectItem key={g} value={g}>
+                          {g}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="priceMax">Maxpris (kr)</Label>
@@ -279,7 +333,25 @@ export function VinlistanToolbar({ q, sort }: { q: string; sort: string }) {
               applyQuick('type', 'sparkling')
             }}
           >
-            Mousserande vin
+            Mousserande
+          </FilterPill>
+          <FilterPill
+            active={(searchParams?.getAll('type') || []).includes('rose')}
+            onClick={() => {
+              setValue('')
+              applyQuick('type', 'rose')
+            }}
+          >
+            Rosé
+          </FilterPill>
+          <FilterPill
+            active={(searchParams?.getAll('type') || []).includes('orange')}
+            onClick={() => {
+              setValue('')
+              applyQuick('type', 'orange')
+            }}
+          >
+            Orange
           </FilterPill>
           <FilterPill
             active={(searchParams?.get('priceMax') || '') === '150'}
@@ -341,7 +413,13 @@ export function VinlistanToolbar({ q, sort }: { q: string; sort: string }) {
         if (types.includes('red')) active.push({ key: 'type', value: 'red', label: 'Rött vin' })
         if (types.includes('white')) active.push({ key: 'type', value: 'white', label: 'Vitt vin' })
         if (types.includes('sparkling'))
-          active.push({ key: 'type', value: 'sparkling', label: 'Mousserande vin' })
+          active.push({ key: 'type', value: 'sparkling', label: 'Mousserande' })
+        if (types.includes('rose')) active.push({ key: 'type', value: 'rose', label: 'Rosé' })
+        if (types.includes('orange')) active.push({ key: 'type', value: 'orange', label: 'Orange' })
+        if (types.includes('fortified'))
+          active.push({ key: 'type', value: 'fortified', label: 'Starkvin' })
+        if (types.includes('dessert'))
+          active.push({ key: 'type', value: 'dessert', label: 'Dessertvin' })
         if (pm) active.push({ key: 'priceMax', label: `Under ${pm} kr` })
         if (co) active.push({ key: 'country', label: `Land: ${co}` })
         if (re) active.push({ key: 'region', label: `Region: ${re}` })

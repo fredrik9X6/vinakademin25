@@ -14,12 +14,166 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { ExternalLink, Clock, ArrowRight, CalendarDays, Sparkles } from 'lucide-react'
+import {
+  ExternalLink,
+  Clock,
+  ArrowRight,
+  CalendarDays,
+  Sparkles,
+  ShoppingBag,
+  BadgeCheck,
+} from 'lucide-react'
 import type { Metadata } from 'next'
 import { BlogPostCard } from '@/components/blog'
 import { getSiteURL } from '@/lib/site-url'
 import { resolveSeo } from '@/lib/seo'
 import { BreadcrumbJsonLd, WineProductJsonLd } from '@/components/seo/JsonLd'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
+import { VinlistanWineCard, StarsRow } from '@/components/vinlistan/VinlistanWineCard'
+import { contentReferencesWine } from '@/lib/wine-references'
+import { cn } from '@/lib/utils'
+
+const SCALE_DEFS: Array<{
+  key: 'sweetness' | 'acidity' | 'tannin' | 'alcohol' | 'body' | 'flavourIntensity'
+  label: string
+  steps: string[]
+}> = [
+  { key: 'sweetness', label: 'Sötma', steps: ['Torr', 'Halvtorr', 'Mellan', 'Söt'] },
+  { key: 'acidity', label: 'Syra', steps: ['Låg', 'Mellan', 'Hög'] },
+  { key: 'tannin', label: 'Tannin', steps: ['Låg', 'Mellan', 'Hög'] },
+  { key: 'alcohol', label: 'Alkohol', steps: ['Låg', 'Mellan', 'Hög'] },
+  { key: 'body', label: 'Fyllighet', steps: ['Lätt', 'Mellan', 'Fyllig'] },
+  { key: 'flavourIntensity', label: 'Smakintensitet', steps: ['Låg', 'Medium', 'Uttalad'] },
+]
+
+function Scale({ label, value, steps }: { label: string; value?: string | null; steps: string[] }) {
+  const idx = value ? steps.findIndex((s) => s.toLowerCase() === String(value).toLowerCase()) : -1
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+        <span className="text-xs font-medium text-foreground">{value || '—'}</span>
+      </div>
+      <div className="relative flex h-3 items-center">
+        <div className="absolute inset-x-0 h-1 rounded-full bg-muted" />
+        {steps.map((_, i) => {
+          const left = (i / (steps.length - 1)) * 100
+          const isActive = i === idx
+          const isPrev = idx > -1 && i < idx
+          return (
+            <div
+              key={i}
+              className={cn(
+                'absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-all',
+                isActive
+                  ? 'h-3 w-3 bg-brand-400 ring-2 ring-brand-300/40'
+                  : isPrev
+                    ? 'h-2 w-2 bg-brand-300/60'
+                    : 'h-1.5 w-1.5 bg-muted-foreground/30',
+              )}
+              style={{ left: `${left}%` }}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function AromaChips({ items, tone = 'neutral' }: { items?: string[] | null; tone?: 'neutral' | 'oak' | 'aging' }) {
+  if (!items || !items.length) return null
+  const toneClass =
+    tone === 'oak'
+      ? 'border-amber-300/40 bg-amber-100/40 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200'
+      : tone === 'aging'
+        ? 'border-stone-300/40 bg-stone-100/40 text-stone-900 dark:bg-stone-900/40 dark:text-stone-200'
+        : 'border-brand-300/40 bg-brand-300/10 text-brand-400'
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map((a, i) => (
+        <span
+          key={`${a}-${i}`}
+          className={cn(
+            'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium',
+            toneClass,
+          )}
+        >
+          {a}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function AromaSection({
+  heading,
+  primary,
+  secondary,
+  tertiary,
+}: {
+  heading: string
+  primary?: string[] | null
+  secondary?: string[] | null
+  tertiary?: string[] | null
+}) {
+  if (!primary?.length && !secondary?.length && !tertiary?.length) return null
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {heading}
+      </div>
+      <div className="space-y-1.5">
+        {primary?.length ? (
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1.5">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+              Primära
+            </span>
+            <AromaChips items={primary} tone="neutral" />
+          </div>
+        ) : null}
+        {secondary?.length ? (
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1.5">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+              Sekundära
+            </span>
+            <AromaChips items={secondary} tone="oak" />
+          </div>
+        ) : null}
+        {tertiary?.length ? (
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1.5">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+              Tertiära
+            </span>
+            <AromaChips items={tertiary} tone="aging" />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  red: 'Rött',
+  white: 'Vitt',
+  rose: 'Rosé',
+  sparkling: 'Mousserande',
+  orange: 'Orange',
+  fortified: 'Starkvin',
+  dessert: 'Dessert',
+}
+
+function reviewerDisplayName(review: any): string | null {
+  if (!review) return null
+  if (review.authorDisplayName) return String(review.authorDisplayName)
+  const u = typeof review.user === 'object' ? review.user : null
+  if (u) {
+    const name = [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
+    return name || u.email || null
+  }
+  return null
+}
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -225,45 +379,81 @@ export default async function WineDetailPage({ params }: PageProps) {
       return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     })
 
-  const wineIdStr = String(wine.id)
-  const wineSlugStr = String(wine.slug || '')
-
-  // Fetch related wines by region or grapes
+  // Fetch related wines that share a grape OR the country with this one
   const grapeIds: number[] = Array.isArray(wine.grapes)
     ? (wine.grapes as any[])
         .map((g: any) => (typeof g === 'object' ? Number(g.id) : Number(g)))
         .filter(Boolean)
     : []
-  const relatedRes = await payload.find({
-    collection: 'wines',
-    where: {
-      and: [
-        { id: { not_equals: wine.id } },
-        {
-          or: [
-            ...(wine.region?.id ? [{ region: { equals: wine.region.id } }] : []),
-            ...(grapeIds.length > 0 ? [{ grapes: { in: grapeIds } }] : []),
-          ],
-        },
-      ],
-    },
-    depth: 1 as any,
-    limit: 8,
-  } as any)
-  const relatedWines = relatedRes.docs || []
+  const relatedRes =
+    grapeIds.length > 0 || wine.country?.id
+      ? await payload.find({
+          collection: 'wines',
+          where: {
+            and: [
+              { id: { not_equals: wine.id } },
+              {
+                or: [
+                  ...(grapeIds.length > 0 ? [{ grapes: { in: grapeIds } }] : []),
+                  ...(wine.country?.id ? [{ country: { equals: wine.country.id } }] : []),
+                ],
+              },
+            ],
+          },
+          depth: 2 as any,
+          limit: 30,
+        } as any)
+      : { docs: [] }
+  // Rank: same grape > same country, prefer those with trusted reviews, cap at 6
+  const candidateWines = (relatedRes.docs || []) as any[]
+  const candidateIds = candidateWines.map((w: any) => Number(w.id)).filter(Boolean)
+  const candidateReviewMap = new Map<number, any>()
+  if (candidateIds.length > 0) {
+    const reviewsRes = await payload.find({
+      collection: 'reviews',
+      where: {
+        and: [{ isTrusted: { equals: true } }, { wine: { in: candidateIds } }],
+      },
+      depth: 1 as any,
+      limit: 200,
+      sort: '-rating',
+    } as any)
+    for (const r of (reviewsRes.docs || []) as any[]) {
+      const wid = Number(typeof r.wine === 'object' ? r.wine?.id : r.wine)
+      if (!wid) continue
+      const prev = candidateReviewMap.get(wid)
+      if (!prev || (Number(r.rating) || 0) > (Number(prev.rating) || 0)) {
+        candidateReviewMap.set(wid, r)
+      }
+    }
+  }
+  const grapeIdSet = new Set(grapeIds)
+  const scored = candidateWines.map((w: any) => {
+    const wGrapeIds = Array.isArray(w.grapes)
+      ? w.grapes.map((g: any) => Number(typeof g === 'object' ? g.id : g)).filter(Boolean)
+      : []
+    const sharesGrape = wGrapeIds.some((id: number) => grapeIdSet.has(id))
+    const sharesCountry =
+      wine.country?.id &&
+      Number(typeof w.country === 'object' ? w.country?.id : w.country) === Number(wine.country.id)
+    const review = candidateReviewMap.get(Number(w.id)) || null
+    const score =
+      (sharesGrape ? 100 : 0) + (sharesCountry ? 10 : 0) + (review ? Number(review.rating) || 0 : 0)
+    return { wine: w, review, score }
+  })
+  scored.sort((a, b) => b.score - a.score)
+  const relatedWines = scored.slice(0, 6)
 
-  // Fetch vinprovningar that reference this wine
+  // Fetch vinprovningar that reference this wine via wine-reference or wine-list blocks
   const vinRes = await payload.find({
     collection: 'vinprovningar',
     where: { _status: { equals: 'published' } },
     depth: 2 as any,
     limit: 100,
   } as any)
-  const allVinprovningar = vinRes.docs || []
-  const relatedVinprovningar = allVinprovningar.filter((v: any) => {
-    const json = JSON.stringify(v.fullDescription || {})
-    return json.includes(wineIdStr) || json.includes(wineSlugStr)
-  })
+  const relatedVinprovningar = (vinRes.docs || []).filter((v: any) =>
+    contentReferencesWine(v.fullDescription, wine.id, wine.slug),
+  )
 
   // Fetch blog posts where this wine is referenced in content blocks
   const postsRes = await payload.find({
@@ -273,86 +463,9 @@ export default async function WineDetailPage({ params }: PageProps) {
     depth: 2 as any,
     limit: 100,
   } as any)
-  const blogPostsAll = postsRes.docs || []
-  const referencesWine = (content: any): boolean => {
-    if (!content || typeof content !== 'object') return false
-    const stack: any[] = [content]
-
-    const getRelId = (w: any): string | null => {
-      if (!w) return null
-      if (typeof w === 'string' || typeof w === 'number') return String(w)
-      // Payload relationship shapes
-      if (typeof w === 'object') {
-        if (w.id) return String(w.id)
-        if (w.value) return String(typeof w.value === 'object' ? (w.value.id ?? w.value) : w.value)
-        if (w.doc && w.doc.id) return String(w.doc.id)
-      }
-      return null
-    }
-
-    while (stack.length) {
-      const node = stack.pop()
-      if (!node || typeof node !== 'object') continue
-
-      // Detect wine-reference blocks in various shapes
-      const blockType =
-        node.blockType || node.blockName || node?.fields?.blockType || node?.fields?.blockName
-      const isWineBlock = blockType === 'wine-reference' || blockType === 'WineReference'
-      if (
-        isWineBlock ||
-        node.type === 'wine-reference' ||
-        (node.type === 'block' && node.fields?.blockType === 'wine-reference')
-      ) {
-        const wRaw =
-          node.fields?.wine ?? node.wine ?? node.fields?.data?.wine ?? node.fields?.fields?.wine
-        const wid = getRelId(wRaw)
-        if (wid && wid === wineIdStr) return true
-        // Also compare by slug when full doc is embedded
-        if (wRaw && typeof wRaw === 'object') {
-          const wslug = String((wRaw as any).slug || '')
-          if (wslug && wslug === wineSlugStr) return true
-        }
-      }
-
-      // Detect link nodes pointing to this wine
-      const url: string | undefined =
-        (node.url || node.href || node?.fields?.url) &&
-        String(node.url || node.href || node?.fields?.url)
-      if (
-        url &&
-        (url.includes(`/vinlistan/${wineSlugStr}`) || url.includes(`/vinlistan/${wineIdStr}`))
-      ) {
-        return true
-      }
-
-      // Detect internal link nodes with doc relation to wines
-      const doc = (node as any).doc || (node as any)?.fields?.doc
-      if (doc && (doc.relationTo === 'wines' || doc.relationTo === 'wine')) {
-        const docVal = doc.value || doc.id
-        const wid = getRelId(docVal)
-        if (wid && wid === wineIdStr) return true
-      }
-
-      for (const key of Object.keys(node)) {
-        const val = (node as any)[key]
-        if (val && typeof val === 'object') stack.push(val)
-        if (Array.isArray(val)) val.forEach((v) => stack.push(v))
-      }
-    }
-    // Fallback: string search in serialized content
-    try {
-      const json = JSON.stringify(content)
-      if (
-        json.includes(`/vinlistan/${wineSlugStr}`) ||
-        json.includes(`/vinlistan/${wineIdStr}`) ||
-        (json.includes('"wine"') && json.includes(`"${wineIdStr}"`))
-      ) {
-        return true
-      }
-    } catch {}
-    return false
-  }
-  const blogPosts = blogPostsAll.filter((p: any) => referencesWine(p.content))
+  const blogPosts = (postsRes.docs || []).filter((p: any) =>
+    contentReferencesWine(p.content, wine.id, wine.slug),
+  )
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(price)
@@ -431,109 +544,121 @@ export default async function WineDetailPage({ params }: PageProps) {
         ) : null}
       </div>
 
-      <Card className="mb-8 overflow-hidden">
+      <Card className="mb-8 overflow-hidden border-border/60">
         <CardContent className="p-0">
-          {/* Mobile: stacked. Tablet (md): image left, content right side-by-side. */}
           <div className="flex flex-col md:flex-row">
-            {/* Wine bottle image */}
-            <div className="flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20 md:w-52 lg:w-60 flex-shrink-0 py-8 px-6">
-              <div className="relative h-56 w-24 sm:h-64 sm:w-28 md:h-72 md:w-32">
+            {/* Wine bottle image — bigger, gradient backdrop, brand-tinted */}
+            <div className="relative flex items-center justify-center bg-gradient-to-br from-brand-300/10 via-muted/40 to-muted/20 md:w-72 lg:w-80 flex-shrink-0 py-10 px-8">
+              <div className="relative h-64 w-32 sm:h-80 sm:w-36 md:h-96 md:w-40">
                 {wine.image?.url ? (
-                  <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
-                ) : null}
+                  <Image
+                    src={wine.image.url}
+                    alt={wine.name}
+                    fill
+                    className="object-contain drop-shadow-md"
+                    sizes="(max-width: 768px) 60vw, 320px"
+                    priority
+                  />
+                ) : (
+                  <WineImagePlaceholder size="lg" />
+                )}
               </div>
+              {wine.type && TYPE_LABEL[String(wine.type)] ? (
+                <Badge
+                  variant="outline"
+                  className="absolute left-4 top-4 border-brand-300/40 bg-background/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-400 backdrop-blur-sm"
+                >
+                  {TYPE_LABEL[String(wine.type)]}
+                </Badge>
+              ) : null}
             </div>
 
             {/* Main content */}
             <div className="flex-1 p-5 sm:p-6 md:p-8 flex flex-col gap-5 min-w-0">
-              {/* Header */}
-              <div>
-                <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
-                  <h1 className="text-2xl sm:text-3xl text-foreground break-words">
-                    {wine.name}{wine.vintage ? <span className="text-muted-foreground font-normal"> · {wine.vintage}</span> : ''}
-                  </h1>
+              {/* Type chip + vintage */}
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                {wine.winery ? <span className="font-semibold">{wine.winery}</span> : null}
+                {wine.vintage ? <span>· Årgång {wine.vintage}</span> : null}
+              </div>
+
+              {/* Wine name */}
+              <h1 className="text-3xl sm:text-4xl font-medium leading-tight tracking-tight text-foreground break-words">
+                {wine.name}
+              </h1>
+
+              {/* Region · Country (linked) */}
+              {(wine.region?.name || wine.country?.name) && (
+                <div className="text-sm text-muted-foreground">
+                  {wine.region?.name && wine.region?.slug ? (
+                    <Link
+                      href={`/regioner/${wine.region.slug}`}
+                      className="hover:text-brand-400 transition-colors underline-offset-2 hover:underline"
+                    >
+                      {wine.region.name}
+                    </Link>
+                  ) : (
+                    wine.region?.name
+                  )}
+                  {wine.region?.name && wine.country?.name ? ', ' : null}
+                  {wine.country?.name && wine.country?.slug ? (
+                    <Link
+                      href={`/lander/${wine.country.slug}`}
+                      className="hover:text-brand-400 transition-colors underline-offset-2 hover:underline"
+                    >
+                      {wine.country.name}
+                    </Link>
+                  ) : (
+                    wine.country?.name
+                  )}
+                </div>
+              )}
+
+              {/* Big star rating row + reviewer attribution + price */}
+              {review?.rating || Number(wine.price) ? (
+                <div className="flex flex-wrap items-center justify-between gap-4 border-y border-border/50 py-4">
+                  {review?.rating ? (
+                    <div className="flex items-center gap-3">
+                      <StarsRow value={Number(review.rating)} max={5} />
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-lg font-semibold text-brand-400">{review.rating}</span>
+                        <span className="text-sm text-muted-foreground">/ 5</span>
+                      </div>
+                      {reviewerDisplayName(review) ? (
+                        <span className="text-sm text-muted-foreground">
+                          · av {reviewerDisplayName(review)}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Ingen recension ännu</span>
+                  )}
                   {Number(wine.price) ? (
-                    <div className="text-brand-gradient text-xl font-bold">
+                    <div className="text-2xl font-bold text-brand-gradient">
                       {formatPrice(Number(wine.price))}
                     </div>
                   ) : null}
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {wine.winery}
-                  {wine.region?.name ? (
-                    <>
-                      {' · '}
-                      <Link href={`/regioner/${wine.region.slug}`} className="hover:text-brand-400 transition-colors underline-offset-2 hover:underline">
-                        {wine.region.name}
-                      </Link>
-                    </>
-                  ) : null}
-                  {wine.country?.name ? (
-                    <>
-                      {', '}
-                      <Link href={`/lander/${wine.country.slug}`} className="hover:text-brand-400 transition-colors underline-offset-2 hover:underline">
-                        {wine.country.name}
-                      </Link>
-                    </>
-                  ) : null}
-                </div>
-              </div>
+              ) : null}
 
-              {/* Badges */}
-              <div className="flex flex-wrap gap-2">
-                {review ? (
-                  <Badge className="bg-brand-300/10 text-brand-400 border-brand-300/30">
-                    Verifierad recension
-                  </Badge>
-                ) : null}
-                {review?.rating ? (
-                  <Badge variant="secondary">
-                    Betyg: {review.rating}/5
-                  </Badge>
-                ) : null}
-              </div>
-
-              {/* Details grid — 2 cols on mobile/tablet, 3 on desktop */}
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Druvor</div>
-                  <div className="text-sm font-medium">
-                    {Array.isArray(wine.grapes) && (wine.grapes as any[]).length > 0
-                      ? (wine.grapes as any[])
-                          .map((g: any) => (typeof g === 'object' ? g.name : g))
-                          .join(', ')
-                      : '—'}
+              {/* Vinakademins omdöme — pulled-up review summary */}
+              {review?.wsetTasting?.conclusion?.summary ? (
+                <div className="rounded-lg border border-brand-300/30 bg-brand-300/5 p-4">
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-brand-400 mb-1">
+                    Vinakademins omdöme
                   </div>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Alkohol</div>
-                  <div className="text-sm font-medium">{wine.alcohol ? `${wine.alcohol}%` : '—'}</div>
-                </div>
-                {wine.region?.name ? (
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Region</div>
-                    <div className="text-sm font-medium">
-                      <Link href={`/regioner/${wine.region.slug}`} className="hover:text-orange-500 transition-colors hover:underline underline-offset-2">
-                        {wine.region.name}
-                      </Link>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              {/* Description */}
-              {wine.description?.root ? (
-                <div className="border-t border-border/50 pt-4">
-                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Beskrivning</div>
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <RichTextRenderer content={wine.description} />
-                  </div>
+                  <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">
+                    {String(review.wsetTasting.conclusion.summary)
+                      .split('\n\n— ')
+                      .slice(0, 2)
+                      .join(' — ')}
+                  </p>
                 </div>
               ) : null}
 
-                {/* Systembolaget link */}
-                {wine.systembolagetUrl && wine.systembolagetUrl.trim() ? (
-                  <div>
+              {/* Systembolaget CTA — prominent */}
+              {wine.systembolagetUrl && wine.systembolagetUrl.trim() ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button asChild size="lg" className="btn-brand">
                     <a
                       href={
                         wine.systembolagetUrl.startsWith('http')
@@ -542,17 +667,54 @@ export default async function WineDetailPage({ params }: PageProps) {
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-400 hover:underline underline-offset-2"
                     >
+                      <ShoppingBag className="mr-2 h-4 w-4" />
                       Köp på Systembolaget
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <ExternalLink className="ml-2 h-3.5 w-3.5" />
                     </a>
+                  </Button>
+                </div>
+              ) : null}
+
+              {/* Details grid */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                    Druvor
+                  </div>
+                  <div className="text-sm font-medium">
+                    {Array.isArray(wine.grapes) && (wine.grapes as any[]).length > 0
+                      ? (wine.grapes as any[])
+                          .map((g: any) => (typeof g === 'object' ? g.name : g))
+                          .join(', ')
+                      : '—'}
+                  </div>
+                </div>
+                {wine.alcohol ? (
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                      Alkohol
+                    </div>
+                    <div className="text-sm font-medium">{wine.alcohol}%</div>
                   </div>
                 ) : null}
               </div>
+
+              {/* Description (editor-curated long-form) */}
+              {wine.description?.root ? (
+                <div className="border-t border-border/50 pt-4">
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                    Beskrivning
+                  </div>
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <RichTextRenderer content={wine.description} />
+                  </div>
+                </div>
+              ) : null}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Reviews */}
       <div className="mt-8">
@@ -560,7 +722,7 @@ export default async function WineDetailPage({ params }: PageProps) {
         {visibleReviews.length === 0 ? (
           <div className="text-sm text-muted-foreground">Inga recensioner ännu.</div>
         ) : (
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full space-y-3">
             {visibleReviews.map((r: any) => {
               const wset = r.wsetTasting || {}
               const appearance = wset.appearance || {}
@@ -580,135 +742,218 @@ export default async function WineDetailPage({ params }: PageProps) {
                       reviewer.email ||
                       'Okänd'
                     : 'Okänd'
+              const reviewerInitial = reviewerName.trim().charAt(0).toUpperCase() || '?'
               return (
-                <AccordionItem key={r.id} value={String(r.id)}>
-                  <AccordionTrigger>
-                    <div className="flex items-center gap-2">
-                      {r.isTrusted ? <Badge variant="secondary">Verifierad</Badge> : null}
-                      {isOwn && !r.isTrusted ? <Badge variant="outline">Du</Badge> : null}
-                      <span className="font-medium">{reviewerName}</span>
-                      <span className="text-muted-foreground">• {r.rating ?? '—'}/5</span>
-                      <span className="text-muted-foreground">
-                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString('sv-SE') : ''}
-                      </span>
+                <AccordionItem
+                  key={r.id}
+                  value={String(r.id)}
+                  className="group/item overflow-hidden rounded-xl border border-border/60 bg-card transition-colors data-[state=open]:border-brand-300/40 hover:border-brand-300/40"
+                >
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline sm:px-5 sm:py-4">
+                    <div className="flex w-full items-center gap-3 text-left">
+                      {/* Avatar — BadgeCheck for trusted, initial otherwise */}
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                          r.isTrusted
+                            ? 'bg-brand-300/15 text-brand-400'
+                            : 'bg-muted text-muted-foreground',
+                        )}
+                      >
+                        {r.isTrusted ? (
+                          <BadgeCheck className="h-5 w-5" />
+                        ) : (
+                          <span>{reviewerInitial}</span>
+                        )}
+                      </div>
+
+                      {/* Name + meta */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-foreground">{reviewerName}</span>
+                          {r.isTrusted ? (
+                            <span className="inline-flex items-center gap-1 rounded-md border border-brand-300/30 bg-brand-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-400">
+                              <BadgeCheck className="h-3 w-3" />
+                              Verifierad
+                            </span>
+                          ) : null}
+                          {isOwn && !r.isTrusted ? (
+                            <span className="inline-flex items-center rounded-md border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              Du
+                            </span>
+                          ) : null}
+                        </div>
+                        {r.createdAt ? (
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {new Date(r.createdAt).toLocaleDateString('sv-SE', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Stars on right */}
+                      {r.rating ? (
+                        <div className="hidden shrink-0 sm:flex sm:items-center sm:gap-2">
+                          <StarsRow value={Number(r.rating)} />
+                          <span className="text-sm font-semibold text-brand-400">{r.rating}</span>
+                          <span className="text-xs text-muted-foreground">/ 5</span>
+                        </div>
+                      ) : null}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="rounded-md border p-4 text-sm">
-                      {/* Section: Utseende */}
-                      <div className="rounded-md border mb-3">
-                        <div className="bg-secondary text-secondary-foreground px-3 py-2 text-xs font-medium uppercase tracking-wide">
-                          Utseende
+                    {/* Mobile-only star row inside the open state (since trigger hides them <sm) */}
+                    {r.rating ? (
+                      <div className="mb-4 flex items-center gap-2 px-4 sm:hidden sm:px-5">
+                        <StarsRow value={Number(r.rating)} />
+                        <span className="text-sm font-semibold text-brand-400">{r.rating}</span>
+                        <span className="text-xs text-muted-foreground">/ 5</span>
+                      </div>
+                    ) : null}
+                    <div className="space-y-5 border-t border-border/40 px-4 py-5 sm:px-5">
+                      {/* 1. Review prose — the headline content */}
+                      {r.reviewText?.root ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <RichTextRenderer content={r.reviewText} />
                         </div>
-                        <div className="divide-y">
-                          {[
-                            ['Klarhet', appearance.clarity],
-                            ['Intensitet', appearance.intensity],
-                            ['Färg', appearance.color],
-                          ].map(([label, val]) => (
-                            <div
-                              key={String(label)}
-                              className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 md:px-4 md:py-3 even:bg-muted/40"
-                            >
-                              <div className="text-sm font-medium text-muted-foreground">
-                                {label}
-                              </div>
-                              <div className="md:col-span-2 text-sm">{val || '—'}</div>
-                            </div>
-                          ))}
+                      ) : conclusion.summary ? (
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">
+                          {conclusion.summary}
+                        </p>
+                      ) : null}
+
+                      {/* 2. Structural attributes — visual sliders */}
+                      {SCALE_DEFS.some((d) => palate[d.key]) ? (
+                        <div className="grid grid-cols-1 gap-x-6 gap-y-4 border-t border-border/40 pt-4 sm:grid-cols-2">
+                          {SCALE_DEFS.map((d) =>
+                            palate[d.key] ? (
+                              <Scale
+                                key={d.key}
+                                label={d.label}
+                                value={palate[d.key]}
+                                steps={d.steps}
+                              />
+                            ) : null,
+                          )}
                         </div>
+                      ) : null}
+
+                      {/* 3. Aromas + flavours — chips grouped by tier */}
+                      <div className="grid grid-cols-1 gap-5 border-t border-border/40 pt-4 md:grid-cols-2">
+                        <AromaSection
+                          heading="Doft"
+                          primary={nose.primaryAromas}
+                          secondary={nose.secondaryAromas}
+                          tertiary={nose.tertiaryAromas}
+                        />
+                        <AromaSection
+                          heading="Smak"
+                          primary={palate.primaryFlavours}
+                          secondary={palate.secondaryFlavours}
+                          tertiary={palate.tertiaryFlavours}
+                        />
                       </div>
 
-                      {/* Section: Doft */}
-                      <div className="rounded-md border mb-3">
-                        <div className="bg-secondary text-secondary-foreground px-3 py-2 text-xs font-medium uppercase tracking-wide">
-                          Doft
+                      {/* 4. Color, finish, quality — small fact pills */}
+                      {(appearance.color ||
+                        appearance.intensity ||
+                        appearance.clarity ||
+                        palate.finish ||
+                        conclusion.quality) && (
+                        <div className="flex flex-wrap gap-2 border-t border-border/40 pt-4">
+                          {appearance.color ? (
+                            <Badge variant="outline" className="font-normal">
+                              Färg: <span className="ml-1 font-medium">{appearance.color}</span>
+                            </Badge>
+                          ) : null}
+                          {palate.finish ? (
+                            <Badge variant="outline" className="font-normal">
+                              Eftersmak: <span className="ml-1 font-medium">{palate.finish}</span>
+                            </Badge>
+                          ) : null}
+                          {conclusion.quality ? (
+                            <Badge variant="outline" className="font-normal">
+                              Kvalitet: <span className="ml-1 font-medium">{conclusion.quality}</span>
+                            </Badge>
+                          ) : null}
                         </div>
-                        <div className="divide-y">
-                          {[
-                            ['Intensitet', nose.intensity],
-                            ['Primära aromer', (nose.primaryAromas || []).join(', ')],
-                            ['Sekundära aromer', (nose.secondaryAromas || []).join(', ')],
-                            ['Tertiära aromer', (nose.tertiaryAromas || []).join(', ')],
-                          ].map(([label, val]) => (
-                            <div
-                              key={String(label)}
-                              className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 md:px-4 md:py-3 even:bg-muted/40"
-                            >
-                              <div className="text-sm font-medium text-muted-foreground">
-                                {label}
-                              </div>
-                              <div className="md:col-span-2 text-sm">{val || '—'}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      )}
 
-                      {/* Section: Smak */}
-                      <div className="rounded-md border mb-3">
-                        <div className="bg-secondary text-secondary-foreground px-3 py-2 text-xs font-medium uppercase tracking-wide">
-                          Smak
-                        </div>
-                        <div className="divide-y">
-                          {[
-                            ['Sötma', palate.sweetness],
-                            ['Syra', palate.acidity],
-                            ['Tannin', palate.tannin],
-                            ['Alkohol', palate.alcohol],
-                            ['Fyllighet', palate.body],
-                            ['Smakintensitet', palate.flavourIntensity],
-                            ['Primära smaker', (palate.primaryFlavours || []).join(', ')],
-                            ['Sekundära smaker', (palate.secondaryFlavours || []).join(', ')],
-                            ['Tertiära smaker', (palate.tertiaryFlavours || []).join(', ')],
-                            ['Eftersmak', palate.finish],
-                          ].map(([label, val]) => (
-                            <div
-                              key={String(label)}
-                              className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 md:px-4 md:py-3 even:bg-muted/40"
-                            >
-                              <div className="text-sm font-medium text-muted-foreground">
-                                {label}
-                              </div>
-                              <div className="md:col-span-2 text-sm">{val || '—'}</div>
+                      {/* 5. Disclosure: full WSET breakdown for the WSET-curious */}
+                      <details className="group rounded-md border border-border/40 text-sm">
+                        <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
+                          Visa fullständig WSET-provning
+                        </summary>
+                        <div className="space-y-4 border-t border-border/40 p-3">
+                          {/* Utseende */}
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                              Utseende
                             </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Section: Slutsats */}
-                      <div className="rounded-md border">
-                        <div className="bg-secondary text-secondary-foreground px-3 py-2 text-xs font-medium uppercase tracking-wide">
-                          Slutsats
-                        </div>
-                        <div className="divide-y">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 md:px-4 md:py-3">
-                            <div className="text-sm font-medium text-muted-foreground">
-                              Kvalitet
-                            </div>
-                            <div className="md:col-span-2 text-sm">{conclusion.quality || '—'}</div>
+                            <dl className="grid grid-cols-3 gap-2 text-xs">
+                              <dt className="text-muted-foreground">Klarhet</dt>
+                              <dd className="col-span-2">{appearance.clarity || '—'}</dd>
+                              <dt className="text-muted-foreground">Intensitet</dt>
+                              <dd className="col-span-2">{appearance.intensity || '—'}</dd>
+                              <dt className="text-muted-foreground">Färg</dt>
+                              <dd className="col-span-2">{appearance.color || '—'}</dd>
+                            </dl>
                           </div>
-                          {r.reviewText?.root ? (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 md:px-4 md:py-3">
-                              <div className="text-sm font-medium text-muted-foreground">
-                                Noteringar
-                              </div>
-                              <div className="md:col-span-2 text-sm">
-                                <RichTextRenderer content={r.reviewText} />
-                              </div>
+                          {/* Doft */}
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                              Doft
                             </div>
-                          ) : null}
-                          {conclusion.summary ? (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 md:px-4 md:py-3">
-                              <div className="text-sm font-medium text-muted-foreground">
-                                Sammanfattning
-                              </div>
-                              <div className="md:col-span-2 text-sm whitespace-pre-wrap">
-                                {conclusion.summary}
-                              </div>
+                            <dl className="grid grid-cols-3 gap-2 text-xs">
+                              <dt className="text-muted-foreground">Intensitet</dt>
+                              <dd className="col-span-2">{nose.intensity || '—'}</dd>
+                            </dl>
+                          </div>
+                          {/* Smak */}
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                              Smak — strukturella egenskaper
                             </div>
-                          ) : null}
+                            <dl className="grid grid-cols-3 gap-2 text-xs">
+                              <dt className="text-muted-foreground">Sötma</dt>
+                              <dd className="col-span-2">{palate.sweetness || '—'}</dd>
+                              <dt className="text-muted-foreground">Syra</dt>
+                              <dd className="col-span-2">{palate.acidity || '—'}</dd>
+                              <dt className="text-muted-foreground">Tannin</dt>
+                              <dd className="col-span-2">{palate.tannin || '—'}</dd>
+                              <dt className="text-muted-foreground">Alkohol</dt>
+                              <dd className="col-span-2">{palate.alcohol || '—'}</dd>
+                              <dt className="text-muted-foreground">Fyllighet</dt>
+                              <dd className="col-span-2">{palate.body || '—'}</dd>
+                              <dt className="text-muted-foreground">Smakintensitet</dt>
+                              <dd className="col-span-2">{palate.flavourIntensity || '—'}</dd>
+                              <dt className="text-muted-foreground">Eftersmak</dt>
+                              <dd className="col-span-2">{palate.finish || '—'}</dd>
+                            </dl>
+                          </div>
+                          {/* Slutsats */}
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                              Slutsats
+                            </div>
+                            <dl className="grid grid-cols-3 gap-2 text-xs">
+                              <dt className="text-muted-foreground">Kvalitet</dt>
+                              <dd className="col-span-2">{conclusion.quality || '—'}</dd>
+                              {conclusion.summary ? (
+                                <>
+                                  <dt className="text-muted-foreground">Sammanfattning</dt>
+                                  <dd className="col-span-2 whitespace-pre-line">
+                                    {conclusion.summary}
+                                  </dd>
+                                </>
+                              ) : null}
+                            </dl>
+                          </div>
                         </div>
-                      </div>
+                      </details>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -789,6 +1034,26 @@ export default async function WineDetailPage({ params }: PageProps) {
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Liknande viner — same grape or country */}
+      {relatedWines.length > 0 ? (
+        <div className="mt-12">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <h2 className="text-xl font-medium">Liknande viner</h2>
+            <Link
+              href="/vinlistan"
+              className="text-sm text-muted-foreground hover:text-brand-400 hover:underline underline-offset-2"
+            >
+              Se hela vinlistan →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+            {relatedWines.map(({ wine: rw, review: rwReview }: any) => (
+              <VinlistanWineCard key={rw.id} wine={rw} review={rwReview} />
             ))}
           </div>
         </div>

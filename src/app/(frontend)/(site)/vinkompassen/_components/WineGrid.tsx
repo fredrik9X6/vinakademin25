@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import posthog from 'posthog-js'
 import type { Wine, Media } from '@/payload-types'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 
 interface Props {
   wines: Wine[]
@@ -35,7 +36,9 @@ export function WineGrid({ wines, archetypeKey }: Props) {
             <div className="relative h-44 w-full overflow-hidden rounded-xl bg-muted">
               {imageUrl ? (
                 <Image src={imageUrl} alt={wine.name} fill className="object-contain" sizes="(max-width:768px) 100vw, 33vw" />
-              ) : null}
+              ) : (
+                <WineImagePlaceholder size="md" />
+              )}
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">

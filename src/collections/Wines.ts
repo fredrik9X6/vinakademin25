@@ -95,6 +95,24 @@ export const Wines: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    {
+      name: 'type',
+      type: 'select',
+      label: 'Vintyp',
+      options: [
+        { label: 'Rött vin', value: 'red' },
+        { label: 'Vitt vin', value: 'white' },
+        { label: 'Rosévin', value: 'rose' },
+        { label: 'Mousserande vin', value: 'sparkling' },
+        { label: 'Orangevin', value: 'orange' },
+        { label: 'Starkvin', value: 'fortified' },
+        { label: 'Sött vin / dessertvin', value: 'dessert' },
+      ],
+      admin: {
+        description: 'Vintyp / wine style category',
+        position: 'sidebar',
+      },
+    },
     // Relationships - PayloadCMS native relationship fields
     {
       name: 'grapes',

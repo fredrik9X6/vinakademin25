@@ -23,7 +23,8 @@
     "cleanup-media": "cross-env NODE_OPTIONS=--no-deprecation node -r tsx scripts/cleanup-missing-media.ts",
     "send-review-emails": "node --import tsx scripts/send-review-emails.ts",
     "test:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --test src/lib/vinkompassen/*.test.ts",
-    "seed:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/seed-vinkompassen.ts"
+    "seed:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/seed-vinkompassen.ts",
+    "import:legacy-wine-reviews": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/import-legacy-wine-reviews.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

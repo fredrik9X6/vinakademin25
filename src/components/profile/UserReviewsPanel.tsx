@@ -12,6 +12,7 @@ import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 import { LayoutGrid, List, Star } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import type { Review } from '@/payload-types'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 
 type ViewMode = 'grid' | 'list'
 
@@ -55,7 +56,9 @@ function WineGridCard({ review }: { review: ReviewWithWine }) {
             <div className="relative h-28 w-16 flex-shrink-0 rounded-md overflow-hidden bg-transparent">
               {wine.image?.url ? (
                 <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
-              ) : null}
+              ) : (
+                <WineImagePlaceholder size="sm" />
+              )}
             </div>
             <div className="min-w-0 text-sm">
               <div className="truncate">

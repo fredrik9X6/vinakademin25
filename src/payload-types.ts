@@ -1146,6 +1146,10 @@ export interface Wine {
    */
   nonVintage?: boolean | null;
   /**
+   * Vintyp / wine style category
+   */
+  type?: ('red' | 'white' | 'rose' | 'sparkling' | 'orange' | 'fortified' | 'dessert') | null;
+  /**
    * Grape varieties in the wine
    */
   grapes: (number | Grape)[];
@@ -3490,6 +3494,7 @@ export interface WinesSelect<T extends boolean = true> {
   winery?: T;
   vintage?: T;
   nonVintage?: T;
+  type?: T;
   grapes?: T;
   country?: T;
   region?: T;
