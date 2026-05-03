@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { VinlistanToolbar } from '@/components/vinlistan/VinlistanToolbar'
 import { VinlistanPagination } from '@/components/vinlistan/VinlistanPagination'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { getSiteURL } from '@/lib/site-url'
 
 export const metadata: Metadata = {
@@ -271,7 +272,9 @@ function WineCard({ item }: { item: any }) {
             <div className="relative h-28 w-16 flex-shrink-0 rounded-md overflow-hidden bg-transparent">
               {wine.image?.url ? (
                 <Image src={wine.image.url} alt={wine.name} fill className="object-contain" />
-              ) : null}
+              ) : (
+                <WineImagePlaceholder size="sm" />
+              )}
             </div>
             <div className="min-w-0 text-sm">
               <div className="text-muted-foreground truncate">{wine.winery}</div>
