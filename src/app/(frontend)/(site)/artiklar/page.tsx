@@ -1,13 +1,20 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 import { getPayload } from 'payload'
 import { notFound } from 'next/navigation'
 import config from '@/payload.config'
 import { BlogPostCard, BlogFilters } from '@/components/blog'
+import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Clock, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { BlogPost, BlogCategory, BlogTag } from '@/payload-types'
 import type { Metadata } from 'next'
 import { getSiteURL } from '@/lib/site-url'
 import { loggerFor } from '@/lib/logger'
+import { calculateReadingTime, calculateReadingTimeFromExcerpt } from '@/lib/reading-time'
 
 const log = loggerFor('(frontend)-(site)-artiklar-page')
 
@@ -161,14 +168,33 @@ async function ArticlesContent({ searchParams }: PageProps) {
     const totalDocs = postsResult.totalDocs
     const totalPages = postsResult.totalPages
 
-    const hasFilters = search || category || tagsArray.length > 0
+    const hasFilters = !!search || !!category || tagsArray.length > 0
+    // Featured hero: only on the unfiltered first page, when there's at least one post
+    const showFeatured = !hasFilters && currentPage === 1 && blogPosts.length > 0
+    const featured = showFeatured ? blogPosts[0] : null
+    const restPosts = showFeatured ? blogPosts.slice(1) : blogPosts
+
+    const buildPageHref = (pageNum: number) => {
+      const params = new URLSearchParams()
+      if (search) params.set('search', search)
+      if (category) params.set('category', category)
+      tagsArray.forEach((tag) => params.append('tags', tag))
+      if (pageNum > 1) params.set('page', String(pageNum))
+      const qs = params.toString()
+      return `/artiklar${qs ? `?${qs}` : ''}`
+    }
 
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-10 sm:py-12">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-medium mb-4 text-foreground">Artiklar</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+        <div className="mb-10 text-center">
+          <span className="mb-3 inline-block text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-400">
+            Vinakademin · Magasin
+          </span>
+          <h1 className="mb-4 text-3xl font-medium tracking-tight text-foreground md:text-4xl">
+            Artiklar
+          </h1>
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             Upptäck allt om vin genom våra expertguider, recensioner och utbildningsartiklar.
           </p>
         </div>
@@ -186,7 +212,7 @@ async function ArticlesContent({ searchParams }: PageProps) {
 
         {/* Results Summary */}
         <div className="mb-6 flex items-center justify-between">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-sm text-muted-foreground">
             {totalDocs === 0 ? (
               hasFilters ? (
                 'Inga artiklar matchar dina filter'
@@ -203,61 +229,179 @@ async function ArticlesContent({ searchParams }: PageProps) {
           </div>
         </div>
 
-        {/* Blog Posts Grid - All cards with consistent sizing */}
-        {blogPosts.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {blogPosts.map((post) => (
+        {/* Featured hero (unfiltered page 1 only) */}
+        {featured ? <FeaturedArticleHero post={featured} /> : null}
+
+        {/* Posts grid */}
+        {restPosts.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {restPosts.map((post) => (
               <BlogPostCard key={post.id} post={post} size="medium" showAuthor={true} />
             ))}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium text-foreground mb-2">
+        ) : !featured ? (
+          <div className="rounded-xl border border-border/60 bg-muted/30 px-6 py-12 text-center">
+            <h3 className="mb-2 text-lg font-medium text-foreground">
               {hasFilters ? 'Inga artiklar matchar dina filter' : 'Inga artiklar än'}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-muted-foreground">
               {hasFilters
                 ? 'Prova att justera dina filter eller söka efter något annat.'
                 : 'Nya artiklar kommer snart!'}
             </p>
           </div>
-        )}
+        ) : null}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-12 flex justify-center gap-2">
-            {Array.from({ length: totalPages }, (_, i) => {
-              const pageNum = i + 1
-              const isActive = pageNum === currentPage
-
-              const params = new URLSearchParams()
-              if (search) params.set('search', search)
-              if (category) params.set('category', category)
-              tagsArray.forEach((tag) => params.append('tags', tag))
-              if (pageNum > 1) params.set('page', pageNum.toString())
-
-              return (
-                <a
-                  key={pageNum}
-                  href={`/artiklar?${params.toString()}`}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-brand-400 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {pageNum}
-                </a>
-              )
-            })}
+        {/* Pagination — Föregående / Sida X av Y / Nästa */}
+        {totalPages > 1 ? (
+          <div className="mt-12 flex items-center justify-center gap-3">
+            {currentPage > 1 ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={buildPageHref(currentPage - 1)}>
+                  <ChevronLeft className="mr-1 h-4 w-4" />
+                  Föregående
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" disabled>
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Föregående
+              </Button>
+            )}
+            <div className="text-xs text-muted-foreground">
+              Sida <span className="font-semibold text-brand-400">{currentPage}</span> av {totalPages}
+            </div>
+            {currentPage < totalPages ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={buildPageHref(currentPage + 1)}>
+                  Nästa
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" disabled>
+                Nästa
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            )}
           </div>
-        )}
+        ) : null}
       </div>
     )
   } catch (error) {
     log.error('Error fetching blog posts:', error)
     notFound()
   }
+}
+
+function FeaturedArticleHero({ post }: { post: BlogPost }) {
+  const readingTime = post.content
+    ? calculateReadingTime(post.content)
+    : calculateReadingTimeFromExcerpt(post.excerpt || '')
+
+  const author = post.author && typeof post.author === 'object' ? post.author : null
+  const authorName = author
+    ? `${author.firstName || ''} ${author.lastName || ''}`.trim() || author.email || 'Okänd'
+    : 'Okänd'
+  const authorAvatar: string | undefined =
+    author?.avatar && typeof author.avatar === 'object' ? author.avatar.url || undefined : undefined
+  const authorInitials = authorName
+    .split(' ')
+    .map((n) => n.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+
+  const featuredImage =
+    post.featuredImage && typeof post.featuredImage === 'object' ? post.featuredImage : null
+  const categoryName =
+    post.category && typeof post.category === 'object' ? post.category.name : null
+
+  return (
+    <Link
+      href={`/artiklar/${post.slug}`}
+      className="group mb-10 block overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:border-brand-400/40 hover:shadow-xl hover:shadow-brand-400/5"
+    >
+      <div className="grid gap-0 md:grid-cols-5">
+        {/* Image — wider half */}
+        <div className="relative aspect-[16/10] md:aspect-auto md:col-span-3 overflow-hidden bg-muted">
+          {featuredImage?.url ? (
+            <Image
+              src={featuredImage.url}
+              alt={featuredImage.alt || post.title}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              sizes="(max-width: 768px) 100vw, 60vw"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-300/20 via-muted to-muted" />
+          )}
+          <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-background/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-400 shadow-sm backdrop-blur-sm">
+            ✦ Senast publicerat
+          </span>
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-col justify-between gap-6 p-6 md:col-span-2 md:p-8">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              {categoryName ? (
+                <Badge
+                  variant="outline"
+                  className="border-brand-300/40 bg-brand-300/10 px-2 py-0 text-[10px] font-semibold uppercase tracking-wide text-brand-400"
+                >
+                  {categoryName}
+                </Badge>
+              ) : null}
+              <span className="inline-flex items-center gap-1">
+                <Clock className="h-3 w-3" aria-hidden />
+                {readingTime.text}
+              </span>
+            </div>
+            <h2 className="text-2xl font-medium leading-tight tracking-tight text-foreground transition-colors group-hover:text-brand-400 md:text-3xl">
+              {post.title}
+            </h2>
+            {post.excerpt ? (
+              <p className="text-base leading-relaxed text-muted-foreground line-clamp-4">
+                {post.excerpt}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-border/40 pt-4">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarImage src={authorAvatar} alt={authorName} />
+                <AvatarFallback className="bg-brand-300/15 text-xs font-semibold text-brand-400">
+                  {authorInitials || '?'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 text-xs">
+                <div className="truncate font-medium text-foreground">{authorName}</div>
+                {post.publishedDate ? (
+                  <time
+                    dateTime={post.publishedDate}
+                    className="block text-muted-foreground"
+                  >
+                    {new Date(post.publishedDate).toLocaleDateString('sv-SE', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </time>
+                ) : null}
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-400 transition-transform group-hover:translate-x-0.5">
+              Läs artikeln
+              <ArrowRight className="h-4 w-4" />
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
 }
 
 function ArticlesSkeleton() {
