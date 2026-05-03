@@ -92,7 +92,10 @@ export function BlogPostCard({ post, showAuthor = true, size = 'medium' }: BlogP
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
               {post.category && typeof post.category === 'object' && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge
+                  variant="outline"
+                  className="border-brand-300/30 bg-brand-300/10 px-2 py-0 text-[10px] font-semibold uppercase tracking-wide text-brand-400"
+                >
                   {post.category.name}
                 </Badge>
               )}

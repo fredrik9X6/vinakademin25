@@ -341,7 +341,7 @@ export default async function BlogPostPage({ params, searchParams }: PageProps) 
                 {/* Category badge */}
                 {post.category && typeof post.category === 'object' && (
                   <div className="mt-1">
-                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-brand-300/15 text-brand-400 rounded">
+                    <span className="inline-flex items-center rounded-md border border-brand-300/30 bg-brand-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-400">
                       {post.category.name}
                     </span>
                   </div>
