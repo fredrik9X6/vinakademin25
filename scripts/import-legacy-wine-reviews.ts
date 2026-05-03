@@ -335,6 +335,20 @@ const FINISH: Record<string, string> = {
   lång: 'Lång',
 }
 
+const WINE_TYPE: Record<string, 'red' | 'white' | 'rose' | 'sparkling' | 'orange' | 'fortified' | 'dessert'> = {
+  'rött vin': 'red',
+  'vitt vin': 'white',
+  'rosévin': 'rose',
+  'rosé vin': 'rose',
+  'mousserande vin': 'sparkling',
+  'mousserande': 'sparkling',
+  'orangevin': 'orange',
+  'orange vin': 'orange',
+  'starkvin': 'fortified',
+  'sött vin': 'dessert',
+  'dessertvin': 'dessert',
+}
+
 const QUALITY: Record<string, string> = {
   dålig: 'Dålig',
   acceptabel: 'Acceptabel',
@@ -613,6 +627,7 @@ async function findOrCreateWine(
     grapeIds: number[]
     price: number | null
     systembolagetUrl: string | null
+    type: string | null
   },
   dryRun: boolean,
   userId: number,
@@ -630,8 +645,20 @@ async function findOrCreateWine(
     limit: 1,
     overrideAccess: true,
   })
-  if (existing.docs.length) return { id: existing.docs[0].id as number, created: false }
-  if (dryRun) return { id: -1, created: true }
+  if (existing.docs.length) {
+    const found: any = existing.docs[0]
+    // Backfill type if missing
+    if (!found.type && args.type && !dryRun) {
+      await payload.update({
+        collection: 'wines',
+        id: found.id,
+        data: { type: args.type as any },
+        overrideAccess: true,
+      })
+    }
+    return { id: found.id as number, created: false, backfilledType: !found.type && !!args.type }
+  }
+  if (dryRun) return { id: -1, created: true, backfilledType: false }
   const slug = slugify([name, winery, vintage ?? ''].filter(Boolean).join(' '))
   const created = await payload.create({
     collection: 'wines',
@@ -641,6 +668,7 @@ async function findOrCreateWine(
       winery,
       vintage: vintage ?? undefined,
       nonVintage: vintage === null,
+      type: args.type as any,
       country: args.countryId,
       region: args.regionId,
       grapes: args.grapeIds,
@@ -650,7 +678,7 @@ async function findOrCreateWine(
     overrideAccess: true,
     user: { id: userId, collection: 'users' } as any,
   })
-  return { id: created.id as number, created: true }
+  return { id: created.id as number, created: true, backfilledType: false }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -702,6 +730,7 @@ async function main() {
   const stats = {
     wineCreated: 0,
     wineFound: 0,
+    typeBackfilled: 0,
     reviewCreated: 0,
     reviewSkipped: 0,
     errors: 0,
@@ -760,6 +789,10 @@ async function main() {
       }
       if (!grapeIds.length) throw new Error('No grapes parsed')
 
+      const typeRaw = (row['Typ'] || '').trim().toLowerCase()
+      const mappedType = typeRaw ? WINE_TYPE[typeRaw] || null : null
+      if (typeRaw && !mappedType) unmatchedSlugs.add(`type: ${row['Typ']}`)
+
       const wineResult = await findOrCreateWine(
         payload,
         {
@@ -771,12 +804,14 @@ async function main() {
           grapeIds,
           price,
           systembolagetUrl: sysbolaget,
+          type: mappedType,
         },
         dryRun,
         ownerUserId,
       )
       if (wineResult.created) stats.wineCreated++
       else stats.wineFound++
+      if (wineResult.backfilledType) stats.typeBackfilled++
 
       // Build WSET tasting object
       const noseAromas = mapAromas(splitMulti(row['Karaktär (doft)'] || ''), unmatchedSlugs)
@@ -882,7 +917,9 @@ async function main() {
   }
 
   console.log('\n──────── Summary ────────')
-  console.log(`Wines:    ${stats.wineCreated} created, ${stats.wineFound} found`)
+  console.log(
+    `Wines:    ${stats.wineCreated} created, ${stats.wineFound} found, ${stats.typeBackfilled} types backfilled`,
+  )
   console.log(`Reviews:  ${stats.reviewCreated} created, ${stats.reviewSkipped} skipped (already existed)`)
   console.log(`Errors:   ${stats.errors}`)
   if (unmatchedSlugs.size) {
