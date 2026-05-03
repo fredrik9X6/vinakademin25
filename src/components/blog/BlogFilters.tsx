@@ -3,15 +3,15 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Search, X, Filter } from 'lucide-react'
+import { Search, X, Tag as TagIcon } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 import type { BlogCategory, BlogTag } from '@/payload-types'
 
 interface BlogFiltersProps {
@@ -20,6 +20,31 @@ interface BlogFiltersProps {
   selectedCategory?: string
   selectedTags?: string[]
   searchQuery?: string
+}
+
+function FilterPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors',
+        active
+          ? 'border-brand-400/30 bg-brand-300/15 text-brand-400'
+          : 'border-border bg-background text-foreground hover:border-brand-400/50 hover:bg-brand-300/5',
+      )}
+    >
+      {children}
+    </button>
+  )
 }
 
 export function BlogFilters({
@@ -33,10 +58,8 @@ export function BlogFilters({
   const searchParams = useSearchParams()
   const [localSearch, setLocalSearch] = useState(searchQuery)
 
-  // Update URL with filters
   const updateFilters = (updates: Record<string, string | string[] | null>) => {
-    const params = new URLSearchParams(searchParams.toString())
-
+    const params = new URLSearchParams(searchParams?.toString() || '')
     Object.entries(updates).forEach(([key, value]) => {
       if (value === null || (Array.isArray(value) && value.length === 0)) {
         params.delete(key)
@@ -47,171 +70,169 @@ export function BlogFilters({
         params.set(key, value)
       }
     })
-
+    // Resetting filters always returns to page 1
+    params.delete('page')
     router.push(`/artiklar?${params.toString()}`)
   }
 
-  // Handle search
-  const handleSearch = (query: string) => {
-    updateFilters({ search: query || null })
-  }
-
-  // Handle category filter
   const handleCategoryFilter = (categorySlug: string | null) => {
-    updateFilters({ category: categorySlug })
+    updateFilters({ category: selectedCategory === categorySlug ? null : categorySlug })
   }
 
-  // Handle tag filter
   const handleTagFilter = (tagSlug: string) => {
     const newTags = selectedTags.includes(tagSlug)
       ? selectedTags.filter((t) => t !== tagSlug)
       : [...selectedTags, tagSlug]
-
     updateFilters({ tags: newTags })
   }
 
-  // Clear all filters
   const clearFilters = () => {
     setLocalSearch('')
     router.push('/artiklar')
   }
 
-  // Handle search input changes with debouncing
+  // Debounced search — skip when value already matches the URL
+  // (otherwise pagination clicks would reset to page 1).
   useEffect(() => {
-    const delayedSearch = setTimeout(() => {
-      if (localSearch !== searchQuery) {
-        handleSearch(localSearch)
-      }
-    }, 300)
+    const currentSearch = searchParams?.get('search') || ''
+    if (localSearch === currentSearch) return
+    const t = setTimeout(() => {
+      updateFilters({ search: localSearch || null })
+    }, 350)
+    return () => clearTimeout(t)
+  }, [localSearch, searchParams])
 
-    return () => clearTimeout(delayedSearch)
-  }, [localSearch])
-
-  const hasActiveFilters = selectedCategory || selectedTags.length > 0 || searchQuery
+  const hasActiveFilters = !!selectedCategory || selectedTags.length > 0 || !!searchQuery
 
   return (
-    <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+    <div className="w-full space-y-3">
+      {/* Row 1: Search */}
+      <div className="relative w-full md:max-w-3xl mx-auto">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Sök artiklar..."
+          placeholder="Sök artiklar, författare, ämne…"
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
-          className="pl-9 pr-4"
+          className="pl-9"
         />
       </div>
 
-      {/* Filter Controls */}
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Category Filter */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Kategori
-              {selectedCategory && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1">
-                  1
-                </Badge>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuItem onClick={() => handleCategoryFilter(null)}>
-              <span className={!selectedCategory ? 'font-medium' : ''}>Alla kategorier</span>
-            </DropdownMenuItem>
-            {categories.map((category) => (
-              <DropdownMenuItem
-                key={category.id}
-                onClick={() => handleCategoryFilter(category.slug)}
-              >
-                <span className={selectedCategory === category.slug ? 'font-medium' : ''}>
-                  {category.name}
-                </span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+      {/* Row 2: Category pills + Tag dropdown */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <FilterPill active={!selectedCategory} onClick={() => handleCategoryFilter(null)}>
+            Alla
+          </FilterPill>
+          {categories.map((cat) => (
+            <FilterPill
+              key={cat.id}
+              active={selectedCategory === cat.slug}
+              onClick={() => handleCategoryFilter(cat.slug)}
+            >
+              {cat.name}
+            </FilterPill>
+          ))}
+        </div>
 
-        {/* Tag Filter */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Taggar
-              {selectedTags.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1">
-                  {selectedTags.length}
-                </Badge>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 max-h-64 overflow-y-auto">
-            {tags.map((tag) => (
-              <DropdownMenuItem key={tag.id} onClick={() => handleTagFilter(tag.slug)}>
-                <span className={selectedTags.includes(tag.slug) ? 'font-medium' : ''}>
-                  {tag.name}
-                </span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Clear Filters */}
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearFilters}
-            className="gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-          >
-            <X className="h-4 w-4" />
-            Rensa filter
-          </Button>
-        )}
+        {tags.length > 0 ? (
+          <div className="shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  aria-label="Filtrera på taggar"
+                >
+                  <TagIcon className="h-4 w-4" />
+                  Taggar
+                  {selectedTags.length > 0 ? (
+                    <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-400 px-1.5 text-[10px] font-semibold text-white">
+                      {selectedTags.length}
+                    </span>
+                  ) : null}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-72 w-56 overflow-y-auto">
+                {tags.map((tag) => (
+                  <DropdownMenuCheckboxItem
+                    key={tag.id}
+                    checked={selectedTags.includes(tag.slug)}
+                    onCheckedChange={() => handleTagFilter(tag.slug)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {tag.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ) : null}
       </div>
 
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
-          {searchQuery && (
-            <Badge variant="secondary" className="gap-1">
-              Sökning: "{searchQuery}"
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-red-600"
-                onClick={() => {
-                  setLocalSearch('')
-                  handleSearch('')
-                }}
-              />
-            </Badge>
-          )}
+      {/* Row 3: Active filter chips */}
+      {hasActiveFilters ? (
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
+            {searchQuery ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand-400/20 bg-brand-300/10 px-3 py-1 text-xs font-medium text-brand-400">
+                <span>Sök: {searchQuery}</span>
+                <button
+                  type="button"
+                  aria-label={`Ta bort sökning ${searchQuery}`}
+                  onClick={() => {
+                    setLocalSearch('')
+                    updateFilters({ search: null })
+                  }}
+                  className="ml-1 inline-flex items-center rounded-full p-0.5 hover:bg-brand-400/15"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ) : null}
 
-          {selectedCategory && (
-            <Badge variant="secondary" className="gap-1">
-              Kategori: {categories.find((c) => c.slug === selectedCategory)?.name}
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-red-600"
-                onClick={() => handleCategoryFilter(null)}
-              />
-            </Badge>
-          )}
+            {selectedCategory ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand-400/20 bg-brand-300/10 px-3 py-1 text-xs font-medium text-brand-400">
+                <span>Kategori: {categories.find((c) => c.slug === selectedCategory)?.name}</span>
+                <button
+                  type="button"
+                  aria-label="Ta bort kategorifilter"
+                  onClick={() => handleCategoryFilter(null)}
+                  className="ml-1 inline-flex items-center rounded-full p-0.5 hover:bg-brand-400/15"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ) : null}
 
-          {selectedTags.map((tagSlug) => {
-            const tag = tags.find((t) => t.slug === tagSlug)
-            return tag ? (
-              <Badge key={tagSlug} variant="secondary" className="gap-1">
-                {tag.name}
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-red-600"
-                  onClick={() => handleTagFilter(tagSlug)}
-                />
-              </Badge>
-            ) : null
-          })}
+            {selectedTags.map((tagSlug) => {
+              const tag = tags.find((t) => t.slug === tagSlug)
+              if (!tag) return null
+              return (
+                <span
+                  key={tagSlug}
+                  className="inline-flex items-center gap-1 rounded-full border border-brand-400/20 bg-brand-300/10 px-3 py-1 text-xs font-medium text-brand-400"
+                >
+                  <span>{tag.name}</span>
+                  <button
+                    type="button"
+                    aria-label={`Ta bort tagg ${tag.name}`}
+                    onClick={() => handleTagFilter(tagSlug)}
+                    className="ml-1 inline-flex items-center rounded-full p-0.5 hover:bg-brand-400/15"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )
+            })}
+          </div>
+
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+            <X className="h-3.5 w-3.5" />
+            Rensa alla filter
+          </Button>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

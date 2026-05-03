@@ -1,8 +1,7 @@
 import { getPayload } from 'payload'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import config from '@/payload.config'
+import { BlogPostCard } from './BlogPostCard'
 import type { BlogPost } from '@/payload-types'
 
 interface RelatedArticlesProps {
@@ -86,54 +85,27 @@ export async function RelatedArticles({ currentPost, limit = 3 }: RelatedArticle
     }
 
     return (
-      <section className="mt-12 pt-8 border-t border-border">
-        <h2 className="text-2xl font-medium mb-6 text-foreground">Relaterade artiklar</h2>
+      <section className="mt-16 border-t border-border/60 pt-10">
+        <div className="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-400">
+              Fortsätt läsa
+            </span>
+            <h2 className="text-2xl font-medium tracking-tight text-foreground">
+              Relaterade artiklar
+            </h2>
+          </div>
+          <Link
+            href="/artiklar"
+            className="hidden text-sm text-muted-foreground hover:text-brand-400 hover:underline underline-offset-2 sm:inline"
+          >
+            Se alla artiklar →
+          </Link>
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {relatedPosts.map((post) => (
-            <Link key={post.id} href={`/artiklar/${post.slug}`} className="group">
-              <Card className="h-full transition-all duration-200 hover:shadow-lg border-border">
-                {post.featuredImage &&
-                  typeof post.featuredImage === 'object' &&
-                  post.featuredImage.url && (
-                    <div className="aspect-video overflow-hidden rounded-t-lg">
-                      <img
-                        src={post.featuredImage.url}
-                        alt={post.featuredImage.alt || ''}
-                        className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-                      />
-                    </div>
-                  )}
-
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    {post.category && typeof post.category === 'object' && (
-                      <Badge variant="secondary" className="text-xs">
-                        {post.category.name}
-                      </Badge>
-                    )}
-                    {post.publishedDate && (
-                      <time dateTime={post.publishedDate} className="text-xs text-muted-foreground">
-                        {new Date(post.publishedDate).toLocaleDateString('sv-SE', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </time>
-                    )}
-                  </div>
-
-                  <h3 className="font-medium text-foreground group-hover:text-secondary transition-colors line-clamp-2">
-                    {post.title}
-                  </h3>
-                </CardHeader>
-
-                {post.excerpt && (
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground line-clamp-3">{post.excerpt}</p>
-                  </CardContent>
-                )}
-              </Card>
-            </Link>
+            <BlogPostCard key={post.id} post={post} size="medium" showAuthor={true} />
           ))}
         </div>
       </section>
