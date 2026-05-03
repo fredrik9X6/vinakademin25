@@ -33,8 +33,19 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
   })
 
   return (
-    <div className="min-h-svh bg-muted flex items-center justify-center p-6">
-      <OnboardingWizard source={source} nextPath={nextPath} />
+    <div className="relative min-h-svh overflow-hidden bg-gradient-to-br from-brand-300/10 via-background to-background flex items-center justify-center p-4 sm:p-6">
+      {/* Soft brand blob backdrop — pure decoration */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 -right-32 h-96 w-96 rounded-full bg-brand-300/20 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-brand-400/10 blur-3xl"
+      />
+      <div className="relative z-10 w-full">
+        <OnboardingWizard source={source} nextPath={nextPath} />
+      </div>
     </div>
   )
 }
