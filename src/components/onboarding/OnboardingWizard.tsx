@@ -56,7 +56,10 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
   const [courseProgress, setCourseProgress] = useState(true)
   const [newCourses, setNewCourses] = useState(true)
 
-  const progressPercent = ((step + 1) / STEP_COUNT) * 100
+  // Fill stops at the current step's dot — uses (step) / (STEP_COUNT - 1)
+  // so dot positions and fill share the same coordinate space.
+  const progressPercent =
+    STEP_COUNT > 1 ? (step / (STEP_COUNT - 1)) * 100 : 100
 
   const toggleString = (arr: string[], value: string) =>
     arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]
@@ -105,9 +108,13 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
   const goBack = () => setStep((s) => Math.max(s - 1, 0))
 
   return (
-    <div className="mx-auto w-full max-w-xl rounded-2xl border border-border/60 bg-card p-6 shadow-xl shadow-brand-400/5 sm:p-8">
-      <div className="mb-8 space-y-3">
-        <div className="flex items-center justify-between gap-3">
+    <>
+      {/* Progress header — outside the card so it stays anchored even when
+       * the card grows or shrinks between steps. Has its own horizontal
+       * padding so the dots at 0% / 100% don't collide with the page edge.
+       */}
+      <div className="mb-6 px-2 sm:mb-8">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Steg <span className="text-brand-400 font-semibold">{step + 1}</span>
             <span className="opacity-60"> / {STEP_COUNT}</span>
@@ -122,43 +129,44 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
           </button>
         </div>
 
-        {/* Custom branded progress bar — gradient fill, step markers, soft glow */}
-        <div className="relative">
-          <div className="relative h-2 w-full overflow-visible rounded-full bg-muted">
-            {/* Filled portion with gradient and glow */}
+        {/* Custom branded progress bar — gradient fill, absolute-positioned
+         * step markers (so dot center coordinates match the fill), soft glow.
+         */}
+        <div className="relative h-4">
+          {/* Track */}
+          <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 overflow-visible rounded-full bg-muted">
             <div
-              className="absolute inset-y-0 left-0 rounded-full bg-brand-gradient shadow-[0_0_12px_-1px_hsl(var(--brand-400)/0.5)] transition-all duration-500 ease-out"
+              className="absolute inset-y-0 left-0 rounded-full bg-brand-gradient shadow-[0_0_12px_-1px_hsl(var(--brand-400)/0.5)] transition-[width] duration-500 ease-out"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          {/* Step markers sitting on top of the track */}
-          <div className="absolute inset-0 flex items-center justify-between px-0">
-            {Array.from({ length: STEP_COUNT }, (_, i) => {
-              const isComplete = i < step
-              const isCurrent = i === step
-              return (
-                <div
-                  key={i}
-                  className={cn(
-                    'h-3 w-3 shrink-0 rounded-full border-2 transition-all duration-300',
-                    isCurrent
-                      ? 'border-brand-400 bg-background ring-2 ring-brand-300/40 scale-125'
-                      : isComplete
-                        ? 'border-brand-400 bg-brand-400'
-                        : 'border-muted-foreground/30 bg-background',
-                    // First and last markers nudge so they don't get clipped by the track
-                    i === 0 && '-ml-0.5',
-                    i === STEP_COUNT - 1 && '-mr-0.5',
-                  )}
-                  aria-hidden
-                />
-              )
-            })}
-          </div>
+          {/* Step markers — absolute at calculated %, same coordinate space as fill */}
+          {Array.from({ length: STEP_COUNT }, (_, i) => {
+            const left = STEP_COUNT > 1 ? (i / (STEP_COUNT - 1)) * 100 : 50
+            const isComplete = i < step
+            const isCurrent = i === step
+            return (
+              <div
+                key={i}
+                className={cn(
+                  'absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-all duration-300',
+                  isCurrent
+                    ? 'h-3.5 w-3.5 border-brand-400 bg-background ring-2 ring-brand-300/40'
+                    : isComplete
+                      ? 'h-3 w-3 border-brand-400 bg-brand-400'
+                      : 'h-3 w-3 border-muted-foreground/30 bg-background',
+                )}
+                style={{ left: `${left}%` }}
+                aria-hidden
+              />
+            )
+          })}
         </div>
       </div>
 
-      <div className="space-y-8">
+      {/* Wizard card — independent of the progress bar above */}
+      <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xl shadow-brand-400/5 sm:p-8">
+        <div className="space-y-8">
         {step === 0 && (
           <div className="space-y-6 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-gradient shadow-brand-glow">
@@ -370,7 +378,8 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
             )}
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
