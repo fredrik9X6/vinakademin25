@@ -191,7 +191,7 @@ async function ArticlesContent({ searchParams }: PageProps) {
           <span className="mb-3 inline-block text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-400">
             Vinakademin · Magasin
           </span>
-          <h1 className="mb-4 text-3xl font-medium tracking-tight text-foreground md:text-4xl">
+          <h1 className="mb-4 text-3xl font-medium text-foreground md:text-4xl">
             Artiklar
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">

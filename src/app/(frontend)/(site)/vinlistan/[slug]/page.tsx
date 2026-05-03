@@ -582,7 +582,7 @@ export default async function WineDetailPage({ params }: PageProps) {
               </div>
 
               {/* Wine name */}
-              <h1 className="text-3xl sm:text-4xl font-medium leading-tight tracking-tight text-foreground break-words">
+              <h1 className="text-3xl sm:text-4xl font-medium leading-tight text-foreground break-words">
                 {wine.name}
               </h1>
 

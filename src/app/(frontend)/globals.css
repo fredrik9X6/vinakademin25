@@ -123,6 +123,17 @@
     font-synthesis: none;
     letter-spacing: -0.015em;
   }
+  /* Defensive: Tailwind's tracking-tight (-0.025em) and tracking-tighter
+   * (-0.05em) cram Coolvetica unacceptably. Block them on h1/font-heading
+   * with a higher-specificity selector. Explicit overrides via
+   * tracking-[<value>] (e.g. tracking-[-0.005em] for huge hero text) still
+   * win because they hit the same specificity but cascade later. */
+  h1.tracking-tight,
+  h1.tracking-tighter,
+  .font-heading.tracking-tight,
+  .font-heading.tracking-tighter {
+    letter-spacing: -0.015em;
+  }
   body {
     /* Remove @apply bg-background to let layout utilities control body background */
     @apply text-foreground font-sans;

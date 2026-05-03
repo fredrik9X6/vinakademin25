@@ -64,7 +64,7 @@ export default async function ReviewPage({ params, searchParams }: ReviewPagePro
       <div className="container mx-auto max-w-2xl py-12 px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl md:text-3xl font-medium tracking-tight mb-2">
+          <h1 className="text-2xl md:text-3xl font-medium mb-2">
             Betygsätt vinprovningen
           </h1>
           <p className="text-muted-foreground">

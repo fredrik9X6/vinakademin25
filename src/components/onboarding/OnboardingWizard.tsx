@@ -165,7 +165,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
               <Sparkles className="h-8 w-8 text-white" aria-hidden />
             </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-medium tracking-tight md:text-3xl">
+              <h1 className="text-2xl font-medium md:text-3xl">
                 Välkommen till Vinakademin
               </h1>
               <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
