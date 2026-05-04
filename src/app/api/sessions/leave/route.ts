@@ -6,105 +6,103 @@ import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('api-sessions-leave')
 
+const PARTICIPANT_COOKIE = 'vk_participant_token'
+
 /**
  * POST /api/sessions/leave
- * Leave a group session and mark participant as inactive
+ *
+ * Marks the caller's participant inactive in the given session. Works for
+ * both authenticated users (looked up by `user`) and anonymous guests
+ * (looked up by the `vk_participant_token` cookie).
+ *
+ * Body:
+ * - sessionId: string | number (required)
  */
 export async function POST(request: NextRequest) {
-  log.info('👋 [LEAVE SESSION] Request received')
-
   try {
     const payload = await getPayload({ config })
-    const cookieStore = await cookies()
-    const token = cookieStore.get('payload-token')
-
-    // Check authentication
-    if (!token) {
-      log.info('❌ [LEAVE SESSION] Not authenticated')
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
-
-    // Get cookie string and verify user
     const cookieString = request.headers.get('cookie') || ''
     const { user } = await payload.auth({
-      headers: new Headers({
-        Cookie: cookieString,
-      }),
+      headers: new Headers({ Cookie: cookieString }),
     })
 
-    if (!user) {
-      log.info('❌ [LEAVE SESSION] User not found')
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
+    const cookieStore = await cookies()
+    const participantToken = cookieStore.get(PARTICIPANT_COOKIE)?.value
 
-    const body = await request.json()
-    const { sessionId } = body
+    const body = await request.json().catch(() => ({}))
+    const { sessionId } = body as { sessionId?: string | number }
 
     if (!sessionId) {
-      log.info('❌ [LEAVE SESSION] No session ID provided')
       return NextResponse.json({ error: 'sessionId is required' }, { status: 400 })
     }
 
-    log.info('👤 [LEAVE SESSION] User:', user.id, 'Session:', sessionId)
+    if (!user && !participantToken) {
+      return NextResponse.json(
+        { error: 'No identity to leave with (need cookie or login)' },
+        { status: 401 },
+      )
+    }
 
-    // Find the participant record for this user and session
+    const where = user
+      ? {
+          and: [{ session: { equals: Number(sessionId) } }, { user: { equals: user.id } }],
+        }
+      : {
+          and: [
+            { session: { equals: Number(sessionId) } },
+            { participantToken: { equals: participantToken } },
+          ],
+        }
+
     const participants = await payload.find({
       collection: 'session-participants',
-      where: {
-        and: [{ session: { equals: Number(sessionId) } }, { user: { equals: user.id } }],
-      },
+      where: where as any,
       limit: 1,
     })
 
     if (participants.totalDocs === 0) {
-      log.info('⚠️ [LEAVE SESSION] Participant not found')
-      return NextResponse.json(
-        { error: 'You are not a participant in this session' },
-        { status: 404 },
+      // Nothing to do — clear the cookie regardless and succeed quietly
+      const ok = NextResponse.json(
+        { success: true, message: 'Nothing to leave' },
+        { status: 200 },
       )
+      ok.cookies.delete(PARTICIPANT_COOKIE)
+      return ok
     }
 
     const participant = participants.docs[0]
-    log.info('📝 [LEAVE SESSION] Found participant:', participant.id)
 
-    // Mark participant as inactive
-    await payload.update({
-      collection: 'session-participants',
-      id: participant.id,
-      data: {
-        isActive: false,
-      },
-    })
-
-    // Update session participant count
-    const session = await payload.findByID({
-      collection: 'course-sessions',
-      id: Number(sessionId),
-    })
-
-    if (session) {
-      const newCount = Math.max(0, (session.participantCount || 1) - 1)
+    if (participant.isActive) {
       await payload.update({
+        collection: 'session-participants',
+        id: participant.id,
+        data: { isActive: false },
+      })
+
+      // Decrement participant count (best-effort; will be replaced with
+      // derived counts in a later phase)
+      const session = await payload.findByID({
         collection: 'course-sessions',
         id: Number(sessionId),
-        data: {
-          participantCount: newCount,
-        },
       })
-      log.info('📊 [LEAVE SESSION] Updated participant count:', newCount)
+      if (session) {
+        const newCount = Math.max(0, (session.participantCount || 1) - 1)
+        await payload.update({
+          collection: 'course-sessions',
+          id: Number(sessionId),
+          data: { participantCount: newCount },
+        })
+      }
     }
 
-    log.info('✅ [LEAVE SESSION] Successfully left session')
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Successfully left session',
-      },
+    const response = NextResponse.json(
+      { success: true, message: 'Successfully left session' },
       { status: 200 },
     )
+    response.cookies.delete(PARTICIPANT_COOKIE)
+    return response
   } catch (error) {
-    log.error('❌ [LEAVE SESSION] Error:', error)
+    log.error('Error leaving session:', error)
     return NextResponse.json(
       {
         error: 'Failed to leave session',

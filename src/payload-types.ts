@@ -1240,9 +1240,13 @@ export interface SessionParticipant {
    */
   participantToken: string;
   /**
-   * Associated user account (if logged in)
+   * Associated user account (if logged in). Null for guest participants.
    */
   user?: (number | null) | User;
+  /**
+   * Optional email captured at guest join. Used for the post-tasting account-claim prompt and the personal summary email.
+   */
+  email?: string | null;
   /**
    * Whether the participant is currently active in the session
    */
@@ -3856,6 +3860,7 @@ export interface SessionParticipantsSelect<T extends boolean = true> {
   nickname?: T;
   participantToken?: T;
   user?: T;
+  email?: T;
   isActive?: T;
   lastActivityAt?: T;
   updatedAt?: T;
