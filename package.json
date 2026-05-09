@@ -110,6 +110,7 @@
     "pino": "9.5.0",
     "pino-pretty": "11.3.0",
     "posthog-js": "^1.302.2",
+    "qrcode.react": "^4.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.55.0",

@@ -69,3 +69,92 @@ export async function getActiveParticipantSession({
     return null
   }
 }
+
+export type LookupStatus =
+  | 'active'
+  | 'paused'
+  | 'completed'
+  | 'expired'
+  | 'full'
+  | 'not_found'
+
+export interface LookupSessionResult {
+  status: LookupStatus
+  course?: { title: string; slug: string }
+  sessionName?: string | null
+  participantCount?: number
+  maxParticipants?: number | null
+}
+
+const JOIN_CODE_RE = /^[A-Z0-9]{6}$/
+
+/**
+ * Resolves a 6-char join code to a status flag the /delta landing page can
+ * branch on. Mirrors the entry-condition checks in /api/sessions/join but
+ * has no side effects — it's a read-only twin so the page can render the
+ * right UI before asking the user for a nickname.
+ *
+ * Malformed codes (wrong length, non-alphanumeric) collapse into 'not_found'
+ * — same UX, less branching at call sites.
+ *
+ * Note: `/api/sessions/join` performs the same eligibility checks inline
+ * for its mutation phase. Keep both in sync when changing join semantics.
+ */
+export async function lookupSessionByCode(
+  payload: Payload,
+  code: string | null | undefined,
+): Promise<LookupSessionResult> {
+  const normalized = (code ?? '').trim().toUpperCase()
+  if (!JOIN_CODE_RE.test(normalized)) {
+    return { status: 'not_found' }
+  }
+
+  try {
+    const res = await payload.find({
+      collection: 'course-sessions',
+      where: { joinCode: { equals: normalized } },
+      limit: 1,
+      depth: 1, // populate `course`
+    })
+    const session = res.docs[0]
+    if (!session) return { status: 'not_found' }
+
+    const courseRef = session.course
+    const course =
+      typeof courseRef === 'object' && courseRef
+        ? { title: courseRef.title, slug: courseRef.slug || String(courseRef.id) }
+        : undefined
+
+    const baseFields: Pick<LookupSessionResult, 'course' | 'sessionName' | 'participantCount' | 'maxParticipants'> = {
+      course,
+      sessionName: session.sessionName ?? null,
+      participantCount: Number(session.participantCount ?? 0),
+      maxParticipants:
+        session.maxParticipants !== null && session.maxParticipants !== undefined
+          ? Number(session.maxParticipants)
+          : null,
+    }
+
+    if (session.expiresAt && new Date(session.expiresAt).getTime() < Date.now()) {
+      return { status: 'expired', ...baseFields }
+    }
+    if (session.status === 'completed') {
+      return { status: 'completed', ...baseFields }
+    }
+    if (session.status === 'paused') {
+      return { status: 'paused', ...baseFields }
+    }
+    if (
+      baseFields.maxParticipants != null &&
+      (baseFields.participantCount ?? 0) >= baseFields.maxParticipants
+    ) {
+      return { status: 'full', ...baseFields }
+    }
+    return { status: 'active', ...baseFields }
+  } catch (err) {
+    log.error({ err, code: normalized }, 'lookupSessionByCode_failed')
+    // Treat infrastructure errors as not_found — the UI can already handle that
+    // state and we don't want to leak a 500 to a public landing page.
+    return { status: 'not_found' }
+  }
+}
