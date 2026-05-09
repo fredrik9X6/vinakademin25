@@ -27,7 +27,7 @@ export default async function JoinPage({ searchParams }: JoinPageProps) {
   if (!code) {
     return (
       <PageShell>
-        <JoinSessionDialog isOpen onClose={() => {}} standalone initialCode="" />
+        <JoinSessionDialog isOpen standalone initialCode="" />
       </PageShell>
     )
   }
@@ -38,7 +38,7 @@ export default async function JoinPage({ searchParams }: JoinPageProps) {
   if (lookup.status === 'active') {
     return (
       <PageShell>
-        <JoinSessionDialog isOpen onClose={() => {}} standalone initialCode={code} />
+        <JoinSessionDialog isOpen standalone initialCode={code} />
       </PageShell>
     )
   }

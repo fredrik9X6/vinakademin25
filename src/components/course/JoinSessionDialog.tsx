@@ -21,7 +21,7 @@ import Link from 'next/link'
 
 interface JoinSessionDialogProps {
   isOpen: boolean
-  onClose: () => void
+  onClose?: () => void
   /** If true, render outside a Dialog (used by the dedicated /delta page). */
   standalone?: boolean
   /** Pre-fill the join code (e.g. from `?code=ABC123`). */
@@ -33,7 +33,7 @@ const EMAIL_LS_KEY = 'vk_session_email'
 
 export default function JoinSessionDialog({
   isOpen,
-  onClose,
+  onClose = () => {},
   standalone = false,
   initialCode = '',
 }: JoinSessionDialogProps) {
