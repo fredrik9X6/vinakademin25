@@ -8,23 +8,54 @@ import { buildEbookGrundernaIVinEmail } from '@/lib/lead-magnet-emails/ebook-gru
 import {
   findUserIdByEmail,
   subscribeAndMirror,
+  LEAD_MAGNET_TYPES,
+  type Source,
+  type LeadMagnetRef,
+  type LeadMagnetType,
 } from '@/lib/subscribers'
 
 const log = loggerFor('api-newsletter-subscribe')
 
-/** Map an `ebook:<slug>` tag → builder for that lead-magnet's delivery email. */
+/**
+ * Lead-magnet delivery registry. Keyed by `${type}:${slug}` — that's the same
+ * shape used in Beehiiv tags and in the typed `Subscribers.leadMagnet` field,
+ * so adding a new magnet means: register here, set the form's `leadMagnetType`
+ * + `slug`, done. Quiz-style magnets (results page IS the delivery) just don't
+ * register a builder — that's the "no email needed" case.
+ */
 const LEAD_MAGNET_BUILDERS: Record<
   string,
   (input: { email: string }) => { subject: string; html: string; text: string }
 > = {
-  'grunderna-i-vin': (input) => buildEbookGrundernaIVinEmail({ email: input.email }),
+  'ebook:grunderna-i-vin': (input) => buildEbookGrundernaIVinEmail({ email: input.email }),
+}
+
+const PUBLIC_SOURCES = new Set<Source>(['footer', 'newsletter_page'])
+
+function parseSource(raw: unknown): Source {
+  return typeof raw === 'string' && (PUBLIC_SOURCES as Set<string>).has(raw)
+    ? (raw as Source)
+    : 'footer'
+}
+
+function parseLeadMagnet(raw: unknown): LeadMagnetRef | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const obj = raw as Record<string, unknown>
+  const type = obj.type
+  const slug = obj.slug
+  if (typeof type !== 'string' || typeof slug !== 'string') return undefined
+  if (!(LEAD_MAGNET_TYPES as readonly string[]).includes(type)) return undefined
+  const trimmedSlug = slug.trim()
+  if (!trimmedSlug) return undefined
+  return { type: type as LeadMagnetType, slug: trimmedSlug }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}))
     const email: string = (body?.email || '').trim().toLowerCase()
-    const source = (body?.source as string | undefined) || 'footer'
+    const source = parseSource(body?.source)
+    const leadMagnet = parseLeadMagnet(body?.leadMagnet)
     const rawTags = Array.isArray(body?.tags) ? (body.tags as unknown[]) : []
     const tags = rawTags
       .filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
@@ -41,9 +72,10 @@ export async function POST(request: NextRequest) {
     const result = await subscribeAndMirror({
       payload,
       email,
-      source: source === 'newsletter_page' ? 'newsletter_page' : 'footer',
+      source,
       relatedUserId,
       tags: tags.length > 0 ? tags : undefined,
+      leadMagnet,
     })
 
     if (!result.ok && !result.alreadySubscribed && !result.beehiivSkipped) {
@@ -55,12 +87,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Lead-magnet delivery: send even when alreadySubscribed so re-entering an
-    // email still gets the file. Tag shape is ['lead_magnet', 'ebook:<slug>'].
-    const isLeadMagnet = tags.includes('lead_magnet')
-    const ebookTag = tags.find((t) => t.startsWith('ebook:'))
-    const ebookSlug = ebookTag ? ebookTag.slice('ebook:'.length) : undefined
-    if (isLeadMagnet && ebookSlug && LEAD_MAGNET_BUILDERS[ebookSlug]) {
-      void deliverLeadMagnet({ payload, email, slug: ebookSlug })
+    // email still gets the file. Dispatch keyed off the typed leadMagnet field.
+    if (leadMagnet) {
+      const builderKey = `${leadMagnet.type}:${leadMagnet.slug}`
+      if (LEAD_MAGNET_BUILDERS[builderKey]) {
+        void deliverLeadMagnet({ payload, email, key: builderKey })
+      }
     }
 
     if (result.alreadySubscribed) {
@@ -71,7 +103,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fire-and-forget heads-up to the team. Never blocks the response.
-    void notifyTeam({ payload, email, source })
+    void notifyTeam({ payload, email, source, leadMagnet })
 
     return NextResponse.json(
       {
@@ -92,9 +124,9 @@ export async function POST(request: NextRequest) {
 async function deliverLeadMagnet(input: {
   payload: Awaited<ReturnType<typeof getPayload>>
   email: string
-  slug: string
+  key: string
 }) {
-  const builder = LEAD_MAGNET_BUILDERS[input.slug]
+  const builder = LEAD_MAGNET_BUILDERS[input.key]
   if (!builder) return
   try {
     const { subject, html, text } = builder({ email: input.email })
@@ -104,9 +136,9 @@ async function deliverLeadMagnet(input: {
       html,
       text,
     })
-    log.info({ email: input.email, slug: input.slug }, 'lead_magnet_delivered')
+    log.info({ email: input.email, leadMagnet: input.key }, 'lead_magnet_delivered')
   } catch (err) {
-    log.error({ err, email: input.email, slug: input.slug }, 'lead_magnet_delivery_failed')
+    log.error({ err, email: input.email, leadMagnet: input.key }, 'lead_magnet_delivery_failed')
   }
 }
 
@@ -114,11 +146,15 @@ async function notifyTeam(input: {
   payload: Awaited<ReturnType<typeof getPayload>>
   email: string
   source?: string
+  leadMagnet?: LeadMagnetRef
 }) {
   try {
+    const sourceLabel = input.leadMagnet
+      ? `${input.source || 'footer'} (${input.leadMagnet.type}:${input.leadMagnet.slug})`
+      : input.source || 'footer'
     const { subject, html } = buildNewsletterSignupEmail({
       email: input.email,
-      source: input.source || 'footer',
+      source: sourceLabel,
     })
     await sendTeamNotification({
       payload: input.payload,

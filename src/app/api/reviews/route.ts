@@ -205,9 +205,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Frontend form submission logic continues below...
+    // Either an authenticated user OR a session-participant cookie is required.
+    // Guest reviews land with user=null and sessionParticipant=<participant id>.
+    const PARTICIPANT_COOKIE = 'vk_participant_token'
+    const participantToken = cookieStore.get(PARTICIPANT_COOKIE)?.value
+    let guestParticipant: { id: number; sessionId: number } | null = null
     if (!user) {
-      log.warn('Not authenticated')
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      if (!participantToken) {
+        log.warn('Not authenticated and no participant cookie')
+        return NextResponse.json(
+          { error: 'Authentication or session participation required' },
+          { status: 401 },
+        )
+      }
+      // Look up the guest participant by cookie token
+      const participantRes = await payload.find({
+        collection: 'session-participants',
+        where: { participantToken: { equals: participantToken } },
+        limit: 1,
+      })
+      if (participantRes.totalDocs === 0) {
+        return NextResponse.json({ error: 'Invalid session participant' }, { status: 401 })
+      }
+      const p: any = participantRes.docs[0]
+      guestParticipant = {
+        id: Number(p.id),
+        sessionId: Number(typeof p.session === 'object' ? p.session.id : p.session),
+      }
     }
 
     // Check content type and parse body accordingly
@@ -319,14 +343,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if a review already exists for this user/wine combination
-    // Note: Removed lesson field - content items reference reviews, not the other way around
-    const whereConditions: any = {
-      and: [{ user: { equals: user.id } }, { wine: { equals: wineId } }],
-    }
+    // Dedup logic differs for guests vs authed users.
+    // - Authed: dedup on (user, wine), optionally scoped to session.
+    // - Guest:  dedup on (sessionParticipant, wine).
+    const whereConditions: any = guestParticipant
+      ? {
+          and: [
+            { sessionParticipant: { equals: guestParticipant.id } },
+            { wine: { equals: wineId } },
+          ],
+        }
+      : {
+          and: [{ user: { equals: user!.id } }, { wine: { equals: wineId } }],
+        }
 
-    // If this is a session review, also match the session
-    if (body.session) {
+    if (!guestParticipant && body.session) {
       const sessionId = Number(body.session)
       if (!isNaN(sessionId)) {
         whereConditions.and.push({ session: { equals: sessionId } })
@@ -337,51 +368,58 @@ export async function POST(request: NextRequest) {
       collection: 'reviews',
       where: whereConditions,
       limit: 1,
+      overrideAccess: !!guestParticipant,
     })
 
     let review
 
+    // Build the data payload. For guests: user stays null; sessionParticipant
+    // and session are derived from the cookie token, NOT trusted from the body.
+    const reviewData: any = {
+      ...body,
+      wine: wineId,
+      user: guestParticipant ? null : user!.id,
+      session: guestParticipant
+        ? guestParticipant.sessionId
+        : body.session
+          ? Number(body.session)
+          : body.session === null
+            ? null
+            : undefined,
+      sessionParticipant: guestParticipant
+        ? guestParticipant.id
+        : body.sessionParticipant
+          ? Number(body.sessionParticipant)
+          : body.sessionParticipant === null
+            ? null
+            : undefined,
+    }
+
     if (existingReviews.totalDocs > 0) {
-      // Update existing review
       const existingReview = existingReviews.docs[0]
       log.info({ reviewId: existingReview.id }, 'Updating existing review')
 
       review = await payload.update({
         collection: 'reviews',
         id: existingReview.id,
-        data: {
-          ...body,
-          wine: wineId,
-          user: user.id, // Explicitly set the user
-          session: body.session ? Number(body.session) : undefined,
-          sessionParticipant: body.sessionParticipant ? Number(body.sessionParticipant) : undefined,
-        },
-        req: {
-          ...request,
-          user, // Pass the authenticated user
-          payload,
-        } as any,
+        data: reviewData,
+        overrideAccess: !!guestParticipant,
+        req: guestParticipant
+          ? ({ ...request, payload } as any)
+          : ({ ...request, user, payload } as any),
       })
 
       log.info({ reviewId: review.id }, 'Review updated')
     } else {
-      // Create new review
       log.info('Creating new review')
 
       review = await payload.create({
         collection: 'reviews',
-        data: {
-          ...body,
-          wine: wineId,
-          user: user.id, // Explicitly set the user
-          session: body.session ? Number(body.session) : undefined,
-          sessionParticipant: body.sessionParticipant ? Number(body.sessionParticipant) : undefined,
-        },
-        req: {
-          ...request,
-          user, // Pass the authenticated user
-          payload,
-        } as any,
+        data: reviewData,
+        overrideAccess: !!guestParticipant,
+        req: guestParticipant
+          ? ({ ...request, payload } as any)
+          : ({ ...request, user, payload } as any),
       })
 
       log.info({ reviewId: review.id }, 'Review created')

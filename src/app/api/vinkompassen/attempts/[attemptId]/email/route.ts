@@ -49,6 +49,7 @@ export async function POST(
       source: 'vinkompassen',
       relatedUserId,
       tags,
+      leadMagnet: { type: 'quiz', slug: 'vinkompassen' },
     })
 
     if (!subResult.ok && !subResult.alreadySubscribed && !subResult.beehiivSkipped) {

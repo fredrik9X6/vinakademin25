@@ -18,8 +18,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useEffect } from 'react'
 
 // Define Zod schema for validation (Swedish messages)
 const RegistrationSchema = z
@@ -45,22 +47,34 @@ interface RegistrationFormProps extends React.ComponentPropsWithoutRef<'div'> {
 export function RegistrationForm({ className, returnTo, ...props }: RegistrationFormProps) {
   const { registerUser, isLoading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Pre-fill from query string when arriving from the post-tasting CTA
+  // (?email=...&firstName=...&claim=session&redirect=...)
+  const prefilledEmail = searchParams?.get('email') || ''
+  const prefilledFirstName = searchParams?.get('firstName') || ''
+  const claimGuestSession = searchParams?.get('claim') === 'session'
+  const claimRedirect = searchParams?.get('redirect')
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationSchema),
     defaultValues: {
-      firstName: '',
+      firstName: prefilledFirstName,
       lastName: '',
-      email: '',
+      email: prefilledEmail,
       password: '',
       confirmPassword: '',
       acceptsMarketing: false,
     },
   })
 
+  // Re-prime the form if query params arrive after mount (rare, but cheap)
+  useEffect(() => {
+    if (prefilledEmail) form.setValue('email', prefilledEmail)
+    if (prefilledFirstName) form.setValue('firstName', prefilledFirstName)
+  }, [prefilledEmail, prefilledFirstName, form])
+
   async function onSubmit(values: RegistrationFormValues) {
-    // Transform the form data to match the expected API structure.
-    // Pass notifications explicitly so the user's choice overrides the default-true on the field.
     const userData = {
       firstName: values.firstName,
       lastName: values.lastName,
@@ -75,9 +89,33 @@ export function RegistrationForm({ className, returnTo, ...props }: Registration
 
     const success = await registerUser(userData as any)
     if (success) {
-      // Show success message and redirect to email verification, passing along returnTo
-      const verificationUrl = returnTo
-        ? `/verifiera-epost-meddelande?from=${encodeURIComponent(returnTo)}`
+      // If the user came from a guest tasting session, claim their guest
+      // participants + reviews now that an authed user exists with the same
+      // email. Best-effort — don't block the redirect on failure.
+      if (claimGuestSession) {
+        try {
+          const res = await fetch('/api/sessions/claim', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          })
+          if (res.ok) {
+            const data = await res.json()
+            const reviews = Number(data?.reviewsClaimed || 0)
+            if (reviews > 0) {
+              toast.success(
+                `Vi sparade ${reviews} ${reviews === 1 ? 'recension' : 'recensioner'} till ditt konto`,
+              )
+            }
+          }
+        } catch {
+          // Silent — claim is best-effort and the user can still claim later
+        }
+      }
+
+      const target = claimGuestSession && claimRedirect ? claimRedirect : returnTo
+      const verificationUrl = target
+        ? `/verifiera-epost-meddelande?from=${encodeURIComponent(target)}`
         : '/verifiera-epost-meddelande'
       router.push(verificationUrl)
     }
