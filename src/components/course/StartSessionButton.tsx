@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Users, Loader2, Copy, Check, ExternalLink } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useActiveSession } from '@/context/SessionContext'
+import { QRCodeSVG } from 'qrcode.react'
 
 interface StartSessionButtonProps {
   courseId: number
@@ -220,6 +221,23 @@ export default function StartSessionButton({
                         <ExternalLink className="h-4 w-4" />
                       )}
                     </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+                    <div className="flex-1 border-t border-border" />
+                    Eller skanna
+                    <div className="flex-1 border-t border-border" />
+                  </div>
+                  <div className="flex justify-center py-2">
+                    <div className="rounded-md bg-white p-3 shadow-sm">
+                      <QRCodeSVG
+                        value={`${window.location.origin}/delta?code=${session?.joinCode}`}
+                        size={192}
+                        level="M"
+                      />
+                    </div>
                   </div>
                 </div>
 

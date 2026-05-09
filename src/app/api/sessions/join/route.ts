@@ -65,6 +65,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Ange en giltig e-postadress.' }, { status: 400 })
     }
 
+    // NOTE: These eligibility checks duplicate the read-only logic in
+    // `lookupSessionByCode` (src/lib/sessions.ts). When changing what counts
+    // as joinable (status, expiry, full, etc.), update both. A future
+    // refactor could have this route call the helper and re-fetch the
+    // session doc for the mutation phase.
     // Find session by join code
     const sessionResult = await payload.find({
       collection: 'course-sessions',
