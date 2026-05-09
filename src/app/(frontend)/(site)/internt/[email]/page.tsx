@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { ArrowLeft } from 'lucide-react'
 import type { User, Subscriber, Event as EventDoc } from '@/payload-types'
+import { effectiveSource } from '@/lib/subscribers'
 
 interface PageProps {
   params: Promise<{ email: string }>
@@ -101,9 +102,16 @@ export default async function ContactDetailPage({ params }: PageProps) {
           <Field
             label="Källa"
             value={
-              (user as any)?.onboarding?.source ||
-              subscriber?.source ||
-              '—'
+              // Prefer the subscriber's effective source (surfaces lead-magnet)
+              // over the user's onboarding source. Marketing attribution wins
+              // here — onboarding tells us how they made an account, not what
+              // brought them in.
+              (subscriber
+                ? effectiveSource({
+                    source: subscriber.source,
+                    leadMagnet: subscriber.leadMagnet,
+                  })
+                : (user as any)?.onboarding?.source) || '—'
             }
           />
           <Field

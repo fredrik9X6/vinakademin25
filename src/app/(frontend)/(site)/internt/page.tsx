@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import type { User, Subscriber, Event as EventDoc } from '@/payload-types'
 import { Search } from 'lucide-react'
+import { effectiveSource } from '@/lib/subscribers'
 
 interface PageProps {
   searchParams: Promise<{
@@ -106,11 +107,18 @@ export default async function InterntListPage({ searchParams }: PageProps) {
 
   for (const s of subscribersRes.docs as Subscriber[]) {
     const email = s.email.toLowerCase()
+    const subscriberSource = effectiveSource({ source: s.source, leadMagnet: s.leadMagnet })
     const existing = contacts.get(email)
     if (existing) {
       existing.subscriberStatus = s.status
       if (existing.marketingOptIn === null) {
         existing.marketingOptIn = s.status === 'subscribed'
+      }
+      // Prefer the subscriber's effective source (which surfaces lead-magnet
+      // identity) over the registration-time onboarding source. Marketing
+      // attribution beats account-creation attribution for ops-side reporting.
+      if (s.leadMagnet?.type && s.leadMagnet?.slug) {
+        existing.source = subscriberSource
       }
     } else {
       contacts.set(email, {
@@ -118,7 +126,7 @@ export default async function InterntListPage({ searchParams }: PageProps) {
         name: null,
         hasAccount: false,
         hasPaid: paidEmails.has(email),
-        source: s.source || null,
+        source: subscriberSource,
         createdAt: s.createdAt,
         lastEventAt: null,
         lastEventLabel: null,

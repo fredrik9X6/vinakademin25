@@ -40,6 +40,25 @@ export interface LeadMagnetRef {
   slug: string
 }
 
+/**
+ * Operator-facing "where did this signup come from" string. Resolves to a
+ * `lead_magnet:<type>:<slug>` triple when a lead magnet drove the signup,
+ * otherwise falls back to the page-level `source`.
+ *
+ * Used for: the CRM "Källa" column, the timeline event label, and Beehiiv's
+ * `utm_medium`. We deliberately preserve both the typed `source` and `leadMagnet`
+ * fields in storage — this is a derived view for the surfaces that need a single
+ * "tell me where the lead came from" string.
+ */
+export function effectiveSource(input: {
+  source?: string | null
+  leadMagnet?: { type?: string | null; slug?: string | null } | null
+}): string {
+  const lm = input.leadMagnet
+  if (lm?.type && lm?.slug) return `lead_magnet:${lm.type}:${lm.slug}`
+  return input.source || 'unknown'
+}
+
 interface UpsertInput {
   payload: Payload
   email: string
@@ -71,10 +90,13 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
     ? ['lead_magnet', `lead_magnet:${leadMagnet.type}`, `lead_magnet:${leadMagnet.type}:${leadMagnet.slug}`]
     : []
   const beehiivTags = ['user', source, ...leadMagnetTags, ...(tags ?? [])].filter(Boolean) as string[]
+  const outboundSource = effectiveSource({ source, leadMagnet })
 
   // 1) Push to Beehiiv first; we want the canonical beehiivId before the local write.
+  //    `outboundSource` becomes Beehiiv's utm_medium — surfaces lead-magnet identity
+  //    in their dashboard instead of the generic page source.
   const beehiivResult = await beehiivSubscribe(email, {
-    source,
+    source: outboundSource,
     tags: beehiivTags,
   })
 
@@ -123,7 +145,7 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
         payload,
         type: 'newsletter_subscribed',
         contactEmail: email,
-        label: `Subscribed via ${source}`,
+        label: `Subscribed via ${outboundSource}`,
         userId: relatedUserId ?? null,
         subscriberId,
         source: 'system',
