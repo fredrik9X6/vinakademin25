@@ -3,10 +3,9 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
+import { PARTICIPANT_COOKIE } from '@/lib/sessions'
 
 const log = loggerFor('api-sessions-[sessionId]')
-
-const PARTICIPANT_COOKIE = 'vk_participant_token'
 
 /**
  * GET /api/sessions/[sessionId]

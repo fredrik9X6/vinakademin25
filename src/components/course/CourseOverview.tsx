@@ -189,8 +189,10 @@ export default function CourseOverview({
 
     const isLessonFree = lesson?.isFree || false
 
-    // Require authentication for free lessons - redirect to login if not authenticated
-    if (isLessonFree && !authUser) {
+    // Free lessons normally require an account, but session participants (incl.
+    // unauthenticated guests joined via a join code) get full course access —
+    // don't bounce them to login.
+    if (isLessonFree && !authUser && !isSessionParticipant) {
       const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
       router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
       toast.info('Du behöver logga in för att prova gratis-lektioner')
@@ -256,8 +258,9 @@ export default function CourseOverview({
       const quiz = (module as any)?.quizzes?.find((q: any) => q.id === item.id)
       const isQuizFree = (quiz as any)?.isFree || false
 
-      // Require authentication for free quizzes - redirect to login if not authenticated
-      if (isQuizFree && !authUser) {
+      // Free quizzes normally require an account, but session participants
+      // (incl. unauthenticated guests) get full course access — don't bounce.
+      if (isQuizFree && !authUser && !isSessionParticipant) {
         const currentUrl = `/vinprovningar/${course.slug || course.id}?quiz=${item.id}`
         router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
         toast.info('Du behöver logga in för att prova gratis-quiz')

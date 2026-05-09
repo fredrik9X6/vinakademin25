@@ -5,11 +5,9 @@ import crypto from 'crypto'
 import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
 import type { SessionParticipant } from '@/payload-types'
+import { PARTICIPANT_COOKIE, PARTICIPANT_COOKIE_MAX_AGE_SECONDS } from '@/lib/sessions'
 
 const log = loggerFor('api-sessions-join')
-
-const PARTICIPANT_COOKIE = 'vk_participant_token'
-const COOKIE_MAX_AGE_SECONDS = 24 * 60 * 60 // 24h
 
 function generateParticipantToken(): string {
   return crypto.randomBytes(32).toString('hex')
@@ -235,7 +233,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: COOKIE_MAX_AGE_SECONDS,
+      maxAge: PARTICIPANT_COOKIE_MAX_AGE_SECONDS,
     })
 
     return response
