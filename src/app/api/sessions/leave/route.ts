@@ -3,10 +3,9 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
+import { PARTICIPANT_COOKIE } from '@/lib/sessions'
 
 const log = loggerFor('api-sessions-leave')
-
-const PARTICIPANT_COOKIE = 'vk_participant_token'
 
 /**
  * POST /api/sessions/leave

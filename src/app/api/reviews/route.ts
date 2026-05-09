@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
+import { PARTICIPANT_COOKIE } from '@/lib/sessions'
 
 const log = loggerFor('reviews-api')
 
@@ -207,7 +208,6 @@ export async function POST(request: NextRequest) {
     // Frontend form submission logic continues below...
     // Either an authenticated user OR a session-participant cookie is required.
     // Guest reviews land with user=null and sessionParticipant=<participant id>.
-    const PARTICIPANT_COOKIE = 'vk_participant_token'
     const participantToken = cookieStore.get(PARTICIPANT_COOKIE)?.value
     let guestParticipant: { id: number; sessionId: number } | null = null
     if (!user) {

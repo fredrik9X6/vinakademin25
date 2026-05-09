@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { Vinprovningar, Module, ContentItem } from '@/payload-types'
+import { Vinprovningar, Module, ContentItem, CourseSession } from '@/payload-types'
 import { notFound, redirect } from 'next/navigation'
 import CourseOverview from '@/components/course/CourseOverview'
 import LessonViewer from '@/components/course/LessonViewer'
@@ -13,6 +13,7 @@ import { getSiteURL } from '@/lib/site-url'
 import { resolveSeo } from '@/lib/seo'
 import { BreadcrumbJsonLd, CourseJsonLd } from '@/components/seo/JsonLd'
 import { loggerFor } from '@/lib/logger'
+import { PARTICIPANT_COOKIE, getActiveParticipantSession } from '@/lib/sessions'
 
 const log = loggerFor('(frontend)-(site)-vinprovningar-[slug]-page')
 
@@ -275,14 +276,20 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   const payloadToken = cookieStore.get('payload-token')
   const isAuthenticated = !!payloadToken
 
-  // Check if this is a session participant (from localStorage, passed via URL)
+  // Recognize a participant from any of three signals, in order:
+  //  1) `?session=<id>` query (used right after Join, and on direct deep links).
+  //  2) `vk_participant_token` httpOnly cookie set by /api/sessions/join — covers
+  //     guests whose URL drops the `?session=` param (refresh, deep link, link
+  //     shared inside the cohort, etc.). Without this fallback, server-side
+  //     redirects bounce them to /logga-in even though they have access.
+  // The cookie is the long-lived signal; the URL param is the authoritative
+  // "right now they're inside this session" signal.
   const sessionId = resolvedSearchParams.session
   let isSessionParticipant = false
-  let sessionData = null
+  let sessionData: CourseSession | null = null
 
   if (sessionId) {
     try {
-      // Verify session exists and is active
       const session = await payload.findByID({
         collection: 'course-sessions',
         id: sessionId,
@@ -298,6 +305,19 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
       }
     } catch (error) {
       log.error('Error fetching session:', error)
+    }
+  }
+
+  if (!isSessionParticipant) {
+    const participantToken = cookieStore.get(PARTICIPANT_COOKIE)?.value
+    const active = await getActiveParticipantSession({
+      payload,
+      participantToken,
+      forCourseId: course.id,
+    })
+    if (active) {
+      isSessionParticipant = true
+      sessionData = active.session
     }
   }
 
