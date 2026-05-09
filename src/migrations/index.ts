@@ -8,6 +8,7 @@ import * as migration_20260502_103451_add_vinkompassen_collections from './20260
 import * as migration_20260502_112427_fix_vinkompass_attempts_archetype_constraint from './20260502_112427_fix_vinkompass_attempts_archetype_constraint';
 import * as migration_20260503_103620_add_wine_type_field from './20260503_103620_add_wine_type_field';
 import * as migration_20260503_144558_add_session_participants_email from './20260503_144558_add_session_participants_email';
+import * as migration_20260509_134811_subscribers_lead_magnet_fields from './20260509_134811_subscribers_lead_magnet_fields';
 
 export const migrations = [
   {
@@ -58,6 +59,11 @@ export const migrations = [
   {
     up: migration_20260503_144558_add_session_participants_email.up,
     down: migration_20260503_144558_add_session_participants_email.down,
-    name: '20260503_144558_add_session_participants_email'
+    name: '20260503_144558_add_session_participants_email',
+  },
+  {
+    up: migration_20260509_134811_subscribers_lead_magnet_fields.up,
+    down: migration_20260509_134811_subscribers_lead_magnet_fields.down,
+    name: '20260509_134811_subscribers_lead_magnet_fields'
   },
 ];

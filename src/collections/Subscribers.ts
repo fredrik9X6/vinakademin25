@@ -82,6 +82,33 @@ export const Subscribers: CollectionConfig = {
       },
     },
     {
+      name: 'leadMagnet',
+      type: 'group',
+      admin: {
+        description:
+          'Set when this signup came from a lead-magnet offer (ebook, quiz, etc). Both fields are populated together.',
+      },
+      fields: [
+        {
+          name: 'type',
+          type: 'select',
+          options: [
+            { label: 'E-book', value: 'ebook' },
+            { label: 'Quiz', value: 'quiz' },
+            { label: 'Webinar', value: 'webinar' },
+            { label: 'Video', value: 'video' },
+            { label: 'Download', value: 'download' },
+            { label: 'Template', value: 'template' },
+          ],
+        },
+        {
+          name: 'slug',
+          type: 'text',
+          admin: { description: 'Specific lead magnet, e.g. "grunderna-i-vin".' },
+        },
+      ],
+    },
+    {
       name: 'subscribedAt',
       type: 'date',
       admin: {

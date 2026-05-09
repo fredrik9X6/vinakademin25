@@ -5,7 +5,7 @@ import { recordEvent } from './events'
 
 const log = loggerFor('lib-subscribers')
 
-type Source =
+export type Source =
   | 'footer'
   | 'newsletter_page'
   | 'registration'
@@ -14,12 +14,39 @@ type Source =
   | 'manual'
   | 'vinkompassen'
 
+export const SOURCES = [
+  'footer',
+  'newsletter_page',
+  'registration',
+  'onboarding',
+  'profile',
+  'manual',
+  'vinkompassen',
+] as const satisfies readonly Source[]
+
+export type LeadMagnetType = 'ebook' | 'quiz' | 'webinar' | 'video' | 'download' | 'template'
+
+export const LEAD_MAGNET_TYPES = [
+  'ebook',
+  'quiz',
+  'webinar',
+  'video',
+  'download',
+  'template',
+] as const satisfies readonly LeadMagnetType[]
+
+export interface LeadMagnetRef {
+  type: LeadMagnetType
+  slug: string
+}
+
 interface UpsertInput {
   payload: Payload
   email: string
   source: Source
   relatedUserId?: number | string | null
   tags?: string[]
+  leadMagnet?: LeadMagnetRef
 }
 
 /**
@@ -35,12 +62,20 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
   beehiivSkipped?: boolean
   error?: string
 }> {
-  const { payload, email, source, relatedUserId, tags } = input
+  const { payload, email, source, relatedUserId, tags, leadMagnet } = input
+
+  // Tags forwarded to Beehiiv. Lead-magnet signups get three layered tags so you
+  // can segment by "any lead magnet", "any of this type" (e.g. all ebooks), or
+  // "this specific magnet" without crafting boolean filters.
+  const leadMagnetTags = leadMagnet
+    ? ['lead_magnet', `lead_magnet:${leadMagnet.type}`, `lead_magnet:${leadMagnet.type}:${leadMagnet.slug}`]
+    : []
+  const beehiivTags = ['user', source, ...leadMagnetTags, ...(tags ?? [])].filter(Boolean) as string[]
 
   // 1) Push to Beehiiv first; we want the canonical beehiivId before the local write.
   const beehiivResult = await beehiivSubscribe(email, {
     source,
-    tags: ['user', source, ...(tags ?? [])].filter(Boolean) as string[],
+    tags: beehiivTags,
   })
 
   // 2) Upsert local Subscribers row regardless of Beehiiv outcome — we want a
@@ -61,6 +96,7 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
       ...(beehiivResult.beehiivId ? { beehiivId: beehiivResult.beehiivId } : {}),
       ...(relatedUserId ? { relatedUser: relatedUserId } : {}),
       ...(tags && tags.length > 0 ? { tags: tags.map((value) => ({ value })) } : {}),
+      ...(leadMagnet ? { leadMagnet: { type: leadMagnet.type, slug: leadMagnet.slug } } : {}),
       lastSyncError: beehiivResult.ok ? null : beehiivResult.error || null,
     }
 
@@ -95,6 +131,7 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
           beehiivId: beehiivResult.beehiivId,
           beehiivSkipped: !!beehiivResult.skipped,
           source,
+          ...(leadMagnet ? { leadMagnetType: leadMagnet.type, leadMagnetSlug: leadMagnet.slug } : {}),
         },
       })
     }

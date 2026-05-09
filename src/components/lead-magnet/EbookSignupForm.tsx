@@ -9,9 +9,18 @@ const ORANGE_400 = '#FB914C'
 const ORANGE_300 = '#FDBA75'
 const GRADIENT = `linear-gradient(90deg, ${ORANGE_400}, ${ORANGE_300})`
 
+/**
+ * Lead-magnet types this form can announce to the API. Mirrors the union in
+ * `src/lib/subscribers.ts`. Add a new value here only after the API + collection
+ * accept it (and the relevant delivery email is registered, when applicable).
+ */
+type LeadMagnetType = 'ebook' | 'quiz' | 'webinar' | 'video' | 'download' | 'template'
+
 interface EbookSignupFormProps {
-  /** Slug used to mark this lead magnet in subscriber tags + redirect path. */
+  /** Slug identifying the specific lead magnet, e.g. "grunderna-i-vin". */
   slug: string
+  /** Type of lead magnet. Defaults to `'ebook'` since this component originated for e-books. */
+  leadMagnetType?: LeadMagnetType
   /** Where to redirect on success — defaults to `/${slug}/tack`. */
   redirectTo?: string
   /** Inverted color scheme for use on dark/colored panels. */
@@ -23,6 +32,7 @@ interface EbookSignupFormProps {
 
 export function EbookSignupForm({
   slug,
+  leadMagnetType = 'ebook',
   redirectTo,
   variant = 'on-paper',
   buttonLabel = 'Skicka mig e-boken',
@@ -49,7 +59,7 @@ export function EbookSignupForm({
         body: JSON.stringify({
           email,
           source: 'newsletter_page',
-          tags: ['lead_magnet', `ebook:${slug}`],
+          leadMagnet: { type: leadMagnetType, slug },
         }),
       })
       const data = await res.json().catch(() => ({}))

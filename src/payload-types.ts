@@ -2651,6 +2651,16 @@ export interface Subscriber {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Set when this signup came from a lead-magnet offer (ebook, quiz, etc). Both fields are populated together.
+   */
+  leadMagnet?: {
+    type?: ('ebook' | 'quiz' | 'webinar' | 'video' | 'download' | 'template') | null;
+    /**
+     * Specific lead magnet, e.g. "grunderna-i-vin".
+     */
+    slug?: string | null;
+  };
   subscribedAt?: string | null;
   unsubscribedAt?: string | null;
   /**
@@ -3881,6 +3891,12 @@ export interface SubscribersSelect<T extends boolean = true> {
     | {
         value?: T;
         id?: T;
+      };
+  leadMagnet?:
+    | T
+    | {
+        type?: T;
+        slug?: T;
       };
   subscribedAt?: T;
   unsubscribedAt?: T;
