@@ -93,7 +93,7 @@ export function OrderSummary({ course }: OrderSummaryProps) {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
-            <span>Alla lektioner och moduler</span>
+            <span>Alla moment och moduler</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>

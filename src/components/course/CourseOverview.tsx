@@ -195,7 +195,7 @@ export default function CourseOverview({
     if (isLessonFree && !authUser && !isSessionParticipant) {
       const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
       router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
-      toast.info('Du behöver logga in för att prova gratis-lektioner')
+      toast.info('Du behöver logga in för att prova gratis-moment')
       return
     }
 

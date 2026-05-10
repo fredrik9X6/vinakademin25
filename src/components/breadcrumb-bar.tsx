@@ -197,7 +197,7 @@ export function BreadcrumbBar() {
     ) {
       // Prefer the resolved content-item title; fall back to a numeric label
       // until it loads (avoids a flash of "undefined").
-      const fallback = itemKind === 'quiz' ? `Quiz ${itemId}` : `Lektion ${itemId}`
+      const fallback = itemKind === 'quiz' ? `Quiz ${itemId}` : `Moment ${itemId}`
       breadcrumbs.push({
         label: resolvedItemTitle ?? fallback,
         href: `${pathname}?${itemKind}=${itemId}`,

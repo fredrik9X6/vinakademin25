@@ -51,7 +51,7 @@ const faqSections = [
     questions: [
       {
         q: 'Vad är skillnaden mellan gratis och betalda vinprovningar?',
-        a: 'Alla vinprovningar har gratis moment som du kan prova direkt. Fullständig tillgång till alla lektioner och quiz kräver ett engångsköp. Du kan kolla på vinprovningen hur många gånger du vill',
+        a: 'Alla vinprovningar har gratis moment som du kan prova direkt. Fullständig tillgång till alla moment och quiz kräver ett engångsköp. Du kan kolla på vinprovningen hur många gånger du vill',
       },
       {
         q: 'Hur fungerar gruppsessioner?',
@@ -103,7 +103,7 @@ const faqSections = [
       },
       {
         q: 'Hur sparas mitt framsteg?',
-        a: 'Ditt framsteg sparas automatiskt när du slutför lektioner och quiz. Du kan när som helst logga in från vilken enhet som helst och fortsätta där du var.',
+        a: 'Ditt framsteg sparas automatiskt när du slutför moment och quiz. Du kan när som helst logga in från vilken enhet som helst och fortsätta där du var.',
       },
       {
         q: 'Jag får felmeddelande när jag försöker logga in',

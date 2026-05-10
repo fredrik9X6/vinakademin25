@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useActiveSession } from '@/context/SessionContext'
 import LessonViewer from './LessonViewer'
 import CourseQuizViewer from './CourseQuizViewer'
+import CourseTableOfContents from './CourseTableOfContents'
 import { SessionRoster } from './SessionRoster'
 import { FollowHostToggle } from './FollowHostToggle'
 import { RealtimeSync } from './RealtimeSync'
@@ -83,6 +84,11 @@ export default function SessionView({
     router.push('/vinprovningar')
   }
 
+  const handleItemClick = (_moduleId: number, item: { type: 'lesson' | 'quiz'; id: number }) => {
+    const param = item.type === 'lesson' ? `lesson=${item.id}` : `quiz=${item.id}`
+    router.push(`/vinprovningar/${course.slug || course.id}?${param}&session=${sessionId}`)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <RealtimeSync sessionId={sessionId} />
@@ -126,8 +132,15 @@ export default function SessionView({
               isSessionParticipant
             />
           ) : (
-            <div className="rounded-md border border-border bg-background p-6 text-sm text-muted-foreground">
-              Välj en lektion från menyn för att börja, eller följ med när värden navigerar.
+            <div className="space-y-4">
+              <div className="rounded-md border border-border bg-background p-4 text-sm text-muted-foreground">
+                Välj ett moment nedan för att börja, eller följ med när värden navigerar.
+              </div>
+              <CourseTableOfContents
+                modules={course.modules}
+                userHasAccess
+                onItemClick={handleItemClick}
+              />
             </div>
           )}
         </div>

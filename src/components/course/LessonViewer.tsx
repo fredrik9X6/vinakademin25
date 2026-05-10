@@ -445,7 +445,7 @@ export default function LessonViewer({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    Lektionsinnehåll
+                    Innehåll
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -539,7 +539,7 @@ export default function LessonViewer({
               {canAccessLesson && (
                 <Card className="hidden lg:block">
                   <CardHeader>
-                    <CardTitle className="text-base">Lektion slutförd?</CardTitle>
+                    <CardTitle className="text-base">Moment slutfört?</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Button
@@ -554,7 +554,7 @@ export default function LessonViewer({
                         : 'Markera som slutförd'}
                     </Button>
                     <p className="text-xs text-muted-foreground mt-2 text-center">
-                      Markera denna lektion som slutförd för att uppdatera dina framsteg.
+                      Markera detta moment som slutfört för att uppdatera dina framsteg.
                     </p>
                   </CardContent>
                 </Card>
