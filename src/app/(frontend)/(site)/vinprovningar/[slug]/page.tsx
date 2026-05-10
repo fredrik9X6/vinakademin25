@@ -411,6 +411,31 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     }
   }
 
+  // Session mode: if the viewer is a session participant for an active session,
+  // render the focused tasting view. SessionView handles its own lesson/quiz
+  // rendering internally so the existing LessonViewer/CourseQuizViewer/CourseOverview
+  // branches don't double-render.
+  if (
+    isSessionParticipant &&
+    sessionData &&
+    sessionData.status === 'active' &&
+    !showCompletionPage
+  ) {
+    const SessionView = (await import('@/components/course/SessionView')).default
+    return (
+      <div className="min-h-screen bg-background">
+        <CourseSchema course={course} />
+        <SessionView
+          course={courseWithModules}
+          selectedLesson={selectedLesson}
+          selectedQuiz={selectedQuiz}
+          selectedModule={selectedModule}
+          sessionId={String(sessionData.id)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <CourseSchema course={course} />
