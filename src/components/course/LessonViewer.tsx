@@ -22,7 +22,7 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import MuxPlayer from '@mux/mux-player-react'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
@@ -32,6 +32,7 @@ import { useCourseProgress } from '@/hooks/use-course-progress'
 import { getFlattenedCourseItems } from '@/lib/course-utils'
 import ReviewComparison from './ReviewComparison'
 import { useActiveSession } from '@/context/SessionContext'
+import { useAuth } from '@/context/AuthContext'
 // QuizViewer removed
 
 interface LessonViewerProps {
@@ -114,7 +115,8 @@ export default function LessonViewer({
     isLessonCompleted,
     updateLessonProgress,
   } = useCourseProgress(course.id, isSessionParticipant) // Pass isSessionParticipant to disable progress tracking
-  const { activeSession } = useActiveSession()
+  const { activeSession, followingHost, hostCurrentLessonId } = useActiveSession()
+  const { user: authUser } = useAuth()
 
   const [isTocOpen, setIsTocOpen] = useState(false)
   const [showReviewComparison, setShowReviewComparison] = useState(false)
@@ -172,6 +174,34 @@ export default function LessonViewer({
   const effectiveSessionId =
     sessionId ||
     (activeSession && activeSession.courseId === course.id ? activeSession.sessionId : null)
+
+  // If the viewer has a Payload session AND we're inside a CourseSession context,
+  // best-effort POST the current lesson id as the host pointer. The server-side
+  // /host-state endpoint enforces host-or-admin role; non-hosts get a silent 403.
+  useEffect(() => {
+    if (!effectiveSessionId) return
+    if (!authUser) return
+    void fetch(`/api/sessions/${encodeURIComponent(effectiveSessionId)}/host-state`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentLessonId: lesson.id }),
+    })
+  }, [effectiveSessionId, authUser, lesson.id])
+
+  // Followers (Following toggle ON) auto-advance when the host's pointer
+  // changes to a different lesson. The dependency on `lesson.id` ensures
+  // this re-runs after the navigation completes — without it, a host on
+  // lesson N+2 while we're on N would only step once.
+  useEffect(() => {
+    if (!effectiveSessionId) return
+    if (!followingHost) return
+    if (hostCurrentLessonId == null) return
+    if (hostCurrentLessonId === lesson.id) return
+    router.push(
+      `/vinprovningar/${course.slug || course.id}?lesson=${hostCurrentLessonId}&session=${effectiveSessionId}`,
+    )
+  }, [effectiveSessionId, followingHost, hostCurrentLessonId, lesson.id, course.slug, course.id, router])
 
   const buildUrl = (base: string) => {
     return effectiveSessionId ? `${base}&session=${effectiveSessionId}` : base
