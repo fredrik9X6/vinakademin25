@@ -97,12 +97,20 @@ export default function CourseQuizViewer({
   const isLastQuizItem =
     currentItemIndex >= 0 && allItems.length > 0 && currentItemIndex === allItems.length - 1
 
-  /** Prompt review after completing the last content item in order — even if other items were skipped. */
-  const maybeNavigateToCourseReview = useCallback(() => {
-    if (isSessionParticipant || hasNavigatedToReviewRef.current) return
-    hasNavigatedToReviewRef.current = true
-    router.push(`/vinprovningar/${course.slug || course.id}/recension`)
-  }, [isSessionParticipant, router, course.slug, course.id])
+  /**
+   * Prompt review after completing the last content item in order.
+   * Auto-fire paths are suppressed for session participants so followers
+   * aren't yanked away mid-tasting. Explicit clicks pass `manual: true`.
+   */
+  const maybeNavigateToCourseReview = useCallback(
+    (manual = false) => {
+      if (hasNavigatedToReviewRef.current) return
+      if (!manual && isSessionParticipant) return
+      hasNavigatedToReviewRef.current = true
+      router.push(`/vinprovningar/${course.slug || course.id}/recension`)
+    },
+    [isSessionParticipant, router, course.slug, course.id],
+  )
 
   const navigateToItem = (item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
@@ -119,17 +127,17 @@ export default function CourseQuizViewer({
   }
 
   const handleQuizNextOrReview = async () => {
-    if (isSessionParticipant) {
-      if (!isLastQuizItem) goToNext()
+    if (isLastQuizItem) {
+      // Session participants normally don't auto-progress, but an explicit
+      // click on "Betygsätt vinprovningen" is a deliberate user action and
+      // should take them to the review page. Skip the progress fetch in
+      // session mode (per-user progress isn't tracked there).
+      if (!isSessionParticipant) await fetchProgress()
+      maybeNavigateToCourseReview(true)
       return
     }
-    if (isLastQuizItem) {
-      await fetchProgress()
-      maybeNavigateToCourseReview()
-    } else {
-      await fetchProgress()
-      goToNext()
-    }
+    if (!isSessionParticipant) await fetchProgress()
+    goToNext()
   }
 
   const goToPrev = () => {

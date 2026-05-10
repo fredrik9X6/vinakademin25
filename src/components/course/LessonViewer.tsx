@@ -135,12 +135,21 @@ export default function LessonViewer({
   const lastProgressUpdateRef = useRef(0)
   const hasNavigatedToReviewRef = useRef(false)
 
-  /** Prompt review after completing the last content item in order — even if other items were skipped. */
-  const maybeNavigateToCourseReview = useCallback(() => {
-    if (isSessionParticipant || hasNavigatedToReviewRef.current) return
-    hasNavigatedToReviewRef.current = true
-    router.push(`/vinprovningar/${course.slug || course.id}/recension`)
-  }, [isSessionParticipant, router, course.slug, course.id])
+  /**
+   * Prompt review after completing the last content item in order.
+   * Auto-fire paths (video ended / progress threshold) are suppressed for
+   * session participants so followers aren't yanked away mid-tasting.
+   * Explicit clicks pass `manual: true` to override the suppression.
+   */
+  const maybeNavigateToCourseReview = useCallback(
+    (manual = false) => {
+      if (hasNavigatedToReviewRef.current) return
+      if (!manual && isSessionParticipant) return
+      hasNavigatedToReviewRef.current = true
+      router.push(`/vinprovningar/${course.slug || course.id}/recension`)
+    },
+    [isSessionParticipant, router, course.slug, course.id],
+  )
 
   const handleTimeUpdate = useCallback((e: any) => {
     try {
@@ -201,7 +210,7 @@ export default function LessonViewer({
       if (!isLessonCompleted(lesson.id)) {
         await updateLessonProgress(lesson.id, true)
       }
-      maybeNavigateToCourseReview()
+      maybeNavigateToCourseReview(true)
       return
     }
 
