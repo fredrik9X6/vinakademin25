@@ -13,6 +13,14 @@ interface SessionData {
   expiresAt: string
 }
 
+export interface RosterEntry {
+  id: number
+  nickname: string
+  currentLessonId: number | null
+  isHost: boolean
+  online: boolean
+}
+
 interface SessionContextValue {
   activeSession: SessionData | null
   isOnSessionPage: boolean
@@ -20,6 +28,13 @@ interface SessionContextValue {
   leaveSession: () => Promise<void>
   getSessionUrl: () => string | null
   timeRemaining: string | null
+  // Realtime additions:
+  followingHost: boolean
+  setFollowingHost: (b: boolean) => void
+  hostCurrentLessonId: number | null
+  setHostCurrentLessonId: (id: number | null) => void
+  roster: RosterEntry[]
+  setRoster: (r: RosterEntry[]) => void
 }
 
 const SessionContext = createContext<SessionContextValue | undefined>(undefined)
@@ -32,6 +47,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [activeSession, setActiveSession] = useState<SessionData | null>(null)
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null)
   const [hasShownWarning, setHasShownWarning] = useState(false)
+  const [followingHostRaw, setFollowingHostRaw] = useState<boolean>(true)
+  const [hostCurrentLessonId, setHostCurrentLessonIdState] = useState<number | null>(null)
+  const [roster, setRoster] = useState<RosterEntry[]>([])
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -69,6 +87,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [])
+
+  // Load Follow-host toggle for the active session from localStorage. Default true.
+  useEffect(() => {
+    if (!activeSession) {
+      setFollowingHostRaw(true)
+      return
+    }
+    try {
+      const raw = localStorage.getItem(`vk_session_follow_${activeSession.sessionId}`)
+      if (raw === '0') setFollowingHostRaw(false)
+      else setFollowingHostRaw(true)
+    } catch {
+      setFollowingHostRaw(true)
+    }
+  }, [activeSession])
 
   // Calculate time remaining and check expiration
   useEffect(() => {
@@ -120,6 +153,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data))
   }, [])
 
+  const setFollowingHost = useCallback(
+    (b: boolean) => {
+      setFollowingHostRaw(b)
+      if (!activeSession) return
+      try {
+        localStorage.setItem(`vk_session_follow_${activeSession.sessionId}`, b ? '1' : '0')
+      } catch {
+        // ignore — toggle still works in-memory
+      }
+    },
+    [activeSession],
+  )
+
+  const setHostCurrentLessonId = useCallback((id: number | null) => {
+    setHostCurrentLessonIdState(id)
+  }, [])
+
   const leaveSession = useCallback(async () => {
     if (!activeSession) return
 
@@ -165,6 +215,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     leaveSession,
     getSessionUrl,
     timeRemaining,
+    followingHost: followingHostRaw,
+    setFollowingHost,
+    hostCurrentLessonId,
+    setHostCurrentLessonId,
+    roster,
+    setRoster,
   }
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
