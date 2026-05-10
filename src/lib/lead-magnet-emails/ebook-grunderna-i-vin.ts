@@ -3,6 +3,7 @@ import {
   emailHeaderCellStyle,
   emailPrimaryCtaButton,
   emailLightOutlineButton,
+  escapeHtml,
 } from '../email-cta'
 import { getSiteURL } from '../site-url'
 
@@ -183,11 +184,3 @@ function chapterRow(num: string, title: string, summary: string): string {
     </tr>`
 }
 
-function escapeHtml(input: string): string {
-  return input
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
