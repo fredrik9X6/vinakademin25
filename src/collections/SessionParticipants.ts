@@ -73,6 +73,30 @@ export const SessionParticipants: CollectionConfig = {
         description: 'Last time the participant was active',
       },
     },
+    {
+      name: 'claimEmailProcessedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        date: { pickerAppearance: 'dayAndTime' },
+        description:
+          'Set by the cron on every per-participant decision (sent, skipped, or failed). Idempotency guard — prevents the cron from re-processing the same participant.',
+      },
+    },
+    {
+      name: 'claimEmailStatus',
+      type: 'select',
+      options: [
+        { label: 'Sent', value: 'sent' },
+        { label: 'Skipped — existing user', value: 'skipped_existing_user' },
+        { label: 'Skipped — no email', value: 'skipped_no_email' },
+        { label: 'Failed', value: 'failed' },
+      ],
+      admin: {
+        readOnly: true,
+        description: 'Outcome of the claim-email decision for operator debugging.',
+      },
+    },
   ],
   timestamps: true,
 }

@@ -125,6 +125,28 @@ export const CourseSessions: CollectionConfig = {
         description: 'Session automatically expires after this time (24 hours default)',
       },
     },
+    {
+      name: 'completedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        date: { pickerAppearance: 'dayAndTime' },
+        description:
+          'Stamped by the beforeChange hook when status transitions to "completed". Read by the claim-email cron to compute the 30-minute window.',
+      },
+    },
+    {
+      name: 'claimEmailsDispatchedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        date: { pickerAppearance: 'dayAndTime' },
+        description:
+          'Set by the cron after iterating participants for this session. Cleared on re-completion so the cron can re-process newly-added participants.',
+      },
+    },
   ],
   timestamps: true,
 }
