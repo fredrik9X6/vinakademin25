@@ -1263,6 +1263,10 @@ export interface SessionParticipant {
    * Outcome of the claim-email decision for operator debugging.
    */
   claimEmailStatus?: ('sent' | 'skipped_existing_user' | 'skipped_no_email' | 'failed') | null;
+  /**
+   * The lesson this participant is currently viewing. Updated by /api/sessions/[id]/participant-state on every page-view and 30s heartbeat. Read by the SSE roster broadcaster.
+   */
+  currentLessonId?: (number | null) | ContentItem;
   updatedAt: string;
   createdAt: string;
 }
@@ -3893,6 +3897,7 @@ export interface SessionParticipantsSelect<T extends boolean = true> {
   lastActivityAt?: T;
   claimEmailProcessedAt?: T;
   claimEmailStatus?: T;
+  currentLessonId?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -10,6 +10,7 @@ import * as migration_20260503_103620_add_wine_type_field from './20260503_10362
 import * as migration_20260503_144558_add_session_participants_email from './20260503_144558_add_session_participants_email';
 import * as migration_20260509_134811_subscribers_lead_magnet_fields from './20260509_134811_subscribers_lead_magnet_fields';
 import * as migration_20260510_074845_session_claim_email_tracking from './20260510_074845_session_claim_email_tracking';
+import * as migration_20260510_131444_session_participants_current_lesson from './20260510_131444_session_participants_current_lesson';
 
 export const migrations = [
   {
@@ -70,6 +71,11 @@ export const migrations = [
   {
     up: migration_20260510_074845_session_claim_email_tracking.up,
     down: migration_20260510_074845_session_claim_email_tracking.down,
-    name: '20260510_074845_session_claim_email_tracking'
+    name: '20260510_074845_session_claim_email_tracking',
+  },
+  {
+    up: migration_20260510_131444_session_participants_current_lesson.up,
+    down: migration_20260510_131444_session_participants_current_lesson.down,
+    name: '20260510_131444_session_participants_current_lesson'
   },
 ];
