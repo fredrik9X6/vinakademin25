@@ -13,6 +13,12 @@ const LESSON_POLL_INTERVAL_MS = 2_000
 /** Heartbeat to keep proxies / browsers from idling-out the connection. */
 const HEARTBEAT_INTERVAL_MS = 30_000
 
+/** How often each connection re-reads the roster. */
+const ROSTER_POLL_INTERVAL_MS = 5_000
+
+/** Liveness window for `online: true` in the roster. */
+const ONLINE_THRESHOLD_MS = 2 * 60 * 1000
+
 // Force dynamic — this route streams; never cache.
 export const dynamic = 'force-dynamic'
 
@@ -122,6 +128,106 @@ export async function GET(
         }
       }, LESSON_POLL_INTERVAL_MS)
 
+      type RosterEntry = {
+        id: number
+        nickname: string
+        currentLessonId: number | null
+        isHost: boolean
+        online: boolean
+      }
+
+      const buildRoster = async (): Promise<RosterEntry[]> => {
+        try {
+          const fresh = await payload.findByID({
+            collection: 'course-sessions',
+            id: sessionId,
+            depth: 1, // populate host
+          })
+          if (!fresh) return []
+
+          const hostUser = typeof fresh.host === 'object' ? fresh.host : null
+          const hostName = hostUser
+            ? `${hostUser.firstName || ''} ${hostUser.lastName || ''}`.replace(/\s+/g, ' ').trim() ||
+              hostUser.email ||
+              'Värden'
+            : 'Värden'
+          const hostCurrentLessonId =
+            typeof fresh.currentLesson === 'object'
+              ? fresh.currentLesson?.id ?? null
+              : (fresh.currentLesson as number | null) ?? null
+
+          const hostEntry: RosterEntry = {
+            id: hostUser?.id ?? -1,
+            nickname: hostName,
+            currentLessonId: hostCurrentLessonId,
+            isHost: true,
+            online: fresh.status === 'active',
+          }
+
+          const partsRes = await payload.find({
+            collection: 'session-participants',
+            where: { session: { equals: sessionId } },
+            limit: 200,
+            depth: 0,
+            overrideAccess: true,
+          })
+
+          const now = Date.now()
+          const partEntries: RosterEntry[] = (partsRes.docs as any[]).map((p) => {
+            const last = p.lastActivityAt ? new Date(p.lastActivityAt).getTime() : 0
+            const cl = p.currentLessonId
+            return {
+              id: p.id,
+              nickname: p.nickname || 'Anonym',
+              currentLessonId:
+                typeof cl === 'object' && cl ? cl.id : (cl as number | null) ?? null,
+              isHost: false,
+              online: now - last < ONLINE_THRESHOLD_MS,
+            }
+          })
+
+          // Host first, then participants by nickname asc.
+          return [
+            hostEntry,
+            ...partEntries.sort((a, b) => a.nickname.localeCompare(b.nickname, 'sv')),
+          ]
+        } catch (err) {
+          log.error({ err, sessionId }, 'sse_build_roster_failed')
+          return []
+        }
+      }
+
+      const rosterEqual = (a: RosterEntry[], b: RosterEntry[]) => {
+        if (a.length !== b.length) return false
+        for (let i = 0; i < a.length; i++) {
+          const x = a[i],
+            y = b[i]
+          if (
+            x.id !== y.id ||
+            x.nickname !== y.nickname ||
+            x.currentLessonId !== y.currentLessonId ||
+            x.isHost !== y.isHost ||
+            x.online !== y.online
+          ) {
+            return false
+          }
+        }
+        return true
+      }
+
+      // Initial roster frame
+      let lastRoster = await buildRoster()
+      send('roster', { participants: lastRoster })
+
+      const rosterPoll = setInterval(async () => {
+        if (closed) return
+        const next = await buildRoster()
+        if (!rosterEqual(lastRoster, next)) {
+          lastRoster = next
+          send('roster', { participants: next })
+        }
+      }, ROSTER_POLL_INTERVAL_MS)
+
       // Heartbeat
       const heartbeat = setInterval(() => {
         send('heartbeat', { ts: Date.now() })
@@ -131,6 +237,7 @@ export async function GET(
       const onAbort = () => {
         closed = true
         clearInterval(lessonPoll)
+        clearInterval(rosterPoll)
         clearInterval(heartbeat)
         try {
           controller.close()
