@@ -44,19 +44,34 @@ export default function SessionView({
   const router = useRouter()
   const { leaveSession, followingHost, hostCurrentLessonId } = useActiveSession()
 
-  // Build a map of contentItemId → title for the roster display.
-  const lessonTitleById = useMemo(() => {
-    const m = new Map<number, string>()
+  // Build a map of contentItemId → { title, type } so the auto-advance push
+  // can pick the right URL param (?lesson= vs ?quiz=) and the roster can show
+  // human-readable titles. Lessons and quizzes are both content-items with
+  // globally-unique ids, so a single map covers both.
+  const itemMetaById = useMemo(() => {
+    const m = new Map<number, { title: string; type: 'lesson' | 'quiz' }>()
     for (const mod of course.modules || []) {
       for (const l of mod.lessons || []) {
-        if (typeof l?.id === 'number' && typeof l?.title === 'string') m.set(l.id, l.title)
+        if (typeof l?.id === 'number') {
+          m.set(l.id, { title: typeof l.title === 'string' ? l.title : '', type: 'lesson' })
+        }
       }
       for (const q of mod.quizzes || []) {
-        if (typeof q?.id === 'number' && typeof q?.title === 'string') m.set(q.id, q.title)
+        if (typeof q?.id === 'number') {
+          m.set(q.id, { title: typeof q.title === 'string' ? q.title : '', type: 'quiz' })
+        }
       }
     }
     return m
   }, [course])
+
+  const lessonTitleById = useMemo(() => {
+    const m = new Map<number, string>()
+    itemMetaById.forEach((meta, id) => {
+      if (meta.title) m.set(id, meta.title)
+    })
+    return m
+  }, [itemMetaById])
 
   // Heartbeat: every 30s POST an empty participant-state to keep lastActivityAt fresh.
   useEffect(() => {
@@ -87,17 +102,37 @@ export default function SessionView({
     })
   }, [sessionId, selectedLesson?.id, selectedQuiz?.id])
 
+  // Hosts broadcast their current item (lesson OR quiz) so followers can sync.
+  // Server-side /host-state enforces host-or-admin auth; this client-side gate
+  // just avoids the noise of guests POSTing 403s. The stored field is
+  // course-sessions.currentLesson (a content-items relationship) — quiz ids
+  // are content-items too, so the same field carries both.
+  useEffect(() => {
+    if (!isHost) return
+    if (!sessionId) return
+    const currentItemId = selectedLesson?.id ?? selectedQuiz?.id ?? null
+    if (currentItemId == null) return
+    void fetch(`/api/sessions/${encodeURIComponent(sessionId)}/host-state`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentLessonId: currentItemId }),
+    })
+  }, [isHost, sessionId, selectedLesson?.id, selectedQuiz?.id])
+
   // Followers auto-advance to the host's current item — works in BOTH the
-  // lobby (no lesson selected) AND the in-lesson cases. Skipped for hosts
-  // (they drive the cohort) and when Roam toggle is off.
+  // lobby (no lesson selected) AND the in-lesson/in-quiz cases. Looks up the
+  // item type so the push lands on ?quiz= for quizzes, ?lesson= for lessons.
   useEffect(() => {
     if (isHost) return
     if (!followingHost) return
     if (hostCurrentLessonId == null) return
     const currentItemId = selectedLesson?.id ?? selectedQuiz?.id ?? null
     if (currentItemId === hostCurrentLessonId) return
+    const meta = itemMetaById.get(hostCurrentLessonId)
+    const param = meta?.type === 'quiz' ? 'quiz' : 'lesson'
     router.push(
-      `/vinprovningar/${course.slug || course.id}?lesson=${hostCurrentLessonId}&session=${sessionId}`,
+      `/vinprovningar/${course.slug || course.id}?${param}=${hostCurrentLessonId}&session=${sessionId}`,
     )
   }, [
     isHost,
@@ -109,6 +144,7 @@ export default function SessionView({
     course.id,
     sessionId,
     router,
+    itemMetaById,
   ])
 
   const handleLeave = async () => {
@@ -162,7 +198,6 @@ export default function SessionView({
             userPurchasedAccess={false}
             sessionId={sessionId}
             isSessionParticipant
-            isSessionHost={isHost}
             sidebarExtra={<SessionRoster lessonTitleById={lessonTitleById} />}
           />
         ) : selectedQuiz ? (
@@ -174,7 +209,6 @@ export default function SessionView({
             userPurchasedAccess={false}
             sessionId={sessionId}
             isSessionParticipant
-            isSessionHost={isHost}
             sidebarExtra={<SessionRoster lessonTitleById={lessonTitleById} />}
           />
         ) : (
