@@ -10,7 +10,7 @@ import { SessionRoster } from './SessionRoster'
 import { FollowHostToggle } from './FollowHostToggle'
 import { RealtimeSync } from './RealtimeSync'
 import { Button } from '@/components/ui/button'
-import { LogOut } from 'lucide-react'
+import { Crown, LogOut } from 'lucide-react'
 
 interface SessionViewProps {
   course: any
@@ -18,13 +18,20 @@ interface SessionViewProps {
   selectedQuiz?: any
   selectedModule?: any
   sessionId: string
+  /** True when the viewer is the session host. Hides Follow-host toggle, disables auto-advance. */
+  isHost?: boolean
 }
 
 /**
  * Stripped session-mode UI for active session participants. Replaces the
  * marketing chrome of CourseOverview. Renders the lesson player (or quiz
- * viewer), the roster, and the Follow-host toggle. Mounts RealtimeSync once
- * so the live stream is open while this view is on screen.
+ * viewer) with the live roster docked beneath the Innehåll TOC sidebar.
+ * Mounts RealtimeSync once so the SSE stream is open while this view is on screen.
+ *
+ * For hosts: no Follow-host toggle (they drive the cohort), no auto-advance,
+ * different lobby helper copy. For followers: auto-advances to the host's
+ * current lesson when followingHost is true (covers both the lobby and the
+ * in-lesson cases).
  */
 export default function SessionView({
   course,
@@ -32,11 +39,12 @@ export default function SessionView({
   selectedQuiz,
   selectedModule,
   sessionId,
+  isHost = false,
 }: SessionViewProps) {
   const router = useRouter()
-  const { leaveSession } = useActiveSession()
+  const { leaveSession, followingHost, hostCurrentLessonId } = useActiveSession()
 
-  // Build a map of lessonId → title for the roster display.
+  // Build a map of contentItemId → title for the roster display.
   const lessonTitleById = useMemo(() => {
     const m = new Map<number, string>()
     for (const mod of course.modules || []) {
@@ -79,6 +87,30 @@ export default function SessionView({
     })
   }, [sessionId, selectedLesson?.id, selectedQuiz?.id])
 
+  // Followers auto-advance to the host's current item — works in BOTH the
+  // lobby (no lesson selected) AND the in-lesson cases. Skipped for hosts
+  // (they drive the cohort) and when Roam toggle is off.
+  useEffect(() => {
+    if (isHost) return
+    if (!followingHost) return
+    if (hostCurrentLessonId == null) return
+    const currentItemId = selectedLesson?.id ?? selectedQuiz?.id ?? null
+    if (currentItemId === hostCurrentLessonId) return
+    router.push(
+      `/vinprovningar/${course.slug || course.id}?lesson=${hostCurrentLessonId}&session=${sessionId}`,
+    )
+  }, [
+    isHost,
+    followingHost,
+    hostCurrentLessonId,
+    selectedLesson?.id,
+    selectedQuiz?.id,
+    course.slug,
+    course.id,
+    sessionId,
+    router,
+  ])
+
   const handleLeave = async () => {
     await leaveSession()
     router.push('/vinprovningar')
@@ -88,6 +120,10 @@ export default function SessionView({
     const param = item.type === 'lesson' ? `lesson=${item.id}` : `quiz=${item.id}`
     router.push(`/vinprovningar/${course.slug || course.id}?${param}&session=${sessionId}`)
   }
+
+  const lobbyHelperText = isHost
+    ? 'Välj ett moment nedan för att starta gruppsessionen — alla som följer dig hoppar med.'
+    : 'Välj ett moment nedan för att börja, eller följ med när värden navigerar.'
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,7 +135,14 @@ export default function SessionView({
           <div className="min-w-0 flex-1">
             <h1 className="font-heading text-lg sm:text-xl truncate">{course.title}</h1>
           </div>
-          <FollowHostToggle />
+          {isHost ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-300/40 bg-brand-300/10 px-3 py-1.5 text-xs font-medium text-brand-400">
+              <Crown className="h-3.5 w-3.5" />
+              Du är värden
+            </span>
+          ) : (
+            <FollowHostToggle />
+          )}
           <Button variant="outline" size="sm" onClick={handleLeave}>
             <LogOut className="mr-1.5 h-3.5 w-3.5" />
             Lämna
@@ -107,34 +150,38 @@ export default function SessionView({
         </div>
       </header>
 
-      {/* Main grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_320px] lg:px-8">
-        {/* Lesson / quiz player */}
-        <div className="min-w-0">
-          {selectedLesson ? (
-            <LessonViewer
-              course={course}
-              lesson={selectedLesson}
-              module={selectedModule}
-              userHasAccess={true}
-              userPurchasedAccess={false}
-              sessionId={sessionId}
-              isSessionParticipant
-            />
-          ) : selectedQuiz ? (
-            <CourseQuizViewer
-              course={course}
-              quiz={selectedQuiz}
-              module={selectedModule}
-              userHasAccess={true}
-              userPurchasedAccess={false}
-              sessionId={sessionId}
-              isSessionParticipant
-            />
-          ) : (
+      {/* Main column — roster lives in the LessonViewer/CourseQuizViewer sidebar
+       * via the sidebarExtra prop, or below the TOC in the lobby state. */}
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        {selectedLesson ? (
+          <LessonViewer
+            course={course}
+            lesson={selectedLesson}
+            module={selectedModule}
+            userHasAccess={true}
+            userPurchasedAccess={false}
+            sessionId={sessionId}
+            isSessionParticipant
+            isSessionHost={isHost}
+            sidebarExtra={<SessionRoster lessonTitleById={lessonTitleById} />}
+          />
+        ) : selectedQuiz ? (
+          <CourseQuizViewer
+            course={course}
+            quiz={selectedQuiz}
+            module={selectedModule}
+            userHasAccess={true}
+            userPurchasedAccess={false}
+            sessionId={sessionId}
+            isSessionParticipant
+            isSessionHost={isHost}
+            sidebarExtra={<SessionRoster lessonTitleById={lessonTitleById} />}
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
             <div className="space-y-4">
               <div className="rounded-md border border-border bg-background p-4 text-sm text-muted-foreground">
-                Välj ett moment nedan för att börja, eller följ med när värden navigerar.
+                {lobbyHelperText}
               </div>
               <CourseTableOfContents
                 modules={course.modules}
@@ -142,13 +189,11 @@ export default function SessionView({
                 onItemClick={handleItemClick}
               />
             </div>
-          )}
-        </div>
-
-        {/* Right rail: roster */}
-        <aside className="space-y-4">
-          <SessionRoster lessonTitleById={lessonTitleById} />
-        </aside>
+            <aside>
+              <SessionRoster lessonTitleById={lessonTitleById} />
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   )
