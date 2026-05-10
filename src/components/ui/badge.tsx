@@ -15,6 +15,10 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
         outline: "text-foreground",
+        // Brand-tinted pill per styleguide: peach bg, brand-orange text + faint orange border.
+        // Use for level badges, free-content callouts, and progress meters.
+        brand:
+          "border-[rgba(253,186,117,0.3)] bg-[rgba(253,186,117,0.1)] text-[#FB914C]",
       },
     },
     defaultVariants: {

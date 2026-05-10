@@ -327,7 +327,7 @@ export default function LessonViewer({
               <div className="space-y-2 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline">{module.title}</Badge>
-                  {lesson.isFree && <Badge variant="secondary">Gratis</Badge>}
+                  {lesson.isFree && <Badge variant="brand">Gratis</Badge>}
                 </div>
                 <h1 className="text-2xl md:text-3xl font-heading">{lesson.title}</h1>
                 {lesson.description && (
@@ -472,7 +472,7 @@ export default function LessonViewer({
                   <div className="px-4 pt-4 pb-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Framsteg</span>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="brand" className="text-xs">
                         {courseProgress.completedLessons}/{courseProgress.totalLessons}
                       </Badge>
                     </div>

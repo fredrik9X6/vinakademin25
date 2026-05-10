@@ -345,7 +345,7 @@ export default function CourseOverview({
                 <div className="space-y-6">
                   {/* Badge */}
                   {freeLessons > 0 && (
-                    <Badge variant="secondary" className="w-fit uppercase tracking-wide text-xs">
+                    <Badge variant="brand" className="w-fit text-xs">
                       {freeLessons} gratis moment
                     </Badge>
                   )}
@@ -409,7 +409,7 @@ export default function CourseOverview({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <div className="max-w-4xl space-y-8">
               <div className="flex items-center gap-3">
-                <Badge variant="secondary">
+                <Badge variant="brand">
                   {course.level === 'beginner' && 'Nybörjare'}
                   {course.level === 'intermediate' && 'Medel'}
                   {course.level === 'advanced' && 'Avancerad'}

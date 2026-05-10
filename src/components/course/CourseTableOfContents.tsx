@@ -156,7 +156,7 @@ export default function CourseTableOfContents({
           <CardTitle className="text-lg font-semibold">Innehåll</CardTitle>
           {courseProgress && (
             <Badge
-              variant="secondary"
+              variant="brand"
               className={`text-xs ${hideMobileProgress ? 'hidden lg:inline-flex' : ''}`}
             >
               {courseProgress.completedLessons}/{courseProgress.totalLessons}
