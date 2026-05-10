@@ -97,6 +97,17 @@ export const SessionParticipants: CollectionConfig = {
         description: 'Outcome of the claim-email decision for operator debugging.',
       },
     },
+    {
+      name: 'currentLessonId',
+      type: 'relationship',
+      relationTo: 'content-items',
+      hasMany: false,
+      admin: {
+        readOnly: true,
+        description:
+          'The lesson this participant is currently viewing. Updated by /api/sessions/[id]/participant-state on every page-view and 30s heartbeat. Read by the SSE roster broadcaster.',
+      },
+    },
   ],
   timestamps: true,
 }
