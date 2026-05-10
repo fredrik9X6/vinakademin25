@@ -1255,6 +1255,14 @@ export interface SessionParticipant {
    * Last time the participant was active
    */
   lastActivityAt?: string | null;
+  /**
+   * Set by the cron on every per-participant decision (sent, skipped, or failed). Idempotency guard — prevents the cron from re-processing the same participant.
+   */
+  claimEmailProcessedAt?: string | null;
+  /**
+   * Outcome of the claim-email decision for operator debugging.
+   */
+  claimEmailStatus?: ('sent' | 'skipped_existing_user' | 'skipped_no_email' | 'failed') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1310,6 +1318,14 @@ export interface CourseSession {
    * Session automatically expires after this time (24 hours default)
    */
   expiresAt: string;
+  /**
+   * Stamped by the beforeChange hook when status transitions to "completed". Read by the claim-email cron to compute the 30-minute window.
+   */
+  completedAt?: string | null;
+  /**
+   * Set by the cron after iterating participants for this session. Cleared on re-completion so the cron can re-process newly-added participants.
+   */
+  claimEmailsDispatchedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3858,6 +3874,8 @@ export interface CourseSessionsSelect<T extends boolean = true> {
   participantCount?: T;
   maxParticipants?: T;
   expiresAt?: T;
+  completedAt?: T;
+  claimEmailsDispatchedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3873,6 +3891,8 @@ export interface SessionParticipantsSelect<T extends boolean = true> {
   email?: T;
   isActive?: T;
   lastActivityAt?: T;
+  claimEmailProcessedAt?: T;
+  claimEmailStatus?: T;
   updatedAt?: T;
   createdAt?: T;
 }

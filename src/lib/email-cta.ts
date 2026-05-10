@@ -79,3 +79,16 @@ export function emailWarmCalloutStyle(): string {
 }
 
 export const emailBrandOrange = PRIMARY
+
+/**
+ * Escapes a string for safe interpolation into HTML email bodies.
+ * Use for any value that originates from user, admin, or DB content.
+ */
+export function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}

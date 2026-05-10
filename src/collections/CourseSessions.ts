@@ -14,6 +14,27 @@ export const CourseSessions: CollectionConfig = {
     update: ({ req }) => Boolean(req.user), // Only logged-in users can update
     delete: ({ req }) => req.user?.role === 'admin', // Only admins can delete
   },
+  hooks: {
+    beforeChange: [
+      ({ data, originalDoc, operation }) => {
+        // Stamp completedAt and reset claimEmailsDispatchedAt on the → completed
+        // transition. Re-completing a session re-stamps completedAt and re-arms
+        // the cron so newly-added participants can still receive a claim email,
+        // while per-participant claimEmailProcessedAt prevents duplicate sends.
+        if (operation !== 'update') return data
+        const wasCompleted = originalDoc?.status === 'completed'
+        const isCompleted = data?.status === 'completed'
+        if (!wasCompleted && isCompleted) {
+          return {
+            ...data,
+            completedAt: new Date().toISOString(),
+            claimEmailsDispatchedAt: null,
+          }
+        }
+        return data
+      },
+    ],
+  },
   fields: [
     {
       name: 'course',
@@ -123,6 +144,28 @@ export const CourseSessions: CollectionConfig = {
       required: true,
       admin: {
         description: 'Session automatically expires after this time (24 hours default)',
+      },
+    },
+    {
+      name: 'completedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        date: { pickerAppearance: 'dayAndTime' },
+        description:
+          'Stamped by the beforeChange hook when status transitions to "completed". Read by the claim-email cron to compute the 30-minute window.',
+      },
+    },
+    {
+      name: 'claimEmailsDispatchedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        date: { pickerAppearance: 'dayAndTime' },
+        description:
+          'Set by the cron after iterating participants for this session. Cleared on re-completion so the cron can re-process newly-added participants.',
       },
     },
   ],
