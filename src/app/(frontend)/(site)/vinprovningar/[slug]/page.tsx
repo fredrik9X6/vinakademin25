@@ -422,6 +422,9 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     !showCompletionPage
   ) {
     const SessionView = (await import('@/components/course/SessionView')).default
+    const sessionHostId =
+      typeof sessionData.host === 'object' ? sessionData.host?.id : sessionData.host
+    const isHostViewer = !!currentUser && sessionHostId === currentUser.id
     return (
       <div className="min-h-screen bg-background">
         <CourseSchema course={course} />
@@ -431,6 +434,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
           selectedQuiz={selectedQuiz}
           selectedModule={selectedModule}
           sessionId={String(sessionData.id)}
+          isHost={isHostViewer}
         />
       </div>
     )

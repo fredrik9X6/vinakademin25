@@ -96,6 +96,10 @@ interface LessonViewerProps {
   isSessionParticipant?: boolean
   // Separate prop for actual purchase status (for ToC display)
   userPurchasedAccess?: boolean
+  /** True when the viewer is the host of the active session — disables follower auto-advance. */
+  isSessionHost?: boolean
+  /** Optional content rendered below the Innehåll TOC card in the sidebar (e.g. session roster). */
+  sidebarExtra?: React.ReactNode
 }
 
 export default function LessonViewer({
@@ -106,6 +110,8 @@ export default function LessonViewer({
   sessionId,
   isSessionParticipant = false,
   userPurchasedAccess = false,
+  isSessionHost = false,
+  sidebarExtra,
 }: LessonViewerProps) {
   const router = useRouter()
   const {
@@ -115,7 +121,7 @@ export default function LessonViewer({
     isLessonCompleted,
     updateLessonProgress,
   } = useCourseProgress(course.id, isSessionParticipant) // Pass isSessionParticipant to disable progress tracking
-  const { activeSession, followingHost, hostCurrentLessonId } = useActiveSession()
+  const { activeSession } = useActiveSession()
   const { user: authUser } = useAuth()
 
   const [isTocOpen, setIsTocOpen] = useState(false)
@@ -175,33 +181,22 @@ export default function LessonViewer({
     sessionId ||
     (activeSession && activeSession.courseId === course.id ? activeSession.sessionId : null)
 
-  // If the viewer has a Payload session AND we're inside a CourseSession context,
-  // best-effort POST the current lesson id as the host pointer. The server-side
-  // /host-state endpoint enforces host-or-admin role; non-hosts get a silent 403.
+  // If the viewer is the host AND we're inside a CourseSession context,
+  // POST the current lesson id as the cohort pointer. Server enforces the
+  // host check; this is just an early gate so non-hosts don't trigger 403s.
+  // Auto-advance for followers lives in SessionView so it works in both
+  // the lesson view and the lobby state.
   useEffect(() => {
     if (!effectiveSessionId) return
     if (!authUser) return
+    if (!isSessionHost) return
     void fetch(`/api/sessions/${encodeURIComponent(effectiveSessionId)}/host-state`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ currentLessonId: lesson.id }),
     })
-  }, [effectiveSessionId, authUser, lesson.id])
-
-  // Followers (Following toggle ON) auto-advance when the host's pointer
-  // changes to a different lesson. The dependency on `lesson.id` ensures
-  // this re-runs after the navigation completes — without it, a host on
-  // lesson N+2 while we're on N would only step once.
-  useEffect(() => {
-    if (!effectiveSessionId) return
-    if (!followingHost) return
-    if (hostCurrentLessonId == null) return
-    if (hostCurrentLessonId === lesson.id) return
-    router.push(
-      `/vinprovningar/${course.slug || course.id}?lesson=${hostCurrentLessonId}&session=${effectiveSessionId}`,
-    )
-  }, [effectiveSessionId, followingHost, hostCurrentLessonId, lesson.id, course.slug, course.id, router])
+  }, [effectiveSessionId, authUser, isSessionHost, lesson.id])
 
   const buildUrl = (base: string) => {
     return effectiveSessionId ? `${base}&session=${effectiveSessionId}` : base
@@ -559,6 +554,8 @@ export default function LessonViewer({
                   </CardContent>
                 </Card>
               )}
+
+              {sidebarExtra}
             </div>
           </div>
         </div>
