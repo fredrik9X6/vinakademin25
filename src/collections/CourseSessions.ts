@@ -14,6 +14,27 @@ export const CourseSessions: CollectionConfig = {
     update: ({ req }) => Boolean(req.user), // Only logged-in users can update
     delete: ({ req }) => req.user?.role === 'admin', // Only admins can delete
   },
+  hooks: {
+    beforeChange: [
+      ({ data, originalDoc, operation }) => {
+        // Stamp completedAt and reset claimEmailsDispatchedAt on the → completed
+        // transition. Re-completing a session re-stamps completedAt and re-arms
+        // the cron so newly-added participants can still receive a claim email,
+        // while per-participant claimEmailProcessedAt prevents duplicate sends.
+        if (operation !== 'update') return data
+        const wasCompleted = originalDoc?.status === 'completed'
+        const isCompleted = data?.status === 'completed'
+        if (!wasCompleted && isCompleted) {
+          return {
+            ...data,
+            completedAt: new Date().toISOString(),
+            claimEmailsDispatchedAt: null,
+          }
+        }
+        return data
+      },
+    ],
+  },
   fields: [
     {
       name: 'course',
