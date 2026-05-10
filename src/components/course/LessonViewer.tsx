@@ -32,7 +32,6 @@ import { useCourseProgress } from '@/hooks/use-course-progress'
 import { getFlattenedCourseItems } from '@/lib/course-utils'
 import ReviewComparison from './ReviewComparison'
 import { useActiveSession } from '@/context/SessionContext'
-import { useAuth } from '@/context/AuthContext'
 // QuizViewer removed
 
 interface LessonViewerProps {
@@ -96,8 +95,6 @@ interface LessonViewerProps {
   isSessionParticipant?: boolean
   // Separate prop for actual purchase status (for ToC display)
   userPurchasedAccess?: boolean
-  /** True when the viewer is the host of the active session — disables follower auto-advance. */
-  isSessionHost?: boolean
   /** Optional content rendered below the Innehåll TOC card in the sidebar (e.g. session roster). */
   sidebarExtra?: React.ReactNode
 }
@@ -110,7 +107,6 @@ export default function LessonViewer({
   sessionId,
   isSessionParticipant = false,
   userPurchasedAccess = false,
-  isSessionHost = false,
   sidebarExtra,
 }: LessonViewerProps) {
   const router = useRouter()
@@ -122,7 +118,6 @@ export default function LessonViewer({
     updateLessonProgress,
   } = useCourseProgress(course.id, isSessionParticipant) // Pass isSessionParticipant to disable progress tracking
   const { activeSession } = useActiveSession()
-  const { user: authUser } = useAuth()
 
   const [isTocOpen, setIsTocOpen] = useState(false)
   const [showReviewComparison, setShowReviewComparison] = useState(false)
@@ -181,22 +176,9 @@ export default function LessonViewer({
     sessionId ||
     (activeSession && activeSession.courseId === course.id ? activeSession.sessionId : null)
 
-  // If the viewer is the host AND we're inside a CourseSession context,
-  // POST the current lesson id as the cohort pointer. Server enforces the
-  // host check; this is just an early gate so non-hosts don't trigger 403s.
-  // Auto-advance for followers lives in SessionView so it works in both
-  // the lesson view and the lobby state.
-  useEffect(() => {
-    if (!effectiveSessionId) return
-    if (!authUser) return
-    if (!isSessionHost) return
-    void fetch(`/api/sessions/${encodeURIComponent(effectiveSessionId)}/host-state`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ currentLessonId: lesson.id }),
-    })
-  }, [effectiveSessionId, authUser, isSessionHost, lesson.id])
+  // Host pacing (host-state POST) and follower auto-advance live in
+  // SessionView so they cover both lesson and quiz selections uniformly.
+  // Nothing to do here.
 
   const buildUrl = (base: string) => {
     return effectiveSessionId ? `${base}&session=${effectiveSessionId}` : base

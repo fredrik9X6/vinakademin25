@@ -37,8 +37,6 @@ interface CourseQuizViewerProps {
   isSessionParticipant?: boolean
   // Separate prop for actual purchase status (for ToC display)
   userPurchasedAccess?: boolean
-  /** True when the viewer is the host of the active session. */
-  isSessionHost?: boolean
   /** Optional content rendered below the Innehåll TOC card in the sidebar (e.g. session roster). */
   sidebarExtra?: React.ReactNode
 }
@@ -51,7 +49,6 @@ export default function CourseQuizViewer({
   sessionId,
   isSessionParticipant = false,
   userPurchasedAccess = false,
-  isSessionHost: _isSessionHost = false,
   sidebarExtra,
 }: CourseQuizViewerProps) {
   const router = useRouter()
