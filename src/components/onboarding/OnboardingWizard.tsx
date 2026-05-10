@@ -322,7 +322,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
                   <Label htmlFor="onb-course" className="text-base">
                     Framsteg
                   </Label>
-                  <p className="text-muted-foreground text-xs">Påminnelser om dina vinprovningar och lektioner.</p>
+                  <p className="text-muted-foreground text-xs">Påminnelser om dina vinprovningar och moment.</p>
                 </div>
                 <Switch
                   id="onb-course"

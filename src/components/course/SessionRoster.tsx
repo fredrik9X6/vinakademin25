@@ -38,7 +38,7 @@ export function SessionRoster({ selfParticipantId, lessonTitleById }: SessionRos
           const lessonLabel =
             p.currentLessonId == null
               ? 'Lobbyn'
-              : lessonTitleById?.get(p.currentLessonId) ?? `Lektion ${p.currentLessonId}`
+              : lessonTitleById?.get(p.currentLessonId) ?? `Moment ${p.currentLessonId}`
           return (
             <li
               key={`${p.isHost ? 'host' : 'p'}-${p.id}`}

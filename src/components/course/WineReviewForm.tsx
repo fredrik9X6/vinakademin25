@@ -391,7 +391,7 @@ export function WineReviewForm({
       if (!primaryFlavours || primaryFlavours.length === 0)
         newErrors['primaryFlavours'] = 'Välj minst en primär smak'
     }
-    if (!wineId) newErrors['wine'] = 'Inget vin kopplat till denna lektion'
+    if (!wineId) newErrors['wine'] = 'Inget vin kopplat till detta moment'
 
     setErrors(newErrors)
     if (Object.keys(newErrors).length > 0) {
