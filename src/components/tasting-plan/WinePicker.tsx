@@ -26,7 +26,7 @@ export type LibraryWineResult = {
   id: number
   title: string
   producer: string | null
-  vintage: string | null
+  vintage: string | number | null
   region: string | null
   thumbnailUrl: string | null
 }

@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from '@dnd-kit/sortable'
-import type { TastingPlan, Wine } from '@/payload-types'
+import type { TastingPlan } from '@/payload-types'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -57,23 +57,25 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
     const hostNotes = w.hostNotes ?? ''
     const key = w.id ?? nextKey()
     if (w.libraryWine && typeof w.libraryWine === 'object') {
-      const lib = w.libraryWine as Wine
+      const lib = w.libraryWine
+      const region =
+        typeof lib.region === 'object' && lib.region ? lib.region.name ?? null : null
+      const image = lib.image
+      const thumbnailUrl =
+        typeof image === 'object' && image
+          ? image.sizes?.thumbnail?.url ?? image.url ?? null
+          : null
       return {
         kind: 'library',
         key,
         libraryWine: lib.id,
         wineSnapshot: {
           id: lib.id,
-          title: (lib as any).title || (lib as any).name || `Vin #${lib.id}`,
-          producer: (lib as any).producer ?? (lib as any).winery ?? null,
-          vintage: (lib as any).vintage ?? null,
-          region: typeof (lib as any).region === 'object' ? (lib as any).region?.name ?? null : null,
-          thumbnailUrl:
-            typeof (lib as any).image === 'object' && (lib as any).image?.sizes?.thumbnail?.url
-              ? (lib as any).image.sizes.thumbnail.url
-              : typeof (lib as any).image === 'object'
-              ? (lib as any).image?.url ?? null
-              : null,
+          title: lib.name || `Vin #${lib.id}`,
+          producer: lib.winery ?? null,
+          vintage: lib.vintage ?? null,
+          region,
+          thumbnailUrl,
         },
         pourOrder,
         hostNotes,
