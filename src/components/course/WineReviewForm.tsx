@@ -22,12 +22,22 @@ import { useAuth } from '@/context/AuthContext'
 import ReviewComparison, { WineReview as ComparisonReview } from './ReviewComparison'
 import { Section, InputRow } from './WineReviewFormHelpers'
 
+interface CustomWineSnapshot {
+  name: string
+  producer?: string
+  vintage?: string
+  type?: 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
+  systembolagetUrl?: string
+  priceSek?: number
+}
+
 interface WineReviewFormProps {
   lessonId: number
   courseId?: number
   sessionId?: string
   onSubmit?: () => void
   wineIdProp?: number | string // Accept wine ID from parent to bypass permission issues
+  customWineSnapshot?: CustomWineSnapshot
 }
 
 type ReviewDoc = {
@@ -47,6 +57,7 @@ export function WineReviewForm({
   sessionId,
   onSubmit,
   wineIdProp,
+  customWineSnapshot,
 }: WineReviewFormProps) {
   const [rating, setRating] = React.useState<number>(0)
   const [buyAgain, setBuyAgain] = React.useState<boolean>(false)
@@ -95,6 +106,8 @@ export function WineReviewForm({
   const { user } = useAuth()
 
   const fetchAnswerKey = React.useCallback(async () => {
+    // Plan-driven sessions pass lessonId=0 sentinel (no underlying lesson). Skip the fetch.
+    if (!lessonId) return
     try {
       // Fetch content-item (lesson) with depth=2 to resolve answerKeyReview.wine
       const res = await fetch(`/api/content-items/${lessonId}?depth=2`, { credentials: 'include' })
@@ -183,10 +196,11 @@ export function WineReviewForm({
 
   // Fetch latest submission when wineId is available
   React.useEffect(() => {
-    if (wineId) {
+    // Custom-wine reviews have no stable id to query against — skip the fetch.
+    if (wineId && !customWineSnapshot) {
       fetchLatestSubmission()
     }
-  }, [wineId, fetchLatestSubmission])
+  }, [wineId, customWineSnapshot, fetchLatestSubmission])
 
   // Function to populate form with existing review data
   const populateFormWithReview = React.useCallback((review: ReviewDoc) => {
@@ -391,7 +405,7 @@ export function WineReviewForm({
       if (!primaryFlavours || primaryFlavours.length === 0)
         newErrors['primaryFlavours'] = 'Välj minst en primär smak'
     }
-    if (!wineId) newErrors['wine'] = 'Inget vin kopplat till detta moment'
+    if (!wineId && !customWineSnapshot) newErrors['wine'] = 'Inget vin kopplat till detta moment'
 
     setErrors(newErrors)
     if (Object.keys(newErrors).length > 0) {
@@ -402,9 +416,13 @@ export function WineReviewForm({
     setIsSubmitting(true)
     try {
       // Convert IDs to numbers for Payload relationships
-      const wineIdNum = wineId ? Number(wineId) : undefined
       const sessionIdNum = sessionId ? Number(sessionId) : undefined
       const participantIdNum = participantId ? Number(participantId) : undefined
+
+      // Either send a library wine relationship or a custom-wine snapshot (XOR).
+      const wineIdentity = customWineSnapshot
+        ? { customWine: customWineSnapshot }
+        : { wine: wineId ? Number(wineId) : undefined }
 
       const res = await fetch('/api/reviews', {
         method: 'POST',
@@ -412,7 +430,7 @@ export function WineReviewForm({
         credentials: 'include',
         body: JSON.stringify({
           // Note: lesson field removed - content items reference reviews, not the other way around
-          wine: wineIdNum,
+          ...wineIdentity,
           rating,
           buyAgain,
           reviewText: notes,

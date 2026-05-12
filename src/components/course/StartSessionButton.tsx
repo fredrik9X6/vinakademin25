@@ -17,17 +17,26 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useActiveSession } from '@/context/SessionContext'
 import { QRCodeSVG } from 'qrcode.react'
 
-interface StartSessionButtonProps {
-  courseId: number
-  courseTitle: string
-  courseSlug?: string
-}
+type StartSessionButtonProps =
+  | {
+      courseId: number
+      courseTitle: string
+      courseSlug?: string
+      tastingPlanId?: never
+      planTitle?: never
+    }
+  | {
+      tastingPlanId: number
+      planTitle: string
+      courseId?: never
+      courseTitle?: never
+      courseSlug?: never
+    }
 
-export default function StartSessionButton({
-  courseId,
-  courseTitle,
-  courseSlug,
-}: StartSessionButtonProps) {
+export default function StartSessionButton(props: StartSessionButtonProps) {
+  const isPlan = 'tastingPlanId' in props && props.tastingPlanId != null
+  const titleText = isPlan ? props.planTitle : props.courseTitle
+  const courseSlug = isPlan ? undefined : props.courseSlug
   const router = useRouter()
   const { joinSession } = useActiveSession()
   const [isOpen, setIsOpen] = useState(false)
@@ -50,8 +59,10 @@ export default function StartSessionButton({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          courseId,
-          sessionName: sessionName || `${courseTitle} - Gruppsession`,
+          ...(isPlan
+            ? { tastingPlanId: props.tastingPlanId }
+            : { courseId: props.courseId }),
+          sessionName: sessionName || `${titleText} - Gruppsession`,
           maxParticipants: 50,
         }),
       })
@@ -94,19 +105,26 @@ export default function StartSessionButton({
     if (session) {
       const sessionData = {
         sessionId: String(session.id),
-        courseSlug: String(courseSlug || courseId),
-        courseId: courseId,
-        courseName: courseTitle,
-        sessionName: session.sessionName || `Session ${session.joinCode}`,
+        courseSlug: isPlan ? '' : String(courseSlug || props.courseId),
+        courseId: isPlan ? 0 : props.courseId,
+        tastingPlanId: isPlan ? props.tastingPlanId : undefined,
+        courseName: titleText,
+        sessionName: sessionName || `${titleText} - Gruppsession`,
         expiresAt: session.expiresAt,
       }
       joinSession(sessionData)
     }
 
     setIsOpen(false)
-    // Redirect to course with session parameter, use slug if available
-    const coursePath = courseSlug || courseId
-    router.push(`/vinprovningar/${coursePath}?session=${session.id}&host=true`)
+    if (isPlan) {
+      router.push(
+        `/mina-provningar/planer/${props.tastingPlanId}?session=${session.id}&host=true`,
+      )
+    } else {
+      // Redirect to course with session parameter, use slug if available
+      const coursePath = courseSlug || props.courseId
+      router.push(`/vinprovningar/${coursePath}?session=${session.id}&host=true`)
+    }
   }
 
   const handleClose = () => {
@@ -149,7 +167,7 @@ export default function StartSessionButton({
                     type="text"
                     value={sessionName}
                     onChange={(e) => setSessionName(e.target.value)}
-                    placeholder={`${courseTitle} - Gruppsession`}
+                    placeholder={`${titleText} - Gruppsession`}
                     maxLength={100}
                     disabled={loading}
                   />

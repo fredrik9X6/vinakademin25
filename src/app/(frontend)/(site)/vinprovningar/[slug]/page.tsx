@@ -435,6 +435,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
           selectedModule={selectedModule}
           sessionId={String(sessionData.id)}
           isHost={isHostViewer}
+          session={sessionData}
         />
       </div>
     )

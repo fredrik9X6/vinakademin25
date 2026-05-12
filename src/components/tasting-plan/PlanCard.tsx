@@ -87,7 +87,7 @@ export function PlanCard({ plan }: PlanCardProps) {
     <>
       <Card className="relative p-4 hover:shadow-md transition-shadow flex flex-col gap-3">
         <Link
-          href={`/skapa-provning/${plan.id}`}
+          href={`/mina-provningar/planer/${plan.id}`}
           className="absolute inset-0 z-0"
           aria-label={plan.title}
         />
