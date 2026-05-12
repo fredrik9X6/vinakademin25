@@ -20,10 +20,13 @@ function generateJoinCode(): string {
 
 /**
  * POST /api/sessions/create
- * Create a new course session for group learning
+ * Create a new live session — either from an admin-authored course
+ * (`courseId`) or from a member-authored tasting plan (`tastingPlanId`).
+ * Exactly one of the two must be provided.
  *
  * Body:
- * - courseId: number (required)
+ * - courseId?: number (XOR with tastingPlanId)
+ * - tastingPlanId?: number (XOR with courseId; caller must own the plan)
  * - sessionName?: string (optional)
  * - maxParticipants?: number (default: 50)
  */
