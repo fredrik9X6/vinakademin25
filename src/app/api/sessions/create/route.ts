@@ -50,20 +50,49 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { courseId, sessionName, maxParticipants = 50 } = body
+    const { courseId, tastingPlanId, sessionName, maxParticipants = 50 } = body
 
-    if (!courseId) {
-      return NextResponse.json({ error: 'courseId is required' }, { status: 400 })
+    // XOR: exactly one of courseId or tastingPlanId is required.
+    if (!courseId && !tastingPlanId) {
+      return NextResponse.json(
+        { error: 'Either courseId or tastingPlanId is required' },
+        { status: 400 },
+      )
+    }
+    if (courseId && tastingPlanId) {
+      return NextResponse.json(
+        { error: 'Provide exactly one of courseId or tastingPlanId, not both' },
+        { status: 400 },
+      )
     }
 
-    // Verify course exists
-    const course = await payload.findByID({
-      collection: 'vinprovningar',
-      id: courseId,
-    })
-
-    if (!course) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 })
+    // Verify the referenced source exists (and, for plans, that the caller owns it).
+    if (courseId) {
+      const course = await payload.findByID({
+        collection: 'vinprovningar',
+        id: courseId,
+      })
+      if (!course) {
+        return NextResponse.json({ error: 'Course not found' }, { status: 404 })
+      }
+    } else {
+      const plan = await payload.findByID({
+        collection: 'tasting-plans',
+        id: tastingPlanId,
+        overrideAccess: true, // we do the owner check explicitly below
+      })
+      if (!plan) {
+        return NextResponse.json({ error: 'Tasting plan not found' }, { status: 404 })
+      }
+      const planOwnerId =
+        typeof plan.owner === 'object' ? plan.owner?.id : plan.owner
+      const isAdmin = user.role === 'admin'
+      if (!isAdmin && planOwnerId !== user.id) {
+        return NextResponse.json(
+          { error: 'You can only start a session from your own tasting plan' },
+          { status: 403 },
+        )
+      }
     }
 
     // Generate unique join code
@@ -103,7 +132,8 @@ export async function POST(request: NextRequest) {
     const session = await payload.create({
       collection: 'course-sessions',
       data: {
-        course: courseId,
+        course: courseId ?? undefined,
+        tastingPlan: tastingPlanId ?? undefined,
         host: user.id,
         joinCode,
         sessionName: sessionName || `${hostName}'s Session`,
