@@ -115,7 +115,6 @@ export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePicker
                     }}
                   >
                     {r.thumbnailUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={r.thumbnailUrl}
                         alt=""
