@@ -11,6 +11,8 @@ import { FollowHostToggle } from './FollowHostToggle'
 import { RealtimeSync } from './RealtimeSync'
 import { Button } from '@/components/ui/button'
 import { Crown, LogOut } from 'lucide-react'
+import { PlanSessionContent } from '@/components/tasting-plan/PlanSessionContent'
+import type { CourseSession, TastingPlan } from '@/payload-types'
 
 interface SessionViewProps {
   course: any
@@ -20,6 +22,12 @@ interface SessionViewProps {
   sessionId: string
   /** True when the viewer is the session host. Hides Follow-host toggle, disables auto-advance. */
   isHost?: boolean
+  /**
+   * Full session doc. When `session.course` is null and `session.tastingPlan`
+   * is populated, the view branches into PlanSessionContent (flat wine list)
+   * instead of the course modules/lessons UI.
+   */
+  session?: CourseSession | null
 }
 
 /**
@@ -40,9 +48,31 @@ export default function SessionView({
   selectedModule,
   sessionId,
   isHost = false,
+  session = null,
 }: SessionViewProps) {
   const router = useRouter()
   const { leaveSession, followingHost, hostCurrentLessonId } = useActiveSession()
+
+  // Plan-driven session — render flat wine list instead of course modules/lessons.
+  // The session pacing pointer (session.currentLesson) is reused to carry the
+  // active wine's pourOrder; the host-state route accepts a numeric currentLessonId
+  // which we use generically here. The roster sidebar is reused as-is.
+  if (
+    session &&
+    !session.course &&
+    session.tastingPlan &&
+    typeof session.tastingPlan === 'object'
+  ) {
+    return (
+      <PlanSessionContent
+        session={session}
+        plan={session.tastingPlan as TastingPlan}
+        isHost={isHost}
+        followingHost={followingHost}
+        sidebarExtra={<SessionRoster lessonTitleById={new Map()} />}
+      />
+    )
+  }
 
   // Build a map of contentItemId → { title, type } so the auto-advance push
   // can pick the right URL param (?lesson= vs ?quiz=) and the roster can show
