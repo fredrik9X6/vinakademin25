@@ -140,6 +140,12 @@ export function TopNavHeader() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link href="/mina-provningar/planer" className="cursor-pointer">
+                      <Wine className="mr-2 h-4 w-4" />
+                      Mina planer
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/profil?tab=uppgifter" className="cursor-pointer">
                       <UserCircleIcon className="mr-2 h-4 w-4" />
                       Konto
