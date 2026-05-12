@@ -6,8 +6,12 @@ import { toast } from 'sonner'
 
 interface SessionData {
   sessionId: string
+  // Either a course session (courseSlug + courseId set) or a plan session (tastingPlanId set).
+  // courseName carries the display title in both modes; legacy course fields are required for
+  // course sessions and ignored when tastingPlanId is set.
   courseSlug: string
   courseId: number
+  tastingPlanId?: number
   courseName: string
   sessionName: string
   expiresAt: string
@@ -57,10 +61,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const isOnSessionPage = useCallback(() => {
     if (!activeSession) return false
     const currentSessionId = searchParams.get('session')
-    return (
-      pathname.includes(`/vinprovningar/${activeSession.courseSlug}`) &&
-      currentSessionId === activeSession.sessionId
-    )
+    if (currentSessionId !== activeSession.sessionId) return false
+    if (activeSession.tastingPlanId) {
+      return pathname.includes(`/mina-provningar/planer/${activeSession.tastingPlanId}`)
+    }
+    return pathname.includes(`/vinprovningar/${activeSession.courseSlug}`)
   }, [activeSession, pathname, searchParams])
 
   // Load session from localStorage on mount
@@ -205,6 +210,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const getSessionUrl = useCallback(() => {
     if (!activeSession) return null
+    if (activeSession.tastingPlanId) {
+      return `/mina-provningar/planer/${activeSession.tastingPlanId}?session=${activeSession.sessionId}`
+    }
     return `/vinprovningar/${activeSession.courseSlug}?session=${activeSession.sessionId}`
   }, [activeSession])
 

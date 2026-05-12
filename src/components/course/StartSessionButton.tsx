@@ -103,23 +103,15 @@ export default function StartSessionButton(props: StartSessionButtonProps) {
   const handleStartSession = () => {
     // Store session metadata using context for persistent banner
     if (session) {
-      const sessionData = isPlan
-        ? {
-            sessionId: String(session.id),
-            courseSlug: String(props.tastingPlanId),
-            courseId: props.tastingPlanId,
-            courseName: titleText,
-            sessionName: session.sessionName || `Session ${session.joinCode}`,
-            expiresAt: session.expiresAt,
-          }
-        : {
-            sessionId: String(session.id),
-            courseSlug: String(courseSlug || props.courseId),
-            courseId: props.courseId,
-            courseName: titleText,
-            sessionName: session.sessionName || `Session ${session.joinCode}`,
-            expiresAt: session.expiresAt,
-          }
+      const sessionData = {
+        sessionId: session.id,
+        courseSlug: isPlan ? '' : String(courseSlug || props.courseId),
+        courseId: isPlan ? 0 : props.courseId,
+        tastingPlanId: isPlan ? props.tastingPlanId : undefined,
+        courseName: titleText,
+        sessionName: sessionName || `${titleText} - Gruppsession`,
+        expiresAt: session.expiresAt,
+      }
       joinSession(sessionData)
     }
 
