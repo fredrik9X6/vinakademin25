@@ -15,6 +15,24 @@ export const CourseSessions: CollectionConfig = {
     delete: ({ req }) => req.user?.role === 'admin', // Only admins can delete
   },
   hooks: {
+    beforeValidate: [
+      ({ data }) => {
+        if (!data) return data
+        const hasCourse = data.course != null && data.course !== ''
+        const hasPlan = data.tastingPlan != null && data.tastingPlan !== ''
+        if (hasCourse && hasPlan) {
+          throw new Error(
+            'CourseSessions: a session must be driven by EITHER a course or a tastingPlan, not both.',
+          )
+        }
+        if (!hasCourse && !hasPlan) {
+          throw new Error(
+            'CourseSessions: a session must have either a course or a tastingPlan set.',
+          )
+        }
+        return data
+      },
+    ],
     beforeChange: [
       ({ data, originalDoc, operation }) => {
         // Stamp completedAt and reset claimEmailsDispatchedAt on the → completed
@@ -40,9 +58,19 @@ export const CourseSessions: CollectionConfig = {
       name: 'course',
       type: 'relationship',
       relationTo: 'vinprovningar',
-      required: true,
+      required: false,
       admin: {
-        description: 'The course this session is for',
+        description: 'A course (Vinprovningar) OR a tastingPlan must be set — XOR enforced by beforeValidate.',
+      },
+    },
+    {
+      name: 'tastingPlan',
+      type: 'relationship',
+      relationTo: 'tasting-plans',
+      hasMany: false,
+      admin: {
+        description:
+          'Set when this session is driven by a member-authored plan. XOR with course.',
       },
     },
     {

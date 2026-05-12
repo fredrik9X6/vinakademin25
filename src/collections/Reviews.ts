@@ -33,6 +33,24 @@ export const Reviews: CollectionConfig = {
   },
 
   hooks: {
+    beforeValidate: [
+      ({ data }) => {
+        if (!data) return data
+        const hasLibrary = data.wine != null && data.wine !== ''
+        const hasCustom = !!data.customWine?.name && String(data.customWine.name).trim() !== ''
+        if (hasLibrary && hasCustom) {
+          throw new Error(
+            'Reviews: välj antingen ett bibliotekvin eller fyll i customWine — inte båda.',
+          )
+        }
+        if (!hasLibrary && !hasCustom) {
+          throw new Error(
+            'Reviews: ange ett bibliotekvin eller fyll i namn på customWine.',
+          )
+        }
+        return data
+      },
+    ],
     beforeChange: [
       async ({ req, operation, data, originalDoc }) => {
         // Always return data early if form building (no user context)
@@ -115,11 +133,14 @@ export const Reviews: CollectionConfig = {
         }
         return data
       },
-      // Generate title from wine name and rating
-      async ({ data, req, operation }) => {
+      // Generate title from wine name (or customWine.name) and rating.
+      async ({ data, req, operation: _op }) => {
         if (!data) return data
-        
-        // Generate title from wine name and rating
+
+        const rating = data.rating
+        const stars = rating && typeof rating === 'number' ? '★'.repeat(rating) : ''
+
+        // Library wine path
         if (data.wine) {
           try {
             const wineId = typeof data.wine === 'object' ? data.wine.id : data.wine
@@ -129,24 +150,28 @@ export const Reviews: CollectionConfig = {
                 id: typeof wineId === 'string' ? parseInt(wineId) : wineId,
                 depth: 0,
               })
-              
               if (wine?.name) {
-                const rating = data.rating
-                const stars = rating && typeof rating === 'number' ? '★'.repeat(rating) : ''
                 data.title = `${wine.name}${stars ? ` - ${stars}` : ''}`
+                return data
               }
             }
-          } catch (error) {
-            // If wine fetch fails, keep existing title or use fallback
-            if (!data.title) {
-              data.title = `Review #${data.id || 'New'}`
-            }
+          } catch {
+            // fall through to customWine / fallback below
           }
-        } else if (!data.title && data.id) {
-          // If no wine but we have an ID, use fallback
-          data.title = `Review #${data.id}`
         }
-        
+
+        // Custom-wine snapshot path
+        const customName =
+          typeof data.customWine?.name === 'string' ? data.customWine.name.trim() : ''
+        if (customName) {
+          data.title = `${customName}${stars ? ` - ${stars}` : ''}`
+          return data
+        }
+
+        // Fallback
+        if (!data.title) {
+          data.title = `Review #${data.id || 'New'}`
+        }
         return data
       },
     ],
@@ -267,8 +292,21 @@ export const Reviews: CollectionConfig = {
       name: 'wine',
       type: 'relationship',
       relationTo: 'wines',
-      required: true,
-      admin: { description: 'The wine being reviewed' },
+      required: false,
+      admin: { description: 'Library wine, OR leave empty and fill customWine below.' },
+    },
+    {
+      name: 'customWine',
+      type: 'group',
+      admin: { description: 'Use when the wine is not in our library.' },
+      fields: [
+        { name: 'name', type: 'text' },
+        { name: 'producer', type: 'text' },
+        { name: 'vintage', type: 'text' },
+        { name: 'type', type: 'text' },
+        { name: 'systembolagetUrl', type: 'text' },
+        { name: 'priceSek', type: 'number', min: 0 },
+      ],
     },
     {
       name: 'user',

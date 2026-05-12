@@ -110,16 +110,33 @@ export const UserWines: CollectionConfig = {
         ],
       },
     },
-    // Relationship to wine
+    // Relationship to library wine — optional after Chunk A (custom-wine support).
     {
       name: 'wine',
       type: 'relationship',
       relationTo: 'wines',
-      required: true,
+      required: false,
       hasMany: false,
       admin: {
-        description: 'Wine in the collection',
+        description: 'Library wine, OR leave empty and fill customWine below.',
       },
+    },
+    // Custom-wine snapshot for entries not in our library.
+    // Exactly one of `wine` or `customWine.name` must be set — see beforeValidate hook.
+    {
+      name: 'customWine',
+      type: 'group',
+      admin: {
+        description: 'Use when the wine is not in our library.',
+      },
+      fields: [
+        { name: 'name', type: 'text' },
+        { name: 'producer', type: 'text' },
+        { name: 'vintage', type: 'text' },
+        { name: 'type', type: 'text', admin: { description: 'e.g. rött, vitt, rosé, mousserande' } },
+        { name: 'systembolagetUrl', type: 'text' },
+        { name: 'priceSek', type: 'number', min: 0 },
+      ],
     },
     // Collection status
     {
@@ -205,6 +222,24 @@ export const UserWines: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeValidate: [
+      ({ data }) => {
+        if (!data) return data
+        const hasLibrary = data.wine != null && data.wine !== ''
+        const hasCustom = !!data.customWine?.name && String(data.customWine.name).trim() !== ''
+        if (hasLibrary && hasCustom) {
+          throw new Error(
+            'UserWines: välj antingen ett bibliotekvin eller fyll i customWine — inte båda.',
+          )
+        }
+        if (!hasLibrary && !hasCustom) {
+          throw new Error(
+            'UserWines: ange ett bibliotekvin eller fyll i namn på customWine.',
+          )
+        }
+        return data
+      },
+    ],
     afterChange: [
       async ({ req, doc, operation }) => {
         if (operation !== 'create') return doc
