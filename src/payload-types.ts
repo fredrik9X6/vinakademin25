@@ -92,6 +92,7 @@ export interface Config {
     'blog-tags': BlogTag;
     'course-sessions': CourseSession;
     'session-participants': SessionParticipant;
+    'tasting-plans': TastingPlan;
     subscribers: Subscriber;
     events: Event;
     'vinkompass-questions': VinkompassQuestion;
@@ -128,6 +129,7 @@ export interface Config {
     'blog-tags': BlogTagsSelect<false> | BlogTagsSelect<true>;
     'course-sessions': CourseSessionsSelect<false> | CourseSessionsSelect<true>;
     'session-participants': SessionParticipantsSelect<false> | SessionParticipantsSelect<true>;
+    'tasting-plans': TastingPlansSelect<false> | TastingPlansSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'vinkompass-questions': VinkompassQuestionsSelect<false> | VinkompassQuestionsSelect<true>;
@@ -836,9 +838,20 @@ export interface Review {
    */
   title?: string | null;
   /**
-   * The wine being reviewed
+   * Library wine, OR leave empty and fill customWine below.
    */
-  wine: number | Wine;
+  wine?: (number | null) | Wine;
+  /**
+   * Use when the wine is not in our library.
+   */
+  customWine?: {
+    name?: string | null;
+    producer?: string | null;
+    vintage?: string | null;
+    type?: string | null;
+    systembolagetUrl?: string | null;
+    priceSek?: number | null;
+  };
   /**
    * User who wrote the review
    */
@@ -1279,9 +1292,13 @@ export interface SessionParticipant {
 export interface CourseSession {
   id: number;
   /**
-   * The course this session is for
+   * A course (Vinprovningar) OR a tastingPlan must be set — XOR enforced by beforeValidate.
    */
-  course: number | Vinprovningar;
+  course?: (number | null) | Vinprovningar;
+  /**
+   * Set when this session is driven by a member-authored plan. XOR with course.
+   */
+  tastingPlan?: (number | null) | TastingPlan;
   /**
    * Currently active content item in the session
    */
@@ -1330,6 +1347,59 @@ export interface CourseSession {
    * Set by the cron after iterating participants for this session. Cleared on re-completion so the cron can re-process newly-added participants.
    */
   claimEmailsDispatchedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Member-authored tasting plans. Private to the owner.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tasting-plans".
+ */
+export interface TastingPlan {
+  id: number;
+  /**
+   * The member who created this plan.
+   */
+  owner: number | User;
+  title: string;
+  description?: string | null;
+  /**
+   * e.g. "Födelsedagsmiddag", "Sommarrosé-flight"
+   */
+  occasion?: string | null;
+  targetParticipants?: number | null;
+  wines?:
+    | {
+        /**
+         * Pick from our library, OR fill out customWine below.
+         */
+        libraryWine?: (number | null) | Wine;
+        /**
+         * Use when the wine is not in the library.
+         */
+        customWine?: {
+          name?: string | null;
+          producer?: string | null;
+          vintage?: string | null;
+          type?: ('red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other') | null;
+          systembolagetUrl?: string | null;
+          priceSek?: number | null;
+        };
+        pourOrder?: number | null;
+        hostNotes?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional flavor text for the host cheat sheet (Chunk C).
+   */
+  hostScript?: string | null;
+  status: 'draft' | 'ready' | 'archived';
+  /**
+   * Set by the clone-template API in Chunk E. Null for now.
+   */
+  derivedFromTemplate?: (number | null) | TastingPlan;
   updatedAt: string;
   createdAt: string;
 }
@@ -2039,9 +2109,23 @@ export interface UserWine {
    */
   user: number | User;
   /**
-   * Wine in the collection
+   * Library wine, OR leave empty and fill customWine below.
    */
-  wine: number | Wine;
+  wine?: (number | null) | Wine;
+  /**
+   * Use when the wine is not in our library.
+   */
+  customWine?: {
+    name?: string | null;
+    producer?: string | null;
+    vintage?: string | null;
+    /**
+     * e.g. rött, vitt, rosé, mousserande
+     */
+    type?: string | null;
+    systembolagetUrl?: string | null;
+    priceSek?: number | null;
+  };
   /**
    * The list this wine belongs to (e.g., Favorites, Wishlist, or a custom list)
    */
@@ -2962,6 +3046,10 @@ export interface PayloadLockedDocument {
         value: number | SessionParticipant;
       } | null)
     | ({
+        relationTo: 'tasting-plans';
+        value: number | TastingPlan;
+      } | null)
+    | ({
         relationTo: 'subscribers';
         value: number | Subscriber;
       } | null)
@@ -3557,6 +3645,16 @@ export interface UserWinesSelect<T extends boolean = true> {
   title?: T;
   user?: T;
   wine?: T;
+  customWine?:
+    | T
+    | {
+        name?: T;
+        producer?: T;
+        vintage?: T;
+        type?: T;
+        systembolagetUrl?: T;
+        priceSek?: T;
+      };
   list?: T;
   rating?: T;
   notes?: T;
@@ -3743,6 +3841,16 @@ export interface UserWineListsSelect<T extends boolean = true> {
 export interface ReviewsSelect<T extends boolean = true> {
   title?: T;
   wine?: T;
+  customWine?:
+    | T
+    | {
+        name?: T;
+        producer?: T;
+        vintage?: T;
+        type?: T;
+        systembolagetUrl?: T;
+        priceSek?: T;
+      };
   user?: T;
   authorDisplayName?: T;
   sessionParticipant?: T;
@@ -3868,6 +3976,7 @@ export interface BlogTagsSelect<T extends boolean = true> {
  */
 export interface CourseSessionsSelect<T extends boolean = true> {
   course?: T;
+  tastingPlan?: T;
   currentLesson?: T;
   currentQuiz?: T;
   host?: T;
@@ -3898,6 +4007,40 @@ export interface SessionParticipantsSelect<T extends boolean = true> {
   claimEmailProcessedAt?: T;
   claimEmailStatus?: T;
   currentLessonId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tasting-plans_select".
+ */
+export interface TastingPlansSelect<T extends boolean = true> {
+  owner?: T;
+  title?: T;
+  description?: T;
+  occasion?: T;
+  targetParticipants?: T;
+  wines?:
+    | T
+    | {
+        libraryWine?: T;
+        customWine?:
+          | T
+          | {
+              name?: T;
+              producer?: T;
+              vintage?: T;
+              type?: T;
+              systembolagetUrl?: T;
+              priceSek?: T;
+            };
+        pourOrder?: T;
+        hostNotes?: T;
+        id?: T;
+      };
+  hostScript?: T;
+  status?: T;
+  derivedFromTemplate?: T;
   updatedAt?: T;
   createdAt?: T;
 }

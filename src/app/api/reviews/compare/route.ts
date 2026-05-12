@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { loggerFor } from '@/lib/logger'
+import { getWineDoc } from '@/lib/wines/get-wine-display'
 
 const log = loggerFor('api-reviews-compare')
 
@@ -55,8 +56,8 @@ export async function GET(request: NextRequest) {
       const answerKeyReview =
         typeof lesson.answerKeyReview === 'object' ? lesson.answerKeyReview : null
       if (answerKeyReview?.wine) {
-        wineId =
-          typeof answerKeyReview.wine === 'object' ? answerKeyReview.wine.id : answerKeyReview.wine
+        const doc = getWineDoc(answerKeyReview.wine)
+        wineId = doc?.id ?? (typeof answerKeyReview.wine === 'number' ? answerKeyReview.wine : null)
       }
     }
 
