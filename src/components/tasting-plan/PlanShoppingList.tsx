@@ -83,7 +83,6 @@ export function PlanShoppingList({ plan }: PlanShoppingListProps) {
                     {pourOrder}
                   </div>
                   {thumb ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={thumb}
                       alt=""

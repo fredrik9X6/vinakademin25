@@ -53,26 +53,14 @@ export default function SessionView({
   const router = useRouter()
   const { leaveSession, followingHost, hostCurrentLessonId } = useActiveSession()
 
+  // Branch flag computed up-front so we can keep all hooks unconditional below.
   // Plan-driven session — render flat wine list instead of course modules/lessons.
   // The session pacing pointer (session.currentLesson) is reused to carry the
   // active wine's pourOrder; the host-state route accepts a numeric currentLessonId
   // which we use generically here. The roster sidebar is reused as-is.
-  if (
-    session &&
-    !session.course &&
-    session.tastingPlan &&
-    typeof session.tastingPlan === 'object'
-  ) {
-    return (
-      <PlanSessionContent
-        session={session}
-        plan={session.tastingPlan as TastingPlan}
-        isHost={isHost}
-        followingHost={followingHost}
-        sidebarExtra={<SessionRoster lessonTitleById={new Map()} />}
-      />
-    )
-  }
+  const isPlanSession = Boolean(
+    session && !session.course && session.tastingPlan && typeof session.tastingPlan === 'object',
+  )
 
   // Build a map of contentItemId → { title, type } so the auto-advance push
   // can pick the right URL param (?lesson= vs ?quiz=) and the roster can show
@@ -80,6 +68,7 @@ export default function SessionView({
   // globally-unique ids, so a single map covers both.
   const itemMetaById = useMemo(() => {
     const m = new Map<number, { title: string; type: 'lesson' | 'quiz' }>()
+    if (!course) return m
     for (const mod of course.modules || []) {
       for (const l of mod.lessons || []) {
         if (typeof l?.id === 'number') {
@@ -119,8 +108,10 @@ export default function SessionView({
   }, [sessionId])
 
   // When the participant lands on a specific lesson/quiz, push their
-  // currentLessonId so the roster reflects it.
+  // currentLessonId so the roster reflects it. Skip for plan sessions —
+  // PlanSessionContent manages its own pointer.
   useEffect(() => {
+    if (isPlanSession) return
     if (!sessionId) return
     const id = selectedLesson?.id ?? selectedQuiz?.id ?? null
     if (id == null) return
@@ -130,14 +121,16 @@ export default function SessionView({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ currentLessonId: id }),
     })
-  }, [sessionId, selectedLesson?.id, selectedQuiz?.id])
+  }, [isPlanSession, sessionId, selectedLesson?.id, selectedQuiz?.id])
 
   // Hosts broadcast their current item (lesson OR quiz) so followers can sync.
   // Server-side /host-state enforces host-or-admin auth; this client-side gate
   // just avoids the noise of guests POSTing 403s. The stored field is
   // course-sessions.currentLesson (a content-items relationship) — quiz ids
-  // are content-items too, so the same field carries both.
+  // are content-items too, so the same field carries both. Skipped for plan
+  // sessions (PlanSessionContent drives its own host pointer).
   useEffect(() => {
+    if (isPlanSession) return
     if (!isHost) return
     if (!sessionId) return
     const currentItemId = selectedLesson?.id ?? selectedQuiz?.id ?? null
@@ -148,12 +141,14 @@ export default function SessionView({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ currentLessonId: currentItemId }),
     })
-  }, [isHost, sessionId, selectedLesson?.id, selectedQuiz?.id])
+  }, [isPlanSession, isHost, sessionId, selectedLesson?.id, selectedQuiz?.id])
 
   // Followers auto-advance to the host's current item — works in BOTH the
   // lobby (no lesson selected) AND the in-lesson/in-quiz cases. Looks up the
   // item type so the push lands on ?quiz= for quizzes, ?lesson= for lessons.
+  // Skipped for plan sessions.
   useEffect(() => {
+    if (isPlanSession) return
     if (isHost) return
     if (!followingHost) return
     if (hostCurrentLessonId == null) return
@@ -162,20 +157,35 @@ export default function SessionView({
     const meta = itemMetaById.get(hostCurrentLessonId)
     const param = meta?.type === 'quiz' ? 'quiz' : 'lesson'
     router.push(
-      `/vinprovningar/${course.slug || course.id}?${param}=${hostCurrentLessonId}&session=${sessionId}`,
+      `/vinprovningar/${course?.slug || course?.id}?${param}=${hostCurrentLessonId}&session=${sessionId}`,
     )
   }, [
+    isPlanSession,
     isHost,
     followingHost,
     hostCurrentLessonId,
     selectedLesson?.id,
     selectedQuiz?.id,
-    course.slug,
-    course.id,
+    course?.slug,
+    course?.id,
     sessionId,
     router,
     itemMetaById,
   ])
+
+  // Plan-driven branch — render the flat wine list view. All hooks above run
+  // unconditionally; this just swaps the render output.
+  if (isPlanSession && session) {
+    return (
+      <PlanSessionContent
+        session={session}
+        plan={session.tastingPlan as TastingPlan}
+        isHost={isHost}
+        followingHost={followingHost}
+        sidebarExtra={<SessionRoster lessonTitleById={new Map()} />}
+      />
+    )
+  }
 
   const handleLeave = async () => {
     await leaveSession()
