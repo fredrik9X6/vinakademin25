@@ -5,6 +5,7 @@ import { VinlistanToolbar } from '@/components/vinlistan/VinlistanToolbar'
 import { VinlistanPagination } from '@/components/vinlistan/VinlistanPagination'
 import { VinlistanWineCard } from '@/components/vinlistan/VinlistanWineCard'
 import { getSiteURL } from '@/lib/site-url'
+import { getWineDoc } from '@/lib/wines/get-wine-display'
 
 export const metadata: Metadata = {
   title: 'Vinlistan — hitta ditt nästa vin',
@@ -78,7 +79,7 @@ async function fetchWinesForVinlistan(params: SearchParams) {
   const trustedReviewByWine = new Map<number, any>()
   for (const reviewDoc of reviews.docs || []) {
     const review = reviewDoc as any
-    const wine = typeof review?.wine === 'object' ? review.wine : null
+    const wine = getWineDoc(review?.wine)
     if (!wine) continue
     const wid = Number((wine as any).id)
     const prev = trustedReviewByWine.get(wid)
@@ -97,7 +98,7 @@ async function fetchWinesForVinlistan(params: SearchParams) {
   const regionSet = new Set<string>()
   const grapeSet = new Set<string>()
   for (const item of items) {
-    const w: any = item.wine
+    const w = getWineDoc(item.wine) as any
     if (w?.country?.name) countrySet.add(String(w.country.name))
     if (w?.region?.name) regionSet.add(String(w.region.name))
     if (Array.isArray(w?.grapes)) {
@@ -113,7 +114,7 @@ async function fetchWinesForVinlistan(params: SearchParams) {
 
   // Filtering — uses authoritative wine.type field and exact-match country/region/grape
   items = items.filter((item: any) => {
-    const w = item.wine
+    const w = getWineDoc(item.wine) as any
     if (!w) return false
 
     if (q) {
@@ -166,8 +167,8 @@ async function fetchWinesForVinlistan(params: SearchParams) {
 
   // Sorting
   items.sort((a: any, b: any) => {
-    const wa = a.wine || null
-    const wb = b.wine || null
+    const wa = getWineDoc(a.wine)
+    const wb = getWineDoc(b.wine)
     const ra = Number(a.review?.rating) || 0
     const rb = Number(b.review?.rating) || 0
     const pa = Number(wa?.price) || 0
@@ -231,7 +232,7 @@ export default async function VinlistanPage({
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {items.map((item: any) => (
             <VinlistanWineCard
-              key={String(item.wine?.id || item.id)}
+              key={String(getWineDoc(item.wine)?.id ?? item.id)}
               wine={item.wine}
               review={item.review}
             />

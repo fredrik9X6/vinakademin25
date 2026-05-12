@@ -13,6 +13,7 @@ import { LayoutGrid, List, Star } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import type { Review } from '@/payload-types'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
+import { getWineDoc } from '@/lib/wines/get-wine-display'
 
 type ViewMode = 'grid' | 'list'
 
@@ -37,7 +38,7 @@ function formatRichText(value: unknown) {
 }
 
 function WineGridCard({ review }: { review: ReviewWithWine }) {
-  const wine = typeof review.wine === 'object' ? review.wine : null
+  const wine = getWineDoc(review.wine) as any
   if (!wine) return null
 
   const href = `/vinlistan/${wine.slug || wine.id}`
@@ -83,7 +84,7 @@ function WineGridCard({ review }: { review: ReviewWithWine }) {
 }
 
 function ReviewListItem({ review }: { review: ReviewWithWine }) {
-  const wine = typeof review.wine === 'object' ? review.wine : null
+  const wine = getWineDoc(review.wine) as any
   const href = wine ? `/vinlistan/${wine.slug || wine.id}` : undefined
 
   const sweetness = review.wsetTasting?.palate?.sweetness
@@ -170,7 +171,7 @@ export function UserReviewsPanel() {
     // Grid view should behave like a wine gallery: one card per wine.
     const byWine = new Map<string, ReviewWithWine>()
     for (const r of reviews) {
-      const wine = typeof r.wine === 'object' ? r.wine : null
+      const wine = getWineDoc(r.wine)
       if (!wine) continue
       const key = String(wine.id)
       const prev = byWine.get(key)
@@ -245,7 +246,7 @@ export function UserReviewsPanel() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {gridItems.map((r) => (
             <WineGridCard
-              key={String((typeof r.wine === 'object' && r.wine?.id) || r.id)}
+              key={String(getWineDoc(r.wine)?.id ?? r.id)}
               review={r}
             />
           ))}
