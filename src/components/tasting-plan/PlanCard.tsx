@@ -64,13 +64,19 @@ export function PlanCard({ plan }: PlanCardProps) {
     setBusy(true)
     try {
       const res = await fetch(`/api/tasting-plans/${plan.id}`, { method: 'DELETE' })
-      const data = await res.json()
+      const data = (await res.json().catch(() => ({}))) as {
+        archived?: boolean
+        deleted?: boolean
+        error?: string
+      }
       if (!res.ok) {
         toast.error(data?.error || 'Kunde inte ta bort planen.')
         return
       }
       toast.success(data.archived ? 'Arkiverad.' : 'Borttagen permanent.')
       router.refresh()
+    } catch {
+      toast.error('Nätverksfel — försök igen.')
     } finally {
       setBusy(false)
       setConfirmOpen(false)
@@ -126,8 +132,16 @@ export function PlanCard({ plan }: PlanCardProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction onClick={performDelete}>Bekräfta</AlertDialogAction>
+            <AlertDialogCancel disabled={busy}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              onClick={(e) => {
+                e.preventDefault()
+                void performDelete()
+              }}
+            >
+              {busy ? 'Tar bort…' : 'Bekräfta'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
