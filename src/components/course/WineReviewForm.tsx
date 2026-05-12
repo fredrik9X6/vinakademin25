@@ -106,6 +106,8 @@ export function WineReviewForm({
   const { user } = useAuth()
 
   const fetchAnswerKey = React.useCallback(async () => {
+    // Plan-driven sessions pass lessonId=0 sentinel (no underlying lesson). Skip the fetch.
+    if (!lessonId) return
     try {
       // Fetch content-item (lesson) with depth=2 to resolve answerKeyReview.wine
       const res = await fetch(`/api/content-items/${lessonId}?depth=2`, { credentials: 'include' })
