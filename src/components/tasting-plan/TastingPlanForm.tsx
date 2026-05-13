@@ -114,6 +114,9 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
   const [defaultMinutesPerWine, setDefaultMinutesPerWine] = React.useState<number | ''>(
     initialPlan?.defaultMinutesPerWine ?? '',
   )
+  const [publishedToProfile, setPublishedToProfile] = React.useState<boolean>(
+    initialPlan?.publishedToProfile ?? false,
+  )
   const [hostScript, setHostScript] = React.useState(initialPlan?.hostScript ?? '')
   const [wines, setWines] = React.useState<WineEntry[]>(() => hydrateInitialWines(initialPlan))
   const [submitting, setSubmitting] = React.useState(false)
@@ -185,6 +188,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       targetParticipants,
       blindTastingByDefault,
       defaultMinutesPerWine: defaultMinutesPerWine === '' ? null : Number(defaultMinutesPerWine),
+      publishedToProfile,
       hostScript: hostScript || undefined,
       wines: wines.map((w, idx) => ({
         libraryWine: w.kind === 'library' ? w.libraryWine : undefined,
@@ -343,6 +347,20 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             />
             <p className="text-xs text-muted-foreground mt-1">Lämna tomt för ingen timer.</p>
           </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-input accent-brand-400"
+              checked={publishedToProfile}
+              onChange={(e) => setPublishedToProfile(e.target.checked)}
+            />
+            <span className="text-sm">
+              <span className="font-medium">Publicera på din profil</span>{' '}
+              <span className="text-muted-foreground">
+                — visa den på /v/&lt;ditt-användarnamn&gt;.
+              </span>
+            </span>
+          </label>
         </div>
       </section>
 
