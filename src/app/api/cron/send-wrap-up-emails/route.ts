@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const result = await sendPendingWrapUpEmails()
     return NextResponse.json({ success: true, ...result })
   } catch (error) {
-    log.error('Error in send-wrap-up-emails cron:', error)
+    log.error({ err: error }, 'Error in send-wrap-up-emails cron')
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
