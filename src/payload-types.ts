@@ -1314,6 +1314,26 @@ export interface CourseSession {
    */
   currentWinePourOrder?: number | null;
   /**
+   * Runtime flag for plan sessions. Stamped from plan.blindTastingByDefault at create-time; may be overridden.
+   */
+  blindTasting?: boolean | null;
+  /**
+   * Pour orders the host has revealed (blind mode). JSON array of numbers.
+   */
+  revealedPourOrders?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Stamped on every plan-mode focus change. Used to compute timer remaining.
+   */
+  currentWineFocusStartedAt?: string | null;
+  /**
    * Currently active quiz in the session (deprecated - use currentLesson)
    */
   currentQuiz?: (number | null) | ContentItem;
@@ -1383,6 +1403,14 @@ export interface TastingPlan {
    */
   occasion?: string | null;
   targetParticipants?: number | null;
+  /**
+   * When checked, sessions started from this plan default to blind tasting.
+   */
+  blindTastingByDefault?: boolean | null;
+  /**
+   * Optional per-wine timer in minutes (1–60). Leave empty for no timer.
+   */
+  defaultMinutesPerWine?: number | null;
   wines?:
     | {
         /**
@@ -4033,6 +4061,9 @@ export interface CourseSessionsSelect<T extends boolean = true> {
   tastingPlan?: T;
   currentLesson?: T;
   currentWinePourOrder?: T;
+  blindTasting?: T;
+  revealedPourOrders?: T;
+  currentWineFocusStartedAt?: T;
   currentQuiz?: T;
   host?: T;
   joinCode?: T;
@@ -4077,6 +4108,8 @@ export interface TastingPlansSelect<T extends boolean = true> {
   description?: T;
   occasion?: T;
   targetParticipants?: T;
+  blindTastingByDefault?: T;
+  defaultMinutesPerWine?: T;
   wines?:
     | T
     | {

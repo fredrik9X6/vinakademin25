@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { courseId, tastingPlanId, sessionName, maxParticipants = 50 } = body
+    const { courseId, tastingPlanId, sessionName, maxParticipants = 50, blindTasting } = body
 
     // XOR: exactly one of courseId or tastingPlanId is required.
     if (!courseId && !tastingPlanId) {
@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the referenced source exists (and, for plans, that the caller owns it).
+    let plan: any = null
     if (courseId) {
       const course = await payload.findByID({
         collection: 'vinprovningar',
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Course not found' }, { status: 404 })
       }
     } else {
-      const plan = await payload.findByID({
+      plan = await payload.findByID({
         collection: 'tasting-plans',
         id: tastingPlanId,
         overrideAccess: true, // we do the owner check explicitly below
@@ -97,6 +98,14 @@ export async function POST(request: NextRequest) {
         )
       }
     }
+
+    // Determine effective blind setting: explicit body value wins, then plan default, else false.
+    const explicitBlind = typeof blindTasting === 'boolean' ? blindTasting : null
+    const planDefaultBlind =
+      tastingPlanId && typeof (plan as any)?.blindTastingByDefault === 'boolean'
+        ? Boolean((plan as any).blindTastingByDefault)
+        : false
+    const effectiveBlind = explicitBlind ?? planDefaultBlind
 
     // Generate unique join code
     let joinCode = generateJoinCode()
@@ -145,6 +154,8 @@ export async function POST(request: NextRequest) {
         participantCount: 0,
         maxParticipants,
         expiresAt: expiresAt.toISOString(),
+        blindTasting: effectiveBlind,
+        revealedPourOrders: [],
       },
     })
 

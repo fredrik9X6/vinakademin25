@@ -102,6 +102,9 @@ export async function GET(
       const readHostPointer = async (): Promise<{
         currentLessonId: number | null
         currentWinePourOrder: number | null
+        currentWineFocusStartedAt: string | null
+        revealedPourOrders: number[]
+        blindTasting: boolean
       }> => {
         try {
           const fresh = await payload.findByID({
@@ -109,16 +112,37 @@ export async function GET(
             id: sessionId,
             depth: 0,
           })
-          if (!fresh) return { currentLessonId: null, currentWinePourOrder: null }
+          if (!fresh)
+            return {
+              currentLessonId: null,
+              currentWinePourOrder: null,
+              currentWineFocusStartedAt: null,
+              revealedPourOrders: [],
+              blindTasting: false,
+            }
           const cl = (fresh as any).currentLesson
           const wp = (fresh as any).currentWinePourOrder
+          const startedAt = (fresh as any).currentWineFocusStartedAt
+          const revealedRaw = (fresh as any).revealedPourOrders
           return {
             currentLessonId: cl == null ? null : typeof cl === 'object' ? cl.id : cl,
             currentWinePourOrder: typeof wp === 'number' ? wp : null,
+            currentWineFocusStartedAt:
+              typeof startedAt === 'string' ? startedAt : null,
+            revealedPourOrders: Array.isArray(revealedRaw)
+              ? (revealedRaw as number[]).filter((n) => typeof n === 'number')
+              : [],
+            blindTasting: Boolean((fresh as any).blindTasting),
           }
         } catch (err) {
           log.error({ err, sessionId }, 'sse_read_host_pointer_failed')
-          return { currentLessonId: null, currentWinePourOrder: null }
+          return {
+            currentLessonId: null,
+            currentWinePourOrder: null,
+            currentWineFocusStartedAt: null,
+            revealedPourOrders: [],
+            blindTasting: false,
+          }
         }
       }
 
@@ -130,10 +154,7 @@ export async function GET(
       const lessonPoll = setInterval(async () => {
         if (closed) return
         const next = await readHostPointer()
-        if (
-          next.currentLessonId !== lastPointer.currentLessonId ||
-          next.currentWinePourOrder !== lastPointer.currentWinePourOrder
-        ) {
+        if (JSON.stringify(next) !== JSON.stringify(lastPointer)) {
           lastPointer = next
           send('lesson', next)
         }
@@ -239,6 +260,114 @@ export async function GET(
         }
       }, ROSTER_POLL_INTERVAL_MS)
 
+      // ───── Swarm aggregator ─────
+      type SwarmEntry = {
+        avgRating: number
+        ratingCount: number
+        aromaCounts: Array<{ label: string; count: number }>
+      }
+      type SwarmPayload = { byPourOrder: Record<number, SwarmEntry> }
+
+      const buildSwarm = async (): Promise<SwarmPayload> => {
+        try {
+          const session = await payload.findByID({
+            collection: 'course-sessions',
+            id: sessionId,
+            depth: 2,
+            overrideAccess: true,
+          })
+          if (!session?.tastingPlan || typeof session.tastingPlan !== 'object') {
+            return { byPourOrder: {} }
+          }
+
+          const wines = ((session.tastingPlan as any).wines ?? []) as any[]
+          const wineIdToPour: Record<number, number> = {}
+          const titleToPour: Record<string, number> = {}
+          wines.forEach((w, idx) => {
+            const pourOrder = w.pourOrder ?? idx + 1
+            if (w.libraryWine) {
+              const id = typeof w.libraryWine === 'object' ? w.libraryWine.id : w.libraryWine
+              if (typeof id === 'number') wineIdToPour[id] = pourOrder
+            } else if (w.customWine?.name) {
+              titleToPour[String(w.customWine.name).toLowerCase()] = pourOrder
+            }
+          })
+
+          const reviews = await payload.find({
+            collection: 'reviews',
+            where: { session: { equals: sessionId } },
+            limit: 1000,
+            depth: 0,
+            overrideAccess: true,
+          })
+
+          type Acc = { ratings: number[]; aromas: Map<string, number> }
+          const accs: Record<number, Acc> = {}
+          for (const r of reviews.docs as any[]) {
+            let pour: number | undefined
+            if (r.wine) {
+              const id = typeof r.wine === 'object' ? r.wine.id : r.wine
+              if (typeof id === 'number') pour = wineIdToPour[id]
+            } else if (r.customWine?.name) {
+              pour = titleToPour[String(r.customWine.name).toLowerCase()]
+            }
+            if (pour == null) continue
+            const acc = (accs[pour] ||= { ratings: [], aromas: new Map() })
+            if (typeof r.rating === 'number') acc.ratings.push(r.rating)
+            const aromas = r.wsetTasting?.nose?.primaryAromas
+            if (Array.isArray(aromas)) {
+              for (const a of aromas) {
+                const label = typeof a === 'string' ? a.trim() : ''
+                if (!label) continue
+                const key = label.toLocaleLowerCase('sv')
+                const prev = acc.aromas.get(key)
+                acc.aromas.set(key, (prev ?? 0) + 1)
+              }
+            }
+          }
+
+          const byPourOrder: Record<number, SwarmEntry> = {}
+          for (const [pourStr, acc] of Object.entries(accs)) {
+            const pour = Number(pourStr)
+            const avg =
+              acc.ratings.length > 0
+                ? acc.ratings.reduce((s, r) => s + r, 0) / acc.ratings.length
+                : 0
+            const allAromas = Array.from(acc.aromas.entries())
+              .map(([key, count]) => ({ label: key, count }))
+              .sort((a, b) => b.count - a.count)
+            const top = allAromas.slice(0, 10)
+            const rest = allAromas.slice(10).reduce((s, e) => s + e.count, 0)
+            const aromaCounts = top
+            if (rest > 0) aromaCounts.push({ label: 'Annat', count: rest })
+            byPourOrder[pour] = {
+              avgRating: Number(avg.toFixed(2)),
+              ratingCount: acc.ratings.length,
+              aromaCounts,
+            }
+          }
+          return { byPourOrder }
+        } catch (err) {
+          log.error({ err, sessionId }, 'sse_build_swarm_failed')
+          return { byPourOrder: {} }
+        }
+      }
+
+      let lastSwarmJson = JSON.stringify({ byPourOrder: {} })
+      const initialSwarm = await buildSwarm()
+      lastSwarmJson = JSON.stringify(initialSwarm)
+      send('swarm', initialSwarm)
+
+      const swarmPoll = setInterval(async () => {
+        if (closed) return
+        const next = await buildSwarm()
+        const nextJson = JSON.stringify(next)
+        if (nextJson !== lastSwarmJson) {
+          lastSwarmJson = nextJson
+          send('swarm', next)
+        }
+      }, LESSON_POLL_INTERVAL_MS)
+
       // Heartbeat
       const heartbeat = setInterval(() => {
         send('heartbeat', { ts: Date.now() })
@@ -249,6 +378,7 @@ export async function GET(
         closed = true
         clearInterval(lessonPoll)
         clearInterval(rosterPoll)
+        clearInterval(swarmPoll)
         clearInterval(heartbeat)
         try {
           controller.close()

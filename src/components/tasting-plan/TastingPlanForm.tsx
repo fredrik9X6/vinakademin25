@@ -108,6 +108,12 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
   const [targetParticipants, setTargetParticipants] = React.useState<number>(
     initialPlan?.targetParticipants ?? 4,
   )
+  const [blindTastingByDefault, setBlindTastingByDefault] = React.useState<boolean>(
+    initialPlan?.blindTastingByDefault ?? false,
+  )
+  const [defaultMinutesPerWine, setDefaultMinutesPerWine] = React.useState<number | ''>(
+    initialPlan?.defaultMinutesPerWine ?? '',
+  )
   const [hostScript, setHostScript] = React.useState(initialPlan?.hostScript ?? '')
   const [wines, setWines] = React.useState<WineEntry[]>(() => hydrateInitialWines(initialPlan))
   const [submitting, setSubmitting] = React.useState(false)
@@ -177,6 +183,8 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       description: description || undefined,
       occasion: occasion || undefined,
       targetParticipants,
+      blindTastingByDefault,
+      defaultMinutesPerWine: defaultMinutesPerWine === '' ? null : Number(defaultMinutesPerWine),
       hostScript: hostScript || undefined,
       wines: wines.map((w, idx) => ({
         libraryWine: w.kind === 'library' ? w.libraryWine : undefined,
@@ -299,6 +307,42 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             onChange={(e) => setTargetParticipants(Number(e.target.value) || 1)}
             className="w-28"
           />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Provningsinställningar</h2>
+        <div className="space-y-3 rounded-md border bg-card p-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-input accent-brand-400"
+              checked={blindTastingByDefault}
+              onChange={(e) => setBlindTastingByDefault(e.target.checked)}
+            />
+            <span className="text-sm">
+              <span className="font-medium">Blindprovning</span>{' '}
+              <span className="text-muted-foreground">
+                — viner visas anonymt tills du avslöjar dem.
+              </span>
+            </span>
+          </label>
+          <div>
+            <Label htmlFor="t-minutes">Tid per vin (minuter)</Label>
+            <Input
+              id="t-minutes"
+              type="number"
+              min={1}
+              max={60}
+              value={defaultMinutesPerWine}
+              onChange={(e) =>
+                setDefaultMinutesPerWine(e.target.value === '' ? '' : Number(e.target.value))
+              }
+              className="w-28"
+              placeholder="t.ex. 5"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Lämna tomt för ingen timer.</p>
+          </div>
         </div>
       </section>
 

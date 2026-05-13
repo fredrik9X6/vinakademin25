@@ -90,6 +90,35 @@ export const CourseSessions: CollectionConfig = {
       },
     },
     {
+      name: 'blindTasting',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Runtime flag for plan sessions. Stamped from plan.blindTastingByDefault at create-time; may be overridden.',
+      },
+    },
+    {
+      name: 'revealedPourOrders',
+      type: 'json',
+      defaultValue: [],
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Pour orders the host has revealed (blind mode). JSON array of numbers.',
+      },
+    },
+    {
+      name: 'currentWineFocusStartedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Stamped on every plan-mode focus change. Used to compute timer remaining.',
+      },
+    },
+    {
       name: 'currentQuiz',
       type: 'relationship',
       relationTo: 'content-items',

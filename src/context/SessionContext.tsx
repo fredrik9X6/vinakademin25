@@ -40,6 +40,22 @@ interface SessionContextValue {
   /** Plan-mode pacing pointer (active wine's pourOrder). Set by RealtimeSync. */
   hostCurrentWinePourOrder: number | null
   setHostCurrentWinePourOrder: (n: number | null) => void
+  /** Plan-mode focus timestamp; null when no wine is in focus. Set by RealtimeSync. */
+  hostFocusStartedAt: string | null
+  setHostFocusStartedAt: (s: string | null) => void
+  /** Plan-mode revealed pour orders. Set by RealtimeSync. */
+  revealedPourOrders: number[]
+  setRevealedPourOrders: (a: number[]) => void
+  /** Plan-mode swarm aggregations keyed by pour order. */
+  swarm: Record<
+    number,
+    {
+      avgRating: number
+      ratingCount: number
+      aromaCounts: Array<{ label: string; count: number }>
+    }
+  >
+  setSwarm: (s: SessionContextValue['swarm']) => void
   roster: RosterEntry[]
   setRoster: (r: RosterEntry[]) => void
 }
@@ -59,6 +75,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [hostCurrentWinePourOrder, setHostCurrentWinePourOrderState] = useState<number | null>(
     null,
   )
+  const [hostFocusStartedAt, setHostFocusStartedAtState] = useState<string | null>(null)
+  const [revealedPourOrders, setRevealedPourOrdersState] = useState<number[]>([])
+  const [swarm, setSwarmState] = useState<SessionContextValue['swarm']>({})
   const [roster, setRoster] = useState<RosterEntry[]>([])
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -185,6 +204,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setHostCurrentWinePourOrderState(n)
   }, [])
 
+  const setHostFocusStartedAt = useCallback((s: string | null) => {
+    setHostFocusStartedAtState(s)
+  }, [])
+  const setRevealedPourOrders = useCallback((a: number[]) => {
+    setRevealedPourOrdersState(a)
+  }, [])
+  const setSwarm = useCallback((s: SessionContextValue['swarm']) => {
+    setSwarmState(s)
+  }, [])
+
   const leaveSession = useCallback(async () => {
     if (!activeSession) return
 
@@ -239,6 +268,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setHostCurrentLessonId,
     hostCurrentWinePourOrder,
     setHostCurrentWinePourOrder,
+    hostFocusStartedAt,
+    setHostFocusStartedAt,
+    revealedPourOrders,
+    setRevealedPourOrders,
+    swarm,
+    setSwarm,
     roster,
     setRoster,
   }

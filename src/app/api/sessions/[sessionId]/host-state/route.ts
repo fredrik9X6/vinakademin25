@@ -47,19 +47,35 @@ export async function POST(
     const body = await request.json().catch(() => ({}))
     const rawLesson = (body as any)?.currentLessonId
     const rawWine = (body as any)?.currentWinePourOrder
+    const rawReveal = (body as any)?.revealPourOrder
     const currentLessonId = typeof rawLesson === 'number' ? rawLesson : null
     const currentWinePourOrder = typeof rawWine === 'number' ? rawWine : null
+    const revealPourOrder =
+      typeof rawReveal === 'number' && Number.isInteger(rawReveal) && rawReveal >= 1
+        ? rawReveal
+        : null
 
-    if (currentLessonId === null && currentWinePourOrder === null) {
+    if (currentLessonId === null && currentWinePourOrder === null && revealPourOrder === null) {
       return NextResponse.json(
-        { error: 'currentLessonId or currentWinePourOrder must be a number' },
+        { error: 'currentLessonId, currentWinePourOrder, or revealPourOrder must be provided' },
         { status: 400 },
       )
     }
 
     const data: Record<string, unknown> = {}
     if (currentLessonId !== null) data.currentLesson = currentLessonId
-    if (currentWinePourOrder !== null) data.currentWinePourOrder = currentWinePourOrder
+    if (currentWinePourOrder !== null) {
+      data.currentWinePourOrder = currentWinePourOrder
+      // Stamp the focus moment so the per-wine timer computes remaining correctly.
+      data.currentWineFocusStartedAt = new Date().toISOString()
+    }
+    if (revealPourOrder !== null) {
+      const existing = Array.isArray((session as any).revealedPourOrders)
+        ? ((session as any).revealedPourOrders as number[])
+        : []
+      const merged = Array.from(new Set([...existing, revealPourOrder])).sort((a, b) => a - b)
+      data.revealedPourOrders = merged
+    }
 
     await payload.update({
       collection: 'course-sessions',

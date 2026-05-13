@@ -11,7 +11,14 @@ import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
  * stream); only one instance per page is needed.
  */
 export function RealtimeSync({ sessionId }: { sessionId: string }) {
-  const { setHostCurrentLessonId, setHostCurrentWinePourOrder, setRoster } = useActiveSession()
+  const {
+    setHostCurrentLessonId,
+    setHostCurrentWinePourOrder,
+    setHostFocusStartedAt,
+    setRevealedPourOrders,
+    setRoster,
+    setSwarm,
+  } = useActiveSession()
 
   useEffect(() => {
     const url = `/api/sessions/${encodeURIComponent(sessionId)}/stream`
@@ -22,10 +29,19 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
         const data = JSON.parse((e as MessageEvent).data) as {
           currentLessonId: number | null
           currentWinePourOrder?: number | null
+          currentWineFocusStartedAt?: string | null
+          revealedPourOrders?: number[]
+          blindTasting?: boolean
         }
         setHostCurrentLessonId(data.currentLessonId)
         if ('currentWinePourOrder' in data) {
           setHostCurrentWinePourOrder(data.currentWinePourOrder ?? null)
+        }
+        if ('currentWineFocusStartedAt' in data) {
+          setHostFocusStartedAt(data.currentWineFocusStartedAt ?? null)
+        }
+        if (Array.isArray(data.revealedPourOrders)) {
+          setRevealedPourOrders(data.revealedPourOrders)
         }
       } catch {
         // Malformed payload — ignore. EventSource will keep streaming.
@@ -41,6 +57,20 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
       }
     })
 
+    es.addEventListener('swarm', (e) => {
+      try {
+        const data = JSON.parse((e as MessageEvent).data) as {
+          byPourOrder: Record<
+            number,
+            { avgRating: number; ratingCount: number; aromaCounts: Array<{ label: string; count: number }> }
+          >
+        }
+        if (data?.byPourOrder) setSwarm(data.byPourOrder)
+      } catch {
+        // ignore
+      }
+    })
+
     es.addEventListener('heartbeat', () => {
       // No-op; the connection is alive. EventSource handles reconnection on drop.
     })
@@ -48,7 +78,15 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     return () => {
       es.close()
     }
-  }, [sessionId, setHostCurrentLessonId, setHostCurrentWinePourOrder, setRoster])
+  }, [
+    sessionId,
+    setHostCurrentLessonId,
+    setHostCurrentWinePourOrder,
+    setHostFocusStartedAt,
+    setRevealedPourOrders,
+    setRoster,
+    setSwarm,
+  ])
 
   return null
 }

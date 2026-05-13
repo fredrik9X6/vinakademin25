@@ -55,9 +55,30 @@ export default async function PlanDetailPage({
         : session?.tastingPlan
     if (session && sessionPlanId === plan.id && session.status === 'active') {
       const isHost = sp.host === 'true'
+      // Blind redaction: for guests, strip wine identity from un-revealed pours.
+      // Hosts always see full info.
+      let renderPlan = plan
+      if (!isHost && (session as any).blindTasting) {
+        const revealed: number[] = Array.isArray((session as any).revealedPourOrders)
+          ? ((session as any).revealedPourOrders as number[])
+          : []
+        renderPlan = {
+          ...plan,
+          wines: (plan.wines ?? []).map((w, idx) => {
+            const pourOrder = w.pourOrder ?? idx + 1
+            if (revealed.includes(pourOrder)) return w
+            return {
+              ...w,
+              libraryWine: null,
+              customWine: undefined,
+              hostNotes: null,
+            }
+          }),
+        } as typeof plan
+      }
       return (
         <PlanSessionShell
-          plan={plan}
+          plan={renderPlan}
           session={session}
           isHost={isHost}
           sessionId={String(session.id)}

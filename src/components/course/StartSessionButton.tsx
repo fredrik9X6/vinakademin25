@@ -24,6 +24,7 @@ type StartSessionButtonProps =
       courseSlug?: string
       tastingPlanId?: never
       planTitle?: never
+      defaultBlindTasting?: never
     }
   | {
       tastingPlanId: number
@@ -31,10 +32,13 @@ type StartSessionButtonProps =
       courseId?: never
       courseTitle?: never
       courseSlug?: never
+      defaultBlindTasting?: boolean
     }
 
 export default function StartSessionButton(props: StartSessionButtonProps) {
   const isPlan = 'tastingPlanId' in props && props.tastingPlanId != null
+  const defaultBlindTasting = isPlan ? props.defaultBlindTasting ?? false : false
+  const [blindTasting, setBlindTasting] = useState<boolean>(defaultBlindTasting)
   const titleText = isPlan ? props.planTitle : props.courseTitle
   const courseSlug = isPlan ? undefined : props.courseSlug
   const router = useRouter()
@@ -60,7 +64,7 @@ export default function StartSessionButton(props: StartSessionButtonProps) {
         },
         body: JSON.stringify({
           ...(isPlan
-            ? { tastingPlanId: props.tastingPlanId }
+            ? { tastingPlanId: props.tastingPlanId, blindTasting }
             : { courseId: props.courseId }),
           sessionName: sessionName || `${titleText} - Gruppsession`,
           maxParticipants: 50,
@@ -175,6 +179,23 @@ export default function StartSessionButton(props: StartSessionButtonProps) {
                     Detta namn hjälper deltagare att identifiera sessionen
                   </p>
                 </div>
+
+                {isPlan && (
+                  <label className="flex items-center gap-2 mt-3 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-input accent-brand-400"
+                      checked={blindTasting}
+                      onChange={(e) => setBlindTasting(e.target.checked)}
+                    />
+                    <span>
+                      <span className="font-medium">Blindprovning</span>{' '}
+                      <span className="text-muted-foreground">
+                        — du kan avslöja viner ett i taget.
+                      </span>
+                    </span>
+                  </label>
+                )}
 
                 <div className="flex gap-3">
                   <Button
