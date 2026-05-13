@@ -60,6 +60,24 @@ export const TastingPlans: CollectionConfig = {
       max: 50,
     },
     {
+      name: 'blindTastingByDefault',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'When checked, sessions started from this plan default to blind tasting.',
+      },
+    },
+    {
+      name: 'defaultMinutesPerWine',
+      type: 'number',
+      min: 1,
+      max: 60,
+      admin: {
+        description: 'Optional per-wine timer in minutes (1–60). Leave empty for no timer.',
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'wines',
       type: 'array',
       labels: { singular: 'Vin', plural: 'Viner' },
