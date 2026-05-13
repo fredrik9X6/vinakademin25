@@ -15,7 +15,7 @@ export interface WineTastingsLinkProps {
  * "Smakad i N provningar" cross-link block on the wine detail page.
  *
  * Renders nothing when count is 0. Lists up to 3 published plans
- * by name, each linking to /v/<handle>/<planId>.
+ * by name, each linking to /profil/<handle>/<planId>.
  */
 export function WineTastingsLink({ count, plans }: WineTastingsLinkProps) {
   if (count === 0) return null
@@ -29,7 +29,7 @@ export function WineTastingsLink({ count, plans }: WineTastingsLinkProps) {
           {plans.slice(0, 3).map((p) => (
             <li key={p.id}>
               <Link
-                href={`/v/${p.handle}/${p.id}`}
+                href={`/profil/${p.handle}/${p.id}`}
                 className="text-sm text-brand-400 hover:underline"
               >
                 {p.title}

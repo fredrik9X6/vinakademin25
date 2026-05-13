@@ -144,7 +144,7 @@ export const TastingPlans: CollectionConfig = {
       defaultValue: false,
       admin: {
         description:
-          "When checked, this plan appears on the owner's /v/<handle> profile.",
+          "When checked, this plan appears on the owner's /profil/<handle> profile.",
       },
     },
     {

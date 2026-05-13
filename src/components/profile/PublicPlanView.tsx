@@ -33,7 +33,7 @@ export function PublicPlanView({ plan, handle, hostDisplayName }: PublicPlanView
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
       <Link
-        href={`/v/${handle}`}
+        href={`/profil/${handle}`}
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4 mr-1" />
@@ -56,7 +56,7 @@ export function PublicPlanView({ plan, handle, hostDisplayName }: PublicPlanView
             ~{plan.targetParticipants ?? 4} deltagare
           </span>
           <span>·</span>
-          <span>Av <Link href={`/v/${handle}`} className="hover:underline">@{handle}</Link></span>
+          <span>Av <Link href={`/profil/${handle}`} className="hover:underline">@{handle}</Link></span>
         </div>
       </header>
       <section className="space-y-3">

@@ -119,6 +119,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Public profile pages live under /profil/<handle> and /profil/<handle>/<planId>.
+  // /profil (own settings) stays protected; only multi-segment paths under
+  // /profil are public.
+  if (/^\/profil\/[^/]+(\/.*)?$/.test(pathname)) {
+    return NextResponse.next()
+  }
+
   // Check if the path is protected (using the updated protectedPaths)
   const protectedPath = protectedPaths.find((p) => pathname.startsWith(p.path))
 
