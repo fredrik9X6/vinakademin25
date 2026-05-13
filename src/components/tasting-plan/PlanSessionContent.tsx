@@ -16,6 +16,8 @@ import { Wine as WineIcon, Crown } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { useActiveSession } from '@/context/SessionContext'
+import { WineFocusTimer } from './WineFocusTimer'
+import { SwarmPanel } from './SwarmPanel'
 
 interface PlanSessionContentProps {
   session: CourseSession
@@ -122,7 +124,40 @@ export function PlanSessionContent({
   // their own UI doesn't wait for the SSE round-trip. Only the host ever sets
   // this; guests fall through to the SSE/prop chain below.
   const [localFocus, setLocalFocus] = React.useState<number | null>(null)
-  const { hostCurrentWinePourOrder } = useActiveSession()
+  // Track which wines THIS participant has already submitted reviews for.
+  // Seeded from /my-submissions on mount; appended locally on each submit.
+  const [submittedPourOrders, setSubmittedPourOrders] = React.useState<Set<number>>(new Set())
+  React.useEffect(() => {
+    let aborted = false
+    fetch(`/api/sessions/${session.id}/my-submissions`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (aborted) return
+        if (data && Array.isArray(data.submittedPourOrders)) {
+          setSubmittedPourOrders(new Set(data.submittedPourOrders))
+        }
+      })
+      .catch(() => {})
+    return () => {
+      aborted = true
+    }
+  }, [session.id])
+  // Optimistic local reveal set so the host sees the change instantly
+  // before SSE catches up.
+  const [localRevealed, setLocalRevealed] = React.useState<Set<number>>(new Set())
+  const {
+    hostCurrentWinePourOrder,
+    hostFocusStartedAt,
+    revealedPourOrders,
+    swarm,
+  } = useActiveSession()
+  const effectiveRevealed = React.useMemo(() => {
+    const s = new Set<number>(revealedPourOrders ?? [])
+    localRevealed.forEach((p) => s.add(p))
+    return s
+  }, [revealedPourOrders, localRevealed])
+
+  const isBlind = Boolean((session as any).blindTasting)
   // Local optimistic value wins (only set on the host's own tap), then
   // realtime SSE, then the initial server-rendered prop. `null` only when
   // nothing has been set.
@@ -159,6 +194,20 @@ export function PlanSessionContent({
     }
   }
 
+  async function revealWine(pourOrder: number) {
+    setLocalRevealed((prev) => new Set([...prev, pourOrder]))
+    try {
+      const res = await fetch(`/api/sessions/${session.id}/host-state`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revealPourOrder: pourOrder }),
+      })
+      if (!res.ok) toast.error('Kunde inte avslöja vinet.')
+    } catch {
+      toast.error('Nätverksfel — försök igen.')
+    }
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <div className="space-y-4 min-w-0">
@@ -174,7 +223,21 @@ export function PlanSessionContent({
         ) : (
           <ul className="space-y-2">
             {rows.map((row) => {
+              const isHiddenForGuest =
+                isBlind && !isHost && !effectiveRevealed.has(row.pourOrder)
+              const displayRow = isHiddenForGuest
+                ? {
+                    ...row,
+                    title: `Vin #${row.pourOrder}`,
+                    subtitle: '',
+                    hostNotes: null as string | null,
+                    imageUrl: null as string | null,
+                  }
+                : row
               const isActive = activePour === row.pourOrder
+              const showRevealButton = isHost && isBlind && !effectiveRevealed.has(row.pourOrder)
+              const swarmEntry = swarm[row.pourOrder]
+              const shouldShowSwarm = isHost || submittedPourOrders.has(row.pourOrder)
               return (
                 <li
                   key={row.key}
@@ -192,10 +255,10 @@ export function PlanSessionContent({
                         {row.pourOrder}
                       </div>
                       <div className="flex-shrink-0 w-14 h-14 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
-                        {row.imageUrl ? (
+                        {displayRow.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={row.imageUrl}
+                            src={displayRow.imageUrl}
                             alt=""
                             className="w-full h-full object-contain p-1"
                           />
@@ -205,7 +268,7 @@ export function PlanSessionContent({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-medium truncate">{row.title}</p>
+                          <p className="text-sm font-medium truncate">{displayRow.title}</p>
                           {isActive && (
                             <Badge variant="brand">
                               <WineIcon className="h-3 w-3 mr-1" />
@@ -213,18 +276,18 @@ export function PlanSessionContent({
                             </Badge>
                           )}
                         </div>
-                        {row.subtitle && (
+                        {displayRow.subtitle && (
                           <p className="text-xs text-muted-foreground truncate">
-                            {row.subtitle}
+                            {displayRow.subtitle}
                           </p>
                         )}
-                        {isHost && row.hostNotes && (
+                        {isHost && displayRow.hostNotes && (
                           <p className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">
                             <Crown className="inline h-3 w-3 mr-1" />
-                            {row.hostNotes}
+                            {displayRow.hostNotes}
                           </p>
                         )}
-                        <div className="mt-3 flex gap-2 flex-wrap">
+                        <div className="mt-3 flex gap-2 flex-wrap items-center">
                           {isHost && (
                             <Button
                               type="button"
@@ -240,11 +303,41 @@ export function PlanSessionContent({
                             type="button"
                             size="sm"
                             variant="outline"
-                            onClick={() => setReviewing(row)}
+                            onClick={() => setReviewing(displayRow)}
                           >
                             Betygsätt
                           </Button>
+                          {showRevealButton && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => revealWine(row.pourOrder)}
+                            >
+                              Avslöja vin #{row.pourOrder}
+                            </Button>
+                          )}
+                          {isActive && plan.defaultMinutesPerWine ? (
+                            <WineFocusTimer
+                              startedAt={hostFocusStartedAt}
+                              minutesPerWine={plan.defaultMinutesPerWine}
+                            />
+                          ) : null}
+                          {isActive &&
+                          isHost &&
+                          plan.defaultMinutesPerWine &&
+                          hostFocusStartedAt &&
+                          row.pourOrder < rows.length ? (
+                            <NextWineButton
+                              startedAt={hostFocusStartedAt}
+                              minutesPerWine={plan.defaultMinutesPerWine}
+                              onNext={() => setFocus(row.pourOrder + 1)}
+                              disabled={settingFocus}
+                            />
+                          ) : null}
                         </div>
+
+                        {shouldShowSwarm && <SwarmPanel entry={swarmEntry ?? null} />}
                       </div>
                     </div>
                   </Card>
@@ -271,7 +364,10 @@ export function PlanSessionContent({
                 sessionId={String(session.id)}
                 wineIdProp={reviewing.libraryWineId}
                 insideDialog
-                onSubmit={() => setReviewing(null)}
+                onSubmit={() => {
+                  setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
+                  setReviewing(null)
+                }}
               />
             ) : reviewing.customWineSnapshot ? (
               <WineReviewForm
@@ -279,11 +375,46 @@ export function PlanSessionContent({
                 sessionId={String(session.id)}
                 customWineSnapshot={reviewing.customWineSnapshot}
                 insideDialog
-                onSubmit={() => setReviewing(null)}
+                onSubmit={() => {
+                  setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
+                  setReviewing(null)
+                }}
               />
             ) : null)}
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+function NextWineButton({
+  startedAt,
+  minutesPerWine,
+  onNext,
+  disabled,
+}: {
+  startedAt: string
+  minutesPerWine: number
+  onNext: () => void
+  disabled?: boolean
+}) {
+  const [now, setNow] = React.useState(() => Date.now())
+  React.useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+  const elapsedSec = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000))
+  if (elapsedSec < minutesPerWine * 60) return null
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="default"
+      disabled={disabled}
+      onClick={onNext}
+      className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+    >
+      → Nästa vin
+    </Button>
   )
 }
