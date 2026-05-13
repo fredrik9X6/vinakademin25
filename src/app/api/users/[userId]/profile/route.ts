@@ -30,6 +30,8 @@ export async function PUT(
 
     const body = await request.json()
 
+    log.info({ userId, bodyHandle: body.handle, bodyBio: body.bio }, 'profile_put_request')
+
     // Update user profile using PayloadCMS 3 best practices
     const updatedUser = await payload.update({
       collection: 'users',
@@ -41,7 +43,13 @@ export async function PUT(
         bio: body.bio,
         handle: body.handle,
       },
+      overrideAccess: true,
     })
+
+    log.info(
+      { userId, savedHandle: (updatedUser as any).handle, savedBio: (updatedUser as any).bio },
+      'profile_put_response',
+    )
 
     return NextResponse.json({
       success: true,

@@ -103,12 +103,16 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
         const json = await response.json()
         const saved = json?.data as Partial<ProfileFormValues> | undefined
         if (saved) {
+          // Prefer the value the user just typed over the server echo. Server
+          // may return an empty string when it failed to write the handle
+          // silently (e.g. unique-collision masked as success), which would
+          // otherwise wipe the field the user is actively trying to set.
           form.reset({
             firstName: saved.firstName ?? values.firstName,
             lastName: saved.lastName ?? values.lastName,
             email: saved.email ?? values.email,
-            bio: saved.bio ?? values.bio ?? '',
-            handle: saved.handle ?? trimmedHandle ?? '',
+            bio: (trimmedBio || saved.bio) ?? values.bio ?? '',
+            handle: (trimmedHandle || saved.handle) ?? '',
           })
         }
         toast.success('Profil uppdaterad', {
@@ -188,7 +192,7 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
             <h2 className="text-lg font-semibold">Offentlig profil</h2>
             <p className="text-sm text-muted-foreground">
               Aktivera ett användarnamn för att göra din profil synlig på{' '}
-              <span className="font-mono">vinakademin.se/v/&lt;namn&gt;</span>. Lämna tomt för att
+              <span className="font-mono">vinakademin.se/profil/&lt;namn&gt;</span>. Lämna tomt för att
               hålla profilen privat.
             </p>
           </div>
@@ -202,7 +206,7 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
                 <FormLabel>Användarnamn</FormLabel>
                 <FormControl>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">vinakademin.se/v/</span>
+                    <span className="text-sm text-muted-foreground">vinakademin.se/profil/</span>
                     <Input
                       placeholder="ditt-namn"
                       maxLength={30}
@@ -246,7 +250,7 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
 
           {handleValue ? (
             <Link
-              href={`/v/${handleValue}`}
+              href={`/profil/${handleValue}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm text-brand-400 hover:underline"

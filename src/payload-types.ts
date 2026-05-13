@@ -1442,7 +1442,7 @@ export interface TastingPlan {
    */
   hostScript?: string | null;
   /**
-   * When checked, this plan appears on the owner's /v/<handle> profile.
+   * When checked, this plan appears on the owner's /profil/<handle> profile.
    */
   publishedToProfile?: boolean | null;
   status: 'draft' | 'ready' | 'archived';

@@ -33,7 +33,7 @@ export function PublicHostProfile({ user, plans }: PublicHostProfileProps) {
         ) : (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             {plans.map((p) => (
-              <Link key={p.id} href={`/v/${user.handle}/${p.id}`} className="block">
+              <Link key={p.id} href={`/profil/${user.handle}/${p.id}`} className="block">
                 <Card className="p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-400/10 text-brand-400 flex items-center justify-center">

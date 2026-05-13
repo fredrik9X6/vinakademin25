@@ -360,7 +360,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             <span className="text-sm">
               <span className="font-medium">Publicera på din profil</span>{' '}
               <span className="text-muted-foreground">
-                — visa den på /v/&lt;ditt-användarnamn&gt;.
+                — visa den på /profil/&lt;ditt-användarnamn&gt;.
               </span>
             </span>
           </label>

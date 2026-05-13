@@ -315,6 +315,21 @@ export async function GET(
             const acc = (accs[pour] ||= { ratings: [], aromas: new Map() })
             if (typeof r.rating === 'number') acc.ratings.push(r.rating)
             const aromas = r.wsetTasting?.nose?.primaryAromas
+            // Debug: log the wsetTasting shape ONCE per swarm build to diagnose
+            // why aroma chips aren't showing on real-world sessions.
+            if (!(global as any).__vk_swarm_debug_logged) {
+              ;(global as any).__vk_swarm_debug_logged = true
+              log.info(
+                {
+                  sessionId,
+                  reviewId: (r as any).id,
+                  hasWsetTasting: !!r.wsetTasting,
+                  hasNose: !!r.wsetTasting?.nose,
+                  primaryAromas: r.wsetTasting?.nose?.primaryAromas,
+                },
+                'swarm_aroma_debug',
+              )
+            }
             if (Array.isArray(aromas)) {
               for (const a of aromas) {
                 const label = typeof a === 'string' ? a.trim() : ''
