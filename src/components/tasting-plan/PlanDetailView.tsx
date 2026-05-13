@@ -114,7 +114,11 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
       </div>
 
       <aside className="md:sticky md:top-20 md:self-start space-y-2">
-        <StartSessionButton tastingPlanId={plan.id} planTitle={plan.title} />
+        <StartSessionButton
+          tastingPlanId={plan.id}
+          planTitle={plan.title}
+          defaultBlindTasting={plan.blindTastingByDefault ?? false}
+        />
         <Button asChild variant="outline" className="w-full">
           <Link href={`/mina-provningar/planer/${plan.id}/handlingslista`}>
             <ShoppingBag className="h-4 w-4 mr-2" />
