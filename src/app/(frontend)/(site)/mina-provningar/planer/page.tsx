@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { Button } from '@/components/ui/button'
@@ -16,19 +16,25 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
-export default async function MinaPlanerPage() {
+export default async function MinaPlanerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ showArchived?: string }>
+}) {
   const user = await getUser()
   if (!user) redirect('/logga-in?from=/mina-provningar/planer')
 
+  const sp = await searchParams
+  const showArchived = sp.showArchived === '1'
+
   const payload = await getPayload({ config })
+  const whereAnd: Where[] = [{ owner: { equals: user.id } }]
+  if (!showArchived) {
+    whereAnd.push({ status: { not_equals: 'archived' } })
+  }
   const { docs } = await payload.find({
     collection: 'tasting-plans',
-    where: {
-      and: [
-        { owner: { equals: user.id } },
-        { status: { not_equals: 'archived' } },
-      ],
-    },
+    where: { and: whereAnd },
     sort: '-updatedAt',
     limit: 100,
     depth: 0,
@@ -44,12 +50,24 @@ export default async function MinaPlanerPage() {
             Provningar du har planerat. Skapa nya och starta sessioner härifrån.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/skapa-provning">
-            <Plus className="h-4 w-4 mr-2" />
-            Ny provning
+        <div className="flex items-center gap-3">
+          <Link
+            href={
+              showArchived
+                ? '/mina-provningar/planer'
+                : '/mina-provningar/planer?showArchived=1'
+            }
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            {showArchived ? '← Dölj arkiverade' : 'Visa arkiverade'}
           </Link>
-        </Button>
+          <Button asChild>
+            <Link href="/skapa-provning">
+              <Plus className="h-4 w-4 mr-2" />
+              Ny provning
+            </Link>
+          </Button>
+        </div>
       </header>
 
       {plans.length === 0 ? (

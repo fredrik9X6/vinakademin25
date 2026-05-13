@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { TastingPlan, Wine, CourseSession } from '@/payload-types'
 import { Card } from '@/components/ui/card'
@@ -12,7 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Wine as WineIcon, Crown } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Wine as WineIcon, Crown, LogOut } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { useActiveSession } from '@/context/SessionContext'
@@ -145,12 +156,60 @@ export function PlanSessionContent({
   // Optimistic local reveal set so the host sees the change instantly
   // before SSE catches up.
   const [localRevealed, setLocalRevealed] = React.useState<Set<number>>(new Set())
+  const router = useRouter()
   const {
     hostCurrentWinePourOrder,
     hostFocusStartedAt,
     revealedPourOrders,
     swarm,
+    leaveSession,
   } = useActiveSession()
+  const [endDialog, setEndDialog] = React.useState(false)
+  const [leaveDialog, setLeaveDialog] = React.useState(false)
+  const [endingOrLeaving, setEndingOrLeaving] = React.useState(false)
+
+  async function handleHostEnd() {
+    setEndingOrLeaving(true)
+    try {
+      // Try the dedicated complete endpoint first; fall back to direct Payload REST.
+      let res = await fetch(`/api/sessions/${session.id}/complete`, { method: 'POST' })
+      if (!res.ok && res.status === 404) {
+        res = await fetch(`/api/course-sessions/${session.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'completed',
+            completedAt: new Date().toISOString(),
+          }),
+          credentials: 'include',
+        })
+      }
+      if (!res.ok) {
+        toast.error('Kunde inte avsluta sessionen.')
+        return
+      }
+      toast.success('Sessionen avslutad.')
+      router.push(`/mina-provningar/planer/${plan.id}`)
+    } catch {
+      toast.error('Nätverksfel — försök igen.')
+    } finally {
+      setEndingOrLeaving(false)
+      setEndDialog(false)
+    }
+  }
+
+  async function handleGuestLeave() {
+    setEndingOrLeaving(true)
+    try {
+      await leaveSession()
+    } catch {
+      // leaveSession() shows its own toast on failure
+    } finally {
+      setEndingOrLeaving(false)
+      setLeaveDialog(false)
+      router.push('/')
+    }
+  }
   const effectiveRevealed = React.useMemo(() => {
     const s = new Set<number>(revealedPourOrders ?? [])
     localRevealed.forEach((p) => s.add(p))
@@ -209,15 +268,24 @@ export function PlanSessionContent({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-      <div className="space-y-4 min-w-0">
-        <header className="space-y-1">
-          <h2 className="text-xl font-heading">{plan.title}</h2>
-          {plan.occasion && (
-            <p className="text-sm text-muted-foreground">{plan.occasion}</p>
-          )}
-        </header>
+    <>
+      <header className="flex items-center justify-between mb-4">
+        <div className="min-w-0">
+          <h1 className="text-xl font-heading truncate">{plan.title}</h1>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => (isHost ? setEndDialog(true) : setLeaveDialog(true))}
+          disabled={endingOrLeaving}
+        >
+          <LogOut className="h-4 w-4 mr-1.5" />
+          {isHost ? 'Avsluta session' : 'Lämna session'}
+        </Button>
+      </header>
 
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-4 min-w-0">
         {rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">Inga viner i planen.</p>
         ) : (
@@ -383,7 +451,55 @@ export function PlanSessionContent({
             ) : null)}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+
+      <AlertDialog open={endDialog} onOpenChange={setEndDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Avsluta sessionen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Alla deltagare kopplas bort och sessionen markeras som klar. Du kan inte återuppta
+              den.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={endingOrLeaving}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={endingOrLeaving}
+              onClick={(e) => {
+                e.preventDefault()
+                void handleHostEnd()
+              }}
+            >
+              {endingOrLeaving ? 'Avslutar…' : 'Avsluta'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={leaveDialog} onOpenChange={setLeaveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Lämna provningen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du kan ansluta igen med samma kod om sessionen fortfarande är aktiv.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={endingOrLeaving}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={endingOrLeaving}
+              onClick={(e) => {
+                e.preventDefault()
+                void handleGuestLeave()
+              }}
+            >
+              {endingOrLeaving ? 'Lämnar…' : 'Lämna'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
 
