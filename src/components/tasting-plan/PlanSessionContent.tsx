@@ -119,16 +119,17 @@ export function PlanSessionContent({
   const [reviewing, setReviewing] = React.useState<WineRow | null>(null)
   const [settingFocus, setSettingFocus] = React.useState(false)
   // Optimistic local focus — fires immediately when the host taps a wine so
-  // their own UI doesn't wait for the SSE round-trip.
+  // their own UI doesn't wait for the SSE round-trip. Only the host ever sets
+  // this; guests fall through to the SSE/prop chain below.
   const [localFocus, setLocalFocus] = React.useState<number | null>(null)
   const { hostCurrentWinePourOrder } = useActiveSession()
-  // Realtime takes precedence; fall back to the server-side prop (initial render
-  // before SSE has connected); finally fall back to the host's optimistic local
-  // pick. `null` only when nothing has been set.
+  // Local optimistic value wins (only set on the host's own tap), then
+  // realtime SSE, then the initial server-rendered prop. `null` only when
+  // nothing has been set.
   const activePour =
+    localFocus ??
     hostCurrentWinePourOrder ??
-    (typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null) ??
-    localFocus
+    (typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null)
 
   const scrollRefs = React.useRef<Record<string, HTMLLIElement | null>>({})
   React.useEffect(() => {
