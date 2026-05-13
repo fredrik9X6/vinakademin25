@@ -37,6 +37,7 @@ import {
 import { Trash2 } from 'lucide-react'
 import { WinePicker, type CustomWineInput, type LibraryWineResult } from './WinePicker'
 import { SortableWineRow } from './SortableWineRow'
+import { WizardTour } from '@/components/onboarding/WizardTour'
 
 type WineEntry =
   | { kind: 'library'; key: string; libraryWine: number; wineSnapshot: LibraryWineResult; pourOrder: number; hostNotes: string }
@@ -114,6 +115,9 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
   const [defaultMinutesPerWine, setDefaultMinutesPerWine] = React.useState<number | ''>(
     initialPlan?.defaultMinutesPerWine ?? '',
   )
+  const [publishedToProfile, setPublishedToProfile] = React.useState<boolean>(
+    initialPlan?.publishedToProfile ?? false,
+  )
   const [hostScript, setHostScript] = React.useState(initialPlan?.hostScript ?? '')
   const [wines, setWines] = React.useState<WineEntry[]>(() => hydrateInitialWines(initialPlan))
   const [submitting, setSubmitting] = React.useState(false)
@@ -185,6 +189,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       targetParticipants,
       blindTastingByDefault,
       defaultMinutesPerWine: defaultMinutesPerWine === '' ? null : Number(defaultMinutesPerWine),
+      publishedToProfile,
       hostScript: hostScript || undefined,
       wines: wines.map((w, idx) => ({
         libraryWine: w.kind === 'library' ? w.libraryWine : undefined,
@@ -255,6 +260,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 pb-32 space-y-8">
+      {!isEdit && <WizardTour />}
       <header>
         <h1 className="text-2xl font-heading">
           {isEdit ? 'Redigera provning' : 'Skapa provning'}
@@ -269,6 +275,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           <Label htmlFor="t-title">Titel *</Label>
           <Input
             id="t-title"
+            data-tour="wizard-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={100}
@@ -343,10 +350,24 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             />
             <p className="text-xs text-muted-foreground mt-1">Lämna tomt för ingen timer.</p>
           </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-input accent-brand-400"
+              checked={publishedToProfile}
+              onChange={(e) => setPublishedToProfile(e.target.checked)}
+            />
+            <span className="text-sm">
+              <span className="font-medium">Publicera på din profil</span>{' '}
+              <span className="text-muted-foreground">
+                — visa den på /v/&lt;ditt-användarnamn&gt;.
+              </span>
+            </span>
+          </label>
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-3" data-tour="wizard-wines">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Viner ({wineCount})</h2>
           {wineCount < 3 && (
@@ -430,7 +451,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           ) : (
             <span />
           )}
-          <Button type="button" onClick={save} disabled={!canSubmit}>
+          <Button type="button" data-tour="wizard-save" onClick={save} disabled={!canSubmit}>
             {submitting ? 'Sparar…' : isEdit ? 'Spara ändringar' : 'Spara utkast'}
           </Button>
         </div>

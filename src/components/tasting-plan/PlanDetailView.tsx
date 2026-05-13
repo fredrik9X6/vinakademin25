@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Pencil, ShoppingBag, Printer } from 'lucide-react'
 import StartSessionButton from '@/components/course/StartSessionButton'
+import { PlanDetailTour } from '@/components/onboarding/PlanDetailTour'
 
 const STATUS_LABEL: Record<TastingPlan['status'], string> = {
   draft: 'Utkast',
@@ -58,6 +59,7 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
   const wines = plan.wines ?? []
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 pb-32 grid gap-8 md:grid-cols-[1fr_280px]">
+      <PlanDetailTour />
       <div className="space-y-6 min-w-0">
         <header>
           <h1 className="text-3xl font-heading">{plan.title}</h1>
@@ -114,18 +116,20 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
       </div>
 
       <aside className="md:sticky md:top-20 md:self-start space-y-2">
-        <StartSessionButton
-          tastingPlanId={plan.id}
-          planTitle={plan.title}
-          defaultBlindTasting={plan.blindTastingByDefault ?? false}
-        />
-        <Button asChild variant="outline" className="w-full">
+        <div data-tour="detail-start-session">
+          <StartSessionButton
+            tastingPlanId={plan.id}
+            planTitle={plan.title}
+            defaultBlindTasting={plan.blindTastingByDefault ?? false}
+          />
+        </div>
+        <Button asChild variant="outline" className="w-full" data-tour="detail-shopping-list">
           <Link href={`/mina-provningar/planer/${plan.id}/handlingslista`}>
             <ShoppingBag className="h-4 w-4 mr-2" />
             Visa handlingslista
           </Link>
         </Button>
-        <Button asChild variant="outline" className="w-full">
+        <Button asChild variant="outline" className="w-full" data-tour="detail-print-guide">
           <Link href={`/varguide/${plan.id}`}>
             <Printer className="h-4 w-4 mr-2" />
             Skriv ut värdguide

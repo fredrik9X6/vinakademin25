@@ -16,6 +16,7 @@ import * as migration_20260513_071543_chunk_c_current_wine_pour_order from './20
 import * as migration_20260513_074240_chunk_d_wrap_up_email from './20260513_074240_chunk_d_wrap_up_email';
 import * as migration_20260513_090406_chunk_e_tasting_templates from './20260513_090406_chunk_e_tasting_templates';
 import * as migration_20260513_121600_chunk_f_host_superpowers from './20260513_121600_chunk_f_host_superpowers';
+import * as migration_20260513_132329_chunk_g_polish from './20260513_132329_chunk_g_polish';
 
 export const migrations = [
   {
@@ -106,6 +107,11 @@ export const migrations = [
   {
     up: migration_20260513_121600_chunk_f_host_superpowers.up,
     down: migration_20260513_121600_chunk_f_host_superpowers.down,
-    name: '20260513_121600_chunk_f_host_superpowers'
+    name: '20260513_121600_chunk_f_host_superpowers',
+  },
+  {
+    up: migration_20260513_132329_chunk_g_polish.up,
+    down: migration_20260513_132329_chunk_g_polish.down,
+    name: '20260513_132329_chunk_g_polish'
   },
 ];

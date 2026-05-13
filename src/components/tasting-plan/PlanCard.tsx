@@ -57,6 +57,8 @@ export function PlanCard({ plan }: PlanCardProps) {
   const router = useRouter()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
+  const [confirmRestore, setConfirmRestore] = React.useState(false)
+  const [restoring, setRestoring] = React.useState(false)
   const wineCount = plan.wines?.length ?? 0
   const isArchived = plan.status === 'archived'
 
@@ -83,9 +85,36 @@ export function PlanCard({ plan }: PlanCardProps) {
     }
   }
 
+  async function performRestore() {
+    setRestoring(true)
+    try {
+      const res = await fetch(`/api/tasting-plans/${plan.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'draft' }),
+      })
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast.error(data?.error || 'Kunde inte återställa planen.')
+        return
+      }
+      toast.success('Återställd.')
+      router.refresh()
+    } catch {
+      toast.error('Nätverksfel — försök igen.')
+    } finally {
+      setRestoring(false)
+      setConfirmRestore(false)
+    }
+  }
+
   return (
     <>
-      <Card className="relative p-4 hover:shadow-md transition-shadow flex flex-col gap-3">
+      <Card
+        className={`relative p-4 hover:shadow-md transition-shadow flex flex-col gap-3 ${
+          isArchived ? 'opacity-60' : ''
+        }`}
+      >
         <Link
           href={`/mina-provningar/planer/${plan.id}`}
           className="absolute inset-0 z-0"
@@ -104,6 +133,11 @@ export function PlanCard({ plan }: PlanCardProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {isArchived && (
+                  <DropdownMenuItem onClick={() => setConfirmRestore(true)}>
+                    Återställ
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => setConfirmOpen(true)}>
                   {isArchived ? 'Ta bort permanent' : 'Arkivera'}
                 </DropdownMenuItem>
@@ -141,6 +175,28 @@ export function PlanCard({ plan }: PlanCardProps) {
               }}
             >
               {busy ? 'Tar bort…' : 'Bekräfta'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={confirmRestore} onOpenChange={setConfirmRestore}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Återställ planen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Den flyttas tillbaka till dina aktiva planer som utkast.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={restoring}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={restoring}
+              onClick={(e) => {
+                e.preventDefault()
+                void performRestore()
+              }}
+            >
+              {restoring ? 'Återställer…' : 'Bekräfta'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
