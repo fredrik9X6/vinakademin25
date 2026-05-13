@@ -29,6 +29,7 @@ import { getSiteURL } from '@/lib/site-url'
 import { resolveSeo } from '@/lib/seo'
 import { BreadcrumbJsonLd, WineProductJsonLd } from '@/components/seo/JsonLd'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
+import { WineTastingsLink } from '@/components/wine/WineTastingsLink'
 import { VinlistanWineCard, StarsRow } from '@/components/vinlistan/VinlistanWineCard'
 import { contentReferencesWine } from '@/lib/wine-references'
 import { cn } from '@/lib/utils'
@@ -467,6 +468,30 @@ export default async function WineDetailPage({ params }: PageProps) {
     contentReferencesWine(p.content, wine.id, wine.slug),
   )
 
+  // Public tasting plans that reference this wine (via wines[].libraryWine)
+  const plansRes = await payload.find({
+    collection: 'tasting-plans',
+    where: {
+      and: [
+        { 'wines.libraryWine': { equals: wine.id } },
+        { publishedToProfile: { equals: true } },
+      ],
+    } as any,
+    limit: 10,
+    depth: 1, // populate owner for handle
+  })
+  const publicPlans = (plansRes.docs as any[])
+    .map((p) => {
+      const owner = typeof p.owner === 'object' ? p.owner : null
+      return {
+        id: p.id,
+        title: p.title,
+        handle: owner?.handle ?? null,
+      }
+    })
+    .filter((p): p is { id: number; title: string; handle: string } => !!p.handle)
+  const tastingCount = plansRes.totalDocs
+
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(price)
 
@@ -675,6 +700,9 @@ export default async function WineDetailPage({ params }: PageProps) {
                   </Button>
                 </div>
               ) : null}
+
+              {/* Public tasting plans cross-link */}
+              <WineTastingsLink count={tastingCount} plans={publicPlans} />
 
               {/* Details grid */}
               <div className="grid grid-cols-2 gap-4 pt-2">
