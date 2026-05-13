@@ -37,6 +37,7 @@ import {
 import { Trash2 } from 'lucide-react'
 import { WinePicker, type CustomWineInput, type LibraryWineResult } from './WinePicker'
 import { SortableWineRow } from './SortableWineRow'
+import { WizardTour } from '@/components/onboarding/WizardTour'
 
 type WineEntry =
   | { kind: 'library'; key: string; libraryWine: number; wineSnapshot: LibraryWineResult; pourOrder: number; hostNotes: string }
@@ -259,6 +260,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 pb-32 space-y-8">
+      {!isEdit && <WizardTour />}
       <header>
         <h1 className="text-2xl font-heading">
           {isEdit ? 'Redigera provning' : 'Skapa provning'}
@@ -273,6 +275,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           <Label htmlFor="t-title">Titel *</Label>
           <Input
             id="t-title"
+            data-tour="wizard-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={100}
@@ -364,7 +367,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-3" data-tour="wizard-wines">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Viner ({wineCount})</h2>
           {wineCount < 3 && (
@@ -448,7 +451,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           ) : (
             <span />
           )}
-          <Button type="button" onClick={save} disabled={!canSubmit}>
+          <Button type="button" data-tour="wizard-save" onClick={save} disabled={!canSubmit}>
             {submitting ? 'Sparar…' : isEdit ? 'Spara ändringar' : 'Spara utkast'}
           </Button>
         </div>

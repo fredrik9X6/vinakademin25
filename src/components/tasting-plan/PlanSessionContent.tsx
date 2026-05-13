@@ -29,6 +29,7 @@ import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { useActiveSession } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
 import { SwarmPanel } from './SwarmPanel'
+import { HostSessionTour } from '@/components/onboarding/HostSessionTour'
 
 interface PlanSessionContentProps {
   session: CourseSession
@@ -283,6 +284,9 @@ export function PlanSessionContent({
           {isHost ? 'Avsluta session' : 'Lämna session'}
         </Button>
       </header>
+      {isHost && (
+        <HostSessionTour blind={isBlind} hasTimer={!!plan.defaultMinutesPerWine} />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <div className="space-y-4 min-w-0">
@@ -290,7 +294,7 @@ export function PlanSessionContent({
           <p className="text-sm text-muted-foreground">Inga viner i planen.</p>
         ) : (
           <ul className="space-y-2">
-            {rows.map((row) => {
+            {rows.map((row, idx) => {
               const isHiddenForGuest =
                 isBlind && !isHost && !effectiveRevealed.has(row.pourOrder)
               const displayRow = isHiddenForGuest
@@ -363,6 +367,7 @@ export function PlanSessionContent({
                               variant={isActive ? 'default' : 'outline'}
                               disabled={settingFocus}
                               onClick={() => setFocus(row.pourOrder)}
+                              {...(idx === 0 ? { 'data-tour': 'session-set-focus' } : {})}
                             >
                               {isActive ? 'I fokus' : 'Sätt fokus'}
                             </Button>
@@ -381,15 +386,18 @@ export function PlanSessionContent({
                               size="sm"
                               variant="outline"
                               onClick={() => revealWine(row.pourOrder)}
+                              {...(idx === 0 ? { 'data-tour': 'session-reveal' } : {})}
                             >
                               Avslöja vin #{row.pourOrder}
                             </Button>
                           )}
                           {isActive && plan.defaultMinutesPerWine ? (
-                            <WineFocusTimer
-                              startedAt={hostFocusStartedAt}
-                              minutesPerWine={plan.defaultMinutesPerWine}
-                            />
+                            <div {...(idx === 0 ? { 'data-tour': 'session-timer' } : {})}>
+                              <WineFocusTimer
+                                startedAt={hostFocusStartedAt}
+                                minutesPerWine={plan.defaultMinutesPerWine}
+                              />
+                            </div>
                           ) : null}
                           {isActive &&
                           isHost &&
