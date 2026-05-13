@@ -13,12 +13,6 @@ export default async function PlanDetailPage({
   params: Promise<{ id: string }>
   searchParams: Promise<{ session?: string; host?: string }>
 }) {
-  const user = await getUser()
-  if (!user) {
-    const { id } = await params
-    redirect(`/logga-in?from=/mina-provningar/planer/${id}`)
-  }
-
   const { id } = await params
   const planId = Number(id)
   if (!Number.isInteger(planId)) notFound()
@@ -37,13 +31,11 @@ export default async function PlanDetailPage({
   }
   if (!plan) notFound()
 
-  const ownerId = typeof plan.owner === 'object' ? plan.owner?.id : plan.owner
-  const isAdmin = user.role === 'admin'
-  if (!isAdmin && ownerId !== user.id) notFound()
-
-  // Session-mode rendering if ?session=<id> is present and points to a session
-  // for this plan. Without this branch, the SessionView plan-mode path added
-  // in Task 5 is unreachable from the host's redirect target.
+  // Session-mode rendering: when ?session=<id> is present and points to an
+  // active session for this plan, render the session shell. This path is
+  // accessible to unauthenticated guests because session participants may
+  // not have an account — their identity is carried by the participant
+  // cookie set on /api/sessions/join.
   const sp = await searchParams
   if (sp.session) {
     let session: CourseSession | null = null
@@ -73,6 +65,15 @@ export default async function PlanDetailPage({
       )
     }
   }
+
+  // Detail-page mode requires auth + owner.
+  const user = await getUser()
+  if (!user) {
+    redirect(`/logga-in?from=/mina-provningar/planer/${id}`)
+  }
+  const ownerId = typeof plan.owner === 'object' ? plan.owner?.id : plan.owner
+  const isAdmin = user.role === 'admin'
+  if (!isAdmin && ownerId !== user.id) notFound()
 
   return <PlanDetailView plan={plan} />
 }

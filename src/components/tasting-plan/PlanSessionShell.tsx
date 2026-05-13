@@ -25,14 +25,16 @@ interface PlanSessionShellProps {
  */
 export function PlanSessionShell({ plan: _plan, session, isHost, sessionId }: PlanSessionShellProps) {
   return (
-    <SessionView
-      course={null}
-      selectedLesson={undefined}
-      selectedQuiz={undefined}
-      selectedModule={undefined}
-      sessionId={sessionId}
-      isHost={isHost}
-      session={session}
-    />
+    <div className="mx-auto max-w-6xl px-4 py-6 pb-24">
+      <SessionView
+        course={null}
+        selectedLesson={undefined}
+        selectedQuiz={undefined}
+        selectedModule={undefined}
+        sessionId={sessionId}
+        isHost={isHost}
+        session={session}
+      />
+    </div>
   )
 }

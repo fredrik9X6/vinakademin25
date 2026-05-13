@@ -200,8 +200,30 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const courseId = typeof session.course === 'object' ? session.course.id : session.course
-    const course = await payload.findByID({ collection: 'vinprovningar', id: courseId })
+    // Polymorphic: course-driven OR plan-driven session.
+    const courseId =
+      session.course == null
+        ? null
+        : typeof session.course === 'object'
+        ? session.course.id
+        : session.course
+    const planId =
+      session.tastingPlan == null
+        ? null
+        : typeof session.tastingPlan === 'object'
+        ? session.tastingPlan.id
+        : session.tastingPlan
+
+    const course = courseId
+      ? await payload.findByID({ collection: 'vinprovningar', id: courseId })
+      : null
+    const plan = planId
+      ? await payload.findByID({
+          collection: 'tasting-plans',
+          id: planId,
+          overrideAccess: true,
+        })
+      : null
 
     const response = NextResponse.json(
       {
@@ -223,7 +245,10 @@ export async function POST(request: NextRequest) {
         session: {
           id: session.id,
           sessionName: session.sessionName,
-          course: { id: course.id, title: course.title, slug: course.slug },
+          course: course
+            ? { id: course.id, title: course.title, slug: course.slug }
+            : null,
+          tastingPlan: plan ? { id: plan.id, title: plan.title } : null,
           currentActivity: session.currentActivity,
           currentLesson: session.currentLesson,
           currentQuiz: session.currentQuiz,
