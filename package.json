@@ -24,6 +24,7 @@
     "send-review-emails": "node --import tsx scripts/send-review-emails.ts",
     "send-claim-emails": "node --import tsx scripts/send-claim-emails.ts",
     "send-wrap-up-emails": "node --import tsx scripts/send-wrap-up-emails.ts",
+    "send-all-emails": "node --import tsx scripts/send-all-emails.ts",
     "test:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --test src/lib/vinkompassen/*.test.ts",
     "seed:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/seed-vinkompassen.ts",
     "import:legacy-wine-reviews": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/import-legacy-wine-reviews.ts"
