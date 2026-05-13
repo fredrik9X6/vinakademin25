@@ -8,11 +8,11 @@ const log = loggerFor('api-sessions-host-state')
 /**
  * POST /api/sessions/[sessionId]/host-state
  *
- * Body: { currentLessonId: number }
+ * Body: { currentLessonId: number } (course mode — writes course-sessions.currentLesson)
+ *   OR  { currentWinePourOrder: number } (plan mode — writes course-sessions.currentWinePourOrder)
  *
- * Updates course-sessions.currentLesson. Auth: Payload session, must be the
- * session's host (or admin). Triggers downstream SSE broadcasts within the
- * stream's 2s poll tick.
+ * Auth: Payload session, must be the session's host (or admin). Triggers
+ * downstream SSE broadcasts within the stream's 2s poll tick.
  */
 export async function POST(
   request: NextRequest,
@@ -45,16 +45,26 @@ export async function POST(
     }
 
     const body = await request.json().catch(() => ({}))
-    const raw = (body as any)?.currentLessonId
-    const currentLessonId = typeof raw === 'number' ? raw : null
-    if (currentLessonId === null) {
-      return NextResponse.json({ error: 'currentLessonId must be a number' }, { status: 400 })
+    const rawLesson = (body as any)?.currentLessonId
+    const rawWine = (body as any)?.currentWinePourOrder
+    const currentLessonId = typeof rawLesson === 'number' ? rawLesson : null
+    const currentWinePourOrder = typeof rawWine === 'number' ? rawWine : null
+
+    if (currentLessonId === null && currentWinePourOrder === null) {
+      return NextResponse.json(
+        { error: 'currentLessonId or currentWinePourOrder must be a number' },
+        { status: 400 },
+      )
     }
+
+    const data: Record<string, unknown> = {}
+    if (currentLessonId !== null) data.currentLesson = currentLessonId
+    if (currentWinePourOrder !== null) data.currentWinePourOrder = currentWinePourOrder
 
     await payload.update({
       collection: 'course-sessions',
       id: sessionId,
-      data: { currentLesson: currentLessonId },
+      data,
       overrideAccess: true,
       depth: 0,
     })

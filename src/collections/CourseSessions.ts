@@ -78,7 +78,15 @@ export const CourseSessions: CollectionConfig = {
       type: 'relationship',
       relationTo: 'content-items',
       admin: {
-        description: 'Currently active content item in the session',
+        description: 'Currently active content item in the session (course mode)',
+      },
+    },
+    {
+      name: 'currentWinePourOrder',
+      type: 'number',
+      min: 1,
+      admin: {
+        description: 'Active wine pour order in plan-driven sessions (plan mode)',
       },
     },
     {
