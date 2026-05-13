@@ -37,6 +37,9 @@ interface SessionContextValue {
   setFollowingHost: (b: boolean) => void
   hostCurrentLessonId: number | null
   setHostCurrentLessonId: (id: number | null) => void
+  /** Plan-mode pacing pointer (active wine's pourOrder). Set by RealtimeSync. */
+  hostCurrentWinePourOrder: number | null
+  setHostCurrentWinePourOrder: (n: number | null) => void
   roster: RosterEntry[]
   setRoster: (r: RosterEntry[]) => void
 }
@@ -53,6 +56,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [hasShownWarning, setHasShownWarning] = useState(false)
   const [followingHostRaw, setFollowingHostRaw] = useState<boolean>(true)
   const [hostCurrentLessonId, setHostCurrentLessonIdState] = useState<number | null>(null)
+  const [hostCurrentWinePourOrder, setHostCurrentWinePourOrderState] = useState<number | null>(
+    null,
+  )
   const [roster, setRoster] = useState<RosterEntry[]>([])
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -175,6 +181,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setHostCurrentLessonIdState(id)
   }, [])
 
+  const setHostCurrentWinePourOrder = useCallback((n: number | null) => {
+    setHostCurrentWinePourOrderState(n)
+  }, [])
+
   const leaveSession = useCallback(async () => {
     if (!activeSession) return
 
@@ -227,6 +237,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setFollowingHost,
     hostCurrentLessonId,
     setHostCurrentLessonId,
+    hostCurrentWinePourOrder,
+    setHostCurrentWinePourOrder,
     roster,
     setRoster,
   }

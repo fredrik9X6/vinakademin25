@@ -97,34 +97,45 @@ export async function GET(
         }
       }
 
-      const readCurrentLessonId = async (): Promise<number | null> => {
+      // Reads BOTH the course-mode currentLesson FK and the plan-mode
+      // currentWinePourOrder number; clients pick whichever they care about.
+      const readHostPointer = async (): Promise<{
+        currentLessonId: number | null
+        currentWinePourOrder: number | null
+      }> => {
         try {
           const fresh = await payload.findByID({
             collection: 'course-sessions',
             id: sessionId,
             depth: 0,
           })
-          if (!fresh) return null
+          if (!fresh) return { currentLessonId: null, currentWinePourOrder: null }
           const cl = (fresh as any).currentLesson
-          if (cl == null) return null
-          return typeof cl === 'object' ? cl.id : cl
+          const wp = (fresh as any).currentWinePourOrder
+          return {
+            currentLessonId: cl == null ? null : typeof cl === 'object' ? cl.id : cl,
+            currentWinePourOrder: typeof wp === 'number' ? wp : null,
+          }
         } catch (err) {
-          log.error({ err, sessionId }, 'sse_read_current_lesson_failed')
-          return null
+          log.error({ err, sessionId }, 'sse_read_host_pointer_failed')
+          return { currentLessonId: null, currentWinePourOrder: null }
         }
       }
 
       // Initial lesson frame
-      let lastLessonId = await readCurrentLessonId()
-      send('lesson', { currentLessonId: lastLessonId })
+      let lastPointer = await readHostPointer()
+      send('lesson', lastPointer)
 
       // Lesson poller
       const lessonPoll = setInterval(async () => {
         if (closed) return
-        const next = await readCurrentLessonId()
-        if (next !== lastLessonId) {
-          lastLessonId = next
-          send('lesson', { currentLessonId: next })
+        const next = await readHostPointer()
+        if (
+          next.currentLessonId !== lastPointer.currentLessonId ||
+          next.currentWinePourOrder !== lastPointer.currentWinePourOrder
+        ) {
+          lastPointer = next
+          send('lesson', next)
         }
       }, LESSON_POLL_INTERVAL_MS)
 

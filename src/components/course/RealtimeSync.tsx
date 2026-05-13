@@ -11,7 +11,7 @@ import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
  * stream); only one instance per page is needed.
  */
 export function RealtimeSync({ sessionId }: { sessionId: string }) {
-  const { setHostCurrentLessonId, setRoster } = useActiveSession()
+  const { setHostCurrentLessonId, setHostCurrentWinePourOrder, setRoster } = useActiveSession()
 
   useEffect(() => {
     const url = `/api/sessions/${encodeURIComponent(sessionId)}/stream`
@@ -19,8 +19,14 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
 
     es.addEventListener('lesson', (e) => {
       try {
-        const data = JSON.parse((e as MessageEvent).data) as { currentLessonId: number | null }
+        const data = JSON.parse((e as MessageEvent).data) as {
+          currentLessonId: number | null
+          currentWinePourOrder?: number | null
+        }
         setHostCurrentLessonId(data.currentLessonId)
+        if ('currentWinePourOrder' in data) {
+          setHostCurrentWinePourOrder(data.currentWinePourOrder ?? null)
+        }
       } catch {
         // Malformed payload — ignore. EventSource will keep streaming.
       }
@@ -42,7 +48,7 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     return () => {
       es.close()
     }
-  }, [sessionId, setHostCurrentLessonId, setRoster])
+  }, [sessionId, setHostCurrentLessonId, setHostCurrentWinePourOrder, setRoster])
 
   return null
 }

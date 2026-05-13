@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog'
 import { Wine as WineIcon, Crown } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
+import { useActiveSession } from '@/context/SessionContext'
 
 interface PlanSessionContentProps {
   session: CourseSession
@@ -30,6 +32,7 @@ type WineRow = {
   subtitle: string
   hostNotes: string | null
   libraryWineId: number | null
+  imageUrl: string | null
   customWineSnapshot: {
     name: string
     producer?: string
@@ -49,6 +52,8 @@ function rowFromEntry(
     const lib = w.libraryWine as Wine
     const region =
       typeof lib.region === 'object' && lib.region ? lib.region.name ?? null : null
+    const image = typeof lib.image === 'object' && lib.image ? lib.image : null
+    const imageUrl = image ? image.sizes?.thumbnail?.url ?? image.url ?? null : null
     return {
       key: w.id ?? `lib-${lib.id}-${idx}`,
       pourOrder,
@@ -56,6 +61,7 @@ function rowFromEntry(
       subtitle: [lib.winery, lib.vintage, region].filter(Boolean).join(' · '),
       hostNotes: w.hostNotes ?? null,
       libraryWineId: lib.id,
+      imageUrl,
       customWineSnapshot: null,
     }
   }
@@ -67,6 +73,7 @@ function rowFromEntry(
     subtitle: [c?.producer, c?.vintage].filter(Boolean).join(' · '),
     hostNotes: w.hostNotes ?? null,
     libraryWineId: null,
+    imageUrl: null,
     customWineSnapshot: c?.name
       ? {
           name: c.name,
@@ -111,8 +118,17 @@ export function PlanSessionContent({
   const rows: WineRow[] = (plan.wines ?? []).map(rowFromEntry)
   const [reviewing, setReviewing] = React.useState<WineRow | null>(null)
   const [settingFocus, setSettingFocus] = React.useState(false)
+  // Optimistic local focus — fires immediately when the host taps a wine so
+  // their own UI doesn't wait for the SSE round-trip.
+  const [localFocus, setLocalFocus] = React.useState<number | null>(null)
+  const { hostCurrentWinePourOrder } = useActiveSession()
+  // Realtime takes precedence; fall back to the server-side prop (initial render
+  // before SSE has connected); finally fall back to the host's optimistic local
+  // pick. `null` only when nothing has been set.
   const activePour =
-    typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null
+    hostCurrentWinePourOrder ??
+    (typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null) ??
+    localFocus
 
   const scrollRefs = React.useRef<Record<string, HTMLLIElement | null>>({})
   React.useEffect(() => {
@@ -125,6 +141,7 @@ export function PlanSessionContent({
 
   async function setFocus(pourOrder: number) {
     setSettingFocus(true)
+    setLocalFocus(pourOrder) // optimistic — host sees the change immediately
     try {
       const res = await fetch(`/api/sessions/${session.id}/host-state`, {
         method: 'POST',
@@ -172,6 +189,18 @@ export function PlanSessionContent({
                     <div className="flex gap-3 items-start">
                       <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-400/10 text-brand-400 text-sm font-semibold flex items-center justify-center">
                         {row.pourOrder}
+                      </div>
+                      <div className="flex-shrink-0 w-14 h-14 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
+                        {row.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={row.imageUrl}
+                            alt=""
+                            className="w-full h-full object-contain p-1"
+                          />
+                        ) : (
+                          <WineImagePlaceholder size="sm" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -240,6 +269,7 @@ export function PlanSessionContent({
                 lessonId={0}
                 sessionId={String(session.id)}
                 wineIdProp={reviewing.libraryWineId}
+                insideDialog
                 onSubmit={() => setReviewing(null)}
               />
             ) : reviewing.customWineSnapshot ? (
@@ -247,6 +277,7 @@ export function PlanSessionContent({
                 lessonId={0}
                 sessionId={String(session.id)}
                 customWineSnapshot={reviewing.customWineSnapshot}
+                insideDialog
                 onSubmit={() => setReviewing(null)}
               />
             ) : null)}

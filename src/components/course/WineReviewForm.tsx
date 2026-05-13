@@ -38,6 +38,12 @@ interface WineReviewFormProps {
   onSubmit?: () => void
   wineIdProp?: number | string // Accept wine ID from parent to bypass permission issues
   customWineSnapshot?: CustomWineSnapshot
+  /**
+   * Set when this form is rendered inside a Radix Dialog. Threads modal=true
+   * through to every internal Popover/MultiSelect so the popover content
+   * traps focus correctly and isn't intercepted by the Dialog's overlay.
+   */
+  insideDialog?: boolean
 }
 
 type ReviewDoc = {
@@ -58,6 +64,7 @@ export function WineReviewForm({
   onSubmit,
   wineIdProp,
   customWineSnapshot,
+  insideDialog = false,
 }: WineReviewFormProps) {
   const [rating, setRating] = React.useState<number>(0)
   const [buyAgain, setBuyAgain] = React.useState<boolean>(false)
@@ -641,6 +648,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <MultiSelect
+                  modalPopover={insideDialog}
                   options={[
                     'Jordgubbe',
                     'Päron',
@@ -849,6 +857,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <MultiSelect
+                  modalPopover={insideDialog}
                   options={[
                     'Jordgubbe',
                     'Päron',
@@ -904,6 +913,7 @@ export function WineReviewForm({
               </InputRow>
               <InputRow label="Sekundära aromer" attemptSubmit={attemptSubmit}>
                 <MultiSelect
+                  modalPopover={insideDialog}
                   options={[
                     'Vanilj',
                     'Ceder',
@@ -935,6 +945,7 @@ export function WineReviewForm({
               </InputRow>
               <InputRow label="Tertiära aromer" attemptSubmit={attemptSubmit}>
                 <MultiSelect
+                  modalPopover={insideDialog}
                   options={[
                     'Choklad',
                     'Läder',
@@ -1002,6 +1013,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <MultiSelect
+                  modalPopover={insideDialog}
                   options={[
                     'Jordgubbe',
                     'Päron',
@@ -1057,6 +1069,7 @@ export function WineReviewForm({
               </InputRow>
               <InputRow label="Sekundära smaker" attemptSubmit={attemptSubmit}>
                 <MultiSelect
+                  modalPopover={insideDialog}
                   options={[
                     'Vanilj',
                     'Ceder',
@@ -1088,6 +1101,7 @@ export function WineReviewForm({
               </InputRow>
               <InputRow label="Tertiära smaker" attemptSubmit={attemptSubmit}>
                 <MultiSelect
+                  modalPopover={insideDialog}
                   options={[
                     'Choklad',
                     'Läder',

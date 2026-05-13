@@ -174,16 +174,21 @@ export default function SessionView({
   ])
 
   // Plan-driven branch — render the flat wine list view. All hooks above run
-  // unconditionally; this just swaps the render output.
+  // unconditionally; this just swaps the render output. RealtimeSync is mounted
+  // here too so the roster + host-focus broadcasts flow exactly like in course
+  // mode (the course-mode branch mounts it inside its main render below).
   if (isPlanSession && session) {
     return (
-      <PlanSessionContent
-        session={session}
-        plan={session.tastingPlan as TastingPlan}
-        isHost={isHost}
-        followingHost={followingHost}
-        sidebarExtra={<SessionRoster lessonTitleById={new Map()} />}
-      />
+      <>
+        <RealtimeSync sessionId={sessionId} />
+        <PlanSessionContent
+          session={session}
+          plan={session.tastingPlan as TastingPlan}
+          isHost={isHost}
+          followingHost={followingHost}
+          sidebarExtra={<SessionRoster lessonTitleById={new Map()} />}
+        />
+      </>
     )
   }
 
