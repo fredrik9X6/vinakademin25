@@ -326,6 +326,32 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: 'handle',
+      type: 'text',
+      unique: true,
+      index: true,
+      admin: {
+        description:
+          'Public profile slug — lowercase, 3–30 chars, regex [a-z0-9-]. Empty = profile not opted in.',
+      },
+      validate: (value: unknown) => {
+        if (value == null || value === '') return true
+        const s = String(value).toLowerCase().trim()
+        if (s.length < 3 || s.length > 30) return 'Användarnamnet måste vara 3–30 tecken.'
+        if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(s))
+          return 'Användarnamnet får bara innehålla a–z, 0–9 och bindestreck.'
+        return true
+      },
+      hooks: {
+        beforeValidate: [
+          ({ value }) => {
+            if (typeof value === 'string') return value.toLowerCase().trim() || null
+            return value
+          },
+        ],
+      },
+    },
+    {
       name: 'avatar',
       type: 'upload',
       label: 'Profile Picture',
@@ -338,8 +364,9 @@ export const Users: CollectionConfig = {
       name: 'bio',
       type: 'textarea',
       label: 'Bio',
+      maxLength: 280,
       admin: {
-        description: 'Short user biography',
+        description: 'Optional bio shown on the public profile page.',
       },
     },
     // Role and Permissions

@@ -77,6 +77,14 @@ export const TastingTemplates: CollectionConfig = {
     { name: 'seoTitle', type: 'text', maxLength: 60 },
     { name: 'seoDescription', type: 'text', maxLength: 160 },
     {
+      name: 'tags',
+      type: 'text',
+      hasMany: true,
+      admin: {
+        description: 'Free-form tags shown as filter chips on /provningsmallar.',
+      },
+    },
+    {
       name: 'publishedStatus',
       type: 'select',
       required: true,

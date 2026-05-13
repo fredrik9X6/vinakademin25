@@ -251,11 +251,15 @@ export interface User {
    */
   lastName?: string | null;
   /**
+   * Public profile slug — lowercase, 3–30 chars, regex [a-z0-9-]. Empty = profile not opted in.
+   */
+  handle?: string | null;
+  /**
    * User's profile picture
    */
   avatar?: (number | null) | Media;
   /**
-   * Short user biography
+   * Optional bio shown on the public profile page.
    */
   bio?: string | null;
   /**
@@ -1437,6 +1441,10 @@ export interface TastingPlan {
    * Optional flavor text for the host cheat sheet (Chunk C).
    */
   hostScript?: string | null;
+  /**
+   * When checked, this plan appears on the owner's /v/<handle> profile.
+   */
+  publishedToProfile?: boolean | null;
   status: 'draft' | 'ready' | 'archived';
   /**
    * Set when this plan was cloned from a TastingTemplate.
@@ -1473,6 +1481,10 @@ export interface TastingTemplate {
   featuredImage?: (number | null) | Media;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  /**
+   * Free-form tags shown as filter chips on /provningsmallar.
+   */
+  tags?: string[] | null;
   publishedStatus: 'draft' | 'published';
   /**
    * Stamped automatically the first time the template is published.
@@ -3264,6 +3276,7 @@ export interface MediaSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   firstName?: T;
   lastName?: T;
+  handle?: T;
   avatar?: T;
   bio?: T;
   role?: T;
@@ -4129,6 +4142,7 @@ export interface TastingPlansSelect<T extends boolean = true> {
         id?: T;
       };
   hostScript?: T;
+  publishedToProfile?: T;
   status?: T;
   derivedFromTemplate?: T;
   updatedAt?: T;
@@ -4156,6 +4170,7 @@ export interface TastingTemplatesSelect<T extends boolean = true> {
   featuredImage?: T;
   seoTitle?: T;
   seoDescription?: T;
+  tags?: T;
   publishedStatus?: T;
   publishedAt?: T;
   updatedAt?: T;

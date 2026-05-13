@@ -139,6 +139,15 @@ export const TastingPlans: CollectionConfig = {
       admin: { description: 'Optional flavor text for the host cheat sheet (Chunk C).' },
     },
     {
+      name: 'publishedToProfile',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description:
+          "When checked, this plan appears on the owner's /v/<handle> profile.",
+      },
+    },
+    {
       name: 'status',
       type: 'select',
       required: true,
