@@ -135,10 +135,10 @@ export const TastingPlans: CollectionConfig = {
     {
       name: 'derivedFromTemplate',
       type: 'relationship',
-      relationTo: 'tasting-plans',
+      relationTo: 'tasting-templates',
       hasMany: false,
       admin: {
-        description: 'Set by the clone-template API in Chunk E. Null for now.',
+        description: 'Set when this plan was cloned from a TastingTemplate.',
         position: 'sidebar',
       },
     },

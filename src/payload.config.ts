@@ -35,6 +35,7 @@ import { BlogTags } from './collections/BlogTags'
 import { CourseSessions } from './collections/CourseSessions'
 import { SessionParticipants } from './collections/SessionParticipants'
 import { TastingPlans } from './collections/TastingPlans'
+import { TastingTemplates } from './collections/TastingTemplates'
 import { Subscribers } from './collections/Subscribers'
 import { Events } from './collections/Events'
 import { VinkompassQuestions } from './collections/VinkompassQuestions'
@@ -219,6 +220,7 @@ export default buildConfig({
     CourseSessions,
     SessionParticipants,
     TastingPlans,
+    TastingTemplates,
     Subscribers,
     Events,
     VinkompassQuestions,

@@ -93,6 +93,7 @@ export interface Config {
     'course-sessions': CourseSession;
     'session-participants': SessionParticipant;
     'tasting-plans': TastingPlan;
+    'tasting-templates': TastingTemplate;
     subscribers: Subscriber;
     events: Event;
     'vinkompass-questions': VinkompassQuestion;
@@ -130,6 +131,7 @@ export interface Config {
     'course-sessions': CourseSessionsSelect<false> | CourseSessionsSelect<true>;
     'session-participants': SessionParticipantsSelect<false> | SessionParticipantsSelect<true>;
     'tasting-plans': TastingPlansSelect<false> | TastingPlansSelect<true>;
+    'tasting-templates': TastingTemplatesSelect<false> | TastingTemplatesSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'vinkompass-questions': VinkompassQuestionsSelect<false> | VinkompassQuestionsSelect<true>;
@@ -1409,9 +1411,45 @@ export interface TastingPlan {
   hostScript?: string | null;
   status: 'draft' | 'ready' | 'archived';
   /**
-   * Set by the clone-template API in Chunk E. Null for now.
+   * Set when this plan was cloned from a TastingTemplate.
    */
-  derivedFromTemplate?: (number | null) | TastingPlan;
+  derivedFromTemplate?: (number | null) | TastingTemplate;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Admin-curated tasting plan templates that members can clone.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tasting-templates".
+ */
+export interface TastingTemplate {
+  id: number;
+  title: string;
+  /**
+   * URL-friendly slug. Auto-generated from title if empty.
+   */
+  slug: string;
+  description?: string | null;
+  occasion?: string | null;
+  targetParticipants?: number | null;
+  wines?:
+    | {
+        libraryWine: number | Wine;
+        pourOrder?: number | null;
+        hostNotes?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  hostScript?: string | null;
+  featuredImage?: (number | null) | Media;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  publishedStatus: 'draft' | 'published';
+  /**
+   * Stamped automatically the first time the template is published.
+   */
+  publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3062,6 +3100,10 @@ export interface PayloadLockedDocument {
         value: number | TastingPlan;
       } | null)
     | ({
+        relationTo: 'tasting-templates';
+        value: number | TastingTemplate;
+      } | null)
+    | ({
         relationTo: 'subscribers';
         value: number | Subscriber;
       } | null)
@@ -4056,6 +4098,33 @@ export interface TastingPlansSelect<T extends boolean = true> {
   hostScript?: T;
   status?: T;
   derivedFromTemplate?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tasting-templates_select".
+ */
+export interface TastingTemplatesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  occasion?: T;
+  targetParticipants?: T;
+  wines?:
+    | T
+    | {
+        libraryWine?: T;
+        pourOrder?: T;
+        hostNotes?: T;
+        id?: T;
+      };
+  hostScript?: T;
+  featuredImage?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  publishedStatus?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
