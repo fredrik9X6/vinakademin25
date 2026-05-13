@@ -1300,9 +1300,13 @@ export interface CourseSession {
    */
   tastingPlan?: (number | null) | TastingPlan;
   /**
-   * Currently active content item in the session
+   * Currently active content item in the session (course mode)
    */
   currentLesson?: (number | null) | ContentItem;
+  /**
+   * Active wine pour order in plan-driven sessions (plan mode)
+   */
+  currentWinePourOrder?: number | null;
   /**
    * Currently active quiz in the session (deprecated - use currentLesson)
    */
@@ -3978,6 +3982,7 @@ export interface CourseSessionsSelect<T extends boolean = true> {
   course?: T;
   tastingPlan?: T;
   currentLesson?: T;
+  currentWinePourOrder?: T;
   currentQuiz?: T;
   host?: T;
   joinCode?: T;

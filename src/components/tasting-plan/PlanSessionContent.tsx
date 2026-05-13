@@ -95,9 +95,11 @@ function rowFromEntry(
  * with host pacing controls and a per-wine "Betygsätt" dialog that opens
  * WineReviewForm in either library-wine or custom-wine snapshot mode.
  *
- * Note: `session.currentLesson` (a relation field in course-mode) is repurposed
- * here as a plain integer carrying the active wine's `pourOrder`. The
- * dual interpretation is intentional — see Chunk C spec.
+
+
+ * Note: plan mode uses the dedicated numeric field `currentWinePourOrder`
+ * on course-sessions (separate from course-mode's `currentLesson` content-item
+ * FK). The host-state route accepts either field name.
  */
 export function PlanSessionContent({
   session,
@@ -110,7 +112,7 @@ export function PlanSessionContent({
   const [reviewing, setReviewing] = React.useState<WineRow | null>(null)
   const [settingFocus, setSettingFocus] = React.useState(false)
   const activePour =
-    typeof session.currentLesson === 'number' ? session.currentLesson : null
+    typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null
 
   const scrollRefs = React.useRef<Record<string, HTMLLIElement | null>>({})
   React.useEffect(() => {
@@ -127,7 +129,7 @@ export function PlanSessionContent({
       const res = await fetch(`/api/sessions/${session.id}/host-state`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentLessonId: pourOrder }),
+        body: JSON.stringify({ currentWinePourOrder: pourOrder }),
       })
       if (!res.ok) {
         toast.error('Kunde inte sätta fokus.')
