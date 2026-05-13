@@ -21,6 +21,9 @@ async function loadHostAndPlans(handle: string): Promise<{ user: User; plans: Ta
   })
   const user = (userRes.docs[0] as User) ?? null
   if (!user) return null
+  // Honor the public/private toggle. Default true for users created before
+  // the profilePublic field existed.
+  if ((user as any).profilePublic === false) return null
   const plansRes = await payload.find({
     collection: 'tasting-plans',
     where: {

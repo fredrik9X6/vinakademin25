@@ -30,24 +30,58 @@ export async function PUT(
 
     const body = await request.json()
 
-    log.info({ userId, bodyHandle: body.handle, bodyBio: body.bio }, 'profile_put_request')
+    // Fetch the existing user first so we can lock the handle once it's set.
+    const existing = (await payload.findByID({
+      collection: 'users',
+      id: parseInt(userId, 10),
+      overrideAccess: true,
+    })) as any
+    const existingHandle =
+      typeof existing?.handle === 'string' && existing.handle.trim()
+        ? existing.handle.trim().toLowerCase()
+        : null
 
-    // Update user profile using PayloadCMS 3 best practices
+    log.info(
+      {
+        userId,
+        bodyHandle: body.handle,
+        bodyBio: body.bio,
+        bodyProfilePublic: body.profilePublic,
+        existingHandle,
+      },
+      'profile_put_request',
+    )
+
+    const data: Record<string, unknown> = {
+      firstName: body.firstName,
+      lastName: body.lastName,
+      email: body.email,
+      bio: body.bio,
+    }
+    // Only allow setting the handle when it's currently empty/null.
+    // Once set, the handle is permanent at the API level.
+    if (!existingHandle && body.handle != null && body.handle !== '') {
+      data.handle = body.handle
+    }
+    // profilePublic always passes through (it's the visibility toggle, not the slug).
+    if (typeof body.profilePublic === 'boolean') {
+      data.profilePublic = body.profilePublic
+    }
+
     const updatedUser = await payload.update({
       collection: 'users',
-      id: parseInt(userId, 10), // Ensure ID is number for PayloadCMS 3
-      data: {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        email: body.email,
-        bio: body.bio,
-        handle: body.handle,
-      },
+      id: parseInt(userId, 10),
+      data,
       overrideAccess: true,
     })
 
     log.info(
-      { userId, savedHandle: (updatedUser as any).handle, savedBio: (updatedUser as any).bio },
+      {
+        userId,
+        savedHandle: (updatedUser as any).handle,
+        savedBio: (updatedUser as any).bio,
+        savedProfilePublic: (updatedUser as any).profilePublic,
+      },
       'profile_put_response',
     )
 
@@ -59,6 +93,7 @@ export async function PUT(
         email: updatedUser.email,
         bio: updatedUser.bio,
         handle: updatedUser.handle,
+        profilePublic: (updatedUser as any).profilePublic,
       },
       message: 'Profile updated successfully',
     })

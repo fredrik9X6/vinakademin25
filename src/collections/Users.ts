@@ -352,6 +352,15 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: 'profilePublic',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        description:
+          'When checked AND handle is set, the user\'s /profil/<handle> page is publicly visible.',
+      },
+    },
+    {
       name: 'avatar',
       type: 'upload',
       label: 'Profile Picture',

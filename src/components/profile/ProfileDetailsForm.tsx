@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -40,9 +41,17 @@ const ProfileSchema = z.object({
           '3–30 tecken, a–z, 0–9 och bindestreck. Får inte börja eller sluta med bindestreck.',
       },
     ),
+  profilePublic: z.boolean().optional(),
 })
 
-export type ProfileFormValues = z.infer<typeof ProfileSchema>
+export type ProfileFormValues = {
+  firstName: string
+  lastName: string
+  email: string
+  bio: string
+  handle: string
+  profilePublic: boolean
+}
 
 interface ProfileDetailsFormProps {
   userId: string
@@ -53,14 +62,20 @@ interface ProfileDetailsFormProps {
 export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDetailsFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
+  // Source-of-truth for the locked handle: comes from initialData, never from
+  // the form. Once set, the user cannot change it through the UI.
+  const lockedHandle = (initialData?.handle ?? '').trim().toLowerCase()
+  const hasLockedHandle = lockedHandle.length > 0
+
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(ProfileSchema),
+    resolver: zodResolver(ProfileSchema) as any,
     defaultValues: {
       firstName: initialData?.firstName || '',
       lastName: initialData?.lastName || '',
       email: initialData?.email || '',
       bio: initialData?.bio || '',
       handle: initialData?.handle || '',
+      profilePublic: initialData?.profilePublic ?? true,
     },
   })
 
@@ -73,6 +88,7 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
         email: initialData.email || '',
         bio: initialData.bio || '',
         handle: initialData.handle || '',
+        profilePublic: initialData.profilePublic ?? true,
       })
     }
   }, [initialData, form])
@@ -85,12 +101,17 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
     try {
       const trimmedHandle = (values.handle ?? '').toLowerCase().trim()
       const trimmedBio = (values.bio ?? '').trim()
-      const payload = {
+      const payload: Record<string, unknown> = {
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
         bio: trimmedBio ? trimmedBio : null,
-        handle: trimmedHandle ? trimmedHandle : null,
+        profilePublic: values.profilePublic ?? true,
+      }
+      // Only send handle when it's not locked yet (i.e. first time setting it).
+      // Server also enforces this, but be defensive here.
+      if (!hasLockedHandle && trimmedHandle) {
+        payload.handle = trimmedHandle
       }
       const response = await fetch(`/api/users/${userId}/profile`, {
         method: 'PUT',
@@ -103,16 +124,18 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
         const json = await response.json()
         const saved = json?.data as Partial<ProfileFormValues> | undefined
         if (saved) {
-          // Prefer the value the user just typed over the server echo. Server
-          // may return an empty string when it failed to write the handle
-          // silently (e.g. unique-collision masked as success), which would
-          // otherwise wipe the field the user is actively trying to set.
+          // ALWAYS preserve the locked handle. Server may echo an empty string
+          // on race conditions, but the URL slug is permanent once set.
           form.reset({
             firstName: saved.firstName ?? values.firstName,
             lastName: saved.lastName ?? values.lastName,
             email: saved.email ?? values.email,
             bio: (trimmedBio || saved.bio) ?? values.bio ?? '',
-            handle: (trimmedHandle || saved.handle) ?? '',
+            handle: lockedHandle || trimmedHandle || saved.handle || '',
+            profilePublic:
+              typeof saved.profilePublic === 'boolean'
+                ? saved.profilePublic
+                : (values.profilePublic ?? true),
           })
         }
         toast.success('Profil uppdaterad', {
@@ -197,34 +220,53 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
             </p>
           </div>
 
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <FormField
-            control={form.control as any}
-            name="handle"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Användarnamn</FormLabel>
-                <FormControl>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">vinakademin.se/profil/</span>
-                    <Input
-                      placeholder="ditt-namn"
-                      maxLength={30}
-                      autoComplete="off"
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(e.target.value.toLowerCase())}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </FormControl>
-                <p className="text-xs text-muted-foreground">
-                  3–30 tecken, a–z, 0–9 och bindestreck. Lämna tomt för att hålla profilen privat.
-                </p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {hasLockedHandle ? (
+            <div>
+              <Label htmlFor="handle">Användarnamn</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">vinakademin.se/profil/</span>
+                <Input
+                  id="handle"
+                  value={lockedHandle}
+                  readOnly
+                  disabled
+                  className="bg-muted text-muted-foreground"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Användarnamnet kan inte ändras efter att det sparats.
+              </p>
+            </div>
+          ) : (
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            <FormField
+              control={form.control as any}
+              name="handle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Användarnamn</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">vinakademin.se/profil/</span>
+                      <Input
+                        placeholder="ditt-namn"
+                        maxLength={30}
+                        autoComplete="off"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(e.target.value.toLowerCase())}
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    3–30 tecken, a–z, 0–9, bindestreck. Lämna tomt för att hålla profilen privat.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}
@@ -248,16 +290,43 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
             )}
           />
 
-          {handleValue ? (
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <FormField
+            control={form.control as any}
+            name="profilePublic"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start gap-3 space-y-0">
+                <FormControl>
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 mt-0.5 rounded border-input accent-brand-400"
+                    checked={field.value !== false}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    disabled={!hasLockedHandle || isLoading}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="cursor-pointer">Min profil är synlig på Vinakademin</FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    {hasLockedHandle
+                      ? 'När detta är av visas inte din profil eller publicerade provningar publikt.'
+                      : 'Sätt ett användarnamn först för att aktivera profilen.'}
+                  </p>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          {(lockedHandle || handleValue) && (
             <Link
-              href={`/profil/${handleValue}`}
+              href={`/profil/${lockedHandle || handleValue}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm text-brand-400 hover:underline"
             >
               Visa profil <ExternalLink className="h-3 w-3" />
             </Link>
-          ) : null}
+          )}
         </section>
 
         <Button type="submit" disabled={isLoading}>

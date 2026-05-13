@@ -255,6 +255,10 @@ export interface User {
    */
   handle?: string | null;
   /**
+   * When checked AND handle is set, the user's /profil/<handle> page is publicly visible.
+   */
+  profilePublic?: boolean | null;
+  /**
    * User's profile picture
    */
   avatar?: (number | null) | Media;
@@ -3277,6 +3281,7 @@ export interface UsersSelect<T extends boolean = true> {
   firstName?: T;
   lastName?: T;
   handle?: T;
+  profilePublic?: T;
   avatar?: T;
   bio?: T;
   role?: T;
