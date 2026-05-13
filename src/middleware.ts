@@ -108,6 +108,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Guest carve-out: a plan-driven session participant may not have an account.
+  // Their identity is carried by the vk_participant_token cookie set on
+  // /api/sessions/join. When ?session=<id> is present on the plan detail page,
+  // skip the middleware gate and let the page validate the session itself.
+  if (
+    /^\/mina-provningar\/planer\/\d+$/.test(pathname) &&
+    url.searchParams.has('session')
+  ) {
+    return NextResponse.next()
+  }
+
   // Check if the path is protected (using the updated protectedPaths)
   const protectedPath = protectedPaths.find((p) => pathname.startsWith(p.path))
 
