@@ -204,6 +204,16 @@ export const CourseSessions: CollectionConfig = {
           'Set by the cron after iterating participants for this session. Cleared on re-completion so the cron can re-process newly-added participants.',
       },
     },
+    {
+      name: 'wrapUpEmailsDispatchedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description:
+          'Stamped when the wrap-up email cron has processed this session. NULL means not yet dispatched.',
+      },
+    },
   ],
   timestamps: true,
 }

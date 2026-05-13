@@ -1273,6 +1273,10 @@ export interface SessionParticipant {
    */
   claimEmailProcessedAt?: string | null;
   /**
+   * Stamped when this participant has been processed by the wrap-up cron (sent OR skipped).
+   */
+  wrapUpEmailDispatchedAt?: string | null;
+  /**
    * Outcome of the claim-email decision for operator debugging.
    */
   claimEmailStatus?: ('sent' | 'skipped_existing_user' | 'skipped_no_email' | 'failed') | null;
@@ -1351,6 +1355,10 @@ export interface CourseSession {
    * Set by the cron after iterating participants for this session. Cleared on re-completion so the cron can re-process newly-added participants.
    */
   claimEmailsDispatchedAt?: string | null;
+  /**
+   * Stamped when the wrap-up email cron has processed this session. NULL means not yet dispatched.
+   */
+  wrapUpEmailsDispatchedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3994,6 +4002,7 @@ export interface CourseSessionsSelect<T extends boolean = true> {
   expiresAt?: T;
   completedAt?: T;
   claimEmailsDispatchedAt?: T;
+  wrapUpEmailsDispatchedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -4010,6 +4019,7 @@ export interface SessionParticipantsSelect<T extends boolean = true> {
   isActive?: T;
   lastActivityAt?: T;
   claimEmailProcessedAt?: T;
+  wrapUpEmailDispatchedAt?: T;
   claimEmailStatus?: T;
   currentLessonId?: T;
   updatedAt?: T;

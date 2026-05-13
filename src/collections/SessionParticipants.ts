@@ -84,6 +84,16 @@ export const SessionParticipants: CollectionConfig = {
       },
     },
     {
+      name: 'wrapUpEmailDispatchedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description:
+          'Stamped when this participant has been processed by the wrap-up cron (sent OR skipped).',
+      },
+    },
+    {
       name: 'claimEmailStatus',
       type: 'select',
       options: [
