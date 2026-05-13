@@ -39,6 +39,7 @@ export async function PUT(
         lastName: body.lastName,
         email: body.email,
         bio: body.bio,
+        handle: body.handle,
       },
     })
 
@@ -49,6 +50,7 @@ export async function PUT(
         lastName: updatedUser.lastName,
         email: updatedUser.email,
         bio: updatedUser.bio,
+        handle: updatedUser.handle,
       },
       message: 'Profile updated successfully',
     })

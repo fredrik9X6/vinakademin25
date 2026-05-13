@@ -17,14 +17,29 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { ExternalLink, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 
 // Define Zod schema for profile validation (Swedish messages)
 const ProfileSchema = z.object({
   firstName: z.string().min(1, { message: 'Förnamn krävs.' }),
   lastName: z.string().min(1, { message: 'Efternamn krävs.' }),
   email: z.string().email({ message: 'Ogiltig e-postadress.' }),
-  bio: z.string().max(500, { message: 'Bio kan inte vara längre än 500 tecken.' }).default(''),
+  bio: z.string().max(280, { message: 'Bio kan inte vara längre än 280 tecken.' }).default(''),
+  handle: z
+    .string()
+    .default('')
+    .refine(
+      (val) => {
+        if (!val) return true
+        if (val.length < 3 || val.length > 30) return false
+        return /^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(val)
+      },
+      {
+        message:
+          '3–30 tecken, a–z, 0–9 och bindestreck. Får inte börja eller sluta med bindestreck.',
+      },
+    ),
 })
 
 export type ProfileFormValues = z.infer<typeof ProfileSchema>
@@ -45,6 +60,7 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
       lastName: initialData?.lastName || '',
       email: initialData?.email || '',
       bio: initialData?.bio || '',
+      handle: initialData?.handle || '',
     },
   })
 
@@ -56,17 +72,30 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
         lastName: initialData.lastName || '',
         email: initialData.email || '',
         bio: initialData.bio || '',
+        handle: initialData.handle || '',
       })
     }
   }, [initialData, form])
 
+  const handleValue = form.watch('handle') ?? ''
+  const bioValue = form.watch('bio') ?? ''
+
   async function onSubmit(values: ProfileFormValues) {
     setIsLoading(true)
     try {
+      const trimmedHandle = (values.handle ?? '').toLowerCase().trim()
+      const trimmedBio = (values.bio ?? '').trim()
+      const payload = {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        bio: trimmedBio ? trimmedBio : null,
+        handle: trimmedHandle ? trimmedHandle : null,
+      }
       const response = await fetch(`/api/users/${userId}/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
         credentials: 'include',
       })
 
@@ -79,6 +108,7 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
             lastName: saved.lastName ?? values.lastName,
             email: saved.email ?? values.email,
             bio: saved.bio ?? values.bio ?? '',
+            handle: saved.handle ?? trimmedHandle ?? '',
           })
         }
         toast.success('Profil uppdaterad', {
@@ -153,6 +183,45 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
           )}
         />
 
+        <section className="space-y-4 rounded-md border bg-card p-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Offentlig profil</h2>
+            <p className="text-sm text-muted-foreground">
+              Aktivera ett användarnamn för att göra din profil synlig på{' '}
+              <span className="font-mono">vinakademin.se/v/&lt;namn&gt;</span>. Lämna tomt för att
+              hålla profilen privat.
+            </p>
+          </div>
+
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <FormField
+            control={form.control as any}
+            name="handle"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Användarnamn</FormLabel>
+                <FormControl>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">vinakademin.se/v/</span>
+                    <Input
+                      placeholder="ditt-namn"
+                      maxLength={30}
+                      autoComplete="off"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value.toLowerCase())}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  3–30 tecken, a–z, 0–9 och bindestreck. Lämna tomt för att hålla profilen privat.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="bio"
@@ -161,17 +230,31 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
                 <FormLabel>Bio (valfritt)</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Berätta lite om dig själv..."
+                    placeholder="Vem är du? Vad gillar du för vin?"
                     className="resize-none"
+                    maxLength={280}
                     {...field}
                     value={field.value ?? ''}
                     disabled={isLoading}
                   />
                 </FormControl>
+                <p className="text-xs text-muted-foreground">{bioValue.length}/280</p>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {handleValue ? (
+            <Link
+              href={`/v/${handleValue}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-brand-400 hover:underline"
+            >
+              Visa profil <ExternalLink className="h-3 w-3" />
+            </Link>
+          ) : null}
+        </section>
 
         <Button type="submit" disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

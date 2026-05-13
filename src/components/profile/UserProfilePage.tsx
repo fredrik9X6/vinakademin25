@@ -273,6 +273,7 @@ export function UserProfilePage() {
                       lastName: user.lastName || '',
                       email: user.email,
                       bio: user.bio || '',
+                      handle: user.handle || '',
                     }}
                     onSuccess={() => checkAuth()}
                   />
