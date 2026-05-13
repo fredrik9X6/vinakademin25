@@ -17,6 +17,7 @@ import * as migration_20260513_074240_chunk_d_wrap_up_email from './20260513_074
 import * as migration_20260513_090406_chunk_e_tasting_templates from './20260513_090406_chunk_e_tasting_templates';
 import * as migration_20260513_121600_chunk_f_host_superpowers from './20260513_121600_chunk_f_host_superpowers';
 import * as migration_20260513_132329_chunk_g_polish from './20260513_132329_chunk_g_polish';
+import * as migration_20260513_152909_chunk_g_profile_public from './20260513_152909_chunk_g_profile_public';
 
 export const migrations = [
   {
@@ -112,6 +113,11 @@ export const migrations = [
   {
     up: migration_20260513_132329_chunk_g_polish.up,
     down: migration_20260513_132329_chunk_g_polish.down,
-    name: '20260513_132329_chunk_g_polish'
+    name: '20260513_132329_chunk_g_polish',
+  },
+  {
+    up: migration_20260513_152909_chunk_g_profile_public.up,
+    down: migration_20260513_152909_chunk_g_profile_public.down,
+    name: '20260513_152909_chunk_g_profile_public'
   },
 ];

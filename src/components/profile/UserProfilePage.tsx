@@ -274,6 +274,7 @@ export function UserProfilePage() {
                       email: user.email,
                       bio: user.bio || '',
                       handle: user.handle || '',
+                      profilePublic: (user as any)?.profilePublic ?? true,
                     }}
                     onSuccess={() => checkAuth()}
                   />

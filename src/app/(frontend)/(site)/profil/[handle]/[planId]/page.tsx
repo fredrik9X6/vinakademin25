@@ -24,6 +24,7 @@ async function loadHostAndPlan(
   })
   const user = (userRes.docs[0] as User) ?? null
   if (!user) return null
+  if ((user as any).profilePublic === false) return null
   const pid = Number(planId)
   if (!Number.isInteger(pid)) return null
   const plan = (await payload
