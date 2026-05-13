@@ -201,7 +201,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       }
       toast.success(isEdit ? 'Sparat.' : 'Planen är skapad.')
       if (!isEdit && data.plan?.id) {
-        router.replace(`/skapa-provning/${data.plan.id}`)
+        router.replace(`/mina-provningar/planer/${data.plan.id}`)
       } else {
         router.refresh()
       }

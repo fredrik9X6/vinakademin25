@@ -117,17 +117,32 @@ export default function JoinSessionDialog({
         // ignore
       }
 
-      const courseSlug = data.session.course.slug || data.session.course.id
-      joinSession({
-        sessionId: String(data.session.id),
-        courseSlug,
-        courseId: data.session.course.id,
-        courseName: data.session.course.title,
-        sessionName: data.session.sessionName || `Session ${joinCode}`,
-        expiresAt: data.session.expiresAt,
-      })
-
-      router.push(`/vinprovningar/${courseSlug}?session=${data.session.id}`)
+      const isPlan = !!data.session.tastingPlan
+      if (isPlan) {
+        joinSession({
+          sessionId: String(data.session.id),
+          courseSlug: '',
+          courseId: 0,
+          tastingPlanId: data.session.tastingPlan.id,
+          courseName: data.session.tastingPlan.title,
+          sessionName: data.session.sessionName || `Session ${joinCode}`,
+          expiresAt: data.session.expiresAt,
+        })
+        router.push(
+          `/mina-provningar/planer/${data.session.tastingPlan.id}?session=${data.session.id}`,
+        )
+      } else {
+        const courseSlug = data.session.course.slug || data.session.course.id
+        joinSession({
+          sessionId: String(data.session.id),
+          courseSlug,
+          courseId: data.session.course.id,
+          courseName: data.session.course.title,
+          sessionName: data.session.sessionName || `Session ${joinCode}`,
+          expiresAt: data.session.expiresAt,
+        })
+        router.push(`/vinprovningar/${courseSlug}?session=${data.session.id}`)
+      }
     } catch (err) {
       console.error('Join error:', err)
       setError('Ett oväntat fel uppstod. Försök igen.')
