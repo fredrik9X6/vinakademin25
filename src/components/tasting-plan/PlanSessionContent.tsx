@@ -54,6 +54,7 @@ type WineRow = {
     type?: 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
     systembolagetUrl?: string
     priceSek?: number
+    systembolagetProductNumber?: string
   } | null
 }
 
@@ -104,6 +105,7 @@ function rowFromEntry(
             | undefined,
           systembolagetUrl: c.systembolagetUrl || undefined,
           priceSek: c.priceSek ?? undefined,
+          systembolagetProductNumber: c.systembolagetProductNumber || undefined,
         }
       : null,
   }

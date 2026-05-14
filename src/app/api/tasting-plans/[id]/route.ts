@@ -13,6 +13,7 @@ type CustomWine = {
   type?: 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
   systembolagetUrl?: string
   priceSek?: number
+  systembolagetProductNumber?: string
 }
 
 type WineEntry = {

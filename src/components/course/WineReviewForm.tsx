@@ -29,6 +29,7 @@ interface CustomWineSnapshot {
   type?: 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
   systembolagetUrl?: string
   priceSek?: number
+  systembolagetProductNumber?: string
 }
 
 interface WineReviewFormProps {
