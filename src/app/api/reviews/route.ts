@@ -304,16 +304,17 @@ export async function POST(request: NextRequest) {
       'Request body',
     )
 
-    // Validate required fields
-    if (!body.wine) {
-      // PayloadCMS relationship fields may send POST requests with empty bodies when fetching options
-      // Return empty result instead of error to avoid breaking the admin UI
+    // Validate: either a library wine OR a customWine snapshot must be present.
+    // Empty bodies are Payload admin UI's relationship-options probe — return
+    // an empty list shape so the admin doesn't break.
+    const hasCustomWine =
+      !!body.customWine?.name && String(body.customWine.name).trim() !== ''
+    if (!body.wine && !hasCustomWine) {
       const { searchParams } = new URL(request.url)
       log.warn(
         { queryParams: searchParams.toString() },
         'Missing required fields — treating as relationship fetch',
       )
-      // Return a proper PayloadCMS-formatted response for relationship fetching
       return NextResponse.json(
         {
           docs: [],
@@ -330,10 +331,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Ensure numeric values are properly converted
+    // Library wine ID, when set, must be a valid number.
     const wineId = body.wine ? Number(body.wine) : undefined
-
-    if (!wineId || isNaN(wineId)) {
+    if (body.wine && (!wineId || isNaN(wineId))) {
       return NextResponse.json(
         {
           error: 'Invalid ID values',
@@ -343,24 +343,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Dedup logic differs for guests vs authed users.
-    // - Authed: dedup on (user, wine), optionally scoped to session.
-    // - Guest:  dedup on (sessionParticipant, wine).
-    const whereConditions: any = guestParticipant
-      ? {
-          and: [
-            { sessionParticipant: { equals: guestParticipant.id } },
-            { wine: { equals: wineId } },
-          ],
-        }
-      : {
-          and: [{ user: { equals: user!.id } }, { wine: { equals: wineId } }],
-        }
+    // Dedup. Library wines dedup on (user/participant, wine[, session]).
+    // CustomWine reviews dedup on (user/participant, session, productNumber || name)
+    // so re-submissions update the existing row instead of creating duplicates.
+    const sessionIdFromBody = body.session ? Number(body.session) : undefined
+    const buildBaseWhere = () =>
+      guestParticipant
+        ? { and: [{ sessionParticipant: { equals: guestParticipant.id } }] as any[] }
+        : { and: [{ user: { equals: user!.id } }] as any[] }
 
-    if (!guestParticipant && body.session) {
-      const sessionId = Number(body.session)
-      if (!isNaN(sessionId)) {
-        whereConditions.and.push({ session: { equals: sessionId } })
+    let whereConditions: any
+    if (wineId) {
+      whereConditions = buildBaseWhere()
+      whereConditions.and.push({ wine: { equals: wineId } })
+      if (!guestParticipant && sessionIdFromBody && !isNaN(sessionIdFromBody)) {
+        whereConditions.and.push({ session: { equals: sessionIdFromBody } })
+      }
+    } else {
+      // customWine path
+      whereConditions = buildBaseWhere()
+      const sid = guestParticipant ? guestParticipant.sessionId : sessionIdFromBody
+      if (sid && !isNaN(sid)) {
+        whereConditions.and.push({ session: { equals: sid } })
+      }
+      const productNumber = body.customWine?.systembolagetProductNumber
+      if (productNumber) {
+        whereConditions.and.push({
+          'customWine.systembolagetProductNumber': { equals: String(productNumber) },
+        })
+      } else {
+        whereConditions.and.push({
+          'customWine.name': { equals: String(body.customWine.name).trim() },
+        })
       }
     }
 
@@ -377,7 +391,9 @@ export async function POST(request: NextRequest) {
     // and session are derived from the cookie token, NOT trusted from the body.
     const reviewData: any = {
       ...body,
-      wine: wineId,
+      // Library wine path uses wineId; customWine path passes wine: null so
+      // Payload's beforeValidate hook sees exactly one of {wine, customWine}.
+      wine: wineId ?? null,
       user: guestParticipant ? null : user!.id,
       session: guestParticipant
         ? guestParticipant.sessionId
