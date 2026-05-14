@@ -14,6 +14,7 @@ type CustomWine = {
   systembolagetUrl?: string
   priceSek?: number
   systembolagetProductNumber?: string
+  imageUrl?: string
 }
 
 type WineEntry = {

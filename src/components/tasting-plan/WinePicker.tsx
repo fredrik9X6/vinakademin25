@@ -26,6 +26,24 @@ export type CustomWineInput = {
    * to the curated `wines` collection or run analytics across reviews.
    */
   systembolagetProductNumber?: string
+  /**
+   * Bottle image URL — set when the snapshot came from the Systembolaget picker.
+   * For hand-typed custom wines this is left empty.
+   */
+  imageUrl?: string
+}
+
+/**
+ * Systembolaget CDN URLs come back from upstream without a file extension
+ * (e.g. .../productimages/47017/47017). The CDN serves a 400px thumbnail at
+ * `_400.png` and the full image at `.png`. We use the thumbnail variant for
+ * picker dropdown and saved-snapshot use; consumers can build the full URL
+ * by swapping the suffix when they need a larger render.
+ */
+function buildThumbnailUrl(baseUrl: string | null): string | undefined {
+  if (!baseUrl) return undefined
+  if (/\.(png|jpg|jpeg|webp)$/i.test(baseUrl)) return baseUrl
+  return `${baseUrl}_400.png`
 }
 
 type SystembolagetHit = {
@@ -65,6 +83,7 @@ function projectSystembolagetToCustom(hit: SystembolagetHit): CustomWineInput {
     systembolagetUrl: hit.productUrl || undefined,
     priceSek: hit.price ?? undefined,
     systembolagetProductNumber: hit.productNumber,
+    imageUrl: buildThumbnailUrl(hit.imageUrl),
   }
 }
 
@@ -188,6 +207,7 @@ export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePicker
           {sbResults.length > 0 && (
             <ul className="max-h-72 overflow-y-auto divide-y rounded-md border">
               {sbResults.map((r) => {
+                const thumbUrl = buildThumbnailUrl(r.imageUrl)
                 const headline = [r.productNameBold, r.productNameThin]
                   .filter(Boolean)
                   .join(' ')
@@ -212,10 +232,10 @@ export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePicker
                         setSbResults([])
                       }}
                     >
-                      {r.imageUrl ? (
+                      {thumbUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={r.imageUrl}
+                          src={thumbUrl}
                           alt=""
                           className="h-10 w-10 rounded object-contain bg-muted flex-shrink-0"
                         />

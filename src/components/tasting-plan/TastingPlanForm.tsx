@@ -93,6 +93,7 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
         systembolagetUrl: w.customWine?.systembolagetUrl || undefined,
         priceSek: w.customWine?.priceSek ?? undefined,
         systembolagetProductNumber: w.customWine?.systembolagetProductNumber || undefined,
+        imageUrl: w.customWine?.imageUrl || undefined,
       },
       pourOrder,
       hostNotes,

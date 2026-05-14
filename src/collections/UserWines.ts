@@ -144,6 +144,14 @@ export const UserWines: CollectionConfig = {
               'Set when this snapshot was populated from the Systembolaget product picker.',
           },
         },
+        {
+          name: 'imageUrl',
+          type: 'text',
+          admin: {
+            description:
+              'Bottle image URL. Populated by the Systembolaget picker (CDN URL on systembolaget.se) — left empty for hand-typed custom wines.',
+          },
+        },
       ],
     },
     // Collection status

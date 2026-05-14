@@ -867,6 +867,10 @@ export interface Review {
      * Set when this snapshot was populated from the Systembolaget product picker.
      */
     systembolagetProductNumber?: string | null;
+    /**
+     * Bottle image URL. Populated by the Systembolaget picker (CDN URL on systembolaget.se) — left empty for hand-typed custom wines.
+     */
+    imageUrl?: string | null;
   };
   /**
    * User who wrote the review
@@ -1445,6 +1449,10 @@ export interface TastingPlan {
            * Set when this snapshot was populated from the Systembolaget product picker.
            */
           systembolagetProductNumber?: string | null;
+          /**
+           * Bottle image URL. Populated by the Systembolaget picker (CDN URL on systembolaget.se) — left empty for hand-typed custom wines.
+           */
+          imageUrl?: string | null;
         };
         pourOrder?: number | null;
         hostNotes?: string | null;
@@ -2233,6 +2241,10 @@ export interface UserWine {
      * Set when this snapshot was populated from the Systembolaget product picker.
      */
     systembolagetProductNumber?: string | null;
+    /**
+     * Bottle image URL. Populated by the Systembolaget picker (CDN URL on systembolaget.se) — left empty for hand-typed custom wines.
+     */
+    imageUrl?: string | null;
   };
   /**
    * The list this wine belongs to (e.g., Favorites, Wishlist, or a custom list)
@@ -3885,6 +3897,7 @@ export interface UserWinesSelect<T extends boolean = true> {
         systembolagetUrl?: T;
         priceSek?: T;
         systembolagetProductNumber?: T;
+        imageUrl?: T;
       };
   list?: T;
   rating?: T;
@@ -4136,6 +4149,7 @@ export interface ReviewsSelect<T extends boolean = true> {
         systembolagetUrl?: T;
         priceSek?: T;
         systembolagetProductNumber?: T;
+        imageUrl?: T;
       };
   user?: T;
   authorDisplayName?: T;
@@ -4328,6 +4342,7 @@ export interface TastingPlansSelect<T extends boolean = true> {
               systembolagetUrl?: T;
               priceSek?: T;
               systembolagetProductNumber?: T;
+              imageUrl?: T;
             };
         pourOrder?: T;
         hostNotes?: T;

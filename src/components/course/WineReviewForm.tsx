@@ -30,6 +30,7 @@ interface CustomWineSnapshot {
   systembolagetUrl?: string
   priceSek?: number
   systembolagetProductNumber?: string
+  imageUrl?: string
 }
 
 interface WineReviewFormProps {

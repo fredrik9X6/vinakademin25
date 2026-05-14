@@ -35,12 +35,15 @@ export function SessionHistoryDetail({ session, isHost, myReviews }: SessionHist
   })()
   const reviewByWineId = new Map<number, Review>()
   const reviewByCustomName = new Map<string, Review>()
+  const reviewByProductNumber = new Map<string, Review>()
   for (const r of myReviews) {
     if ((r as any).wine) {
       const id = typeof (r as any).wine === 'object' ? (r as any).wine.id : (r as any).wine
       if (typeof id === 'number') reviewByWineId.set(id, r)
     } else if ((r as any).customWine?.name) {
       reviewByCustomName.set(String((r as any).customWine.name).toLowerCase(), r)
+      const pn = (r as any).customWine?.systembolagetProductNumber
+      if (pn) reviewByProductNumber.set(String(pn), r)
     }
   }
   const planId =
@@ -72,6 +75,11 @@ export function SessionHistoryDetail({ session, isHost, myReviews }: SessionHist
             let myReview: Review | undefined
             if (w.libraryWine && typeof w.libraryWine === 'object') {
               myReview = reviewByWineId.get((w.libraryWine as Wine).id)
+            } else if (w.customWine?.systembolagetProductNumber) {
+              myReview = reviewByProductNumber.get(String(w.customWine.systembolagetProductNumber))
+              if (!myReview && w.customWine?.name) {
+                myReview = reviewByCustomName.get(String(w.customWine.name).toLowerCase())
+              }
             } else if (w.customWine?.name) {
               myReview = reviewByCustomName.get(String(w.customWine.name).toLowerCase())
             }
