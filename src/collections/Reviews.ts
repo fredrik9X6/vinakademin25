@@ -306,6 +306,14 @@ export const Reviews: CollectionConfig = {
         { name: 'type', type: 'text' },
         { name: 'systembolagetUrl', type: 'text' },
         { name: 'priceSek', type: 'number', min: 0 },
+        {
+          name: 'systembolagetProductNumber',
+          type: 'text',
+          admin: {
+            description:
+              'Set when this snapshot was populated from the Systembolaget product picker.',
+          },
+        },
       ],
     },
     {

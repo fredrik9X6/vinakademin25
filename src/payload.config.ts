@@ -20,6 +20,7 @@ import { QuizAttempts } from './collections/QuizAttempts'
 import { Enrollments } from './collections/Enrollments'
 import { Wines } from './collections/Wines'
 import { UserWines } from './collections/UserWines'
+import { SystembolagetProducts } from './collections/SystembolagetProducts'
 import { Transactions } from './collections/Transactions'
 import { Subscriptions } from './collections/Subscriptions'
 import { Orders } from './collections/Orders'
@@ -205,6 +206,7 @@ export default buildConfig({
     Enrollments,
     Wines,
     UserWines,
+    SystembolagetProducts,
     Transactions,
     Subscriptions,
     Orders,

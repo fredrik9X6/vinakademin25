@@ -27,7 +27,8 @@
     "send-all-emails": "node --import tsx scripts/send-all-emails.ts",
     "test:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --test src/lib/vinkompassen/*.test.ts",
     "seed:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/seed-vinkompassen.ts",
-    "import:legacy-wine-reviews": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/import-legacy-wine-reviews.ts"
+    "import:legacy-wine-reviews": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/import-legacy-wine-reviews.ts",
+    "import:systembolaget": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/import-systembolaget.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

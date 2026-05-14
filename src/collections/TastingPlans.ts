@@ -112,6 +112,14 @@ export const TastingPlans: CollectionConfig = {
             },
             { name: 'systembolagetUrl', type: 'text' },
             { name: 'priceSek', type: 'number', min: 0 },
+            {
+              name: 'systembolagetProductNumber',
+              type: 'text',
+              admin: {
+                description:
+                  'Set when this snapshot was populated from the Systembolaget product picker.',
+              },
+            },
           ],
         },
         { name: 'pourOrder', type: 'number', min: 1 },
