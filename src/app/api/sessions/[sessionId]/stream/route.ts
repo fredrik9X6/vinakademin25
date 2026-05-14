@@ -283,6 +283,7 @@ export async function GET(
           const wines = ((session.tastingPlan as any).wines ?? []) as any[]
           const wineIdToPour: Record<number, number> = {}
           const titleToPour: Record<string, number> = {}
+          const productNumberToPour: Record<string, number> = {}
           wines.forEach((w, idx) => {
             const pourOrder = w.pourOrder ?? idx + 1
             if (w.libraryWine) {
@@ -290,6 +291,9 @@ export async function GET(
               if (typeof id === 'number') wineIdToPour[id] = pourOrder
             } else if (w.customWine?.name) {
               titleToPour[String(w.customWine.name).toLowerCase()] = pourOrder
+              if (w.customWine.systembolagetProductNumber) {
+                productNumberToPour[String(w.customWine.systembolagetProductNumber)] = pourOrder
+              }
             }
           })
 
@@ -308,6 +312,15 @@ export async function GET(
             if (r.wine) {
               const id = typeof r.wine === 'object' ? r.wine.id : r.wine
               if (typeof id === 'number') pour = wineIdToPour[id]
+            } else if (r.customWine?.systembolagetProductNumber) {
+              // Prefer the stable Systembolaget product number when present —
+              // immune to name-string normalization drift.
+              pour = productNumberToPour[String(r.customWine.systembolagetProductNumber)]
+              if (pour == null && r.customWine.name) {
+                // Fallback: name match (covers hand-typed customWines and
+                // legacy reviews from before productNumber was wired).
+                pour = titleToPour[String(r.customWine.name).toLowerCase()]
+              }
             } else if (r.customWine?.name) {
               pour = titleToPour[String(r.customWine.name).toLowerCase()]
             }

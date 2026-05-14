@@ -18,6 +18,8 @@ import * as migration_20260513_090406_chunk_e_tasting_templates from './20260513
 import * as migration_20260513_121600_chunk_f_host_superpowers from './20260513_121600_chunk_f_host_superpowers';
 import * as migration_20260513_132329_chunk_g_polish from './20260513_132329_chunk_g_polish';
 import * as migration_20260513_152909_chunk_g_profile_public from './20260513_152909_chunk_g_profile_public';
+import * as migration_20260514_144902_add_systembolaget_products_collection from './20260514_144902_add_systembolaget_products_collection';
+import * as migration_20260514_161256_add_custom_wine_image_url from './20260514_161256_add_custom_wine_image_url';
 
 export const migrations = [
   {
@@ -118,6 +120,16 @@ export const migrations = [
   {
     up: migration_20260513_152909_chunk_g_profile_public.up,
     down: migration_20260513_152909_chunk_g_profile_public.down,
-    name: '20260513_152909_chunk_g_profile_public'
+    name: '20260513_152909_chunk_g_profile_public',
+  },
+  {
+    up: migration_20260514_144902_add_systembolaget_products_collection.up,
+    down: migration_20260514_144902_add_systembolaget_products_collection.down,
+    name: '20260514_144902_add_systembolaget_products_collection',
+  },
+  {
+    up: migration_20260514_161256_add_custom_wine_image_url.up,
+    down: migration_20260514_161256_add_custom_wine_image_url.down,
+    name: '20260514_161256_add_custom_wine_image_url'
   },
 ];

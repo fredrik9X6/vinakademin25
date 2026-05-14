@@ -20,6 +20,7 @@ import { QuizAttempts } from './collections/QuizAttempts'
 import { Enrollments } from './collections/Enrollments'
 import { Wines } from './collections/Wines'
 import { UserWines } from './collections/UserWines'
+import { SystembolagetProducts } from './collections/SystembolagetProducts'
 import { Transactions } from './collections/Transactions'
 import { Subscriptions } from './collections/Subscriptions'
 import { Orders } from './collections/Orders'
@@ -115,10 +116,10 @@ const payloadSecret = process.env.PAYLOAD_SECRET || 'development-secret-change-i
 // PayloadCMS requires a full URL with protocol, but Railway might not include it
 const normalizeServerURL = (url: string | undefined): string | undefined => {
   if (!url) return undefined
-  // If it already has a protocol, return as-is
-  if (/^https?:\/\//i.test(url)) return url
-  // Otherwise, add https:// (Railway uses HTTPS)
-  return `https://${url}`
+  // Railway may set this without a protocol; add https:// if missing.
+  const withProtocol = /^https?:\/\//i.test(url) ? url : `https://${url}`
+  // Strip trailing slashes so Payload's `${serverURL}/api/...` doesn't double up.
+  return withProtocol.replace(/\/+$/, '')
 }
 
 const payloadPublicServerURL = normalizeServerURL(process.env.PAYLOAD_PUBLIC_SERVER_URL)
@@ -205,6 +206,7 @@ export default buildConfig({
     Enrollments,
     Wines,
     UserWines,
+    SystembolagetProducts,
     Transactions,
     Subscriptions,
     Orders,

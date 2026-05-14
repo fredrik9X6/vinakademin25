@@ -54,6 +54,8 @@ type WineRow = {
     type?: 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
     systembolagetUrl?: string
     priceSek?: number
+    systembolagetProductNumber?: string
+    imageUrl?: string
   } | null
 }
 
@@ -87,7 +89,7 @@ function rowFromEntry(
     subtitle: [c?.producer, c?.vintage].filter(Boolean).join(' · '),
     hostNotes: w.hostNotes ?? null,
     libraryWineId: null,
-    imageUrl: null,
+    imageUrl: c?.imageUrl || null,
     customWineSnapshot: c?.name
       ? {
           name: c.name,
@@ -104,6 +106,8 @@ function rowFromEntry(
             | undefined,
           systembolagetUrl: c.systembolagetUrl || undefined,
           priceSek: c.priceSek ?? undefined,
+          systembolagetProductNumber: c.systembolagetProductNumber || undefined,
+          imageUrl: c.imageUrl || undefined,
         }
       : null,
   }
