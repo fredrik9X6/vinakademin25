@@ -105,16 +105,16 @@ export function TemplateDetailView({ template }: TemplateDetailViewProps) {
                     <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-400/10 text-brand-400 text-sm font-medium flex items-center justify-center">
                       {w.pourOrder ?? idx + 1}
                     </div>
-                    {thumb ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={thumb}
-                        alt=""
-                        className="h-10 w-10 rounded object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded bg-muted flex-shrink-0" />
-                    )}
+                    <div className="flex-shrink-0 w-10 h-12 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
+                      {thumb ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={thumb}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-contain p-1"
+                        />
+                      ) : null}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{wineTitle(w)}</p>
                       {wineSubtitle(w) && (

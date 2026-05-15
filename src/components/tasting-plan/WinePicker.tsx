@@ -232,16 +232,16 @@ export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePicker
                         setSbResults([])
                       }}
                     >
-                      {thumbUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={thumbUrl}
-                          alt=""
-                          className="h-10 w-10 rounded object-contain bg-muted flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded bg-muted flex-shrink-0" />
-                      )}
+                      <div className="flex-shrink-0 w-10 h-12 rounded-md overflow-hidden bg-muted relative">
+                        {thumbUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={thumbUrl}
+                            alt=""
+                            className="absolute inset-0 w-full h-full object-contain p-1"
+                          />
+                        ) : null}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">{headline}</p>
                         <p className="text-xs text-muted-foreground truncate">{meta}</p>
@@ -287,15 +287,16 @@ export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePicker
                       setResults([])
                     }}
                   >
-                    {r.thumbnailUrl ? (
-                      <img
-                        src={r.thumbnailUrl}
-                        alt=""
-                        className="h-10 w-10 rounded object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded bg-muted flex-shrink-0" />
-                    )}
+                    <div className="flex-shrink-0 w-10 h-12 rounded-md overflow-hidden bg-muted relative">
+                      {r.thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={r.thumbnailUrl}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-contain p-1"
+                        />
+                      ) : null}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{r.title}</p>
                       <p className="text-xs text-muted-foreground truncate">

@@ -100,13 +100,13 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
                     <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-400/10 text-brand-400 text-sm font-medium flex items-center justify-center">
                       {w.pourOrder ?? idx + 1}
                     </div>
-                    <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
+                    <div className="flex-shrink-0 w-12 h-14 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
                       {imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={imageUrl}
                           alt=""
-                          className="w-full h-full object-contain p-1"
+                          className="absolute inset-0 w-full h-full object-contain p-1"
                         />
                       ) : (
                         <WineImagePlaceholder size="sm" />
