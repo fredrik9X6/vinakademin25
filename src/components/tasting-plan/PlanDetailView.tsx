@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Pencil, ShoppingBag, Printer } from 'lucide-react'
 import StartSessionButton from '@/components/course/StartSessionButton'
 import { PlanDetailTour } from '@/components/onboarding/PlanDetailTour'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 
 const STATUS_LABEL: Record<TastingPlan['status'], string> = {
   draft: 'Utkast',
@@ -51,6 +52,15 @@ function wineSubtitle(w: NonNullable<TastingPlan['wines']>[number]): string {
   return [c?.producer, c?.vintage].filter(Boolean).join(' · ')
 }
 
+function wineImageUrl(w: NonNullable<TastingPlan['wines']>[number]): string | null {
+  if (w.libraryWine && typeof w.libraryWine === 'object') {
+    const lib = w.libraryWine as Wine
+    const image = typeof lib.image === 'object' && lib.image ? lib.image : null
+    return image ? image.sizes?.thumbnail?.url ?? image.url ?? null : null
+  }
+  return w.customWine?.imageUrl ?? null
+}
+
 export interface PlanDetailViewProps {
   plan: TastingPlan
 }
@@ -83,24 +93,39 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
             <p className="text-sm text-muted-foreground">Inga viner tillagda.</p>
           ) : (
             <ul className="space-y-2">
-              {wines.map((w, idx) => (
-                <li key={w.id ?? idx} className="flex gap-3 rounded-md border bg-card p-3 items-start">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-400/10 text-brand-400 text-sm font-medium flex items-center justify-center">
-                    {w.pourOrder ?? idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{wineTitle(w)}</p>
-                    {wineSubtitle(w) && (
-                      <p className="text-xs text-muted-foreground truncate">{wineSubtitle(w)}</p>
-                    )}
-                    {w.hostNotes && (
-                      <p className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap">
-                        {w.hostNotes}
-                      </p>
-                    )}
-                  </div>
-                </li>
-              ))}
+              {wines.map((w, idx) => {
+                const imageUrl = wineImageUrl(w)
+                return (
+                  <li key={w.id ?? idx} className="flex gap-3 rounded-md border bg-card p-3 items-start">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-400/10 text-brand-400 text-sm font-medium flex items-center justify-center">
+                      {w.pourOrder ?? idx + 1}
+                    </div>
+                    <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
+                      {imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={imageUrl}
+                          alt=""
+                          className="w-full h-full object-contain p-1"
+                        />
+                      ) : (
+                        <WineImagePlaceholder size="sm" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{wineTitle(w)}</p>
+                      {wineSubtitle(w) && (
+                        <p className="text-xs text-muted-foreground truncate">{wineSubtitle(w)}</p>
+                      )}
+                      {w.hostNotes && (
+                        <p className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap">
+                          {w.hostNotes}
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </section>

@@ -258,6 +258,10 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             .join(' · ')
         : [w.customWine.producer, w.customWine.vintage].filter(Boolean).join(' · '),
     hostNotes: w.hostNotes,
+    imageUrl:
+      w.kind === 'library'
+        ? w.wineSnapshot.thumbnailUrl ?? null
+        : w.customWine.imageUrl ?? null,
   }))
 
   return (
