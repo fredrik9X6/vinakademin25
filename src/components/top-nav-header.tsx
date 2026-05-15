@@ -158,6 +158,14 @@ export function TopNavHeader() {
                       Historik
                     </Link>
                   </DropdownMenuItem>
+                  {user.handle && (user as any).profilePublic !== false && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/profil/${user.handle}`} className="cursor-pointer">
+                        <UserCircleIcon className="mr-2 h-4 w-4" />
+                        Visa min profil
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link href="/profil?tab=uppgifter" className="cursor-pointer">
                       <UserCircleIcon className="mr-2 h-4 w-4" />
