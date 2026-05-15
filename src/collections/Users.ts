@@ -50,6 +50,10 @@ export const Users: CollectionConfig = {
   },
   auth: {
     cookies: cookieConfig,
+    // Default Payload JWT lifetime is 2h, which is short for a consumer site
+    // where members come back over a day-long tasting prep session. Extend
+    // to 30 days; the cookie is httpOnly + secure + SameSite=Lax.
+    tokenExpiration: 60 * 60 * 24 * 30,
     forgotPassword: {
       generateEmailSubject: () => {
         return 'Återställ ditt lösenord - Vinakademin'
