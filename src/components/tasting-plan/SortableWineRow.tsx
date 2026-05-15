@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 
 export interface SortableWineRowItem {
   key: string
@@ -13,6 +14,7 @@ export interface SortableWineRowItem {
   title: string
   subtitle: string
   hostNotes: string
+  imageUrl?: string | null
 }
 
 export interface SortableWineRowProps {
@@ -50,6 +52,18 @@ export function SortableWineRow({ item, onNotesChange, onRemove, disabled }: Sor
       </button>
       <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-400/10 text-brand-400 text-sm font-medium flex items-center justify-center">
         {item.pourOrder}
+      </div>
+      <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
+        {item.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.imageUrl}
+            alt=""
+            className="w-full h-full object-contain p-1"
+          />
+        ) : (
+          <WineImagePlaceholder size="sm" />
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{item.title}</p>

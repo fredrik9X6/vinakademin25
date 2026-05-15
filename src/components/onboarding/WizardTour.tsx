@@ -49,6 +49,7 @@ export function WizardTour() {
         close: 'Stäng',
         last: 'Klar',
         next: 'Nästa',
+        nextWithProgress: 'Nästa ({current}/{total})',
         skip: 'Hoppa över',
       }}
       options={{
@@ -57,6 +58,7 @@ export function WizardTour() {
         showProgress: true,
         overlayClickAction: false,
         buttons: ['back', 'skip', 'primary'],
+        scrollOffset: 80,
       }}
       onEvent={(data: EventData) => {
         if (data.status === 'finished' || data.status === 'skipped') {

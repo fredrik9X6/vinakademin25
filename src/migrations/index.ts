@@ -136,6 +136,6 @@ export const migrations = [
   {
     up: migration_20260515_115353_add_review_published_to_profile.up,
     down: migration_20260515_115353_add_review_published_to_profile.down,
-    name: '20260515_115353_add_review_published_to_profile',
+    name: '20260515_115353_add_review_published_to_profile'
   },
 ];
