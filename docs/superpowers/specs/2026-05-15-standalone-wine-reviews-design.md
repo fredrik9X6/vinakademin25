@@ -188,8 +188,8 @@ End-to-end:
   - Accept optional `initialReview: Review | null` prop. When set, hydrate state on mount via the existing `populateFormWithReview` helper. Replaces the post-submit "edit" branch as the mount path for the edit route.
   - Add `publishedToProfile` to the form state, controlled by a Shadcn `Checkbox` rendered in the existing footer row next to the "Köpa igen?" checkbox. Default value reads from `initialReview?.publishedToProfile`. Submit sends it as part of the POST/PATCH body.
   - When `sessionId` is undefined AND `lessonId === 0`, skip the post-submit `ReviewComparison` render and instead redirect to `/mina-recensioner/<new-id>` via the existing `onSubmit` callback. The page route owns the redirect.
-- `src/app/(frontend)/(site)/vinlistan/[slug]/page.tsx` — add a primary "Recensera detta vin" button linking to `/recensera-vin?wine=<id>`. Only renders for logged-in members (the existing page already has access to a server-side user via `headers()`).
-- `src/components/top-nav-header.tsx` and `src/components/mobile-bottom-nav.tsx` — add a "Mina recensioner" link next to the existing "Mina provningar" entries. Both surfaces stay consistent.
+- `src/app/(frontend)/(site)/vinlistan/[slug]/page.tsx` — add a primary "Recensera detta vin" button **above the fold** (in the hero / wine-header area, next to the existing wine title/image block — NOT below the description / pairings sections). Only renders for logged-in members (the existing page already has access to a server-side user via `headers()`).
+- `src/components/top-nav-header.tsx` — add a "Mina recensioner" link inside the **account menu dropdown** (the existing `DropdownMenu` around line 115, next to the "Mina Provningar" `DropdownMenuItem` at line 137). NOT added to the top-nav row or mobile bottom nav — discoverable only via the user-avatar dropdown to keep primary nav clean.
 - `src/payload-types.ts` — regenerated
 
 **No changes to:** WinePicker, /api/reviews, /api/systembolaget-products/*, customWine schema, taxonomy collections.
