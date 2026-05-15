@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { useAuth } from '@/context/AuthContext'
 
 import {
   Form,
@@ -61,6 +62,7 @@ interface ProfileDetailsFormProps {
 
 export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDetailsFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const { setUser } = useAuth()
 
   // Sticky lock: once a handle is known (from initialData or just-saved on this
   // page), we never let it un-set. The server enforces immutability; this state
@@ -162,6 +164,29 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
                 ? saved.profilePublic
                 : (values.profilePublic ?? true),
           })
+          // Push the saved fields into the auth context so the user object
+          // available app-wide (top-nav, dropdown, profile page on remount)
+          // has the just-saved handle/bio/profilePublic. Without this, the
+          // sticky lockedHandle state evaporates on remount because
+          // initialData.handle (derived from useAuth().user.handle) is still
+          // empty until the next /api/users/me refresh.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setUser((prev: any) =>
+            prev
+              ? {
+                  ...prev,
+                  firstName: saved.firstName ?? prev.firstName,
+                  lastName: saved.lastName ?? prev.lastName,
+                  email: saved.email ?? prev.email,
+                  bio: saved.bio ?? prev.bio ?? null,
+                  handle: newlyLockedHandle || prev.handle,
+                  profilePublic:
+                    typeof saved.profilePublic === 'boolean'
+                      ? saved.profilePublic
+                      : prev.profilePublic,
+                }
+              : prev,
+          )
         }
         toast.success('Profil uppdaterad', {
           description: 'Dina profiluppgifter har sparats.',
