@@ -73,7 +73,7 @@ read: ({ req }) => {
   const publishedClause = {
     and: [
       { publishedToProfile: { equals: true } },
-      { 'user.profile_public': { equals: true } },
+      { 'user.profilePublic': { equals: true } },
     ],
   }
   if (req.user) {
