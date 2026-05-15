@@ -46,6 +46,12 @@ export async function GET(request: NextRequest) {
         firstName: user.firstName,
         lastName: user.lastName,
         bio: user.bio ?? null,
+        // Public-profile fields — needed by top-nav (Visa min profil item),
+        // profile setup form (sticky slug lock), and other surfaces that
+        // gate UI on the user's handle / public-profile state.
+        handle: (user as { handle?: string | null }).handle ?? null,
+        profilePublic:
+          (user as { profilePublic?: boolean | null }).profilePublic ?? null,
         role: user.role,
         accountStatus: user.accountStatus,
         isVerified: user.isVerified,

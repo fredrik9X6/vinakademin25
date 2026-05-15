@@ -22,8 +22,10 @@ import {
   MoonIcon,
   UserCircleIcon,
   LogOutIcon,
-  Wine,
   Star,
+  ClipboardList,
+  History,
+  Settings,
   ChevronDown,
 } from 'lucide-react'
 
@@ -32,7 +34,6 @@ const NAV_LINKS = [
   { label: 'Provningsmallar', href: '/provningsmallar' },
   { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },
-  { label: 'Om oss', href: '/om-oss' },
 ]
 
 export function TopNavHeader() {
@@ -135,12 +136,14 @@ export function TopNavHeader() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem asChild>
-                    <Link href="/mina-provningar" className="cursor-pointer">
-                      <Wine className="mr-2 h-4 w-4" />
-                      Mina Provningar
-                    </Link>
-                  </DropdownMenuItem>
+                  {user.handle && (user as any).profilePublic !== false && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/profil/${user.handle}`} className="cursor-pointer">
+                        <UserCircleIcon className="mr-2 h-4 w-4" />
+                        Visa min profil
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link href="/mina-recensioner" className="cursor-pointer">
                       <Star className="mr-2 h-4 w-4" />
@@ -149,28 +152,30 @@ export function TopNavHeader() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/mina-provningar/planer" className="cursor-pointer">
-                      <Wine className="mr-2 h-4 w-4" />
-                      Mina planer
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      Mina vinprovningar
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/mina-provningar/historik" className="cursor-pointer">
-                      <Wine className="mr-2 h-4 w-4" />
+                      <History className="mr-2 h-4 w-4" />
                       Historik
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/profil?tab=uppgifter" className="cursor-pointer">
-                      <UserCircleIcon className="mr-2 h-4 w-4" />
-                      Konto
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                  <LogOutIcon className="mr-2 h-4 w-4" />
-                  Logga ut
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profil?tab=uppgifter" className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Konto
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                    <LogOutIcon className="mr-2 h-4 w-4" />
+                    Logga ut
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

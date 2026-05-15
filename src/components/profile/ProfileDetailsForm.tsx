@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { useAuth } from '@/context/AuthContext'
 
 import {
   Form,
@@ -61,11 +62,27 @@ interface ProfileDetailsFormProps {
 
 export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDetailsFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const { setUser } = useAuth()
 
-  // Source-of-truth for the locked handle: comes from initialData, never from
-  // the form. Once set, the user cannot change it through the UI.
-  const lockedHandle = (initialData?.handle ?? '').trim().toLowerCase()
+  // Sticky lock: once a handle is known (from initialData or just-saved on this
+  // page), we never let it un-set. The server enforces immutability; this state
+  // makes sure the UI also renders the read-only branch consistently even when
+  // initialData transiently echoes back an empty handle (auth-context refresh
+  // race, etc.). To unlock for a user, clear the handle in Payload admin.
+  const [lockedHandle, setLockedHandle] = useState<string>(
+    (initialData?.handle ?? '').trim().toLowerCase(),
+  )
   const hasLockedHandle = lockedHandle.length > 0
+
+  // Sync upward (initialData → state) only when initialData provides a non-empty
+  // handle. Never reset to empty from props.
+  useEffect(() => {
+    const next = (initialData?.handle ?? '').trim().toLowerCase()
+    if (next && next !== lockedHandle) {
+      setLockedHandle(next)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.handle])
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(ProfileSchema) as any,
@@ -124,6 +141,16 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
         const json = await response.json()
         const saved = json?.data as Partial<ProfileFormValues> | undefined
         if (saved) {
+          // Sticky lock: if we just set the handle for the first time, commit
+          // it locally so the read-only branch renders immediately on next
+          // render — without waiting for a parent re-fetch.
+          const newlyLockedHandle =
+            !hasLockedHandle && trimmedHandle
+              ? trimmedHandle
+              : lockedHandle || trimmedHandle || saved.handle || ''
+          if (newlyLockedHandle && newlyLockedHandle !== lockedHandle) {
+            setLockedHandle(newlyLockedHandle)
+          }
           // ALWAYS preserve the locked handle. Server may echo an empty string
           // on race conditions, but the URL slug is permanent once set.
           form.reset({
@@ -131,12 +158,35 @@ export function ProfileDetailsForm({ userId, initialData, onSuccess }: ProfileDe
             lastName: saved.lastName ?? values.lastName,
             email: saved.email ?? values.email,
             bio: (trimmedBio || saved.bio) ?? values.bio ?? '',
-            handle: lockedHandle || trimmedHandle || saved.handle || '',
+            handle: newlyLockedHandle,
             profilePublic:
               typeof saved.profilePublic === 'boolean'
                 ? saved.profilePublic
                 : (values.profilePublic ?? true),
           })
+          // Push the saved fields into the auth context so the user object
+          // available app-wide (top-nav, dropdown, profile page on remount)
+          // has the just-saved handle/bio/profilePublic. Without this, the
+          // sticky lockedHandle state evaporates on remount because
+          // initialData.handle (derived from useAuth().user.handle) is still
+          // empty until the next /api/users/me refresh.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setUser((prev: any) =>
+            prev
+              ? {
+                  ...prev,
+                  firstName: saved.firstName ?? prev.firstName,
+                  lastName: saved.lastName ?? prev.lastName,
+                  email: saved.email ?? prev.email,
+                  bio: saved.bio ?? prev.bio ?? null,
+                  handle: newlyLockedHandle || prev.handle,
+                  profilePublic:
+                    typeof saved.profilePublic === 'boolean'
+                      ? saved.profilePublic
+                      : prev.profilePublic,
+                }
+              : prev,
+          )
         }
         toast.success('Profil uppdaterad', {
           description: 'Dina profiluppgifter har sparats.',

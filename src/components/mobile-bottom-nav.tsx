@@ -10,7 +10,7 @@ const TABS = [
   { label: 'Provningar', href: '/vinprovningar', icon: Wine },
   { label: 'Vinlistan', href: '/vinlistan', icon: List },
   { label: 'Artiklar', href: '/artiklar', icon: Newspaper },
-  { label: 'Mitt konto', href: '/mina-provningar', hrefLoggedOut: '/logga-in', icon: User },
+  { label: 'Min sida', href: '/mina-sidor', hrefLoggedOut: '/logga-in', icon: User },
 ]
 
 export function MobileBottomNav() {

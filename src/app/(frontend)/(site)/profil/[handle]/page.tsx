@@ -3,13 +3,17 @@ import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { PublicHostProfile } from '@/components/profile/PublicHostProfile'
-import type { TastingPlan, User } from '@/payload-types'
+import type { Review, TastingPlan, User } from '@/payload-types'
 
 interface RouteParams {
   params: Promise<{ handle: string }>
 }
 
-async function loadHostAndPlans(handle: string): Promise<{ user: User; plans: TastingPlan[] } | null> {
+const REVIEWS_ON_PROFILE_PREVIEW = 3
+
+async function loadProfileData(
+  handle: string,
+): Promise<{ user: User; plans: TastingPlan[]; reviews: Review[]; reviewTotal: number } | null> {
   const payload = await getPayload({ config })
   const lowered = handle.toLowerCase()
   const userRes = await payload.find({
@@ -37,12 +41,30 @@ async function loadHostAndPlans(handle: string): Promise<{ user: User; plans: Ta
     depth: 0,
     overrideAccess: true,
   })
-  return { user, plans: plansRes.docs as TastingPlan[] }
+  const reviewsRes = await payload.find({
+    collection: 'reviews',
+    where: {
+      and: [
+        { user: { equals: user.id } },
+        { publishedToProfile: { equals: true } },
+      ],
+    },
+    sort: '-createdAt',
+    limit: REVIEWS_ON_PROFILE_PREVIEW,
+    depth: 2, // resolve wine + media for thumbnails
+    overrideAccess: true,
+  })
+  return {
+    user,
+    plans: plansRes.docs as TastingPlan[],
+    reviews: reviewsRes.docs as Review[],
+    reviewTotal: reviewsRes.totalDocs,
+  }
 }
 
 export async function generateMetadata({ params }: RouteParams): Promise<Metadata> {
   const { handle } = await params
-  const data = await loadHostAndPlans(handle)
+  const data = await loadProfileData(handle)
   if (!data) return { title: 'Profil — Vinakademin' }
   const name =
     `${data.user.firstName || ''} ${data.user.lastName || ''}`.trim() ||
@@ -57,7 +79,14 @@ export const dynamic = 'force-dynamic'
 
 export default async function PublicProfilePage({ params }: RouteParams) {
   const { handle } = await params
-  const data = await loadHostAndPlans(handle)
+  const data = await loadProfileData(handle)
   if (!data) notFound()
-  return <PublicHostProfile user={data.user} plans={data.plans} />
+  return (
+    <PublicHostProfile
+      user={data.user}
+      plans={data.plans}
+      reviews={data.reviews}
+      reviewTotal={data.reviewTotal}
+    />
+  )
 }
