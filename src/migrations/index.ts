@@ -20,6 +20,7 @@ import * as migration_20260513_132329_chunk_g_polish from './20260513_132329_chu
 import * as migration_20260513_152909_chunk_g_profile_public from './20260513_152909_chunk_g_profile_public';
 import * as migration_20260514_144902_add_systembolaget_products_collection from './20260514_144902_add_systembolaget_products_collection';
 import * as migration_20260514_161256_add_custom_wine_image_url from './20260514_161256_add_custom_wine_image_url';
+import * as migration_20260515_115353_add_review_published_to_profile from './20260515_115353_add_review_published_to_profile';
 
 export const migrations = [
   {
@@ -130,6 +131,11 @@ export const migrations = [
   {
     up: migration_20260514_161256_add_custom_wine_image_url.up,
     down: migration_20260514_161256_add_custom_wine_image_url.down,
-    name: '20260514_161256_add_custom_wine_image_url'
+    name: '20260514_161256_add_custom_wine_image_url',
+  },
+  {
+    up: migration_20260515_115353_add_review_published_to_profile.up,
+    down: migration_20260515_115353_add_review_published_to_profile.down,
+    name: '20260515_115353_add_review_published_to_profile'
   },
 ];
