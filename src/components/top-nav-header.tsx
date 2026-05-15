@@ -32,7 +32,6 @@ const NAV_LINKS = [
   { label: 'Provningsmallar', href: '/provningsmallar' },
   { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },
-  { label: 'Om oss', href: '/om-oss' },
 ]
 
 export function TopNavHeader() {
