@@ -28,6 +28,18 @@ export const Wines: CollectionConfig = {
     delete: adminOnly,
   },
   fields: [
+    // Systembolaget picker — search the imported catalog and auto-populate
+    // the rest of the form (name, winery, vintage, type, price, image, plus
+    // country/region/grape relationships resolved against existing rows).
+    {
+      name: 'systembolagetPicker',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/components/admin/SystembolagetWinePickerField.tsx#SystembolagetWinePickerField',
+        },
+      },
+    },
     // Basic Wine Information
     {
       name: 'name',
