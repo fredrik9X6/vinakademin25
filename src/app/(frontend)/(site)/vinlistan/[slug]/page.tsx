@@ -680,24 +680,33 @@ export default async function WineDetailPage({ params }: PageProps) {
                 </div>
               ) : null}
 
-              {/* Systembolaget CTA — prominent */}
-              {wine.systembolagetUrl && wine.systembolagetUrl.trim() ? (
+              {/* Primary CTAs — Systembolaget + Recensera detta vin */}
+              {(wine.systembolagetUrl && wine.systembolagetUrl.trim()) || user ? (
                 <div className="flex flex-wrap items-center gap-3">
-                  <Button asChild size="lg" className="btn-brand">
-                    <a
-                      href={
-                        wine.systembolagetUrl.startsWith('http')
-                          ? wine.systembolagetUrl
-                          : `https://${wine.systembolagetUrl}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ShoppingBag className="mr-2 h-4 w-4" />
-                      Köp på Systembolaget
-                      <ExternalLink className="ml-2 h-3.5 w-3.5" />
-                    </a>
-                  </Button>
+                  {wine.systembolagetUrl && wine.systembolagetUrl.trim() ? (
+                    <Button asChild size="lg" className="btn-brand">
+                      <a
+                        href={
+                          wine.systembolagetUrl.startsWith('http')
+                            ? wine.systembolagetUrl
+                            : `https://${wine.systembolagetUrl}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        Köp på Systembolaget
+                        <ExternalLink className="ml-2 h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  ) : null}
+                  {user ? (
+                    <Button asChild size="lg" variant="outline">
+                      <Link href={`/recensera-vin?wine=${wine.id}`}>
+                        Recensera detta vin
+                      </Link>
+                    </Button>
+                  ) : null}
                 </div>
               ) : null}
 

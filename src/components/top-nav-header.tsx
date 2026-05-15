@@ -23,6 +23,7 @@ import {
   UserCircleIcon,
   LogOutIcon,
   Wine,
+  Star,
   ChevronDown,
 } from 'lucide-react'
 
@@ -138,6 +139,12 @@ export function TopNavHeader() {
                     <Link href="/mina-provningar" className="cursor-pointer">
                       <Wine className="mr-2 h-4 w-4" />
                       Mina Provningar
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/mina-recensioner" className="cursor-pointer">
+                      <Star className="mr-2 h-4 w-4" />
+                      Mina recensioner
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

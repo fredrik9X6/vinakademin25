@@ -46,6 +46,17 @@ interface WineReviewFormProps {
    * traps focus correctly and isn't intercepted by the Dialog's overlay.
    */
   insideDialog?: boolean
+  /**
+   * When provided, the form mounts in "edit" mode — populates state from this
+   * review on first render. Used by /mina-recensioner/[id].
+   */
+  initialReview?: ReviewDoc | null
+  /**
+   * Standalone mode (no session, no lesson). Skips the answer-key fetch,
+   * the participant-cookie logic, and the post-submit comparison view.
+   * Caller is responsible for redirecting via `onSubmit`.
+   */
+  standalone?: boolean
 }
 
 type ReviewDoc = {
@@ -56,7 +67,10 @@ type ReviewDoc = {
   buyAgain?: boolean
   createdAt?: string
   user?: number | { id: number }
-  sessionParticipant?: number | { id: number }
+  session?: number | { id: number } | null
+  sessionParticipant?: number | { id: number } | null
+  customWine?: any
+  publishedToProfile?: boolean
 }
 
 export function WineReviewForm({
@@ -67,6 +81,8 @@ export function WineReviewForm({
   wineIdProp,
   customWineSnapshot,
   insideDialog = false,
+  initialReview,
+  standalone = false,
 }: WineReviewFormProps) {
   const [rating, setRating] = React.useState<number>(0)
   const [buyAgain, setBuyAgain] = React.useState<boolean>(false)
@@ -111,10 +127,15 @@ export function WineReviewForm({
 
   const [quality, setQuality] = React.useState<string>('')
 
+  const [publishedToProfile, setPublishedToProfile] = React.useState<boolean>(
+    initialReview?.publishedToProfile ?? false,
+  )
+
   // Get current user from auth context
   const { user } = useAuth()
 
   const fetchAnswerKey = React.useCallback(async () => {
+    if (standalone) return
     // Plan-driven sessions pass lessonId=0 sentinel (no underlying lesson). Skip the fetch.
     if (!lessonId) return
     try {
@@ -134,9 +155,10 @@ export function WineReviewForm({
       }
       if (derivedWineId) setWineId(derivedWineId)
     } catch {}
-  }, [lessonId])
+  }, [lessonId, standalone])
 
   const fetchLatestSubmission = React.useCallback(async () => {
+    if (standalone) return
     if (!wineId) return // Can't fetch without wine ID
 
     // Only fetch if we have a user (authenticated) or participant ID (guest)
@@ -197,7 +219,7 @@ export function WineReviewForm({
         setSubmittedReview(null)
       }
     } catch {}
-  }, [wineId, user?.id, participantId])
+  }, [wineId, user?.id, participantId, standalone])
 
   React.useEffect(() => {
     fetchAnswerKey()
@@ -252,6 +274,15 @@ export function WineReviewForm({
     if (wset.conclusion?.summary && typeof wset.conclusion.summary === 'string') {
       setNotes(wset.conclusion.summary)
     }
+  }, [])
+
+  const initialReviewRef = React.useRef<ReviewDoc | null>(initialReview ?? null)
+  React.useEffect(() => {
+    if (initialReviewRef.current) {
+      populateFormWithReview(initialReviewRef.current)
+      setSubmittedReview(null) // don't go straight to "submitted" UI; show editable form
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const { verifiedComparison, historyComparisons } = React.useMemo<{
@@ -428,6 +459,23 @@ export function WineReviewForm({
       const sessionIdNum = sessionId ? Number(sessionId) : undefined
       const participantIdNum = participantId ? Number(participantId) : undefined
 
+      // When editing an existing review (initialReview), preserve its session
+      // context. Otherwise editing a session review via /mina-recensioner/[id]
+      // would lose the session/participant, breaking the dedup key and creating
+      // a duplicate row instead of updating.
+      const effectiveSessionId =
+        initialReview?.session != null
+          ? typeof initialReview.session === 'object'
+            ? (initialReview.session as any).id
+            : initialReview.session
+          : sessionIdNum
+      const effectiveParticipantId =
+        initialReview?.sessionParticipant != null
+          ? typeof initialReview.sessionParticipant === 'object'
+            ? (initialReview.sessionParticipant as any).id
+            : initialReview.sessionParticipant
+          : participantIdNum
+
       // Either send a library wine relationship or a custom-wine snapshot (XOR).
       const wineIdentity = customWineSnapshot
         ? { customWine: customWineSnapshot }
@@ -443,8 +491,9 @@ export function WineReviewForm({
           rating,
           buyAgain,
           reviewText: notes,
-          session: sessionIdNum || undefined,
-          sessionParticipant: participantIdNum || undefined,
+          publishedToProfile,
+          session: effectiveSessionId || undefined,
+          sessionParticipant: effectiveParticipantId || undefined,
           wsetTasting: {
             appearance: {
               clarity: appearanceClarity || undefined,
@@ -513,7 +562,7 @@ export function WineReviewForm({
   }
 
   // In group sessions, show a success message instead of the comparison
-  if (submittedReview && sessionId) {
+  if (!standalone && submittedReview && sessionId) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
@@ -554,7 +603,7 @@ export function WineReviewForm({
   }
 
   // In regular mode (not group session), reuse the comparison UI
-  if (submittedReview && !sessionId) {
+  if (!standalone && submittedReview && !sessionId) {
     const hasReference = Boolean(verifiedComparison)
     return (
       <div className="space-y-6">
@@ -1201,6 +1250,19 @@ export function WineReviewForm({
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
             >
               Jag hade köpt detta vin igen
+            </label>
+          </div>
+          <div className="flex items-center space-x-2 p-4 bg-muted/30 rounded-lg w-full md:w-auto">
+            <Checkbox
+              id="publishedToProfile"
+              checked={publishedToProfile}
+              onCheckedChange={(checked) => setPublishedToProfile(checked as boolean)}
+            />
+            <label
+              htmlFor="publishedToProfile"
+              className="text-sm font-medium leading-none cursor-pointer"
+            >
+              Publicera på min profil
             </label>
           </div>
           <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">

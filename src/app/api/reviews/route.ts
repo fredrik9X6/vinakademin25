@@ -352,20 +352,26 @@ export async function POST(request: NextRequest) {
         ? { and: [{ sessionParticipant: { equals: guestParticipant.id } }] as any[] }
         : { and: [{ user: { equals: user!.id } }] as any[] }
 
+    // Compute the effective session for dedup. Standalone reviews carry no
+    // session — for those we explicitly match `session is null` so a standalone
+    // submission doesn't accidentally overwrite a previously-saved session
+    // review of the same wine. Guest reviews always carry their session via
+    // the participant cookie.
+    const effectiveDedupSession: number | null = guestParticipant
+      ? guestParticipant.sessionId
+      : sessionIdFromBody && !isNaN(sessionIdFromBody)
+        ? sessionIdFromBody
+        : null
+
     let whereConditions: any
     if (wineId) {
       whereConditions = buildBaseWhere()
       whereConditions.and.push({ wine: { equals: wineId } })
-      if (!guestParticipant && sessionIdFromBody && !isNaN(sessionIdFromBody)) {
-        whereConditions.and.push({ session: { equals: sessionIdFromBody } })
-      }
+      whereConditions.and.push({ session: { equals: effectiveDedupSession } })
     } else {
       // customWine path
       whereConditions = buildBaseWhere()
-      const sid = guestParticipant ? guestParticipant.sessionId : sessionIdFromBody
-      if (sid && !isNaN(sid)) {
-        whereConditions.and.push({ session: { equals: sid } })
-      }
+      whereConditions.and.push({ session: { equals: effectiveDedupSession } })
       const productNumber = body.customWine?.systembolagetProductNumber
       if (productNumber) {
         whereConditions.and.push({

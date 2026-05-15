@@ -16,15 +16,22 @@ export const Reviews: CollectionConfig = {
     // Bare minimum access control - simplified
     read: ({ req }) => {
       if (req.user?.role === 'admin' || req.user?.role === 'instructor') return true
+      const publishedClause = {
+        and: [
+          { publishedToProfile: { equals: true } },
+          { 'user.profilePublic': { equals: true } },
+        ],
+      }
       if (req.user) {
         return {
           or: [
             { user: { equals: req.user.id } },
             { isTrusted: { equals: true } },
+            publishedClause,
           ],
         } as any
       }
-      return { isTrusted: { equals: true } } as any
+      return { or: [{ isTrusted: { equals: true } }, publishedClause] } as any
     },
     create: ({ req }) => Boolean(req.user),
     // Allow update for form building
@@ -417,6 +424,22 @@ export const Reviews: CollectionConfig = {
       },
       access: {
         // Allow form building, but enforce at collection level via beforeChange hook
+        read: () => true,
+        update: () => true,
+      },
+    },
+    {
+      name: 'publishedToProfile',
+      type: 'checkbox',
+      label: 'Publicera på min profil',
+      defaultValue: false,
+      admin: {
+        description:
+          "When checked, this review appears on the owner's /profil/<handle>/recensioner page (only when the owner's profile is also public).",
+        position: 'sidebar',
+      },
+      access: {
+        // Allow form building, enforced at collection level
         read: () => true,
         update: () => true,
       },

@@ -923,6 +923,10 @@ export interface Review {
    */
   isTrusted?: boolean | null;
   /**
+   * When checked, this review appears on the owner's /profil/<handle>/recensioner page (only when the owner's profile is also public).
+   */
+  publishedToProfile?: boolean | null;
+  /**
    * WSET systematiskt provningsprotokoll
    */
   wsetTasting?: {
@@ -4160,6 +4164,7 @@ export interface ReviewsSelect<T extends boolean = true> {
   rating?: T;
   reviewText?: T;
   isTrusted?: T;
+  publishedToProfile?: T;
   wsetTasting?:
     | T
     | {
