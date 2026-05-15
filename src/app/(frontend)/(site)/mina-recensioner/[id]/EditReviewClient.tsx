@@ -12,7 +12,15 @@ export function EditReviewClient({ review }: EditReviewClientProps) {
   const router = useRouter()
 
   const wine = review.wine
-  const wineId = typeof wine === 'object' ? (wine as Wine).id : wine
+  // typeof null === 'object', so guard truthiness first. For customWine reviews
+  // wine is null and we want wineId to fall through to the customWineSnapshot
+  // branch.
+  const wineId: number | null =
+    wine && typeof wine === 'object'
+      ? (wine as Wine).id
+      : typeof wine === 'number'
+        ? wine
+        : null
   const customWine = (review as any).customWine
 
   return (

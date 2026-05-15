@@ -56,6 +56,14 @@ const nextConfig = {
         hostname: '*.amazonaws.com',
         pathname: '/**',
       },
+      // Systembolaget bottle-image CDN — used by customWine snapshots when a
+      // wine is picked from the Systembolaget catalog (productNumber-derived
+      // CDN URLs flow through to Reviews, TastingPlans, and UserWines).
+      {
+        protocol: 'https',
+        hostname: 'product-cdn.systembolaget.se',
+        pathname: '/**',
+      },
     ],
     // Allow localhost in development
     ...(process.env.NODE_ENV === 'development' && {
