@@ -57,6 +57,7 @@ export function WizardTour() {
         showProgress: true,
         overlayClickAction: false,
         buttons: ['back', 'skip', 'primary'],
+        scrollOffset: 80,
       }}
       onEvent={(data: EventData) => {
         if (data.status === 'finished' || data.status === 'skipped') {
