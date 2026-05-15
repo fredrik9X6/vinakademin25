@@ -45,6 +45,7 @@ export function PlanDetailTour() {
         close: 'Stäng',
         last: 'Klar',
         next: 'Nästa',
+        nextWithProgress: 'Nästa ({current}/{total})',
         skip: 'Hoppa över',
       }}
       options={{

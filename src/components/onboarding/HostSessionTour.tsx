@@ -58,6 +58,7 @@ export function HostSessionTour({ blind, hasTimer }: HostSessionTourProps) {
         close: 'Stäng',
         last: 'Klar',
         next: 'Nästa',
+        nextWithProgress: 'Nästa ({current}/{total})',
         skip: 'Hoppa över',
       }}
       options={{
