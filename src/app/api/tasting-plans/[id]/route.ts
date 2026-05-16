@@ -29,6 +29,9 @@ type PatchBody = {
   description?: string
   occasion?: string
   targetParticipants?: number
+  blindTastingByDefault?: boolean
+  defaultMinutesPerWine?: number | null
+  publishedToProfile?: boolean
   wines?: WineEntry[]
   hostScript?: string
   status?: 'draft' | 'ready' | 'archived'
@@ -42,7 +45,7 @@ function validatePatch(body: PatchBody): string | null {
   if (body.description && body.description.trim().length > 500)
     return 'Beskrivning får vara max 500 tecken.'
   if (body.wines !== undefined) {
-    if (body.wines.length < 3) return 'En plan måste innehålla minst 3 viner.'
+    if (body.wines.length < 1) return 'Lägg till minst ett vin.'
     for (let i = 0; i < body.wines.length; i++) {
       const w = body.wines[i]
       const hasLib = w.libraryWine != null
@@ -101,6 +104,12 @@ export async function PATCH(
   if (body.description !== undefined) data.description = body.description.trim() || null
   if (body.occasion !== undefined) data.occasion = body.occasion.trim() || null
   if (body.targetParticipants !== undefined) data.targetParticipants = body.targetParticipants
+  if (body.blindTastingByDefault !== undefined)
+    data.blindTastingByDefault = body.blindTastingByDefault
+  if (body.defaultMinutesPerWine !== undefined)
+    data.defaultMinutesPerWine = body.defaultMinutesPerWine
+  if (body.publishedToProfile !== undefined)
+    data.publishedToProfile = body.publishedToProfile
   if (body.wines !== undefined) {
     data.wines = body.wines.map((w, idx) => ({
       libraryWine: w.libraryWine ?? null,

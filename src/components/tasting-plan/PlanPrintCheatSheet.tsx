@@ -71,7 +71,7 @@ export function PlanPrintCheatSheet({ plan }: PlanPrintCheatSheetProps) {
         <header className="mb-6 pb-4 border-b">
           <h1 className="text-3xl font-heading">Värdguide — {plan.title}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {plan.occasion || '—'} · {plan.targetParticipants ?? 4} deltagare · Utskriven {today}
+            {plan.targetParticipants ?? 4} deltagare · Utskriven {today}
           </p>
         </header>
 

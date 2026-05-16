@@ -34,14 +34,37 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Trash2 } from 'lucide-react'
-import { WinePicker, type CustomWineInput, type LibraryWineResult } from './WinePicker'
+import { Trash2, Minus, Plus, ChevronDown, Wand2, Check } from 'lucide-react'
+import {
+  WinePicker,
+  type CustomWineInput,
+  type LibraryWineResult,
+  type PickedWineMeta,
+} from './WinePicker'
 import { SortableWineRow } from './SortableWineRow'
 import { WizardTour } from '@/components/onboarding/WizardTour'
 
+type WineType = NonNullable<CustomWineInput['type']>
+
 type WineEntry =
-  | { kind: 'library'; key: string; libraryWine: number; wineSnapshot: LibraryWineResult; pourOrder: number; hostNotes: string }
-  | { kind: 'custom'; key: string; customWine: CustomWineInput; pourOrder: number; hostNotes: string }
+  | {
+      kind: 'library'
+      key: string
+      libraryWine: number
+      wineSnapshot: LibraryWineResult
+      country: string | null
+      type: WineType | null
+      pourOrder: number
+      hostNotes: string
+    }
+  | {
+      kind: 'custom'
+      key: string
+      customWine: CustomWineInput
+      country: string | null
+      pourOrder: number
+      hostNotes: string
+    }
 
 export interface TastingPlanFormProps {
   initialPlan?: TastingPlan
@@ -49,6 +72,79 @@ export interface TastingPlanFormProps {
 
 function nextKey() {
   return Math.random().toString(36).slice(2, 10)
+}
+
+function entryType(w: WineEntry): WineType | null {
+  return w.kind === 'library' ? w.type : w.customWine.type ?? null
+}
+
+function entryPriceSek(w: WineEntry): number | null {
+  if (w.kind === 'custom') return w.customWine.priceSek ?? null
+  // We do not eagerly load library wine price into WineEntry — historical plans
+  // can still be re-saved without it; the cost chip just under-reports.
+  return null
+}
+
+// Standard pour order: lighter / drier first, sweet / fortified last.
+const POUR_PRIORITY: Record<WineType, number> = {
+  sparkling: 0,
+  white: 1,
+  rose: 2,
+  red: 3,
+  other: 4,
+  dessert: 5,
+  fortified: 6,
+}
+
+function sortByStandardPour(entries: WineEntry[]): WineEntry[] {
+  return [...entries]
+    .sort((a, b) => {
+      const ta = entryType(a)
+      const tb = entryType(b)
+      const pa = ta != null ? POUR_PRIORITY[ta] : 999
+      const pb = tb != null ? POUR_PRIORITY[tb] : 999
+      if (pa !== pb) return pa - pb
+      // Stable on original pourOrder when same priority
+      return a.pourOrder - b.pourOrder
+    })
+    .map((w, idx) => ({ ...w, pourOrder: idx + 1 }))
+}
+
+const TYPE_LABEL_SV: Record<WineType, string> = {
+  sparkling: 'Mousserande',
+  white: 'Vitvins',
+  rose: 'Rosévins',
+  red: 'Rödvins',
+  dessert: 'Dessertvins',
+  fortified: 'Fortifierat',
+  other: 'Vin',
+}
+
+function suggestTitle(wines: WineEntry[]): string | null {
+  if (wines.length < 2) return null
+  // 1) Country majority
+  const countries = wines
+    .map((w) => w.country)
+    .filter((c): c is string => !!c && c.trim().length > 0)
+  if (countries.length >= 2) {
+    const counts = new Map<string, number>()
+    countries.forEach((c) => counts.set(c, (counts.get(c) ?? 0) + 1))
+    const [top, n] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]!
+    if (n >= 2 && n / wines.length >= 0.5) {
+      return `Vinprovning från ${top}`
+    }
+  }
+  // 2) Type majority
+  const types = wines.map(entryType).filter((t): t is WineType => !!t)
+  if (types.length >= 2) {
+    const counts = new Map<WineType, number>()
+    types.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1))
+    const [top, n] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]!
+    if (n >= 2 && n / wines.length >= 0.5) {
+      return `${TYPE_LABEL_SV[top]}provning`
+    }
+  }
+  return null
 }
 
 function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
@@ -61,11 +157,17 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
       const lib = w.libraryWine
       const region =
         typeof lib.region === 'object' && lib.region ? lib.region.name ?? null : null
+      const country =
+        typeof lib.country === 'object' && lib.country ? lib.country.name ?? null : null
       const image = lib.image
       const thumbnailUrl =
         typeof image === 'object' && image
-          ? image.sizes?.thumbnail?.url ?? image.url ?? null
+          ? image.sizes?.bottle?.url ??
+            image.sizes?.thumbnail?.url ??
+            image.url ??
+            null
           : null
+      const libType = (lib.type ?? null) as WineType | null
       return {
         kind: 'library',
         key,
@@ -78,6 +180,8 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
           region,
           thumbnailUrl,
         },
+        country,
+        type: libType,
         pourOrder,
         hostNotes,
       }
@@ -95,6 +199,8 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
         systembolagetProductNumber: w.customWine?.systembolagetProductNumber || undefined,
         imageUrl: w.customWine?.imageUrl || undefined,
       },
+      // Country isn't persisted on customWine — re-derive only for new picks.
+      country: null,
       pourOrder,
       hostNotes,
     }
@@ -123,6 +229,22 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
   const [wines, setWines] = React.useState<WineEntry[]>(() => hydrateInitialWines(initialPlan))
   const [submitting, setSubmitting] = React.useState(false)
 
+  // Advanced settings accordion — default open in edit mode only if any
+  // non-default value exists, so most members never see the section.
+  const hasNonDefaultAdvanced =
+    blindTastingByDefault ||
+    (defaultMinutesPerWine !== '' && defaultMinutesPerWine !== null) ||
+    publishedToProfile ||
+    (hostScript ?? '').trim().length > 0
+  const [showAdvanced, setShowAdvanced] = React.useState<boolean>(
+    isEdit && hasNonDefaultAdvanced,
+  )
+
+  // Autosave (edit mode only). Idle / saving / saved badge shown in action bar.
+  const [autosaveStatus, setAutosaveStatus] = React.useState<'idle' | 'saving' | 'saved'>(
+    'idle',
+  )
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -130,29 +252,27 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
 
   const wineCount = wines.length
   const titleValid = title.trim().length > 0 && title.length <= 100
-  const canSubmit = titleValid && wineCount >= 3 && !submitting
+  const canSubmit = titleValid && wineCount >= 1 && !submitting
 
-  function pickLibrary(w: LibraryWineResult) {
-    setWines((prev) => [
-      ...prev,
-      {
-        kind: 'library',
-        key: nextKey(),
-        libraryWine: w.id,
-        wineSnapshot: w,
-        pourOrder: prev.length + 1,
-        hostNotes: '',
-      },
-    ])
-  }
+  // Live summary chip values.
+  const estimatedMinutes =
+    defaultMinutesPerWine !== '' && wineCount > 0
+      ? wineCount * (defaultMinutesPerWine || 0)
+      : null
+  const estimatedCost = wines.reduce((sum, w) => sum + (entryPriceSek(w) ?? 0), 0)
 
-  function pickCustom(w: CustomWineInput) {
+  const suggestedTitle = React.useMemo(() => suggestTitle(wines), [wines])
+  const showTitleSuggestion =
+    !!suggestedTitle && suggestedTitle.trim().toLowerCase() !== title.trim().toLowerCase()
+
+  function pickCustom(w: CustomWineInput, meta?: PickedWineMeta) {
     setWines((prev) => [
       ...prev,
       {
         kind: 'custom',
         key: nextKey(),
         customWine: w,
+        country: meta?.country ?? null,
         pourOrder: prev.length + 1,
         hostNotes: '',
       },
@@ -180,15 +300,18 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     })
   }
 
-  async function save() {
-    if (!canSubmit) return
-    setSubmitting(true)
-    const payload = {
+  function applyStandardPourOrder() {
+    setWines((prev) => sortByStandardPour(prev))
+  }
+
+  function buildPayload() {
+    return {
       title: title.trim(),
       description: description || undefined,
       targetParticipants,
       blindTastingByDefault,
-      defaultMinutesPerWine: defaultMinutesPerWine === '' ? null : Number(defaultMinutesPerWine),
+      defaultMinutesPerWine:
+        defaultMinutesPerWine === '' ? null : Number(defaultMinutesPerWine),
       publishedToProfile,
       hostScript: hostScript || undefined,
       wines: wines.map((w, idx) => ({
@@ -198,32 +321,69 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         hostNotes: w.hostNotes,
       })),
     }
+  }
+
+  async function save(opts: { silent?: boolean } = {}) {
+    if (!canSubmit) return
+    if (!opts.silent) setSubmitting(true)
     try {
       const res = await fetch(
         isEdit ? `/api/tasting-plans/${initialPlan!.id}` : '/api/tasting-plans',
         {
           method: isEdit ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(buildPayload()),
         },
       )
       const data = await res.json()
       if (!res.ok) {
-        toast.error(data?.error || 'Kunde inte spara planen.')
+        if (!opts.silent) toast.error(data?.error || 'Kunde inte spara planen.')
         return
       }
-      toast.success(isEdit ? 'Sparat.' : 'Planen är skapad.')
-      if (!isEdit && data.plan?.id) {
-        router.replace(`/mina-provningar/planer/${data.plan.id}`)
-      } else {
-        router.refresh()
+      if (!opts.silent) {
+        toast.success(isEdit ? 'Sparat.' : 'Planen är skapad.')
+        if (!isEdit && data.plan?.id) {
+          router.replace(`/mina-provningar/planer/${data.plan.id}`)
+        } else {
+          router.refresh()
+        }
       }
     } catch {
-      toast.error('Nätverksfel — försök igen.')
+      if (!opts.silent) toast.error('Nätverksfel — försök igen.')
     } finally {
-      setSubmitting(false)
+      if (!opts.silent) setSubmitting(false)
     }
   }
+
+  // Autosave: edit mode only, debounced 1.5s on any tracked state change.
+  // Skip the very first effect run so opening the page doesn't trigger a save.
+  const hasMountedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (!isEdit) return
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true
+      return
+    }
+    if (!canSubmit) return
+    const handle = setTimeout(async () => {
+      setAutosaveStatus('saving')
+      await save({ silent: true })
+      setAutosaveStatus('saved')
+      const fadeOut = setTimeout(() => setAutosaveStatus('idle'), 2000)
+      return () => clearTimeout(fadeOut)
+    }, 1500)
+    return () => clearTimeout(handle)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    title,
+    description,
+    targetParticipants,
+    blindTastingByDefault,
+    defaultMinutesPerWine,
+    publishedToProfile,
+    hostScript,
+    wines,
+  ])
 
   async function deletePlan() {
     if (!initialPlan) return
@@ -246,9 +406,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     key: w.key,
     pourOrder: w.pourOrder,
     title:
-      w.kind === 'library'
-        ? w.wineSnapshot.title
-        : w.customWine.name || 'Namnlöst vin',
+      w.kind === 'library' ? w.wineSnapshot.title : w.customWine.name || 'Namnlöst vin',
     subtitle:
       w.kind === 'library'
         ? [w.wineSnapshot.producer, w.wineSnapshot.vintage, w.wineSnapshot.region]
@@ -285,6 +443,16 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             maxLength={100}
             placeholder="t.ex. Sommarrosé från Provence"
           />
+          {showTitleSuggestion && (
+            <button
+              type="button"
+              onClick={() => setTitle(suggestedTitle!)}
+              className="mt-2 inline-flex items-center gap-1 text-xs text-brand-400 hover:underline"
+            >
+              <Wand2 className="h-3 w-3" />
+              Förslag: {suggestedTitle}
+            </button>
+          )}
           <p className="text-xs text-muted-foreground mt-1">{title.length}/100</p>
         </div>
         <div>
@@ -299,76 +467,71 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           <p className="text-xs text-muted-foreground mt-1">{description.length}/500</p>
         </div>
         <div>
-          <Label htmlFor="t-participants">Antal deltagare</Label>
-          <Input
-            id="t-participants"
-            type="number"
-            min={1}
-            max={50}
-            value={targetParticipants}
-            onChange={(e) => setTargetParticipants(Number(e.target.value) || 1)}
-            className="w-28"
-          />
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Provningsinställningar</h2>
-        <div className="space-y-3 rounded-md border bg-card p-4">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-input accent-brand-400"
-              checked={blindTastingByDefault}
-              onChange={(e) => setBlindTastingByDefault(e.target.checked)}
-            />
-            <span className="text-sm">
-              <span className="font-medium">Blindprovning</span>{' '}
-              <span className="text-muted-foreground">
-                — viner visas anonymt tills du avslöjar dem.
-              </span>
+          <Label>Antal deltagare</Label>
+          <div className="mt-1 inline-flex items-center gap-1 rounded-md border bg-background p-1">
+            <button
+              type="button"
+              onClick={() => setTargetParticipants((n) => Math.max(1, n - 1))}
+              disabled={targetParticipants <= 1}
+              aria-label="Minska antal deltagare"
+              className="inline-flex h-9 w-9 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+            <span
+              className="min-w-[2ch] px-2 text-center font-medium tabular-nums"
+              aria-live="polite"
+            >
+              {targetParticipants}
             </span>
-          </label>
-          <div>
-            <Label htmlFor="t-minutes">Tid per vin (minuter)</Label>
-            <Input
-              id="t-minutes"
-              type="number"
-              min={1}
-              max={60}
-              value={defaultMinutesPerWine}
-              onChange={(e) =>
-                setDefaultMinutesPerWine(e.target.value === '' ? '' : Number(e.target.value))
-              }
-              className="w-28"
-              placeholder="t.ex. 5"
-            />
-            <p className="text-xs text-muted-foreground mt-1">Lämna tomt för ingen timer.</p>
+            <button
+              type="button"
+              onClick={() => setTargetParticipants((n) => Math.min(50, n + 1))}
+              disabled={targetParticipants >= 50}
+              aria-label="Öka antal deltagare"
+              className="inline-flex h-9 w-9 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
           </div>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-input accent-brand-400"
-              checked={publishedToProfile}
-              onChange={(e) => setPublishedToProfile(e.target.checked)}
-            />
-            <span className="text-sm">
-              <span className="font-medium">Publicera på din profil</span>{' '}
-              <span className="text-muted-foreground">
-                — visa den på /profil/&lt;ditt-användarnamn&gt;.
-              </span>
-            </span>
-          </label>
         </div>
       </section>
 
       <section className="space-y-3" data-tour="wizard-wines">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="text-lg font-semibold">Viner ({wineCount})</h2>
-          {wineCount < 3 && (
-            <span className="text-xs text-muted-foreground">Minst 3 viner krävs</span>
+          {wines.length >= 2 && (
+            <button
+              type="button"
+              onClick={applyStandardPourOrder}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+            >
+              <Wand2 className="h-3 w-3" />
+              Sortera efter standardordning
+            </button>
           )}
         </div>
+
+        {wineCount > 0 && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span className="tabular-nums">{wineCount} viner</span>
+            {estimatedMinutes != null && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="tabular-nums">≈ {estimatedMinutes} min</span>
+              </>
+            )}
+            {estimatedCost > 0 && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="tabular-nums">{estimatedCost.toLocaleString('sv-SE')} kr</span>
+              </>
+            )}
+            <span aria-hidden="true">·</span>
+            <span className="tabular-nums">{targetParticipants} deltagare</span>
+          </div>
+        )}
+
         {wineCount >= 9 && (
           <div className="rounded-md border border-yellow-300/50 bg-yellow-50 dark:bg-yellow-950/30 p-3 text-sm">
             Långa provningar är svåra att hålla fokus på. Överväg att dela upp i två tillfällen.
@@ -396,22 +559,80 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             </SortableContext>
           </DndContext>
         )}
-        <WinePicker
-          onPickLibrary={pickLibrary}
-          onPickCustom={pickCustom}
-          disabled={submitting}
-        />
+        <WinePicker onPickCustom={pickCustom} disabled={submitting} />
       </section>
 
-      <section className="space-y-2">
-        <Label htmlFor="t-script">Manus för värden</Label>
-        <Textarea
-          id="t-script"
-          value={hostScript}
-          onChange={(e) => setHostScript(e.target.value)}
-          rows={8}
-          placeholder="Frivilligt — anteckningar du vill ha med på fusklappen under provningen."
-        />
+      <section>
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((s) => !s)}
+          aria-expanded={showAdvanced}
+          className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${showAdvanced ? '' : '-rotate-90'}`}
+            aria-hidden="true"
+          />
+          Avancerade inställningar
+        </button>
+        {showAdvanced && (
+          <div className="mt-3 space-y-3 rounded-md border bg-card p-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-input accent-brand-400"
+                checked={blindTastingByDefault}
+                onChange={(e) => setBlindTastingByDefault(e.target.checked)}
+              />
+              <span className="text-sm">
+                <span className="font-medium">Blindprovning</span>{' '}
+                <span className="text-muted-foreground">
+                  — viner visas anonymt tills du avslöjar dem.
+                </span>
+              </span>
+            </label>
+            <div>
+              <Label htmlFor="t-minutes">Tid per vin (minuter)</Label>
+              <Input
+                id="t-minutes"
+                type="number"
+                min={1}
+                max={60}
+                value={defaultMinutesPerWine}
+                onChange={(e) =>
+                  setDefaultMinutesPerWine(e.target.value === '' ? '' : Number(e.target.value))
+                }
+                className="w-28"
+                placeholder="t.ex. 5"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Lämna tomt för ingen timer.</p>
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-input accent-brand-400"
+                checked={publishedToProfile}
+                onChange={(e) => setPublishedToProfile(e.target.checked)}
+              />
+              <span className="text-sm">
+                <span className="font-medium">Publicera på din profil</span>{' '}
+                <span className="text-muted-foreground">
+                  — visa den på /profil/&lt;ditt-användarnamn&gt;.
+                </span>
+              </span>
+            </label>
+            <div>
+              <Label htmlFor="t-script">Manus för värden</Label>
+              <Textarea
+                id="t-script"
+                value={hostScript}
+                onChange={(e) => setHostScript(e.target.value)}
+                rows={6}
+                placeholder="Frivilligt — anteckningar du vill ha med på fusklappen under provningen."
+              />
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -446,9 +667,31 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           ) : (
             <span />
           )}
-          <Button type="button" data-tour="wizard-save" onClick={save} disabled={!canSubmit}>
-            {submitting ? 'Sparar…' : isEdit ? 'Spara ändringar' : 'Spara utkast'}
-          </Button>
+          <div className="flex items-center gap-3">
+            {isEdit && autosaveStatus !== 'idle' && (
+              <span
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums"
+                aria-live="polite"
+              >
+                {autosaveStatus === 'saving' ? (
+                  'Sparar…'
+                ) : (
+                  <>
+                    <Check className="h-3 w-3" />
+                    Sparat
+                  </>
+                )}
+              </span>
+            )}
+            <Button
+              type="button"
+              data-tour="wizard-save"
+              onClick={() => save()}
+              disabled={!canSubmit}
+            >
+              {submitting ? 'Sparar…' : isEdit ? 'Spara ändringar' : 'Spara utkast'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

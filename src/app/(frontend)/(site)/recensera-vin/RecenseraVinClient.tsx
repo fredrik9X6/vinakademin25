@@ -3,11 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  WinePicker,
-  type CustomWineInput,
-  type LibraryWineResult,
-} from '@/components/tasting-plan/WinePicker'
+import { WinePicker, type CustomWineInput } from '@/components/tasting-plan/WinePicker'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 
 function RecenseraVinInner() {
@@ -25,10 +21,6 @@ function RecenseraVinInner() {
       ? { kind: 'library', wineId: initialWineId }
       : null,
   )
-
-  function pickLibrary(w: LibraryWineResult) {
-    setPicked({ kind: 'library', wineId: w.id })
-  }
 
   function pickCustom(w: CustomWineInput) {
     setPicked({ kind: 'custom', snapshot: w })
@@ -50,7 +42,7 @@ function RecenseraVinInner() {
       {!picked && (
         <Card>
           <CardContent className="p-6">
-            <WinePicker onPickLibrary={pickLibrary} onPickCustom={pickCustom} />
+            <WinePicker onPickCustom={pickCustom} />
           </CardContent>
         </Card>
       )}

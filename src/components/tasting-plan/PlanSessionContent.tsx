@@ -69,7 +69,9 @@ function rowFromEntry(
     const region =
       typeof lib.region === 'object' && lib.region ? lib.region.name ?? null : null
     const image = typeof lib.image === 'object' && lib.image ? lib.image : null
-    const imageUrl = image ? image.sizes?.thumbnail?.url ?? image.url ?? null : null
+    const imageUrl = image
+      ? image.sizes?.bottle?.url ?? image.sizes?.thumbnail?.url ?? image.url ?? null
+      : null
     return {
       key: w.id ?? `lib-${lib.id}-${idx}`,
       pourOrder,

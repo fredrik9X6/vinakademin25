@@ -29,6 +29,16 @@ export const Media: CollectionConfig = {
         position: 'centre',
       },
       {
+        // Portrait crop for bottle thumbnails — used in tasting-plan wine rows,
+        // session screens, shopping list. Renders cleanly inside a portrait
+        // slot (w-20 h-32 etc.) without library wines looking tiny next to
+        // tall Systembolaget bottle images.
+        name: 'bottle',
+        width: 200,
+        height: 400,
+        position: 'centre',
+      },
+      {
         name: 'profile',
         width: 200,
         height: 200,

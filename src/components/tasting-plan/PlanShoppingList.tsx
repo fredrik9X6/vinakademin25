@@ -68,7 +68,10 @@ export function PlanShoppingList({ plan }: PlanShoppingListProps) {
               : [c?.producer, c?.vintage].filter(Boolean).join(' · ')
             const thumb =
               lib && typeof lib.image === 'object' && lib.image
-                ? lib.image.sizes?.thumbnail?.url ?? lib.image.url ?? null
+                ? lib.image.sizes?.bottle?.url ??
+                  lib.image.sizes?.thumbnail?.url ??
+                  lib.image.url ??
+                  null
                 : null
             const price = lib ? lib.price ?? null : c?.priceSek ?? null
             const url = lib ? lib.systembolagetUrl ?? null : c?.systembolagetUrl ?? null

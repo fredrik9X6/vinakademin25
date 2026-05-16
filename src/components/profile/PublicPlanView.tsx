@@ -47,8 +47,6 @@ export function PublicPlanView({ plan, handle, hostDisplayName }: PublicPlanView
           </p>
         )}
         <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-          <span>{plan.occasion || '—'}</span>
-          <span>·</span>
           <span>{wines.length} viner</span>
           <span>·</span>
           <span className="inline-flex items-center gap-1">

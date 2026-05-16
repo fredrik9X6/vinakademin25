@@ -56,7 +56,9 @@ function wineImageUrl(w: NonNullable<TastingPlan['wines']>[number]): string | nu
   if (w.libraryWine && typeof w.libraryWine === 'object') {
     const lib = w.libraryWine as Wine
     const image = typeof lib.image === 'object' && lib.image ? lib.image : null
-    return image ? image.sizes?.thumbnail?.url ?? image.url ?? null : null
+    return image
+      ? image.sizes?.bottle?.url ?? image.sizes?.thumbnail?.url ?? image.url ?? null
+      : null
   }
   return w.customWine?.imageUrl ?? null
 }
@@ -75,8 +77,6 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
           <h1 className="text-3xl font-heading">{plan.title}</h1>
           <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
             <Badge variant={STATUS_VARIANT[plan.status]}>{STATUS_LABEL[plan.status]}</Badge>
-            <span>{plan.occasion || '—'}</span>
-            <span>·</span>
             <span>Senast uppdaterad {formatRelative(plan.updatedAt)}</span>
           </div>
         </header>
