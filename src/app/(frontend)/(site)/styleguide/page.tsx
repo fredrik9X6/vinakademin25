@@ -415,7 +415,7 @@ function LogoTile({
 }) {
   return (
     <div
-      className={`flex min-h-[198px] flex-col items-center justify-between gap-5 rounded-2xl border p-6 ${
+      className={`relative flex min-h-[198px] flex-col items-center justify-center gap-5 rounded-2xl border p-6 ${
         gradient ? '' : `${bg} ${border}`
       } ${capColor}`}
       style={
