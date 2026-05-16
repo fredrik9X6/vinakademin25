@@ -12,6 +12,7 @@ import { Pencil, ShoppingBag, Printer, Copy } from 'lucide-react'
 import StartSessionButton from '@/components/course/StartSessionButton'
 import { PlanDetailTour } from '@/components/onboarding/PlanDetailTour'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
+import { trackEvent } from '@/components/analytics'
 
 const STATUS_LABEL: Record<TastingPlan['status'], string> = {
   draft: 'Utkast',
@@ -86,6 +87,11 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
         toast.error(data?.error || 'Kunde inte kopiera planen.')
         return
       }
+      trackEvent('tasting_plan_duplicated', {
+        source_plan_id: plan.id,
+        new_plan_id: data.plan.id,
+        origin: 'plan_detail',
+      })
       toast.success('Kopia skapad — öppnar utkastet.')
       router.push(`/skapa-provning/${data.plan.id}`)
     } catch {

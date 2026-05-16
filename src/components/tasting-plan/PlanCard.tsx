@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { MoreVertical, Copy } from 'lucide-react'
+import { trackEvent } from '@/components/analytics'
 
 const STATUS_LABEL: Record<TastingPlan['status'], string> = {
   draft: 'Utkast',
@@ -75,6 +76,11 @@ export function PlanCard({ plan }: PlanCardProps) {
         toast.error(data?.error || 'Kunde inte kopiera planen.')
         return
       }
+      trackEvent('tasting_plan_duplicated', {
+        source_plan_id: plan.id,
+        new_plan_id: data.plan.id,
+        origin: 'plan_card',
+      })
       toast.success('Kopia skapad — öppnar utkastet.')
       router.push(`/skapa-provning/${data.plan.id}`)
     } catch {

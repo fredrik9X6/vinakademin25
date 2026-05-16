@@ -43,6 +43,7 @@ import {
 } from './WinePicker'
 import { SortableWineRow } from './SortableWineRow'
 import { WizardTour } from '@/components/onboarding/WizardTour'
+import { trackEvent } from '@/components/analytics'
 
 type WineType = NonNullable<CustomWineInput['type']>
 
@@ -245,6 +246,16 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     'idle',
   )
 
+  // Fire once per mount in create mode. Edit mounts are uninteresting (they
+  // happen on every refresh / autosave reload).
+  const createStartedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (isEdit || createStartedRef.current) return
+    createStartedRef.current = true
+    trackEvent('tasting_plan_create_started')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -266,23 +277,41 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     !!suggestedTitle && suggestedTitle.trim().toLowerCase() !== title.trim().toLowerCase()
 
   function pickCustom(w: CustomWineInput, meta?: PickedWineMeta) {
-    setWines((prev) => [
-      ...prev,
-      {
-        kind: 'custom',
-        key: nextKey(),
-        customWine: w,
+    setWines((prev) => {
+      const next = [
+        ...prev,
+        {
+          kind: 'custom' as const,
+          key: nextKey(),
+          customWine: w,
+          country: meta?.country ?? null,
+          pourOrder: prev.length + 1,
+          hostNotes: '',
+        },
+      ]
+      trackEvent('tasting_plan_wine_added', {
+        source: w.systembolagetProductNumber ? 'systembolaget' : 'custom',
+        wine_type: w.type ?? null,
         country: meta?.country ?? null,
-        pourOrder: prev.length + 1,
-        hostNotes: '',
-      },
-    ])
+        has_image: !!w.imageUrl,
+        wine_count_after: next.length,
+        is_edit: isEdit,
+      })
+      return next
+    })
   }
 
   function removeAt(key: string) {
-    setWines((prev) =>
-      prev.filter((w) => w.key !== key).map((w, idx) => ({ ...w, pourOrder: idx + 1 })),
-    )
+    setWines((prev) => {
+      const next = prev
+        .filter((w) => w.key !== key)
+        .map((w, idx) => ({ ...w, pourOrder: idx + 1 }))
+      trackEvent('tasting_plan_wine_removed', {
+        wine_count_after: next.length,
+        is_edit: isEdit,
+      })
+      return next
+    })
   }
 
   function updateNotes(key: string, notes: string) {
@@ -301,7 +330,13 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
   }
 
   function applyStandardPourOrder() {
-    setWines((prev) => sortByStandardPour(prev))
+    setWines((prev) => {
+      trackEvent('tasting_plan_pour_order_autosorted', {
+        wine_count: prev.length,
+        is_edit: isEdit,
+      })
+      return sortByStandardPour(prev)
+    })
   }
 
   function buildPayload() {
@@ -338,8 +373,25 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       const data = await res.json()
       if (!res.ok) {
         if (!opts.silent) toast.error(data?.error || 'Kunde inte spara planen.')
+        trackEvent('tasting_plan_save_failed', {
+          is_edit: isEdit,
+          is_autosave: !!opts.silent,
+          status: res.status,
+          error: data?.error ?? null,
+        })
         return false
       }
+      trackEvent(opts.silent ? 'tasting_plan_autosaved' : 'tasting_plan_saved', {
+        plan_id: data.plan?.id ?? initialPlan?.id ?? null,
+        is_edit: isEdit,
+        wine_count: wines.length,
+        total_cost_sek: estimatedCost > 0 ? estimatedCost : null,
+        estimated_minutes: estimatedMinutes,
+        target_participants: targetParticipants,
+        blind_tasting: blindTastingByDefault,
+        has_timer: defaultMinutesPerWine !== '' && Number(defaultMinutesPerWine) > 0,
+        published_to_profile: publishedToProfile,
+      })
       if (!opts.silent) {
         toast.success(isEdit ? 'Sparat.' : 'Planen är skapad.')
         if (!isEdit && data.plan?.id) {
@@ -351,6 +403,11 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       return true
     } catch {
       if (!opts.silent) toast.error('Nätverksfel — försök igen.')
+      trackEvent('tasting_plan_save_failed', {
+        is_edit: isEdit,
+        is_autosave: !!opts.silent,
+        error: 'network',
+      })
       return false
     } finally {
       if (!opts.silent) setSubmitting(false)
@@ -402,6 +459,10 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         toast.error(data?.error || 'Kunde inte ta bort planen.')
         return
       }
+      trackEvent('tasting_plan_deleted', {
+        plan_id: initialPlan.id,
+        archived: !!data.archived,
+      })
       toast.success(data.archived ? 'Arkiverad.' : 'Borttagen permanent.')
       router.push('/mina-provningar/planer')
     } finally {
@@ -453,7 +514,14 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           {showTitleSuggestion && (
             <button
               type="button"
-              onClick={() => setTitle(suggestedTitle!)}
+              onClick={() => {
+                setTitle(suggestedTitle!)
+                trackEvent('tasting_plan_title_suggestion_applied', {
+                  suggestion: suggestedTitle,
+                  wine_count: wines.length,
+                  is_edit: isEdit,
+                })
+              }}
               className="mt-2 inline-flex items-center gap-1 text-xs text-brand-400 hover:underline"
             >
               <Wand2 className="h-3 w-3" />
@@ -572,7 +640,15 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       <section>
         <button
           type="button"
-          onClick={() => setShowAdvanced((s) => !s)}
+          onClick={() => {
+            setShowAdvanced((s) => {
+              trackEvent('tasting_plan_advanced_toggled', {
+                opened: !s,
+                is_edit: isEdit,
+              })
+              return !s
+            })
+          }}
           aria-expanded={showAdvanced}
           className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
