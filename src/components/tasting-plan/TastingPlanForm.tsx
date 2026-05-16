@@ -64,7 +64,10 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
       const image = lib.image
       const thumbnailUrl =
         typeof image === 'object' && image
-          ? image.sizes?.thumbnail?.url ?? image.url ?? null
+          ? image.sizes?.bottle?.url ??
+            image.sizes?.thumbnail?.url ??
+            image.url ??
+            null
           : null
       return {
         kind: 'library',

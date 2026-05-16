@@ -37,11 +37,12 @@ export async function GET(request: NextRequest) {
     vintage: w.vintage ?? null,
     region: typeof w.region === 'object' ? w.region?.name ?? null : null,
     thumbnailUrl:
-      typeof w.image === 'object' && w.image?.sizes?.thumbnail?.url
-        ? w.image.sizes.thumbnail.url
-        : typeof w.image === 'object'
-          ? w.image?.url ?? null
-          : null,
+      typeof w.image === 'object' && w.image
+        ? w.image.sizes?.bottle?.url ??
+          w.image.sizes?.thumbnail?.url ??
+          w.image.url ??
+          null
+        : null,
   }))
 
   return NextResponse.json({ results })

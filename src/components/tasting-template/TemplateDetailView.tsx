@@ -29,7 +29,7 @@ function wineThumb(w: NonNullable<TastingTemplate['wines']>[number]): string | n
   const lib = w.libraryWine as Wine
   const image = typeof lib.image === 'object' && lib.image ? lib.image : null
   if (!image) return null
-  return image.sizes?.thumbnail?.url ?? image.url ?? null
+  return image.sizes?.bottle?.url ?? image.sizes?.thumbnail?.url ?? image.url ?? null
 }
 
 export interface TemplateDetailViewProps {

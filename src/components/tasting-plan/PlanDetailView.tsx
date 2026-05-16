@@ -56,7 +56,9 @@ function wineImageUrl(w: NonNullable<TastingPlan['wines']>[number]): string | nu
   if (w.libraryWine && typeof w.libraryWine === 'object') {
     const lib = w.libraryWine as Wine
     const image = typeof lib.image === 'object' && lib.image ? lib.image : null
-    return image ? image.sizes?.thumbnail?.url ?? image.url ?? null : null
+    return image
+      ? image.sizes?.bottle?.url ?? image.sizes?.thumbnail?.url ?? image.url ?? null
+      : null
   }
   return w.customWine?.imageUrl ?? null
 }
