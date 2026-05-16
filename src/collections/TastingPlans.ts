@@ -48,11 +48,6 @@ export const TastingPlans: CollectionConfig = {
       maxLength: 500,
     },
     {
-      name: 'occasion',
-      type: 'text',
-      admin: { description: 'e.g. "Födelsedagsmiddag", "Sommarrosé-flight"' },
-    },
-    {
       name: 'targetParticipants',
       type: 'number',
       defaultValue: 4,

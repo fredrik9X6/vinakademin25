@@ -68,7 +68,7 @@ export function PublicHostProfile({
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold truncate">{p.title}</p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {[p.occasion, `${p.wines?.length ?? 0} viner`].filter(Boolean).join(' · ')}
+                        {p.wines?.length ?? 0} viner
                       </p>
                     </div>
                   </div>

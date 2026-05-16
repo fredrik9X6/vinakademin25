@@ -27,7 +27,6 @@ type WineEntry = {
 type PatchBody = {
   title?: string
   description?: string
-  occasion?: string
   targetParticipants?: number
   blindTastingByDefault?: boolean
   defaultMinutesPerWine?: number | null
@@ -102,7 +101,6 @@ export async function PATCH(
   const data: Record<string, unknown> = {}
   if (body.title !== undefined) data.title = body.title.trim()
   if (body.description !== undefined) data.description = body.description.trim() || null
-  if (body.occasion !== undefined) data.occasion = body.occasion.trim() || null
   if (body.targetParticipants !== undefined) data.targetParticipants = body.targetParticipants
   if (body.blindTastingByDefault !== undefined)
     data.blindTastingByDefault = body.blindTastingByDefault

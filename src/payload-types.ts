@@ -1428,10 +1428,6 @@ export interface TastingPlan {
   owner: number | User;
   title: string;
   description?: string | null;
-  /**
-   * e.g. "Födelsedagsmiddag", "Sommarrosé-flight"
-   */
-  occasion?: string | null;
   targetParticipants?: number | null;
   /**
    * When checked, sessions started from this plan default to blind tasting.
@@ -1501,7 +1497,6 @@ export interface TastingTemplate {
    */
   slug: string;
   description?: string | null;
-  occasion?: string | null;
   targetParticipants?: number | null;
   wines?:
     | {
@@ -4347,7 +4342,6 @@ export interface TastingPlansSelect<T extends boolean = true> {
   owner?: T;
   title?: T;
   description?: T;
-  occasion?: T;
   targetParticipants?: T;
   blindTastingByDefault?: T;
   defaultMinutesPerWine?: T;
@@ -4386,7 +4380,6 @@ export interface TastingTemplatesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   description?: T;
-  occasion?: T;
   targetParticipants?: T;
   wines?:
     | T

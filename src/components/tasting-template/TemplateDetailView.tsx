@@ -76,8 +76,6 @@ export function TemplateDetailView({ template }: TemplateDetailViewProps) {
             </p>
           )}
           <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-            <span>{template.occasion || '—'}</span>
-            <span>·</span>
             <span>{wines.length} viner</span>
             <span>·</span>
             <span className="inline-flex items-center gap-1">

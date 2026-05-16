@@ -48,7 +48,6 @@ export const TastingTemplates: CollectionConfig = {
       },
     },
     { name: 'description', type: 'textarea', maxLength: 500 },
-    { name: 'occasion', type: 'text' },
     {
       name: 'targetParticipants',
       type: 'number',

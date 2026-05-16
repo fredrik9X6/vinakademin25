@@ -35,9 +35,7 @@ export function TemplateCard({ template }: TemplateCardProps) {
           <h3 className="font-semibold truncate group-hover:text-brand-400 transition-colors">
             {template.title}
           </h3>
-          <p className="text-xs text-muted-foreground truncate">
-            {[template.occasion, `${wineCount} viner`].filter(Boolean).join(' · ')}
-          </p>
+          <p className="text-xs text-muted-foreground truncate">{wineCount} viner</p>
           <p className="text-xs text-muted-foreground mt-2">Av Vinakademin</p>
         </div>
       </Card>
