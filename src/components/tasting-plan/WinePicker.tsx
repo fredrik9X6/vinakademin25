@@ -34,6 +34,31 @@ export type CustomWineInput = {
 }
 
 /**
+ * Client-only metadata about the picked wine — used by the form for things
+ * like title suggestions, but NOT persisted on the customWine snapshot.
+ * Adding to the snapshot would require a schema migration; carrying it
+ * alongside the snapshot in form state keeps the change scoped.
+ */
+export type PickedWineMeta = {
+  country?: string | null
+}
+
+/**
+ * Library wine shape kept around for hydrating already-saved plans that
+ * reference a wine from the curated `wines` collection. The picker no
+ * longer offers library wines as a new choice (all new picks go through
+ * Systembolaget or hand-typed custom), but legacy rows still render.
+ */
+export type LibraryWineResult = {
+  id: number
+  title: string
+  producer: string | null
+  vintage: string | number | null
+  region: string | null
+  thumbnailUrl: string | null
+}
+
+/**
  * Systembolaget CDN URLs come back from upstream without a file extension
  * (e.g. .../productimages/47017/47017). The CDN serves a 400px thumbnail at
  * `_400.png` and the full image at `.png`. We use the thumbnail variant for
@@ -87,18 +112,8 @@ function projectSystembolagetToCustom(hit: SystembolagetHit): CustomWineInput {
   }
 }
 
-export type LibraryWineResult = {
-  id: number
-  title: string
-  producer: string | null
-  vintage: string | number | null
-  region: string | null
-  thumbnailUrl: string | null
-}
-
 export interface WinePickerProps {
-  onPickLibrary: (wine: LibraryWineResult) => void
-  onPickCustom: (wine: CustomWineInput) => void
+  onPickCustom: (wine: CustomWineInput, meta?: PickedWineMeta) => void
   disabled?: boolean
 }
 
@@ -112,44 +127,12 @@ const WINE_TYPE_OPTIONS: Array<{ value: NonNullable<CustomWineInput['type']>; la
   { value: 'other', label: 'Annat' },
 ]
 
-export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePickerProps) {
-  const [tab, setTab] = React.useState<'library' | 'systembolaget' | 'custom'>('systembolaget')
-  const [q, setQ] = React.useState('')
-  const [results, setResults] = React.useState<LibraryWineResult[]>([])
-  const [loading, setLoading] = React.useState(false)
+export function WinePicker({ onPickCustom, disabled }: WinePickerProps) {
+  const [tab, setTab] = React.useState<'systembolaget' | 'custom'>('systembolaget')
   const [custom, setCustom] = React.useState<CustomWineInput>({ name: '' })
-
-  // Systembolaget search state — independent query so switching tabs doesn't
-  // clobber the in-progress query in the other tab.
   const [sbQ, setSbQ] = React.useState('')
   const [sbResults, setSbResults] = React.useState<SystembolagetHit[]>([])
   const [sbLoading, setSbLoading] = React.useState(false)
-
-  React.useEffect(() => {
-    if (q.trim().length < 2) {
-      setResults([])
-      return
-    }
-    let aborted = false
-    setLoading(true)
-    const handle = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/wines/search?q=${encodeURIComponent(q)}`)
-        if (!res.ok) {
-          if (!aborted) setResults([])
-          return
-        }
-        const data = await res.json()
-        if (!aborted) setResults(data.results || [])
-      } finally {
-        if (!aborted) setLoading(false)
-      }
-    }, 300)
-    return () => {
-      aborted = true
-      clearTimeout(handle)
-    }
-  }, [q])
 
   React.useEffect(() => {
     if (sbQ.trim().length < 2) {
@@ -182,18 +165,11 @@ export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePicker
 
   return (
     <div className="rounded-md border bg-card p-4">
-      <Tabs
-        value={tab}
-        onValueChange={(v) => setTab(v as 'library' | 'systembolaget' | 'custom')}
-      >
-        <TabsList className="mb-3 grid w-full grid-cols-3">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'systembolaget' | 'custom')}>
+        <TabsList className="mb-3 grid w-full grid-cols-2">
           <TabsTrigger value="systembolaget">
             <span className="sm:hidden">Systembolaget</span>
             <span className="hidden sm:inline">Sök Systembolaget</span>
-          </TabsTrigger>
-          <TabsTrigger value="library">
-            <span className="sm:hidden">Bibliotek</span>
-            <span className="hidden sm:inline">Från biblioteket</span>
           </TabsTrigger>
           <TabsTrigger value="custom">Eget vin</TabsTrigger>
         </TabsList>
@@ -233,7 +209,7 @@ export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePicker
                       className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-3 disabled:opacity-50"
                       disabled={disabled}
                       onClick={() => {
-                        onPickCustom(projectSystembolagetToCustom(r))
+                        onPickCustom(projectSystembolagetToCustom(r), { country: r.country })
                         setSbQ('')
                         setSbResults([])
                       }}
@@ -265,55 +241,6 @@ export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePicker
             Vin från Systembolagets sortiment. Träffen läggs till som ett eget vin med
             data från Systembolaget — du kan justera fälten efteråt.
           </p>
-        </TabsContent>
-
-        <TabsContent value="library" className="space-y-2">
-          <Input
-            placeholder="Sök efter titel eller producent…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            disabled={disabled}
-            aria-label="Sök vin"
-          />
-          {loading && <p className="text-xs text-muted-foreground">Söker…</p>}
-          {!loading && q.trim().length >= 2 && results.length === 0 && (
-            <p className="text-xs text-muted-foreground">Inga träffar.</p>
-          )}
-          {results.length > 0 && (
-            <ul className="max-h-72 overflow-y-auto divide-y rounded-md border">
-              {results.map((r) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-3 disabled:opacity-50"
-                    disabled={disabled}
-                    onClick={() => {
-                      onPickLibrary(r)
-                      setQ('')
-                      setResults([])
-                    }}
-                  >
-                    <div className="flex-shrink-0 w-10 h-12 rounded-md overflow-hidden bg-muted relative">
-                      {r.thumbnailUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={r.thumbnailUrl}
-                          alt=""
-                          className="absolute inset-0 w-full h-full object-contain p-1"
-                        />
-                      ) : null}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{r.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {[r.producer, r.vintage, r.region].filter(Boolean).join(' · ')}
-                      </p>
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
         </TabsContent>
 
         <TabsContent value="custom" className="space-y-3">

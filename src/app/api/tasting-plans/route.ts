@@ -39,7 +39,7 @@ function validateBody(body: CreateBody): string | null {
   if (body.description && body.description.trim().length > 500)
     return 'Beskrivning får vara max 500 tecken.'
   const wines = body.wines || []
-  if (wines.length < 3) return 'En plan måste innehålla minst 3 viner.'
+  if (wines.length < 1) return 'Lägg till minst ett vin.'
   for (let i = 0; i < wines.length; i++) {
     const w = wines[i]
     const hasLib = w.libraryWine != null
