@@ -23,7 +23,7 @@ export function OrganizationJsonLd({ siteURL }: { siteURL: string }) {
     '@type': 'Organization',
     name: 'Vinakademin',
     url: siteURL,
-    logo: `${siteURL}/brand/vinakademin_logo_lockup_darkmode.svg`,
+    logo: `${siteURL}/brand/logomark-gradient.svg`,
     sameAs: [
       'https://www.instagram.com/vinakademin',
       'https://www.facebook.com/vinakademin',
@@ -254,7 +254,7 @@ export function ArticleJsonLd(input: ArticleJsonLdInput) {
       name: 'Vinakademin',
       logo: {
         '@type': 'ImageObject',
-        url: `${input.siteURL}/brand/vinakademin_logo_lockup_darkmode.svg`,
+        url: `${input.siteURL}/brand/logomark-gradient.svg`,
       },
     },
     datePublished: input.datePublished,

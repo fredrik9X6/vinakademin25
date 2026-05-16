@@ -140,7 +140,7 @@ function LogoSection() {
             style={{ background: ORANGE_400 }}
           />
           <Image
-            src="/brand/vinakademin_logo_lockup_darkmode.svg"
+            src="/brand/wordmark-white.svg"
             alt="Vinakademin lockup på mörk bakgrund"
             width={520}
             height={260}
@@ -151,7 +151,7 @@ function LogoSection() {
         <div className="grid grid-cols-2 gap-4">
           <LogoTile bg="bg-[#fafafa]" border="border-[#e5e5e5]" capColor="text-[#666]">
             <Image
-              src="/brand/Vinakademin_logo_lockup.svg"
+              src="/brand/wordmark-ink.svg"
               alt="Logotyp på ljus yta"
               width={130}
               height={80}
@@ -166,7 +166,7 @@ function LogoSection() {
             capColor="text-[#8a5a2a]"
           >
             <Image
-              src="/brand/Vinakademin_logo_lockup.svg"
+              src="/brand/wordmark-ink.svg"
               alt="Logotyp på cremegul yta"
               width={130}
               height={80}
@@ -177,7 +177,7 @@ function LogoSection() {
 
           <LogoTile bg="" border="border-0" capColor="text-white" gradient>
             <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              src="/brand/wordmark-white.svg"
               alt="Logotyp på orange yta"
               width={130}
               height={80}
@@ -188,7 +188,7 @@ function LogoSection() {
 
           <LogoTile bg="bg-[#1a1a1a]" border="border-border" capColor="text-muted-foreground">
             <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              src="/brand/wordmark-white.svg"
               alt="Logotyp på mörk yta"
               width={130}
               height={80}
@@ -226,8 +226,8 @@ function LogoSection() {
               <Image
                 src={
                   m.favicon
-                    ? '/brand/vinakademin_logomark_favicon.svg'
-                    : '/brand/vinakademin_logomark.svg'
+                    ? '/brand/favicon.svg'
+                    : '/brand/logomark.svg'
                 }
                 alt="Logomärke"
                 width={48}
@@ -252,7 +252,7 @@ function LogoSection() {
         >
           <div className="flex h-[110px] items-center justify-center rounded-xl border border-border bg-[#1a1a1a] p-4">
             <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              src="/brand/wordmark-white.svg"
               alt=""
               width={150}
               height={60}
@@ -267,7 +267,7 @@ function LogoSection() {
         >
           <div className="flex h-[110px] items-center justify-center rounded-xl border border-border bg-[#1a1a1a] p-0.5">
             <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              src="/brand/wordmark-white.svg"
               alt=""
               width={300}
               height={120}
@@ -282,7 +282,7 @@ function LogoSection() {
         >
           <div className="flex h-[110px] items-center justify-center rounded-xl border border-[#e5e5e5] bg-[#fafafa] p-4">
             <Image
-              src="/brand/Vinakademin_logo_lockup.svg"
+              src="/brand/wordmark-ink.svg"
               alt=""
               width={150}
               height={60}
@@ -297,7 +297,7 @@ function LogoSection() {
         >
           <div className="flex h-[110px] items-center justify-center rounded-xl bg-[linear-gradient(45deg,#ff006e,#8338ec,#3a86ff)] p-4">
             <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              src="/brand/wordmark-white.svg"
               alt=""
               width={150}
               height={60}
