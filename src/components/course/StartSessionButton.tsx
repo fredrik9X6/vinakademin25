@@ -16,6 +16,7 @@ import { Users, Loader2, Copy, Check, ExternalLink } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useActiveSession } from '@/context/SessionContext'
 import { QRCodeSVG } from 'qrcode.react'
+import { trackEvent } from '@/components/analytics'
 
 type StartSessionButtonProps =
   | {
@@ -55,6 +56,12 @@ export default function StartSessionButton(props: StartSessionButtonProps) {
     e.preventDefault()
     setError('')
     setLoading(true)
+    trackEvent('session_create_started', {
+      kind: isPlan ? 'plan' : 'course',
+      plan_id: isPlan ? props.tastingPlanId : null,
+      course_id: isPlan ? null : props.courseId,
+      blind_tasting: isPlan ? blindTasting : false,
+    })
 
     try {
       const response = await fetch('/api/sessions/create', {
@@ -75,16 +82,32 @@ export default function StartSessionButton(props: StartSessionButtonProps) {
 
       if (!response.ok) {
         setError(data.error || 'Kunde inte skapa session')
+        trackEvent('session_create_failed', {
+          kind: isPlan ? 'plan' : 'course',
+          status: response.status,
+          error: data?.error ?? null,
+        })
         setLoading(false)
         return
       }
 
       setSession(data.session)
+      trackEvent('session_created', {
+        kind: isPlan ? 'plan' : 'course',
+        session_id: data.session?.id ?? null,
+        plan_id: isPlan ? props.tastingPlanId : null,
+        course_id: isPlan ? null : props.courseId,
+        blind_tasting: isPlan ? blindTasting : false,
+      })
       setStep('share')
       setLoading(false)
     } catch (err) {
       console.error('Create session error:', err)
       setError('Ett oväntat fel uppstod. Försök igen.')
+      trackEvent('session_create_failed', {
+        kind: isPlan ? 'plan' : 'course',
+        error: 'network',
+      })
       setLoading(false)
     }
   }
@@ -117,6 +140,12 @@ export default function StartSessionButton(props: StartSessionButtonProps) {
         expiresAt: session.expiresAt,
       }
       joinSession(sessionData)
+      trackEvent('session_started', {
+        kind: isPlan ? 'plan' : 'course',
+        session_id: String(session.id),
+        plan_id: isPlan ? props.tastingPlanId : null,
+        course_id: isPlan ? null : props.courseId,
+      })
     }
 
     setIsOpen(false)

@@ -43,7 +43,7 @@ function FilterPill({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors',
+        'inline-flex h-9 flex-shrink-0 items-center whitespace-nowrap rounded-full border px-4 text-sm font-medium transition-colors',
         active
           ? 'border-brand-400/30 bg-brand-300/15 text-brand-400'
           : 'border-border bg-background text-foreground hover:border-brand-400/50 hover:bg-brand-300/5',
@@ -72,6 +72,7 @@ export function VinlistanToolbar({
   const [country, setCountry] = React.useState<string>('')
   const [region, setRegion] = React.useState<string>('')
   const [grape, setGrape] = React.useState<string>('')
+  const [priceMin, setPriceMin] = React.useState<string>('')
   const [priceMax, setPriceMax] = React.useState<string>('')
   const [ratingMin, setRatingMin] = React.useState<string>('')
   const router = useRouter()
@@ -82,6 +83,7 @@ export function VinlistanToolbar({
     setCountry(searchParams.get('country') || '')
     setRegion(searchParams.get('region') || '')
     setGrape(searchParams.get('grape') || '')
+    setPriceMin(searchParams.get('priceMin') || '')
     setPriceMax(searchParams.get('priceMax') || '')
     setRatingMin(searchParams.get('ratingMin') || '')
   }, [searchParams])
@@ -139,7 +141,12 @@ export function VinlistanToolbar({
 
   const clearParam = (key: string) => {
     const params = new URLSearchParams(searchParams?.toString() || '')
-    params.delete(key)
+    if (key === 'priceRange') {
+      params.delete('priceMin')
+      params.delete('priceMax')
+    } else {
+      params.delete(key)
+    }
     params.delete('page')
     if (key === 'q') setValue('')
     router.push(`/vinlistan?${params.toString()}`)
@@ -171,9 +178,10 @@ export function VinlistanToolbar({
         />
       </div>
 
-      {/* Row 2: Filters (left) + Sort (right) */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Row 2: Filters (left) + Sort (right). On mobile the chip row scrolls
+          horizontally so the row stays one line instead of wrapping. */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0 overflow-x-auto md:overflow-visible md:flex-wrap scrollbar-hide pr-1 -mx-1 px-1">
           {/* Filter icon + dialog */}
           <Dialog>
             <DialogTrigger asChild>
@@ -244,13 +252,26 @@ export function VinlistanToolbar({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="priceMax">Maxpris (kr)</Label>
-                  <TextInput
-                    id="priceMax"
-                    inputMode="numeric"
-                    value={priceMax}
-                    onChange={(e) => setPriceMax(e.target.value.replace(/[^0-9]/g, ''))}
-                  />
+                  <Label>Pris (kr)</Label>
+                  <div className="flex items-center gap-2">
+                    <TextInput
+                      placeholder="Min"
+                      inputMode="numeric"
+                      value={priceMin}
+                      onChange={(e) => setPriceMin(e.target.value.replace(/[^0-9]/g, ''))}
+                      aria-label="Minimipris"
+                    />
+                    <span className="text-muted-foreground" aria-hidden="true">
+                      –
+                    </span>
+                    <TextInput
+                      placeholder="Max"
+                      inputMode="numeric"
+                      value={priceMax}
+                      onChange={(e) => setPriceMax(e.target.value.replace(/[^0-9]/g, ''))}
+                      aria-label="Maxpris"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Min betyg</Label>
@@ -276,9 +297,15 @@ export function VinlistanToolbar({
                   variant="ghost"
                   onClick={() => {
                     const params = new URLSearchParams(searchParams?.toString() || '')
-                    ;['country', 'region', 'grape', 'priceMax', 'ratingMin', 'type'].forEach((k) =>
-                      params.delete(k),
-                    )
+                    ;[
+                      'country',
+                      'region',
+                      'grape',
+                      'priceMin',
+                      'priceMax',
+                      'ratingMin',
+                      'type',
+                    ].forEach((k) => params.delete(k))
                     router.push(`/vinlistan?${params.toString()}`)
                   }}
                 >
@@ -293,6 +320,8 @@ export function VinlistanToolbar({
                     else params.delete('region')
                     if (grape) params.set('grape', grape)
                     else params.delete('grape')
+                    if (priceMin) params.set('priceMin', priceMin)
+                    else params.delete('priceMin')
                     if (priceMax) params.set('priceMax', priceMax)
                     else params.delete('priceMax')
                     if (ratingMin) params.set('ratingMin', ratingMin)
@@ -378,6 +407,8 @@ export function VinlistanToolbar({
                 { v: 'rating-asc', label: 'Betyg: lägst först' },
                 { v: 'price-asc', label: 'Pris: lägst först' },
                 { v: 'price-desc', label: 'Pris: högst först' },
+                { v: 'name-asc', label: 'Namn: A → Ö' },
+                { v: 'name-desc', label: 'Namn: Ö → A' },
                 { v: 'newest', label: 'Nyast' },
               ].map((opt) => (
                 <DropdownMenuItem
@@ -420,7 +451,10 @@ export function VinlistanToolbar({
           active.push({ key: 'type', value: 'fortified', label: 'Starkvin' })
         if (types.includes('dessert'))
           active.push({ key: 'type', value: 'dessert', label: 'Dessertvin' })
-        if (pm) active.push({ key: 'priceMax', label: `Under ${pm} kr` })
+        const pmin = searchParams?.get('priceMin') || ''
+        if (pmin && pm) active.push({ key: 'priceRange', label: `${pmin}–${pm} kr` })
+        else if (pmin) active.push({ key: 'priceMin', label: `Från ${pmin} kr` })
+        else if (pm) active.push({ key: 'priceMax', label: `Under ${pm} kr` })
         if (co) active.push({ key: 'country', label: `Land: ${co}` })
         if (re) active.push({ key: 'region', label: `Region: ${re}` })
         if (gr) active.push({ key: 'grape', label: `Druva: ${gr}` })
@@ -455,6 +489,7 @@ export function VinlistanToolbar({
                 ;[
                   'q',
                   'type',
+                  'priceMin',
                   'priceMax',
                   'country',
                   'region',

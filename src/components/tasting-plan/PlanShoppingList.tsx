@@ -126,6 +126,39 @@ export function PlanShoppingList({ plan }: PlanShoppingListProps) {
           })}
         </ul>
       )}
+
+      {sum != null && wines.length > 0 && (
+        <Card className="mt-6 p-4">
+          <div className="flex items-baseline justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Totalt</p>
+              <p className="text-2xl font-heading tabular-nums">
+                ~{sum.toLocaleString('sv-SE')} kr
+              </p>
+            </div>
+            {(plan.targetParticipants ?? 0) > 0 && (
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Per person
+                </p>
+                <p className="text-base tabular-nums">
+                  ~{Math.round(sum / (plan.targetParticipants ?? 1)).toLocaleString('sv-SE')} kr
+                  <span className="text-muted-foreground">
+                    {' '}
+                    × {plan.targetParticipants} st
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+          {prices.length < wines.length && (
+            <p className="text-xs text-muted-foreground mt-3">
+              Saknar pris på {wines.length - prices.length}{' '}
+              {wines.length - prices.length === 1 ? 'vin' : 'viner'} — totalen är ett minimum.
+            </p>
+          )}
+        </Card>
+      )}
     </div>
   )
 }

@@ -23,9 +23,17 @@ export const metadata: Metadata = {
 
 type SearchParams = {
   q?: string
-  sort?: 'rating-desc' | 'rating-asc' | 'price-asc' | 'price-desc' | 'newest'
+  sort?:
+    | 'rating-desc'
+    | 'rating-asc'
+    | 'price-asc'
+    | 'price-desc'
+    | 'newest'
+    | 'name-asc'
+    | 'name-desc'
   page?: string
   type?: string | string[] // support multi values
+  priceMin?: string
   priceMax?: string
   country?: string
   region?: string
@@ -47,6 +55,7 @@ async function fetchWinesForVinlistan(params: SearchParams) {
         .map((t) => t.trim())
         .filter(Boolean)
         .map((t) => t.toLowerCase())
+  const filterPriceMin = Number(params.priceMin || '') || null
   const filterPriceMax = Number(params.priceMax || '') || null
   const filterCountry = (params.country || '').trim().toLowerCase()
   const filterRegion = (params.region || '').trim().toLowerCase()
@@ -134,9 +143,10 @@ async function fetchWinesForVinlistan(params: SearchParams) {
       if (!w?.type || !filterTypes.includes(String(w.type))) return false
     }
 
-    if (filterPriceMax != null) {
+    if (filterPriceMin != null || filterPriceMax != null) {
       const price = Number(w?.price) || 0
-      if (!(price > 0 && price <= filterPriceMax)) return false
+      if (filterPriceMin != null && price < filterPriceMin) return false
+      if (filterPriceMax != null && !(price > 0 && price <= filterPriceMax)) return false
     }
 
     if (filterCountry) {
@@ -178,6 +188,10 @@ async function fetchWinesForVinlistan(params: SearchParams) {
     if (sort === 'price-asc') return pa - pb
     if (sort === 'price-desc') return pb - pa
     if (sort === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    if (sort === 'name-asc')
+      return String(wa?.name || '').localeCompare(String(wb?.name || ''), 'sv')
+    if (sort === 'name-desc')
+      return String(wb?.name || '').localeCompare(String(wa?.name || ''), 'sv')
     return rb - ra
   })
 
@@ -225,8 +239,11 @@ export default async function VinlistanPage({
 
       {/* Gallery */}
       {items.length === 0 ? (
-        <div className="rounded-lg border p-8 text-sm text-muted-foreground">
-          Inga viner matchade din sökning.
+        <div className="rounded-lg border border-dashed p-10 text-center">
+          <p className="text-base font-medium">Inga viner matchade dina filter.</p>
+          <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+            Prova att ta bort några filter, eller sök på producent / druva.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

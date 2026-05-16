@@ -30,6 +30,7 @@ import { useActiveSession } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
 import { SwarmPanel } from './SwarmPanel'
 import { HostSessionTour } from '@/components/onboarding/HostSessionTour'
+import { trackEvent } from '@/components/analytics'
 
 interface PlanSessionContentProps {
   session: CourseSession
@@ -195,6 +196,12 @@ export function PlanSessionContent({
         toast.error('Kunde inte avsluta sessionen.')
         return
       }
+      trackEvent('session_ended', {
+        session_id: String(session.id),
+        plan_id: plan.id,
+        revealed_count: localRevealed.size,
+        total_wines: rows.length,
+      })
       toast.success('Sessionen avslutad.')
       router.push(`/mina-provningar/planer/${plan.id}`)
     } catch {
@@ -207,6 +214,10 @@ export function PlanSessionContent({
 
   async function handleGuestLeave() {
     setEndingOrLeaving(true)
+    trackEvent('session_left', {
+      session_id: String(session.id),
+      plan_id: plan.id,
+    })
     try {
       await leaveSession()
     } catch {
@@ -244,6 +255,12 @@ export function PlanSessionContent({
   async function setFocus(pourOrder: number) {
     setSettingFocus(true)
     setLocalFocus(pourOrder) // optimistic — host sees the change immediately
+    trackEvent('session_focus_set', {
+      session_id: String(session.id),
+      plan_id: plan.id,
+      pour_order: pourOrder,
+      total_wines: rows.length,
+    })
     try {
       const res = await fetch(`/api/sessions/${session.id}/host-state`, {
         method: 'POST',
@@ -262,6 +279,11 @@ export function PlanSessionContent({
 
   async function revealWine(pourOrder: number) {
     setLocalRevealed((prev) => new Set([...prev, pourOrder]))
+    trackEvent('session_wine_revealed', {
+      session_id: String(session.id),
+      plan_id: plan.id,
+      pour_order: pourOrder,
+    })
     try {
       const res = await fetch(`/api/sessions/${session.id}/host-state`, {
         method: 'POST',
