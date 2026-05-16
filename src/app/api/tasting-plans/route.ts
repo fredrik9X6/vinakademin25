@@ -29,6 +29,9 @@ type CreateBody = {
   description?: string
   occasion?: string
   targetParticipants?: number
+  blindTastingByDefault?: boolean
+  defaultMinutesPerWine?: number | null
+  publishedToProfile?: boolean
   wines?: WineEntry[]
   hostScript?: string
 }
@@ -81,6 +84,9 @@ export async function POST(request: NextRequest) {
         description: body.description?.trim() || undefined,
         occasion: body.occasion?.trim() || undefined,
         targetParticipants: body.targetParticipants ?? 4,
+        blindTastingByDefault: body.blindTastingByDefault ?? false,
+        defaultMinutesPerWine: body.defaultMinutesPerWine ?? null,
+        publishedToProfile: body.publishedToProfile ?? false,
         wines: (body.wines || []).map((w, idx) => ({
           libraryWine: w.libraryWine ?? null,
           customWine: w.customWine?.name?.trim() ? w.customWine : undefined,

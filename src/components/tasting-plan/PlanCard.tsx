@@ -123,7 +123,6 @@ export function PlanCard({ plan }: PlanCardProps) {
         <div className="flex items-start justify-between relative z-10 pointer-events-none">
           <div className="min-w-0 flex-1 pr-2">
             <h3 className="font-semibold truncate">{plan.title}</h3>
-            <p className="text-xs text-muted-foreground truncate">{plan.occasion || '—'}</p>
           </div>
           <div className="flex-shrink-0 pointer-events-auto">
             <DropdownMenu>
