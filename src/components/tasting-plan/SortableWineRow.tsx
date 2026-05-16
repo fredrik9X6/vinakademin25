@@ -55,7 +55,7 @@ export function SortableWineRow({ item, onNotesChange, onRemove, disabled }: Sor
           expands the notes textarea, the card grows but the bottle stays put. */}
       <div className="relative flex-shrink-0 w-20 h-32 sm:w-24 sm:h-36">
         <span
-          className="absolute inset-0 flex items-center justify-center font-heading leading-none text-muted-foreground/20 select-none pointer-events-none text-[110px] sm:text-[130px]"
+          className="absolute inset-0 flex items-start justify-start font-heading leading-[0.85] text-muted-foreground/25 select-none pointer-events-none text-[110px] sm:text-[130px] -ml-2 -mt-1"
           aria-hidden="true"
         >
           {item.pourOrder}
