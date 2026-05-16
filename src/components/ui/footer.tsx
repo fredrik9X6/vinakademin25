@@ -47,7 +47,7 @@ function FooterNewsletter() {
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, source: 'footer' }),
       })
       const data = await res.json()
 
@@ -88,7 +88,7 @@ function FooterNewsletter() {
               handleSubmit()
             }
           }}
-          className="h-12 min-w-0 flex-1 rounded-md border border-border bg-background px-4 text-base leading-none outline-none transition focus:border-brand-400/60 focus:ring-1 focus:ring-brand-400/40 disabled:opacity-50 sm:h-10 sm:px-3 sm:text-sm"
+          className="h-14 min-w-0 flex-1 rounded-md border border-border bg-background px-4 text-base outline-none transition focus:border-brand-400/60 focus:ring-1 focus:ring-brand-400/40 disabled:opacity-50 sm:h-10 sm:px-3 sm:text-sm"
           disabled={status === 'loading'}
           aria-label="E-postadress"
         />
@@ -96,7 +96,7 @@ function FooterNewsletter() {
           type="button"
           onClick={handleSubmit}
           disabled={status === 'loading'}
-          className="btn-brand h-12 w-full px-4 text-base sm:h-10 sm:w-auto sm:flex-shrink-0 sm:text-sm"
+          className="btn-brand !h-14 w-full px-4 text-base sm:!h-10 sm:w-auto sm:flex-shrink-0 sm:text-sm"
         >
           {status === 'loading' ? (
             <Loader2 className="h-4 w-4 animate-spin" />

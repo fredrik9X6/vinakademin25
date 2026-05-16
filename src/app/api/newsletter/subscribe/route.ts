@@ -32,10 +32,13 @@ const LEAD_MAGNET_BUILDERS: Record<
 
 const PUBLIC_SOURCES = new Set<Source>(['footer', 'newsletter_page'])
 
+// Fallback is `manual` rather than `footer` so missing/unknown source values
+// don't get silently mis-attributed to the footer form. Real callers (footer,
+// newsletter page, e-book form) always pass their own source.
 function parseSource(raw: unknown): Source {
   return typeof raw === 'string' && (PUBLIC_SOURCES as Set<string>).has(raw)
     ? (raw as Source)
-    : 'footer'
+    : 'manual'
 }
 
 function parseLeadMagnet(raw: unknown): LeadMagnetRef | undefined {
@@ -150,8 +153,8 @@ async function notifyTeam(input: {
 }) {
   try {
     const sourceLabel = input.leadMagnet
-      ? `${input.source || 'footer'} (${input.leadMagnet.type}:${input.leadMagnet.slug})`
-      : input.source || 'footer'
+      ? `${input.source || 'manual'} (${input.leadMagnet.type}:${input.leadMagnet.slug})`
+      : input.source || 'manual'
     const { subject, html } = buildNewsletterSignupEmail({
       email: input.email,
       source: sourceLabel,
