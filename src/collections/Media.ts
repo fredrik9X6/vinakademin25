@@ -29,14 +29,20 @@ export const Media: CollectionConfig = {
         position: 'centre',
       },
       {
-        // Portrait crop for bottle thumbnails — used in tasting-plan wine rows,
-        // session screens, shopping list. Renders cleanly inside a portrait
-        // slot (w-20 h-32 etc.) without library wines looking tiny next to
-        // tall Systembolaget bottle images.
+        // Portrait bottle thumbnail — used in tasting-plan wine rows,
+        // session screens, shopping list, review lists.
+        //
+        // `fit: 'inside'` preserves the source aspect and scales DOWN to fit
+        // within 200x400. Default `cover` would centre-crop the source to
+        // 1:2, which on very tall library bottle photos (e.g. 400x1721,
+        // 636x2048) chopped off the cap and base and showed only the label.
+        // Inside fit keeps the whole bottle visible at the cost of variable
+        // output dimensions per image.
         name: 'bottle',
         width: 200,
         height: 400,
         position: 'centre',
+        fit: 'inside',
       },
       {
         name: 'profile',
