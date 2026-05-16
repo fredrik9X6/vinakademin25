@@ -12,6 +12,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // Mobile bottom nav is h-16 (64px) — keep toasts above it + safe area.
+      mobileOffset={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}
       toastOptions={{
         classNames: {
           toast:

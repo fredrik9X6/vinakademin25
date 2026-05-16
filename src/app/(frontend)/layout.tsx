@@ -14,7 +14,15 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  // iOS Safari: resize the page when the virtual keyboard appears instead
+  // of overlaying it on top of the action bar / inputs.
+  interactiveWidget: 'resizes-content',
+}
 
 export const metadata: Metadata = {
   title: {

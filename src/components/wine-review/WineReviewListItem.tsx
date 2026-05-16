@@ -4,6 +4,30 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Review, Wine, Media } from '@/payload-types'
 
+type WineType = 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
+
+const TYPE_LABEL_SV: Record<WineType, string> = {
+  red: 'Rött',
+  white: 'Vitt',
+  rose: 'Rosé',
+  sparkling: 'Mousserande',
+  dessert: 'Dessert',
+  fortified: 'Fortifierat',
+  other: 'Annat',
+}
+
+// Light tints + readable text colour for each wine type. Tailwind utility
+// classes so dark mode flips automatically.
+const TYPE_CHIP_CLASSES: Record<WineType, string> = {
+  red: 'bg-rose-100 text-rose-900 dark:bg-rose-950/40 dark:text-rose-200',
+  white: 'bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200',
+  rose: 'bg-pink-100 text-pink-900 dark:bg-pink-950/40 dark:text-pink-200',
+  sparkling: 'bg-sky-100 text-sky-900 dark:bg-sky-950/40 dark:text-sky-200',
+  dessert: 'bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200',
+  fortified: 'bg-stone-200 text-stone-900 dark:bg-stone-800 dark:text-stone-200',
+  other: 'bg-muted text-muted-foreground',
+}
+
 export interface WineReviewListItemProps {
   review: Review
   /** When set, the card is a link to this href. Otherwise rendered as a static card. */
@@ -35,16 +59,29 @@ function reviewThumbnailUrl(r: Review): string | null {
     const img = (r.wine as Wine).image
     if (typeof img === 'object' && img) {
       const m = img as Media
-      return m.sizes?.thumbnail?.url ?? m.url ?? null
+      return m.sizes?.bottle?.url ?? m.sizes?.thumbnail?.url ?? m.url ?? null
     }
   }
   return (r.customWine as any)?.imageUrl ?? null
+}
+
+function reviewWineType(r: Review): WineType | null {
+  if (r.wine && typeof r.wine === 'object') {
+    const w = r.wine as Wine
+    const t = (w as { type?: string | null }).type
+    if (t && t in TYPE_LABEL_SV) return t as WineType
+    return null
+  }
+  const t = (r.customWine as any)?.type as string | undefined
+  if (t && t in TYPE_LABEL_SV) return t as WineType
+  return null
 }
 
 export function WineReviewListItem({ review, href, showPublishedBadge = true }: WineReviewListItemProps) {
   const title = reviewWineTitle(review)
   const subtitle = reviewWineSubtitle(review)
   const thumb = reviewThumbnailUrl(review)
+  const type = reviewWineType(review)
   const rating = (review as any).rating as number | undefined
   const date = review.createdAt ? new Date(review.createdAt).toLocaleDateString('sv-SE') : null
 
@@ -57,8 +94,15 @@ export function WineReviewListItem({ review, href, showPublishedBadge = true }: 
           ) : null}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium truncate">{title}</p>
+            {type && (
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider flex-shrink-0 ${TYPE_CHIP_CLASSES[type]}`}
+              >
+                {TYPE_LABEL_SV[type]}
+              </span>
+            )}
             {showPublishedBadge && review.publishedToProfile && (
               <Badge variant="secondary">Publicerad</Badge>
             )}

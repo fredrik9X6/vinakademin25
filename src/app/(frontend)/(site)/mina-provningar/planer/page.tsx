@@ -71,18 +71,24 @@ export default async function MinaPlanerPage({
       </header>
 
       {plans.length === 0 ? (
-        <div className="rounded-md border border-dashed p-10 text-center">
-          <Wine className="h-10 w-10 mx-auto text-muted-foreground" />
-          <h2 className="mt-3 font-semibold">Inga planer än</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Skapa din första provning för att komma igång.
+        <div className="rounded-lg border border-dashed p-10 text-center">
+          <Wine className="h-12 w-12 mx-auto text-brand-400/60" />
+          <h2 className="mt-4 font-heading text-xl">Inga planer än</h2>
+          <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+            En provning är 3–6 viner du planerar att smaka tillsammans med vänner —
+            från start till klart i en samlad plan.
           </p>
-          <Button asChild className="mt-4">
-            <Link href="/skapa-provning">
-              <Plus className="h-4 w-4 mr-2" />
-              Skapa din första provning
-            </Link>
-          </Button>
+          <div className="mt-5 flex flex-col sm:flex-row gap-2 justify-center">
+            <Button asChild>
+              <Link href="/skapa-provning">
+                <Plus className="h-4 w-4 mr-2" />
+                Skapa från grunden
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/provningsmallar">Utforska mallar</Link>
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

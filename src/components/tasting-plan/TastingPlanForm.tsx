@@ -323,8 +323,8 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     }
   }
 
-  async function save(opts: { silent?: boolean } = {}) {
-    if (!canSubmit) return
+  async function save(opts: { silent?: boolean } = {}): Promise<boolean> {
+    if (!canSubmit) return false
     if (!opts.silent) setSubmitting(true)
     try {
       const res = await fetch(
@@ -338,7 +338,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       const data = await res.json()
       if (!res.ok) {
         if (!opts.silent) toast.error(data?.error || 'Kunde inte spara planen.')
-        return
+        return false
       }
       if (!opts.silent) {
         toast.success(isEdit ? 'Sparat.' : 'Planen är skapad.')
@@ -348,8 +348,10 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           router.refresh()
         }
       }
+      return true
     } catch {
       if (!opts.silent) toast.error('Nätverksfel — försök igen.')
+      return false
     } finally {
       if (!opts.silent) setSubmitting(false)
     }
@@ -367,7 +369,12 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     if (!canSubmit) return
     const handle = setTimeout(async () => {
       setAutosaveStatus('saving')
-      await save({ silent: true })
+      const ok = await save({ silent: true })
+      if (!ok) {
+        setAutosaveStatus('idle')
+        toast.error('Kunde inte spara automatiskt — försök igen.')
+        return
+      }
       setAutosaveStatus('saved')
       const fadeOut = setTimeout(() => setAutosaveStatus('idle'), 2000)
       return () => clearTimeout(fadeOut)
