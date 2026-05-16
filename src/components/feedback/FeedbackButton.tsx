@@ -36,12 +36,18 @@ export function FeedbackButton({ position = 'bottom-right' }: FeedbackButtonProp
     pathname.startsWith('/vinprovningar/') &&
     (searchParams.has('lesson') || searchParams.has('quiz'))
 
+  // The tasting-plan create/edit form mounts a sticky action bar above the
+  // global bottom nav — feedback bubble has to clear both. Same height budget
+  // as course content pages.
+  const isTastingPlanFormPage = pathname.startsWith('/skapa-provning')
+
   // On mobile (below md): position above the bottom tab bar (h-16 + safe area)
-  // On course content pages: also clear the lesson/quiz nav bar
+  // On course content pages OR plan form: also clear the secondary nav bar
   // On desktop (md+): normal bottom-4 positioning
-  const mobileBottom = isCourseContentPage
-    ? 'bottom-[calc(9rem+env(safe-area-inset-bottom))]'
-    : 'bottom-[calc(4.5rem+env(safe-area-inset-bottom))]'
+  const mobileBottom =
+    isCourseContentPage || isTastingPlanFormPage
+      ? 'bottom-[calc(9rem+env(safe-area-inset-bottom))]'
+      : 'bottom-[calc(4.5rem+env(safe-area-inset-bottom))]'
 
   const positionClasses = {
     'bottom-right': `${mobileBottom} right-4 md:bottom-4`,
