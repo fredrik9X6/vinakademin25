@@ -28,7 +28,8 @@ async function loadProfileData(
     collection: 'users',
     where: { handle: { equals: lowered } },
     limit: 1,
-    depth: 0,
+    // depth: 1 so user.avatar is resolved to a Media doc with url + sizes.
+    depth: 1,
     overrideAccess: true,
   })
   const user = (userRes.docs[0] as User) ?? null
