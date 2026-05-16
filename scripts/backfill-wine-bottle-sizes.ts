@@ -24,6 +24,7 @@ import type { Wine, Media } from '../src/payload-types'
 
 interface CliArgs {
   execute: boolean
+  force: boolean
   limit: number | null
   mediaBaseUrl: string
 }
@@ -34,17 +35,20 @@ function parseArgs(argv: string[]): CliArgs {
   // with the public host that actually serves /api/media/file/<filename>.
   const args: CliArgs = {
     execute: false,
+    force: false,
     limit: null,
     mediaBaseUrl: 'https://vinakademin.se',
   }
   for (const a of argv.slice(2)) {
     if (a === '--execute') args.execute = true
+    else if (a === '--force') args.force = true
     else if (a.startsWith('--limit=')) args.limit = parseInt(a.slice('--limit='.length), 10)
     else if (a.startsWith('--media-base-url=')) args.mediaBaseUrl = a.slice('--media-base-url='.length)
     else if (a === '--help' || a === '-h') {
       console.log(
-        'Usage: pnpm tsx scripts/backfill-wine-bottle-sizes.ts [--execute] [--limit=N] [--media-base-url=https://vinakademin.se]',
+        'Usage: pnpm tsx scripts/backfill-wine-bottle-sizes.ts [--execute] [--force] [--limit=N] [--media-base-url=https://vinakademin.se]',
       )
+      console.log('  --force  re-upload every media doc even if it already has a bottle url (use after changing imageSize config)')
       process.exit(0)
     }
   }
@@ -84,14 +88,19 @@ async function main(): Promise<void> {
   console.log(`Wines with image: ${winesRes.docs.length}`)
   console.log(`Unique media docs: ${mediaById.size}`)
 
-  // 2. Filter to those missing the bottle size.
+  // 2. Filter to those missing the bottle size (unless --force, in which case
+  //    we re-process everything to pick up imageSize config changes).
   const needsBackfill: Media[] = []
   for (const m of mediaById.values()) {
     const hasBottle = !!m.sizes?.bottle?.url
-    if (!hasBottle) needsBackfill.push(m)
+    if (args.force || !hasBottle) needsBackfill.push(m)
   }
-  console.log(`Already have bottle size: ${mediaById.size - needsBackfill.length}`)
-  console.log(`Need backfill: ${needsBackfill.length}\n`)
+  if (args.force) {
+    console.log(`Force mode — re-uploading all ${mediaById.size} media docs\n`)
+  } else {
+    console.log(`Already have bottle size: ${mediaById.size - needsBackfill.length}`)
+    console.log(`Need backfill: ${needsBackfill.length}\n`)
+  }
 
   if (needsBackfill.length === 0) {
     console.log('Nothing to do. ✓')
