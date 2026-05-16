@@ -87,7 +87,7 @@ export function WineReviewListItem({ review, href, showPublishedBadge = true }: 
   const content = (
     <Card className="hover:shadow-sm transition-shadow">
       <CardContent className="flex items-center gap-4 p-4">
-        <div className="w-14 h-20 rounded-md overflow-hidden bg-muted/40 flex-shrink-0 relative">
+        <div className="w-10 h-20 rounded-md overflow-hidden bg-muted/40 flex-shrink-0 relative">
           {thumb ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
