@@ -39,19 +39,37 @@ export function SortableWineRow({ item, onNotesChange, onRemove, disabled }: Sor
     <li
       ref={setNodeRef}
       style={style}
-      className="flex gap-3 rounded-md border bg-card p-3 items-start"
+      className="flex gap-2 sm:gap-3 rounded-lg border bg-card p-3 sm:p-4 items-start overflow-hidden"
     >
       <button
         type="button"
-        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground mt-1"
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground mt-1 flex-shrink-0"
         aria-label="Dra för att ändra ordning"
         {...attributes}
         {...listeners}
       >
         <GripVertical className="h-4 w-4" />
       </button>
-      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-400/10 text-brand-400 text-sm font-medium flex items-center justify-center">
-        {item.pourOrder}
+      {/* Bottle column — big faded Coolvetica number sits behind the bottle.
+          Fixed height so cards keep a consistent visual rhythm; if user
+          expands the notes textarea, the card grows but the bottle stays put. */}
+      <div className="relative flex-shrink-0 w-20 h-32 sm:w-24 sm:h-36">
+        <span
+          className="absolute inset-0 flex items-start justify-start font-heading leading-[0.85] text-muted-foreground/25 select-none pointer-events-none text-[110px] sm:text-[130px] -ml-2 -mt-1"
+          aria-hidden="true"
+        >
+          {item.pourOrder}
+        </span>
+        {item.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.imageUrl}
+            alt=""
+            className="relative w-full h-full object-contain"
+          />
+        ) : (
+          <WineImagePlaceholder size="md" />
+        )}
       </div>
       <div className="flex-shrink-0 w-12 h-14 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
         {item.imageUrl ? (
@@ -66,7 +84,7 @@ export function SortableWineRow({ item, onNotesChange, onRemove, disabled }: Sor
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{item.title}</p>
+        <p className="text-sm sm:text-base font-medium truncate">{item.title}</p>
         {item.subtitle && (
           <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
         )}
@@ -85,6 +103,7 @@ export function SortableWineRow({ item, onNotesChange, onRemove, disabled }: Sor
         onClick={onRemove}
         disabled={disabled}
         aria-label="Ta bort vin"
+        className="flex-shrink-0"
       >
         <X className="h-4 w-4" />
       </Button>

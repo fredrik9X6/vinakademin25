@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    
+    <linearGradient id="fgGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#FB914C"></stop><stop offset="100%" stop-color="#FDBA75"></stop></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="80" fill="#1a1a1a"></rect>
+  <text x="256" y="272" font-family="Coolvetica, Arial, sans-serif" font-size="280" fill="url(#fgGrad)" text-anchor="middle" dominant-baseline="middle">Va</text>
+</svg>

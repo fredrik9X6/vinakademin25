@@ -24,10 +24,11 @@ export const metadata: Metadata = {
   description: 'Vinakademin - Din guide till vinets värld. Upptäck vinprovningar, lär dig om vin och utveckla din vinkunskap.',
   icons: {
     icon: [
-      { url: '/brand/vinakademin_logomark_favicon.svg', type: 'image/svg+xml' },
+      { url: '/brand/favicon.svg', type: 'image/svg+xml' },
+      { url: '/brand/favicon.png', type: 'image/png' },
     ],
     apple: [
-      { url: '/brand/vinakademin_logomark_touch-icon.svg', type: 'image/svg+xml' },
+      { url: '/brand/logomark-favicon.png', type: 'image/png' },
     ],
   },
   openGraph: {
@@ -38,9 +39,9 @@ export const metadata: Metadata = {
     description: 'Vinakademin - Din guide till vinets värld. Upptäck vinprovningar, lär dig om vin och utveckla din vinkunskap.',
     images: [
       {
-        url: '/brand/vinakademin_logo_lockup_darkmode.svg',
+        url: '/brand/logomark-gradient.png',
         width: 1200,
-        height: 630,
+        height: 1200,
         alt: 'Vinakademin',
       },
     ],
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Vinakademin',
     description: 'Vinakademin - Din guide till vinets värld',
-    images: ['/brand/vinakademin_logo_lockup_darkmode.svg'],
+    images: ['/brand/logomark-gradient.png'],
   },
 }
 

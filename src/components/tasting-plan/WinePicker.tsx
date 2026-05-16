@@ -186,9 +186,15 @@ export function WinePicker({ onPickLibrary, onPickCustom, disabled }: WinePicker
         value={tab}
         onValueChange={(v) => setTab(v as 'library' | 'systembolaget' | 'custom')}
       >
-        <TabsList className="mb-3">
-          <TabsTrigger value="systembolaget">Sök Systembolaget</TabsTrigger>
-          <TabsTrigger value="library">Från biblioteket</TabsTrigger>
+        <TabsList className="mb-3 grid w-full grid-cols-3">
+          <TabsTrigger value="systembolaget">
+            <span className="sm:hidden">Systembolaget</span>
+            <span className="hidden sm:inline">Sök Systembolaget</span>
+          </TabsTrigger>
+          <TabsTrigger value="library">
+            <span className="sm:hidden">Bibliotek</span>
+            <span className="hidden sm:inline">Från biblioteket</span>
+          </TabsTrigger>
           <TabsTrigger value="custom">Eget vin</TabsTrigger>
         </TabsList>
 

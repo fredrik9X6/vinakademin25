@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 220" width="1480" height="220">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#FB914C"></stop><stop offset="100%" stop-color="#FDBA75"></stop></linearGradient>
+  </defs>
+  <text x="740" y="158" font-family="Coolvetica, Arial, sans-serif" font-size="178" fill="url(#g)" text-anchor="middle">Vinakademin</text>
+</svg>

@@ -65,7 +65,7 @@ function SectionHead({
 }: {
   eyebrow: string
   title: React.ReactNode
-  subtitle: string
+  subtitle: React.ReactNode
 }) {
   return (
     <div className="mb-10 flex flex-col gap-2">
@@ -121,14 +121,24 @@ function LogoSection() {
         eyebrow="Brand · Logotyp"
         title={
           <>
-            Vinakademin,
+            Wordmark först,
             <br />
-            alltid i ett stycke
+            märke sedan
           </>
         }
-        subtitle="Wordmarken är den primära logotypen. Logomärket — ett enkelt vinglas med en orange droppe — är reserverat för favicons, avatarer och trånga kvadratiska ytor. Invertera aldrig färgerna och placera aldrig märket på en yta som tappar kontrasten."
+        subtitle={
+          <>
+            Två märken som används <strong>separat</strong>. <strong>Wordmarken</strong> —
+            &ldquo;Vinakademin&rdquo; satt i Coolvetica med brand-orange-gradienten — är den
+            primära identiteten. <strong>Logomärket</strong> är Va-monogrammet på en
+            brand-orange-kvadrat, för app-ikoner, avatarer, sociala kvadrater, favicons,
+            webbläsarflikar. <strong>Kombinera aldrig de två sida vid sida</strong> — Va börjar
+            redan med V, så en lockup upprepar varumärket och blir överflödig.
+          </>
+        }
       />
 
+      {/* Wordmark hero + 4 colorways */}
       <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
         <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-[20px] border border-border bg-[#1a1a1a] p-12">
           <div
@@ -140,22 +150,33 @@ function LogoSection() {
             style={{ background: ORANGE_400 }}
           />
           <Image
-            src="/brand/vinakademin_logo_lockup_darkmode.svg"
-            alt="Vinakademin lockup på mörk bakgrund"
+            src="/brand/wordmark-orange.svg"
+            alt="Vinakademin wordmark — orange gradient"
             width={520}
-            height={260}
-            className="relative z-10 max-h-[260px] w-auto max-w-[58%]"
+            height={120}
+            className="relative z-10 max-h-[120px] w-auto max-w-[78%]"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
+          <LogoTile bg="bg-[#1a1a1a]" border="border-border" capColor="text-muted-foreground">
+            <Image
+              src="/brand/wordmark-orange.svg"
+              alt="Wordmark på mörk bakgrund"
+              width={150}
+              height={40}
+              className="max-h-[40px] w-auto max-w-[150px] object-contain"
+            />
+            <span className="font-mono text-[11px]">Mörkt (standard)</span>
+          </LogoTile>
+
           <LogoTile bg="bg-[#fafafa]" border="border-[#e5e5e5]" capColor="text-[#666]">
             <Image
-              src="/brand/Vinakademin_logo_lockup.svg"
-              alt="Logotyp på ljus yta"
-              width={130}
-              height={80}
-              className="max-h-[80px] w-auto max-w-[130px] object-contain"
+              src="/brand/wordmark-ink.svg"
+              alt="Wordmark på ljus bakgrund"
+              width={150}
+              height={40}
+              className="max-h-[40px] w-auto max-w-[150px] object-contain"
             />
             <span className="font-mono text-[11px]">Ljus yta</span>
           </LogoTile>
@@ -166,142 +187,211 @@ function LogoSection() {
             capColor="text-[#8a5a2a]"
           >
             <Image
-              src="/brand/Vinakademin_logo_lockup.svg"
-              alt="Logotyp på cremegul yta"
-              width={130}
-              height={80}
-              className="max-h-[80px] w-auto max-w-[130px] object-contain"
+              src="/brand/wordmark-ink.svg"
+              alt="Wordmark på cremegul bakgrund"
+              width={150}
+              height={40}
+              className="max-h-[40px] w-auto max-w-[150px] object-contain"
             />
             <span className="font-mono text-[11px]">Crèmeaccent</span>
           </LogoTile>
 
           <LogoTile bg="" border="border-0" capColor="text-white" gradient>
             <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
-              alt="Logotyp på orange yta"
-              width={130}
-              height={80}
-              className="max-h-[80px] w-auto max-w-[130px] object-contain"
+              src="/brand/wordmark-white.svg"
+              alt="Wordmark på orange bakgrund"
+              width={150}
+              height={40}
+              className="max-h-[40px] w-auto max-w-[150px] object-contain"
             />
             <span className="font-mono text-[11px]">Brand orange</span>
-          </LogoTile>
-
-          <LogoTile bg="bg-[#1a1a1a]" border="border-border" capColor="text-muted-foreground">
-            <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
-              alt="Logotyp på mörk yta"
-              width={130}
-              height={80}
-              className="max-h-[80px] w-auto max-w-[130px] object-contain"
-            />
-            <span className="font-mono text-[11px]">Mörkt (standard)</span>
           </LogoTile>
         </div>
       </div>
 
+      {/* Logomark — Va */}
       <Panel className="mt-8">
-        <Eyebrow className="mb-5 block">Logomärke</Eyebrow>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <h3 className="font-heading text-2xl tracking-tight">Logomärke — Va</h3>
+          <p className="max-w-md text-[13px] leading-relaxed text-muted-foreground">
+            Va-monogrammet i Coolvetica, centrerat på en rundad kvadrat. Fyra bakgrundsvarianter
+            täcker alla ytor; gradient-orange är primärvarianten.
+          </p>
+        </div>
+
+        {/* 4 logomark variants */}
+        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { size: 'h-16 w-16 p-3', bg: 'bg-[#1a1a1a]', border: 'border-border' },
-            { size: 'h-16 w-16 p-3', bg: 'bg-[#fafafa]', border: 'border-[#e5e5e5]' },
-            {
-              size: 'h-16 w-16 p-3',
-              bg: 'bg-[#FFF7EE]',
-              border: 'border-[rgba(253,186,117,0.3)]',
-            },
-            {
-              size: 'h-16 w-16 p-3 border-0',
-              bg: 'bg-[#FB914C]',
-              border: '',
-              favicon: true,
-            },
-            { size: 'h-10 w-10 p-2', bg: 'bg-[#1a1a1a]', border: 'border-border' },
-            { size: 'h-7 w-7 p-1', bg: 'bg-[#1a1a1a]', border: 'border-border' },
-          ].map((m, i) => (
+            { src: '/brand/logomark-gradient.svg', label: 'Primary · Gradient', tile: 'bg-[#1a1a1a] border-border', cap: 'text-muted-foreground' },
+            { src: '/brand/logomark-dark.svg', label: 'On dark', tile: 'bg-[#1a1a1a] border-border', cap: 'text-muted-foreground' },
+            { src: '/brand/logomark-cream.svg', label: 'On cream', tile: 'bg-[#FFF7EE] border-[rgba(253,186,117,0.3)]', cap: 'text-[#8a5a2a]' },
+            { src: '/brand/logomark-white.svg', label: 'On white', tile: 'bg-[#fafafa] border-[#e5e5e5]', cap: 'text-[#666]' },
+          ].map((v) => (
             <div
-              key={i}
-              className={`flex items-center justify-center rounded-2xl border ${m.bg} ${m.border} ${m.size}`}
+              key={v.label}
+              className={`flex flex-col items-center justify-between gap-4 rounded-2xl border p-6 ${v.tile} ${v.cap}`}
             >
               <Image
-                src={
-                  m.favicon
-                    ? '/brand/vinakademin_logomark_favicon.svg'
-                    : '/brand/vinakademin_logomark.svg'
-                }
-                alt="Logomärke"
-                width={48}
-                height={48}
-                className="h-full w-full object-contain"
+                src={v.src}
+                alt={v.label}
+                width={88}
+                height={88}
+                className="h-[88px] w-[88px] object-contain"
               />
+              <span className="font-mono text-[11px] uppercase tracking-wider">{v.label}</span>
             </div>
           ))}
         </div>
-        <p className="mt-5 text-[13px] leading-relaxed text-muted-foreground">
-          Ett vinglas i siluett med en liten orange droppe vid kanten — &ldquo;academy&rdquo;-märket.
-          Använd för favicons, avatarer, app-ikoner och alltid när hela lockupen skulle bli mindre
-          än 24 px hög.
-        </p>
+
+        {/* Size scale */}
+        <div className="mt-6 rounded-xl border border-border bg-[#0d0d0d] p-6">
+          <div className="flex flex-wrap items-end gap-6">
+            {[
+              { size: 96, label: '96px' },
+              { size: 64, label: '64px' },
+              { size: 48, label: '48px' },
+              { size: 32, label: '32px · App' },
+              { size: 24, label: '24px · Tab' },
+              { size: 16, label: '16px · Favicon' },
+            ].map((s) => (
+              <div key={s.size} className="flex flex-col items-center gap-2">
+                <Image
+                  src="/brand/logomark.svg"
+                  alt={`Logomärke ${s.label}`}
+                  width={s.size}
+                  height={s.size}
+                  style={{ width: s.size, height: s.size }}
+                  className="object-contain"
+                />
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 text-[13px] leading-relaxed text-muted-foreground">
+            Samma <strong>Va</strong>-monogram från 96 px ner till 16 px — Coolveticas
+            geometriska former håller läsbarheten ända ner till favicon-storlek, utan
+            krympningstrick.
+          </p>
+        </div>
       </Panel>
 
+      {/* Wordmark — three colorways */}
+      <div className="mt-8">
+        <Eyebrow className="mb-4 block">Wordmark — tre färgvarianter</Eyebrow>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="flex flex-col items-center justify-between gap-4 rounded-2xl border border-border bg-[#1a1a1a] p-8 text-muted-foreground">
+            <Image
+              src="/brand/wordmark-orange.svg"
+              alt="Wordmark orange gradient"
+              width={220}
+              height={56}
+              className="max-h-[56px] w-auto max-w-[220px] object-contain"
+            />
+            <span className="font-mono text-[11px] uppercase tracking-wider">
+              Orange gradient · any bg
+            </span>
+          </div>
+          <div className="flex flex-col items-center justify-between gap-4 rounded-2xl border border-[#e5e5e5] bg-[#fafafa] p-8 text-[#666]">
+            <Image
+              src="/brand/wordmark-ink.svg"
+              alt="Wordmark ink"
+              width={220}
+              height={56}
+              className="max-h-[56px] w-auto max-w-[220px] object-contain"
+            />
+            <span className="font-mono text-[11px] uppercase tracking-wider">
+              Ink · light bg only
+            </span>
+          </div>
+          <div
+            className="flex flex-col items-center justify-between gap-4 rounded-2xl p-8 text-white"
+            style={{ background: `linear-gradient(135deg, ${ORANGE_300}, ${ORANGE_400})` }}
+          >
+            <Image
+              src="/brand/wordmark-white.svg"
+              alt="Wordmark white"
+              width={220}
+              height={56}
+              className="max-h-[56px] w-auto max-w-[220px] object-contain"
+            />
+            <span className="font-mono text-[11px] uppercase tracking-wider">
+              White · dark / orange bg
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Do / Don't */}
       <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DoDontCard
+          tone="bad"
+          head="Undvik — paret"
+          note="Sätt aldrig Va-märket bredvid wordmarken. Va börjar redan med V — att placera wordmarken direkt efter upprepar varumärket och känns överflödigt. Välj ett."
+        >
+          <div className="flex h-[110px] items-center justify-center gap-3 rounded-xl border border-border bg-[#1a1a1a] p-4">
+            <Image
+              src="/brand/logomark.svg"
+              alt=""
+              width={48}
+              height={48}
+              className="h-[48px] w-[48px] object-contain"
+            />
+            <Image
+              src="/brand/wordmark-white.svg"
+              alt=""
+              width={150}
+              height={40}
+              className="max-h-[40px] w-auto"
+            />
+          </div>
+        </DoDontCard>
+
+        <DoDontCard
           tone="good"
-          head="Gör — andas runt märket"
-          note="Minsta luftrum = 1× märkets höjd på alla sidor. Hela lockupen från 80 px bredd och uppåt; därunder bara logomärket."
+          head="Gör — wordmarken ensam"
+          note="Från ca 120 px bredd och uppåt: använd wordmarken. Den bär varumärket själv — inget stödmärke behövs."
         >
           <div className="flex h-[110px] items-center justify-center rounded-xl border border-border bg-[#1a1a1a] p-4">
             <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              src="/brand/wordmark-orange.svg"
               alt=""
-              width={150}
-              height={60}
-              className="max-h-[80%] w-auto"
+              width={180}
+              height={48}
+              className="max-h-[60%] w-auto"
             />
           </div>
         </DoDontCard>
-        <DoDontCard
-          tone="bad"
-          head="Undvik — för trångt"
-          note="Pressa inte ihop märket eller krymp under 80 px. Byt till logomärket istället."
-        >
-          <div className="flex h-[110px] items-center justify-center rounded-xl border border-border bg-[#1a1a1a] p-0.5">
-            <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
-              alt=""
-              width={300}
-              height={120}
-              className="max-h-full w-full object-contain"
-            />
-          </div>
-        </DoDontCard>
+
         <DoDontCard
           tone="good"
-          head="Gör — matcha ytan"
-          note="Ljus variant på ljust, mörk på mörkt. Färglägg aldrig om wordmarken."
+          head="Gör — märket ensamt"
+          note="Under 120 px eller i kvadratiska slottar — app-ikon, avatar, social, favicon — använd Va-logomärket ensamt."
         >
-          <div className="flex h-[110px] items-center justify-center rounded-xl border border-[#e5e5e5] bg-[#fafafa] p-4">
+          <div className="flex h-[110px] items-center justify-center rounded-xl border border-border bg-[#1a1a1a] p-4">
             <Image
-              src="/brand/Vinakademin_logo_lockup.svg"
+              src="/brand/logomark.svg"
               alt=""
-              width={150}
-              height={60}
-              className="max-h-[80%] w-auto"
+              width={72}
+              height={72}
+              className="h-[72px] w-[72px] object-contain"
             />
           </div>
         </DoDontCard>
+
         <DoDontCard
           tone="bad"
           head="Undvik — stökig bakgrund"
-          note="Placera inte märket över livliga bilder eller konkurrerande gradienter — låg kontrast dödar märket."
+          note="Placera inte wordmark eller logomärke över livliga bilder eller konkurrerande gradienter — låg kontrast dödar bägge."
         >
           <div className="flex h-[110px] items-center justify-center rounded-xl bg-[linear-gradient(45deg,#ff006e,#8338ec,#3a86ff)] p-4">
             <Image
-              src="/brand/vinakademin_logo_lockup_darkmode.svg"
+              src="/brand/wordmark-white.svg"
               alt=""
               width={150}
-              height={60}
-              className="max-h-[80%] w-auto"
+              height={40}
+              className="max-h-[60%] w-auto"
             />
           </div>
         </DoDontCard>
@@ -325,7 +415,7 @@ function LogoTile({
 }) {
   return (
     <div
-      className={`flex min-h-[198px] flex-col items-center justify-between gap-5 rounded-2xl border p-6 ${
+      className={`relative flex min-h-[198px] flex-col items-center justify-center gap-5 rounded-2xl border p-6 ${
         gradient ? '' : `${bg} ${border}`
       } ${capColor}`}
       style={

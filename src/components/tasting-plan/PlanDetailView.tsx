@@ -96,29 +96,35 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
               {wines.map((w, idx) => {
                 const imageUrl = wineImageUrl(w)
                 return (
-                  <li key={w.id ?? idx} className="flex gap-3 rounded-md border bg-card p-3 items-start">
-                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-400/10 text-brand-400 text-sm font-medium flex items-center justify-center">
-                      {w.pourOrder ?? idx + 1}
-                    </div>
-                    <div className="flex-shrink-0 w-12 h-14 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
+                  <li
+                    key={w.id ?? idx}
+                    className="flex gap-3 sm:gap-4 rounded-lg border bg-card p-3 sm:p-4 items-start overflow-hidden"
+                  >
+                    <div className="relative flex-shrink-0 w-20 h-32 sm:w-24 sm:h-36">
+                      <span
+                        className="absolute inset-0 flex items-start justify-start font-heading leading-[0.85] text-muted-foreground/25 select-none pointer-events-none text-[110px] sm:text-[130px] -ml-2 -mt-1"
+                        aria-hidden="true"
+                      >
+                        {w.pourOrder ?? idx + 1}
+                      </span>
                       {imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={imageUrl}
                           alt=""
-                          className="absolute inset-0 w-full h-full object-contain p-1"
+                          className="relative w-full h-full object-contain"
                         />
                       ) : (
-                        <WineImagePlaceholder size="sm" />
+                        <WineImagePlaceholder size="md" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{wineTitle(w)}</p>
+                    <div className="flex-1 min-w-0 pt-1">
+                      <p className="text-sm sm:text-base font-medium truncate">{wineTitle(w)}</p>
                       {wineSubtitle(w) && (
                         <p className="text-xs text-muted-foreground truncate">{wineSubtitle(w)}</p>
                       )}
                       {w.hostNotes && (
-                        <p className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap">
+                        <p className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">
                           {w.hostNotes}
                         </p>
                       )}
