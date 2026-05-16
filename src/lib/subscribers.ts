@@ -123,7 +123,13 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
     }
 
     let subscriberId: number | string | null = null
-    if (existing.docs.length > 0) {
+    // Track whether we already had this email in our local mirror. Used below
+    // to dedup the team notification — Beehiiv's `alreadySubscribed` flag is
+    // eventually-consistent, so back-to-back signups (e.g. footer + e-book on
+    // the same visit) can both come back as "new" from Beehiiv even though we
+    // clearly already have the row.
+    const locallyExisted = existing.docs.length > 0
+    if (locallyExisted) {
       const updated = await payload.update({
         collection: 'subscribers',
         id: existing.docs[0].id,
@@ -140,7 +146,7 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
 
     // Append to the CRM timeline. Skip when this was a no-op re-subscribe of
     // an already-subscribed address (avoid noise when users repeatedly hit the form).
-    if (!beehiivResult.alreadySubscribed) {
+    if (!beehiivResult.alreadySubscribed && !locallyExisted) {
       await recordEvent({
         payload,
         type: 'newsletter_subscribed',
@@ -156,6 +162,13 @@ export async function subscribeAndMirror(input: UpsertInput): Promise<{
           ...(leadMagnet ? { leadMagnetType: leadMagnet.type, leadMagnetSlug: leadMagnet.slug } : {}),
         },
       })
+    }
+
+    return {
+      ok: beehiivResult.ok,
+      alreadySubscribed: beehiivResult.alreadySubscribed || locallyExisted,
+      beehiivSkipped: beehiivResult.skipped,
+      error: beehiivResult.error,
     }
   } catch (err) {
     log.error({ err, email }, 'subscribers_local_upsert_failed')

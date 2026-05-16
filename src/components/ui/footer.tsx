@@ -47,7 +47,7 @@ function FooterNewsletter() {
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, source: 'footer' }),
       })
       const data = await res.json()
 
