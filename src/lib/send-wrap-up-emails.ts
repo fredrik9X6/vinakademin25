@@ -194,7 +194,6 @@ async function stampParticipant(payload: any, participantId: number | string) {
 
 interface SessionContext {
   title: string
-  occasion: string | null
   /** Wines in pour order, with display fields. */
   wines: Array<{
     pourOrder: number
@@ -207,8 +206,8 @@ interface SessionContext {
 }
 
 /**
- * Resolve a session's display title, occasion, and wine list (handles both
- * course and plan modes). Walks the populated tree from depth=2 fetch.
+ * Resolve a session's display title and wine list (handles both course and
+ * plan modes). Walks the populated tree from depth=2 fetch.
  */
 async function resolveSessionContext(
   session: CourseSession,
@@ -235,7 +234,6 @@ async function resolveSessionContext(
     }
     return {
       title: course.title ?? 'din vinprovning',
-      occasion: null,
       wines: contentItemRefs.map((r) => ({
         pourOrder: r.pourOrder,
         wineId: r.wine.id,
@@ -251,7 +249,6 @@ async function resolveSessionContext(
     const planWines = plan.wines ?? []
     return {
       title: plan.title ?? 'din vinprovning',
-      occasion: plan.occasion ?? null,
       wines: planWines.map((pw, idx) => {
         const pourOrder = pw.pourOrder ?? idx + 1
         if (pw.libraryWine && typeof pw.libraryWine === 'object') {
@@ -427,7 +424,6 @@ async function buildEmailInput({
   return {
     nickname: participant.nickname ?? null,
     title: sessionContext.title,
-    occasion: sessionContext.occasion,
     dateText,
     isGuest,
     wines: sessionContext.wines.map((w) => ({

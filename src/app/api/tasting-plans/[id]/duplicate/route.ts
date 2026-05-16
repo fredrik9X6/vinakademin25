@@ -81,7 +81,6 @@ export async function POST(
         owner: user.id,
         title: clonedTitle,
         description: source.description || undefined,
-        occasion: source.occasion || undefined,
         targetParticipants: source.targetParticipants ?? 4,
         blindTastingByDefault: source.blindTastingByDefault ?? false,
         defaultMinutesPerWine: source.defaultMinutesPerWine ?? null,

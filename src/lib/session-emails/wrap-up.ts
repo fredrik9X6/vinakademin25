@@ -43,8 +43,6 @@ export interface WrapUpEmailInput {
   nickname: string | null
   /** Session/plan/course display title for the subject + header. */
   title: string
-  /** Occasion line if set on the plan; else null. */
-  occasion: string | null
   /** Locale-formatted date the session happened. */
   dateText: string
   /** True when the recipient is unauthenticated (guest). Drives CTA copy. */
@@ -96,7 +94,6 @@ export function buildWrapUpEmail(input: WrapUpEmailInput): {
   const textLines: string[] = []
   textLines.push(greeting, '')
   textLines.push(`Tack för att du var med på "${input.title}".`)
-  if (input.occasion) textLines.push(`Tillfälle: ${input.occasion}`)
   textLines.push(`Datum: ${input.dateText}`, '')
 
   textLines.push('Dina betyg:')
@@ -265,7 +262,7 @@ export function buildWrapUpEmail(input: WrapUpEmailInput): {
                 Tack för att du var med på <strong>${escapeHtml(input.title)}</strong>.
               </p>
               <p style="margin: 0; color: #8a8580; font-size: 13px; line-height: 1.55;">
-                ${input.occasion ? escapeHtml(input.occasion) + ' · ' : ''}${escapeHtml(input.dateText)}
+                ${escapeHtml(input.dateText)}
               </p>
             </td>
           </tr>

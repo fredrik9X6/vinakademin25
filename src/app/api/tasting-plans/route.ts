@@ -27,7 +27,6 @@ type WineEntry = {
 type CreateBody = {
   title?: string
   description?: string
-  occasion?: string
   targetParticipants?: number
   blindTastingByDefault?: boolean
   defaultMinutesPerWine?: number | null
@@ -82,7 +81,6 @@ export async function POST(request: NextRequest) {
         owner: user.id,
         title: body.title!.trim(),
         description: body.description?.trim() || undefined,
-        occasion: body.occasion?.trim() || undefined,
         targetParticipants: body.targetParticipants ?? 4,
         blindTastingByDefault: body.blindTastingByDefault ?? false,
         defaultMinutesPerWine: body.defaultMinutesPerWine ?? null,

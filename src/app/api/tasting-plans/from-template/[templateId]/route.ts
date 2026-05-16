@@ -67,7 +67,6 @@ export async function POST(
         owner: user.id,
         title: template.title,
         description: template.description || undefined,
-        occasion: template.occasion || undefined,
         targetParticipants: template.targetParticipants ?? 4,
         wines,
         hostScript: template.hostScript || undefined,
