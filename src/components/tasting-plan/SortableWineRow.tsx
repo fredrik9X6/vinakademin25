@@ -71,18 +71,6 @@ export function SortableWineRow({ item, onNotesChange, onRemove, disabled }: Sor
           <WineImagePlaceholder size="md" />
         )}
       </div>
-      <div className="flex-shrink-0 w-12 h-14 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
-        {item.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.imageUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-contain p-1"
-          />
-        ) : (
-          <WineImagePlaceholder size="sm" />
-        )}
-      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm sm:text-base font-medium truncate">{item.title}</p>
         {item.subtitle && (

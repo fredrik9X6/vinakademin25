@@ -106,7 +106,6 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
   const isEdit = !!initialPlan
 
   const [title, setTitle] = React.useState(initialPlan?.title ?? '')
-  const [occasion, setOccasion] = React.useState(initialPlan?.occasion ?? '')
   const [description, setDescription] = React.useState(initialPlan?.description ?? '')
   const [targetParticipants, setTargetParticipants] = React.useState<number>(
     initialPlan?.targetParticipants ?? 4,
@@ -187,7 +186,6 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     const payload = {
       title: title.trim(),
       description: description || undefined,
-      occasion: occasion || undefined,
       targetParticipants,
       blindTastingByDefault,
       defaultMinutesPerWine: defaultMinutesPerWine === '' ? null : Number(defaultMinutesPerWine),
@@ -288,15 +286,6 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             placeholder="t.ex. Sommarrosé från Provence"
           />
           <p className="text-xs text-muted-foreground mt-1">{title.length}/100</p>
-        </div>
-        <div>
-          <Label htmlFor="t-occasion">Tillfälle</Label>
-          <Input
-            id="t-occasion"
-            value={occasion}
-            onChange={(e) => setOccasion(e.target.value)}
-            placeholder="Födelsedag, fredagsmiddag …"
-          />
         </div>
         <div>
           <Label htmlFor="t-desc">Beskrivning</Label>
