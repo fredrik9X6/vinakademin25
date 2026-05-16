@@ -13,7 +13,15 @@ const REVIEWS_ON_PROFILE_PREVIEW = 3
 
 async function loadProfileData(
   handle: string,
-): Promise<{ user: User; plans: TastingPlan[]; reviews: Review[]; reviewTotal: number } | null> {
+): Promise<{
+  user: User
+  plans: TastingPlan[]
+  reviews: Review[]
+  reviewTotal: number
+  publicReviewCount: number
+  publicPlanCount: number
+  participatedCount: number
+} | null> {
   const payload = await getPayload({ config })
   const lowered = handle.toLowerCase()
   const userRes = await payload.find({
@@ -54,11 +62,24 @@ async function loadProfileData(
     depth: 2, // resolve wine + media for thumbnails
     overrideAccess: true,
   })
+  // Lightweight count queries for the profile totals strip.
+  const [participatedRes] = await Promise.all([
+    payload.find({
+      collection: 'session-participants',
+      where: { user: { equals: user.id } },
+      limit: 0,
+      depth: 0,
+      overrideAccess: true,
+    }),
+  ])
   return {
     user,
     plans: plansRes.docs as TastingPlan[],
     reviews: reviewsRes.docs as Review[],
     reviewTotal: reviewsRes.totalDocs,
+    publicReviewCount: reviewsRes.totalDocs,
+    publicPlanCount: plansRes.totalDocs,
+    participatedCount: participatedRes.totalDocs,
   }
 }
 
@@ -87,6 +108,9 @@ export default async function PublicProfilePage({ params }: RouteParams) {
       plans={data.plans}
       reviews={data.reviews}
       reviewTotal={data.reviewTotal}
+      publicReviewCount={data.publicReviewCount}
+      publicPlanCount={data.publicPlanCount}
+      participatedCount={data.participatedCount}
     />
   )
 }

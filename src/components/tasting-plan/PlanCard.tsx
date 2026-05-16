@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, Copy } from 'lucide-react'
 
 const STATUS_LABEL: Record<TastingPlan['status'], string> = {
   draft: 'Utkast',
@@ -59,8 +59,30 @@ export function PlanCard({ plan }: PlanCardProps) {
   const [busy, setBusy] = React.useState(false)
   const [confirmRestore, setConfirmRestore] = React.useState(false)
   const [restoring, setRestoring] = React.useState(false)
+  const [duplicating, setDuplicating] = React.useState(false)
   const wineCount = plan.wines?.length ?? 0
   const isArchived = plan.status === 'archived'
+
+  async function performDuplicate() {
+    setDuplicating(true)
+    try {
+      const res = await fetch(`/api/tasting-plans/${plan.id}/duplicate`, { method: 'POST' })
+      const data = (await res.json().catch(() => ({}))) as {
+        plan?: TastingPlan
+        error?: string
+      }
+      if (!res.ok || !data.plan) {
+        toast.error(data?.error || 'Kunde inte kopiera planen.')
+        return
+      }
+      toast.success('Kopia skapad — öppnar utkastet.')
+      router.push(`/skapa-provning/${data.plan.id}`)
+    } catch {
+      toast.error('Nätverksfel — försök igen.')
+    } finally {
+      setDuplicating(false)
+    }
+  }
 
   async function performDelete() {
     setBusy(true)
@@ -132,6 +154,10 @@ export function PlanCard({ plan }: PlanCardProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={performDuplicate} disabled={duplicating}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Skapa kopia
+                </DropdownMenuItem>
                 {isArchived && (
                   <DropdownMenuItem onClick={() => setConfirmRestore(true)}>
                     Återställ

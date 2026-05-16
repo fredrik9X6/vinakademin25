@@ -2,11 +2,13 @@
 
 import * as React from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import type { TastingPlan, Wine } from '@/payload-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Pencil, ShoppingBag, Printer } from 'lucide-react'
+import { Pencil, ShoppingBag, Printer, Copy } from 'lucide-react'
 import StartSessionButton from '@/components/course/StartSessionButton'
 import { PlanDetailTour } from '@/components/onboarding/PlanDetailTour'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
@@ -69,6 +71,30 @@ export interface PlanDetailViewProps {
 
 export function PlanDetailView({ plan }: PlanDetailViewProps) {
   const wines = plan.wines ?? []
+  const router = useRouter()
+  const [duplicating, setDuplicating] = React.useState(false)
+
+  async function performDuplicate() {
+    setDuplicating(true)
+    try {
+      const res = await fetch(`/api/tasting-plans/${plan.id}/duplicate`, { method: 'POST' })
+      const data = (await res.json().catch(() => ({}))) as {
+        plan?: TastingPlan
+        error?: string
+      }
+      if (!res.ok || !data.plan) {
+        toast.error(data?.error || 'Kunde inte kopiera planen.')
+        return
+      }
+      toast.success('Kopia skapad — öppnar utkastet.')
+      router.push(`/skapa-provning/${data.plan.id}`)
+    } catch {
+      toast.error('Nätverksfel — försök igen.')
+    } finally {
+      setDuplicating(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 pb-32 grid gap-8 md:grid-cols-[1fr_280px]">
       <PlanDetailTour />
@@ -171,6 +197,16 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
             <Pencil className="h-4 w-4 mr-2" />
             Redigera
           </Link>
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full"
+          onClick={performDuplicate}
+          disabled={duplicating}
+        >
+          <Copy className="h-4 w-4 mr-2" />
+          {duplicating ? 'Kopierar…' : 'Skapa kopia'}
         </Button>
       </aside>
     </div>

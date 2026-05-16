@@ -9,6 +9,13 @@ export interface PublicHostProfileProps {
   plans: TastingPlan[]
   reviews?: Review[]
   reviewTotal?: number
+  publicReviewCount?: number
+  publicPlanCount?: number
+  participatedCount?: number
+}
+
+function plural(n: number, singular: string, plural: string): string {
+  return `${n} ${n === 1 ? singular : plural}`
 }
 
 export function PublicHostProfile({
@@ -16,12 +23,20 @@ export function PublicHostProfile({
   plans,
   reviews = [],
   reviewTotal = 0,
+  publicReviewCount = 0,
+  publicPlanCount = 0,
+  participatedCount = 0,
 }: PublicHostProfileProps) {
   const displayName =
     `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
     user.email?.split('@')[0] ||
     user.handle ||
     'Värd'
+  const totalsSegments = [
+    plural(publicReviewCount, 'recension', 'recensioner'),
+    plural(publicPlanCount, 'publicerad provning', 'publicerade provningar'),
+    plural(participatedCount, 'provning deltagit i', 'provningar deltagit i'),
+  ]
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 space-y-10">
       <header>
@@ -30,6 +45,9 @@ export function PublicHostProfile({
           <p className="text-base text-muted-foreground mt-2 whitespace-pre-wrap">{user.bio}</p>
         )}
         <p className="text-xs text-muted-foreground mt-2">@{user.handle}</p>
+        <p className="text-sm text-muted-foreground mt-3 tabular-nums">
+          {totalsSegments.join(' · ')}
+        </p>
       </header>
 
       <section>
