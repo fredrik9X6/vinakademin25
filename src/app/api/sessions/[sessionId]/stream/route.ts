@@ -4,6 +4,7 @@ import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { PARTICIPANT_COOKIE } from '@/lib/sessions'
 import { loggerFor } from '@/lib/logger'
+import { buildPourMaps, resolvePourForReview } from '@/lib/session-pour-mapping'
 
 const log = loggerFor('api-sessions-stream')
 
@@ -281,21 +282,7 @@ export async function GET(
           }
 
           const wines = ((session.tastingPlan as any).wines ?? []) as any[]
-          const wineIdToPour: Record<number, number> = {}
-          const titleToPour: Record<string, number> = {}
-          const productNumberToPour: Record<string, number> = {}
-          wines.forEach((w, idx) => {
-            const pourOrder = w.pourOrder ?? idx + 1
-            if (w.libraryWine) {
-              const id = typeof w.libraryWine === 'object' ? w.libraryWine.id : w.libraryWine
-              if (typeof id === 'number') wineIdToPour[id] = pourOrder
-            } else if (w.customWine?.name) {
-              titleToPour[String(w.customWine.name).toLowerCase()] = pourOrder
-              if (w.customWine.systembolagetProductNumber) {
-                productNumberToPour[String(w.customWine.systembolagetProductNumber)] = pourOrder
-              }
-            }
-          })
+          const pourMaps = buildPourMaps(wines)
 
           const reviews = await payload.find({
             collection: 'reviews',
@@ -308,22 +295,7 @@ export async function GET(
           type Acc = { ratings: number[]; aromas: Map<string, number> }
           const accs: Record<number, Acc> = {}
           for (const r of reviews.docs as any[]) {
-            let pour: number | undefined
-            if (r.wine) {
-              const id = typeof r.wine === 'object' ? r.wine.id : r.wine
-              if (typeof id === 'number') pour = wineIdToPour[id]
-            } else if (r.customWine?.systembolagetProductNumber) {
-              // Prefer the stable Systembolaget product number when present —
-              // immune to name-string normalization drift.
-              pour = productNumberToPour[String(r.customWine.systembolagetProductNumber)]
-              if (pour == null && r.customWine.name) {
-                // Fallback: name match (covers hand-typed customWines and
-                // legacy reviews from before productNumber was wired).
-                pour = titleToPour[String(r.customWine.name).toLowerCase()]
-              }
-            } else if (r.customWine?.name) {
-              pour = titleToPour[String(r.customWine.name).toLowerCase()]
-            }
+            const pour = resolvePourForReview(r, pourMaps)
             if (pour == null) continue
             const acc = (accs[pour] ||= { ratings: [], aromas: new Map() })
             if (typeof r.rating === 'number') acc.ratings.push(r.rating)

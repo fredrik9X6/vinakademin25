@@ -1,57 +1,42 @@
 import Link from 'next/link'
-import type { CourseSession, TastingPlan, Wine, Review } from '@/payload-types'
+import type { CourseSession, TastingPlan } from '@/payload-types'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft } from 'lucide-react'
+import { SessionRecapHeader } from './SessionRecapHeader'
+import { WineRecapCard } from './WineRecapCard'
+import type { RecapData } from '@/lib/session-recap'
 
 export interface SessionHistoryDetailProps {
   session: CourseSession
   isHost: boolean
-  myReviews: Review[]
+  recap: RecapData
 }
 
 function sessionTitle(s: CourseSession): string {
   if (s.tastingPlan && typeof s.tastingPlan === 'object')
-    return (s.tastingPlan as any).title ?? 'Provning'
+    return (s.tastingPlan as TastingPlan).title ?? 'Provning'
   if (s.course && typeof s.course === 'object')
-    return (s.course as any).title ?? 'Provning'
+    return ((s.course as { title?: string }).title) ?? 'Provning'
   return s.sessionName ?? 'Provning'
 }
 
-function wineTitle(w: any): string {
-  if (w?.libraryWine && typeof w.libraryWine === 'object') {
-    return (w.libraryWine as Wine).name || `Vin #${(w.libraryWine as Wine).id}`
-  }
-  return w?.customWine?.name || 'Vin'
-}
-
-export function SessionHistoryDetail({ session, isHost, myReviews }: SessionHistoryDetailProps) {
-  const wines =
-    session.tastingPlan && typeof session.tastingPlan === 'object'
-      ? ((session.tastingPlan as TastingPlan).wines ?? [])
-      : []
-  const date = (() => {
-    const iso = session.completedAt || session.expiresAt || session.createdAt
-    return iso ? new Date(iso).toLocaleDateString('sv-SE') : ''
-  })()
-  const reviewByWineId = new Map<number, Review>()
-  const reviewByCustomName = new Map<string, Review>()
-  const reviewByProductNumber = new Map<string, Review>()
-  for (const r of myReviews) {
-    if ((r as any).wine) {
-      const id = typeof (r as any).wine === 'object' ? (r as any).wine.id : (r as any).wine
-      if (typeof id === 'number') reviewByWineId.set(id, r)
-    } else if ((r as any).customWine?.name) {
-      reviewByCustomName.set(String((r as any).customWine.name).toLowerCase(), r)
-      const pn = (r as any).customWine?.systembolagetProductNumber
-      if (pn) reviewByProductNumber.set(String(pn), r)
-    }
-  }
+export function SessionHistoryDetail({
+  session,
+  isHost,
+  recap,
+}: SessionHistoryDetailProps) {
   const planId =
     session.tastingPlan && typeof session.tastingPlan === 'object'
       ? (session.tastingPlan as TastingPlan).id
       : null
+  const date = (() => {
+    const iso = session.completedAt || session.expiresAt || session.createdAt
+    return iso ? new Date(iso).toLocaleDateString('sv-SE') : ''
+  })()
+  const { headline, perWine } = recap
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
+    <div className="mx-auto max-w-4xl px-4 py-8 space-y-6 pb-24">
       <Link
         href="/mina-provningar/historik"
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
@@ -59,60 +44,42 @@ export function SessionHistoryDetail({ session, isHost, myReviews }: SessionHist
         <ArrowLeft className="h-4 w-4 mr-1" />
         Tillbaka till historik
       </Link>
+
       <header>
         <div className="flex items-center gap-2 mb-1">
-          <Badge variant={isHost ? 'brand' : 'secondary'}>{isHost ? 'Värd' : 'Gäst'}</Badge>
-          <span className="text-sm text-muted-foreground">{date}</span>
+          <Badge variant={isHost ? 'brand' : 'secondary'}>
+            {isHost ? 'Värd' : 'Gäst'}
+          </Badge>
+          {date && (
+            <span className="text-sm text-muted-foreground">{date}</span>
+          )}
         </div>
         <h1 className="text-2xl font-heading">{sessionTitle(session)}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {headline.totalReviewers}{' '}
+          {headline.totalReviewers === 1 ? 'deltagare' : 'deltagare'} ·{' '}
+          {headline.totalReviews}{' '}
+          {headline.totalReviews === 1 ? 'recension' : 'recensioner'}
+        </p>
       </header>
+
+      <SessionRecapHeader headline={headline} />
+
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Viner</h2>
-        <ul className="space-y-2">
-          {wines.map((w, idx) => {
-            const pourOrder = w.pourOrder ?? idx + 1
-            const title = wineTitle(w)
-            let myReview: Review | undefined
-            if (w.libraryWine && typeof w.libraryWine === 'object') {
-              myReview = reviewByWineId.get((w.libraryWine as Wine).id)
-            } else if (w.customWine?.systembolagetProductNumber) {
-              myReview = reviewByProductNumber.get(String(w.customWine.systembolagetProductNumber))
-              if (!myReview && w.customWine?.name) {
-                myReview = reviewByCustomName.get(String(w.customWine.name).toLowerCase())
-              }
-            } else if (w.customWine?.name) {
-              myReview = reviewByCustomName.get(String(w.customWine.name).toLowerCase())
-            }
-            return (
-              <li key={w.id ?? idx} className="rounded-md border bg-card p-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-400/10 text-brand-400 text-sm font-medium flex items-center justify-center">
-                    {pourOrder}
-                  </div>
-                  <p className="text-sm font-medium truncate">{title}</p>
-                </div>
-                {myReview ? (
-                  <div className="mt-2 ml-10 text-xs space-y-1">
-                    {typeof (myReview as any).rating === 'number' && (
-                      <p className="text-brand-400 tracking-wider">
-                        {'★'.repeat(Math.round((myReview as any).rating))}
-                        {'☆'.repeat(5 - Math.round((myReview as any).rating))}
-                      </p>
-                    )}
-                    {(myReview as any).reviewText && (
-                      <p className="text-muted-foreground italic">
-                        &quot;{(myReview as any).reviewText}&quot;
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="mt-2 ml-10 text-xs text-muted-foreground">Ingen recension</p>
-                )}
+        <h2 className="text-lg font-semibold">Vin för vin</h2>
+        {perWine.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Inga viner i sessionen.</p>
+        ) : (
+          <ul className="space-y-3">
+            {perWine.map((wine) => (
+              <li key={wine.pourOrder}>
+                <WineRecapCard wine={wine} />
               </li>
-            )
-          })}
-        </ul>
+            ))}
+          </ul>
+        )}
       </section>
+
       {isHost && planId && (
         <p className="text-sm">
           <Link
