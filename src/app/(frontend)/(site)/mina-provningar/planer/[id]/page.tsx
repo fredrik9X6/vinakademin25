@@ -54,16 +54,14 @@ export default async function PlanDetailPage({
         ? session.tastingPlan?.id
         : session?.tastingPlan
     if (session && sessionPlanId === plan.id && session.status === 'active') {
-      // Determine host from the authenticated user identity (not a URL query
-      // param) so navigating away and back doesn't downgrade the host to a
-      // guest. The ?host=true query stays as a hint for the initial redirect
-      // but is no longer authoritative.
+      // Determine host strictly from the authenticated user identity matching
+      // the session's host (no URL query, no admin auto-elevation). An admin
+      // who joins a session as a regular participant gets the participant view
+      // — they're a guest in someone else's tasting.
       const viewer = await getUser()
       const sessionHostId =
         session && typeof session.host === 'object' ? session.host?.id : (session as any)?.host
-      const isHost = Boolean(
-        viewer && (viewer.role === 'admin' || (sessionHostId && viewer.id === sessionHostId)),
-      )
+      const isHost = Boolean(viewer && sessionHostId && viewer.id === sessionHostId)
       // Blind redaction: for guests, strip wine identity from un-revealed pours.
       // Hosts always see full info.
       let renderPlan = plan

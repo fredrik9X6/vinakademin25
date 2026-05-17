@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use PayloadCMS's built-in reset password method
-    await payload.resetPassword({
+    const result = await payload.resetPassword({
       collection: 'users',
       data: {
         token,
@@ -23,6 +23,33 @@ export async function POST(request: NextRequest) {
       },
       overrideAccess: true,
     })
+
+    // Auto-verify the account on successful reset. The reset token was
+    // delivered to the user's email, so they've already proven email
+    // ownership — same level of proof as the verification email. Without
+    // this, an unverified user who resets their password is still blocked
+    // from logging in by auth.verify (silent failure that required an admin
+    // to manually flip _verified before login worked).
+    const userId =
+      (result as { user?: { id?: number | string } } | null)?.user?.id ?? null
+    if (userId != null) {
+      try {
+        await payload.update({
+          collection: 'users',
+          id: userId,
+          data: { _verified: true } as never,
+          overrideAccess: true,
+        })
+      } catch (verifyErr) {
+        // Don't fail the reset on a verify-flip error — the password is
+        // already updated. Worst case the user stays unverified and we
+        // surface that via a follow-up support ticket.
+        log.warn(
+          { err: verifyErr, userId },
+          'reset_password_auto_verify_failed',
+        )
+      }
+    }
 
     return NextResponse.json({
       message: 'Password reset successfully',
