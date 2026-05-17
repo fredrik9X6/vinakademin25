@@ -7,6 +7,7 @@ import { GripVertical, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
+import { BlindAnswerInputs, type BlindAnswers } from './BlindAnswerInputs'
 
 export interface SortableWineRowItem {
   key: string
@@ -15,16 +16,24 @@ export interface SortableWineRowItem {
   subtitle: string
   hostNotes: string
   imageUrl?: string | null
+  blindAnswers: BlindAnswers
 }
 
 export interface SortableWineRowProps {
   item: SortableWineRowItem
   onNotesChange: (notes: string) => void
+  onBlindAnswersChange: (next: BlindAnswers) => void
   onRemove: () => void
   disabled?: boolean
 }
 
-export function SortableWineRow({ item, onNotesChange, onRemove, disabled }: SortableWineRowProps) {
+export function SortableWineRow({
+  item,
+  onNotesChange,
+  onBlindAnswersChange,
+  onRemove,
+  disabled,
+}: SortableWineRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.key,
     disabled,
@@ -81,6 +90,11 @@ export function SortableWineRow({ item, onNotesChange, onRemove, disabled }: Sor
           placeholder="Anteckningar för värden (frivilligt)…"
           value={item.hostNotes}
           onChange={(e) => onNotesChange(e.target.value)}
+          disabled={disabled}
+        />
+        <BlindAnswerInputs
+          value={item.blindAnswers}
+          onChange={onBlindAnswersChange}
           disabled={disabled}
         />
       </div>

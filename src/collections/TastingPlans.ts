@@ -127,6 +127,33 @@ export const TastingPlans: CollectionConfig = {
         },
         { name: 'pourOrder', type: 'number', min: 1 },
         { name: 'hostNotes', type: 'textarea' },
+        // ── Blind-tasting answers (Chunk I). All optional. Empty field = that
+        // scoring tier is disabled for this wine in the guess game.
+        {
+          name: 'blindAnswerCountry',
+          type: 'text',
+          admin: { description: 'Land som rätt svar i blind provning (frivilligt).' },
+        },
+        {
+          name: 'blindAnswerGrape',
+          type: 'text',
+          admin: { description: 'Ange den dominerande druvan som rätt svar (frivilligt).' },
+        },
+        {
+          name: 'blindAnswerPriceBucket',
+          type: 'select',
+          options: [
+            { label: 'Under 100 kr', value: 'under_100' },
+            { label: '100–200 kr', value: '100_200' },
+            { label: '200–300 kr', value: '200_300' },
+            { label: '300–500 kr', value: '300_500' },
+            { label: '500+ kr', value: '500_plus' },
+          ],
+          admin: {
+            description:
+              'Prisintervall som rätt svar. Lämna tom så härleds det från vinets pris (om satt).',
+          },
+        },
       ],
       validate: (value: unknown) => {
         if (!Array.isArray(value)) return true

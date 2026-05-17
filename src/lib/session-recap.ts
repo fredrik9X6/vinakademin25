@@ -1,6 +1,8 @@
 import type { Payload } from 'payload'
 import type { CourseSession, Media, Review, TastingPlan, Wine } from '@/payload-types'
 import { buildPourMaps, resolvePourForReview } from '@/lib/session-pour-mapping'
+import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
+import type { PriceBucket } from '@/lib/blind-guess-vocab'
 
 /**
  * Per-wine aggregated stats + the current viewer's own review (when present).
@@ -44,9 +46,22 @@ export interface RecapHeadline {
   totalReviews: number
 }
 
+export interface BlindLeaderboardEntry {
+  /** Stable identity key — prefer participant id, fall back to user id. */
+  key: string
+  displayName: string
+  totalPoints: number
+  correctCountries: number
+  correctGrapes: number
+  correctPrices: number
+  guessCount: number
+}
+
 export interface RecapData {
   headline: RecapHeadline
   perWine: PerWineRecap[]
+  /** Top-10 guess leaderboard. Empty when the session wasn't blind or nobody guessed. */
+  blindLeaderboard: BlindLeaderboardEntry[]
 }
 
 /**
@@ -333,6 +348,147 @@ export async function getSessionRecap(
       count,
     }))
 
+  // ── Blind-tasting leaderboard ───────────────────────────────────────────
+  // Only emit when the session was blind. Scores each guess against the wine's
+  // resolved BlindAnswer; accumulates per identity (participant first, user
+  // fallback). Display name comes from the participant row's nickname when
+  // available, else the user's first/last name, else "Anonym".
+  const isBlindSession = Boolean((session as { blindTasting?: boolean }).blindTasting)
+  let blindLeaderboard: BlindLeaderboardEntry[] = []
+  if (isBlindSession) {
+    // Build pour → BlindAnswer map from the plan entries
+    const answerByPour = new Map<number, BlindAnswer>()
+    wines.forEach((w, idx) => {
+      const pourOrder = w.pourOrder ?? idx + 1
+      const lib = w.libraryWine && typeof w.libraryWine === 'object' ? (w.libraryWine as Wine) : null
+      const libCountry =
+        lib && typeof lib.country === 'object' && lib.country
+          ? (lib.country as { name?: string }).name ?? null
+          : null
+      const libGrape =
+        lib && Array.isArray(lib.grapes) && lib.grapes.length > 0 && typeof lib.grapes[0] === 'object'
+          ? ((lib.grapes[0] as { name?: string }).name ?? null)
+          : null
+      const libPrice =
+        lib && typeof (lib as { price?: number }).price === 'number'
+          ? ((lib as { price?: number }).price as number)
+          : null
+      const cust = !lib && w.customWine ? w.customWine : null
+      const overrideCountry =
+        typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry === 'string'
+          ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
+          : null
+      const overrideGrape =
+        typeof (w as { blindAnswerGrape?: string | null }).blindAnswerGrape === 'string'
+          ? ((w as { blindAnswerGrape?: string | null }).blindAnswerGrape as string)
+          : null
+      const overridePriceBucket =
+        ((w as { blindAnswerPriceBucket?: PriceBucket | null }).blindAnswerPriceBucket ?? null) as
+          | PriceBucket
+          | null
+      answerByPour.set(pourOrder, {
+        country: overrideCountry ?? libCountry,
+        grape: overrideGrape ?? libGrape,
+        priceBucket: overridePriceBucket,
+        priceSek: libPrice ?? cust?.priceSek ?? null,
+      })
+    })
+
+    // Load all guesses for this session
+    const guessRes = await payload.find({
+      collection: 'session-guesses',
+      where: { session: { equals: session.id } },
+      limit: 1000,
+      depth: 1,
+      overrideAccess: true,
+    })
+
+    type Tally = {
+      key: string
+      displayName: string
+      totalPoints: number
+      correctCountries: number
+      correctGrapes: number
+      correctPrices: number
+      guessCount: number
+    }
+    const tallies = new Map<string, Tally>()
+
+    for (const g of guessRes.docs as Array<{
+      sessionParticipant?: number | { id: number; nickname?: string } | null
+      user?: number | { id: number; firstName?: string; lastName?: string; email?: string } | null
+      pourOrder: number
+      guessedCountry?: string | null
+      guessedGrape?: string | null
+      guessedPriceBucket?: PriceBucket | null
+    }>) {
+      const answer = answerByPour.get(g.pourOrder)
+      if (!answer) continue
+
+      const participantObj =
+        g.sessionParticipant && typeof g.sessionParticipant === 'object'
+          ? (g.sessionParticipant as { id: number; nickname?: string })
+          : null
+      const participantId =
+        participantObj?.id ??
+        (typeof g.sessionParticipant === 'number' ? g.sessionParticipant : null)
+      const userObj =
+        g.user && typeof g.user === 'object'
+          ? (g.user as { id: number; firstName?: string; lastName?: string; email?: string })
+          : null
+      const userId = userObj?.id ?? (typeof g.user === 'number' ? g.user : null)
+
+      const key = participantId != null ? `p:${participantId}` : userId != null ? `u:${userId}` : null
+      if (!key) continue
+
+      const displayName =
+        participantObj?.nickname?.trim() ||
+        [userObj?.firstName, userObj?.lastName].filter(Boolean).join(' ').trim() ||
+        userObj?.email ||
+        'Anonym deltagare'
+
+      let tally = tallies.get(key)
+      if (!tally) {
+        tally = {
+          key,
+          displayName,
+          totalPoints: 0,
+          correctCountries: 0,
+          correctGrapes: 0,
+          correctPrices: 0,
+          guessCount: 0,
+        }
+        tallies.set(key, tally)
+      }
+      // Keep first-seen display name (handles late nickname changes consistently)
+      if (!tally.displayName && displayName) tally.displayName = displayName
+
+      const scored = scoreOne(
+        {
+          guessedCountry: g.guessedCountry,
+          guessedGrape: g.guessedGrape,
+          guessedPriceBucket: g.guessedPriceBucket ?? null,
+        },
+        answer,
+      )
+      tally.totalPoints += scored.points
+      if (scored.countryCorrect) tally.correctCountries += 1
+      if (scored.grapeCorrect) tally.correctGrapes += 1
+      if (scored.priceCorrect) tally.correctPrices += 1
+      tally.guessCount += 1
+    }
+
+    blindLeaderboard = Array.from(tallies.values())
+      .sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints
+        if (b.correctCountries !== a.correctCountries)
+          return b.correctCountries - a.correctCountries
+        if (b.correctGrapes !== a.correctGrapes) return b.correctGrapes - a.correctGrapes
+        return b.correctPrices - a.correctPrices
+      })
+      .slice(0, 10)
+  }
+
   return {
     headline: {
       topWine,
@@ -342,5 +498,6 @@ export async function getSessionRecap(
       totalReviews: reviews.length,
     },
     perWine,
+    blindLeaderboard,
   }
 }

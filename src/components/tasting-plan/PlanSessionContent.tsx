@@ -26,6 +26,9 @@ import {
 import { Wine as WineIcon, Crown, LogOut } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
+import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
+import type { BlindAnswer } from '@/lib/blind-guess-scoring'
+import type { PriceBucket } from '@/lib/blind-guess-vocab'
 import { useActiveSession } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
 import { SwarmPanel } from './SwarmPanel'
@@ -57,6 +60,10 @@ type WineRow = {
     systembolagetProductNumber?: string
     imageUrl?: string
   } | null
+  /** Blind-tasting answer for the BlindGuessCard. Resolved from host overrides
+   * with fallback to joined library wine data + raw price. Null fields mean
+   * that scoring tier is disabled for this wine. */
+  blindAnswer: BlindAnswer
 }
 
 function rowFromEntry(
@@ -64,6 +71,19 @@ function rowFromEntry(
   idx: number,
 ): WineRow {
   const pourOrder = w.pourOrder ?? idx + 1
+  const overrideCountry =
+    typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry === 'string'
+      ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
+      : null
+  const overrideGrape =
+    typeof (w as { blindAnswerGrape?: string | null }).blindAnswerGrape === 'string'
+      ? ((w as { blindAnswerGrape?: string | null }).blindAnswerGrape as string)
+      : null
+  const overridePriceBucket =
+    ((w as { blindAnswerPriceBucket?: PriceBucket | null }).blindAnswerPriceBucket ?? null) as
+      | PriceBucket
+      | null
+
   if (w.libraryWine && typeof w.libraryWine === 'object') {
     const lib = w.libraryWine as Wine
     const region =
@@ -71,6 +91,17 @@ function rowFromEntry(
     const image = typeof lib.image === 'object' && lib.image ? lib.image : null
     const imageUrl = image
       ? image.sizes?.bottle?.url ?? image.sizes?.thumbnail?.url ?? image.url ?? null
+      : null
+    const libCountry =
+      typeof lib.country === 'object' && lib.country
+        ? (lib.country as { name?: string }).name ?? null
+        : null
+    const libGrape =
+      Array.isArray(lib.grapes) && lib.grapes.length > 0 && typeof lib.grapes[0] === 'object'
+        ? ((lib.grapes[0] as { name?: string }).name ?? null)
+        : null
+    const libPriceSek = typeof (lib as { price?: number }).price === 'number'
+      ? ((lib as { price?: number }).price as number)
       : null
     return {
       key: w.id ?? `lib-${lib.id}-${idx}`,
@@ -81,6 +112,12 @@ function rowFromEntry(
       libraryWineId: lib.id,
       imageUrl,
       customWineSnapshot: null,
+      blindAnswer: {
+        country: overrideCountry ?? libCountry,
+        grape: overrideGrape ?? libGrape,
+        priceBucket: overridePriceBucket,
+        priceSek: libPriceSek,
+      },
     }
   }
   const c = w.customWine
@@ -112,6 +149,12 @@ function rowFromEntry(
           imageUrl: c.imageUrl || undefined,
         }
       : null,
+    blindAnswer: {
+      country: overrideCountry,
+      grape: overrideGrape,
+      priceBucket: overridePriceBucket,
+      priceSek: c?.priceSek ?? null,
+    },
   }
 }
 
@@ -144,6 +187,15 @@ export function PlanSessionContent({
   // Track which wines THIS participant has already submitted reviews for.
   // Seeded from /my-submissions on mount; appended locally on each submit.
   const [submittedPourOrders, setSubmittedPourOrders] = React.useState<Set<number>>(new Set())
+  // Viewer's own blind guesses keyed by pourOrder. Hydrated on mount; updated
+  // locally when the BlindGuessCard saves. `null` value means "not yet
+  // submitted for this wine".
+  type LocalGuess = {
+    country: string | null
+    grape: string | null
+    priceBucket: PriceBucket | null
+  }
+  const [myGuesses, setMyGuesses] = React.useState<Map<number, LocalGuess>>(new Map())
   React.useEffect(() => {
     let aborted = false
     fetch(`/api/sessions/${session.id}/my-submissions`)
@@ -152,6 +204,33 @@ export function PlanSessionContent({
         if (aborted) return
         if (data && Array.isArray(data.submittedPourOrders)) {
           setSubmittedPourOrders(new Set(data.submittedPourOrders))
+        }
+      })
+      .catch(() => {})
+    fetch(`/api/session-guesses?session=${session.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (aborted) return
+        const arr = (
+          data as {
+            guesses?: Array<{
+              pourOrder: number
+              guessedCountry: string | null
+              guessedGrape: string | null
+              guessedPriceBucket: PriceBucket | null
+            }>
+          }
+        )?.guesses
+        if (Array.isArray(arr)) {
+          const map = new Map<number, LocalGuess>()
+          for (const g of arr) {
+            map.set(g.pourOrder, {
+              country: g.guessedCountry ?? null,
+              grape: g.guessedGrape ?? null,
+              priceBucket: g.guessedPriceBucket ?? null,
+            })
+          }
+          setMyGuesses(map)
         }
       })
       .catch(() => {})
@@ -427,6 +506,19 @@ export function PlanSessionContent({
                             />
                           ) : null}
                         </div>
+
+                        {isBlind && !isHost && (
+                          <BlindGuessCard
+                            sessionId={Number(session.id)}
+                            pourOrder={row.pourOrder}
+                            isRevealed={effectiveRevealed.has(row.pourOrder)}
+                            answer={row.blindAnswer}
+                            initialGuess={(() => {
+                              const g = myGuesses.get(row.pourOrder)
+                              return g ?? null
+                            })()}
+                          />
+                        )}
 
                         {shouldShowSwarm && <SwarmPanel entry={swarmEntry ?? null} />}
                       </div>

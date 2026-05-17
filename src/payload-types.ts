@@ -93,6 +93,7 @@ export interface Config {
     'blog-tags': BlogTag;
     'course-sessions': CourseSession;
     'session-participants': SessionParticipant;
+    'session-guesses': SessionGuess;
     'tasting-plans': TastingPlan;
     'tasting-templates': TastingTemplate;
     subscribers: Subscriber;
@@ -132,6 +133,7 @@ export interface Config {
     'blog-tags': BlogTagsSelect<false> | BlogTagsSelect<true>;
     'course-sessions': CourseSessionsSelect<false> | CourseSessionsSelect<true>;
     'session-participants': SessionParticipantsSelect<false> | SessionParticipantsSelect<true>;
+    'session-guesses': SessionGuessesSelect<false> | SessionGuessesSelect<true>;
     'tasting-plans': TastingPlansSelect<false> | TastingPlansSelect<true>;
     'tasting-templates': TastingTemplatesSelect<false> | TastingTemplatesSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
@@ -1464,6 +1466,18 @@ export interface TastingPlan {
         };
         pourOrder?: number | null;
         hostNotes?: string | null;
+        /**
+         * Land som rätt svar i blind provning (frivilligt).
+         */
+        blindAnswerCountry?: string | null;
+        /**
+         * Ange den dominerande druvan som rätt svar (frivilligt).
+         */
+        blindAnswerGrape?: string | null;
+        /**
+         * Prisintervall som rätt svar. Lämna tom så härleds det från vinets pris (om satt).
+         */
+        blindAnswerPriceBucket?: ('under_100' | '100_200' | '200_300' | '300_500' | '500_plus') | null;
         id?: string | null;
       }[]
     | null;
@@ -2965,6 +2979,22 @@ export interface BlogTag {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "session-guesses".
+ */
+export interface SessionGuess {
+  id: number;
+  session: number | CourseSession;
+  sessionParticipant?: (number | null) | SessionParticipant;
+  user?: (number | null) | User;
+  pourOrder: number;
+  guessedCountry?: string | null;
+  guessedGrape?: string | null;
+  guessedPriceBucket?: ('under_100' | '100_200' | '200_300' | '300_500' | '500_plus') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Newsletter / marketing contacts mirrored from Beehiiv
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3287,6 +3317,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'session-participants';
         value: number | SessionParticipant;
+      } | null)
+    | ({
+        relationTo: 'session-guesses';
+        value: number | SessionGuess;
       } | null)
     | ({
         relationTo: 'tasting-plans';
@@ -4336,6 +4370,21 @@ export interface SessionParticipantsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "session-guesses_select".
+ */
+export interface SessionGuessesSelect<T extends boolean = true> {
+  session?: T;
+  sessionParticipant?: T;
+  user?: T;
+  pourOrder?: T;
+  guessedCountry?: T;
+  guessedGrape?: T;
+  guessedPriceBucket?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tasting-plans_select".
  */
 export interface TastingPlansSelect<T extends boolean = true> {
@@ -4363,6 +4412,9 @@ export interface TastingPlansSelect<T extends boolean = true> {
             };
         pourOrder?: T;
         hostNotes?: T;
+        blindAnswerCountry?: T;
+        blindAnswerGrape?: T;
+        blindAnswerPriceBucket?: T;
         id?: T;
       };
   hostScript?: T;

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowLeft } from 'lucide-react'
 import { SessionRecapHeader } from './SessionRecapHeader'
 import { WineRecapCard } from './WineRecapCard'
+import { BlindLeaderboard } from './BlindLeaderboard'
 import type { RecapData } from '@/lib/session-recap'
 
 export interface SessionHistoryDetailProps {
@@ -79,6 +80,12 @@ export function SessionHistoryDetail({
           </ul>
         )}
       </section>
+
+      {recap.blindLeaderboard.length > 0 && (
+        <section className="space-y-3">
+          <BlindLeaderboard entries={recap.blindLeaderboard} />
+        </section>
+      )}
 
       {isHost && planId && (
         <p className="text-sm">

@@ -47,6 +47,14 @@ import { trackEvent } from '@/components/analytics'
 
 type WineType = NonNullable<CustomWineInput['type']>
 
+type PriceBucket = 'under_100' | '100_200' | '200_300' | '300_500' | '500_plus'
+
+type BlindAnswersState = {
+  country: string | null
+  grape: string | null
+  priceBucket: PriceBucket | null
+}
+
 type WineEntry =
   | {
       kind: 'library'
@@ -57,6 +65,7 @@ type WineEntry =
       type: WineType | null
       pourOrder: number
       hostNotes: string
+      blindAnswers: BlindAnswersState
     }
   | {
       kind: 'custom'
@@ -65,6 +74,7 @@ type WineEntry =
       country: string | null
       pourOrder: number
       hostNotes: string
+      blindAnswers: BlindAnswersState
     }
 
 export interface TastingPlanFormProps {
@@ -154,6 +164,13 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
     const pourOrder = w.pourOrder ?? idx + 1
     const hostNotes = w.hostNotes ?? ''
     const key = w.id ?? nextKey()
+    const storedBlind: BlindAnswersState = {
+      country: (w as { blindAnswerCountry?: string | null }).blindAnswerCountry ?? null,
+      grape: (w as { blindAnswerGrape?: string | null }).blindAnswerGrape ?? null,
+      priceBucket:
+        ((w as { blindAnswerPriceBucket?: PriceBucket | null }).blindAnswerPriceBucket ??
+          null) as PriceBucket | null,
+    }
     if (w.libraryWine && typeof w.libraryWine === 'object') {
       const lib = w.libraryWine
       const region =
@@ -169,6 +186,17 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
             null
           : null
       const libType = (lib.type ?? null) as WineType | null
+      const libGrape =
+        Array.isArray(lib.grapes) && lib.grapes.length > 0 && typeof lib.grapes[0] === 'object'
+          ? (lib.grapes[0] as { name?: string }).name ?? null
+          : null
+      // Pre-fill blind answers from the library wine when the host hasn't set
+      // their own override. Stored values always win.
+      const blindAnswers: BlindAnswersState = {
+        country: storedBlind.country ?? country ?? null,
+        grape: storedBlind.grape ?? libGrape ?? null,
+        priceBucket: storedBlind.priceBucket,
+      }
       return {
         kind: 'library',
         key,
@@ -185,6 +213,7 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
         type: libType,
         pourOrder,
         hostNotes,
+        blindAnswers,
       }
     }
     return {
@@ -204,6 +233,7 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
       country: null,
       pourOrder,
       hostNotes,
+      blindAnswers: storedBlind,
     }
   })
 }
@@ -287,6 +317,14 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           country: meta?.country ?? null,
           pourOrder: prev.length + 1,
           hostNotes: '',
+          // Pre-fill the blind-answer country from the picker's hint when
+          // available (Systembolaget search results carry it). Grape and
+          // price bucket are left to the host to fill in or auto-derive.
+          blindAnswers: {
+            country: meta?.country ?? null,
+            grape: null,
+            priceBucket: null,
+          },
         },
       ]
       trackEvent('tasting_plan_wine_added', {
@@ -316,6 +354,12 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
 
   function updateNotes(key: string, notes: string) {
     setWines((prev) => prev.map((w) => (w.key === key ? { ...w, hostNotes: notes } : w)))
+  }
+
+  function updateBlindAnswers(key: string, next: BlindAnswersState) {
+    setWines((prev) =>
+      prev.map((w) => (w.key === key ? { ...w, blindAnswers: next } : w)),
+    )
   }
 
   function onDragEnd(e: DragEndEvent) {
@@ -354,6 +398,9 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         customWine: w.kind === 'custom' ? w.customWine : undefined,
         pourOrder: idx + 1,
         hostNotes: w.hostNotes,
+        blindAnswerCountry: w.blindAnswers.country,
+        blindAnswerGrape: w.blindAnswers.grape,
+        blindAnswerPriceBucket: w.blindAnswers.priceBucket,
       })),
     }
   }
@@ -486,6 +533,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       w.kind === 'library'
         ? w.wineSnapshot.thumbnailUrl ?? null
         : w.customWine.imageUrl ?? null,
+    blindAnswers: w.blindAnswers,
   }))
 
   return (
@@ -626,6 +674,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
                     key={item.key}
                     item={item}
                     onNotesChange={(notes) => updateNotes(item.key, notes)}
+                    onBlindAnswersChange={(next) => updateBlindAnswers(item.key, next)}
                     onRemove={() => removeAt(item.key)}
                     disabled={submitting}
                   />
