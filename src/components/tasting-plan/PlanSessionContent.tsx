@@ -349,7 +349,7 @@ export function PlanSessionContent({
                       isActive ? 'border-brand-400 ring-2 ring-brand-400/40' : ''
                     }`}
                   >
-                    <div className="flex gap-3 sm:gap-4 items-center overflow-hidden">
+                    <div className="flex gap-3 sm:gap-4 items-center">
                       <div className="relative flex-shrink-0 w-20 h-32 sm:w-24 sm:h-36">
                         <span
                           className="absolute inset-0 flex items-start justify-start font-heading leading-[0.85] text-muted-foreground/25 select-none pointer-events-none text-[110px] sm:text-[130px] -ml-2 -mt-1"

@@ -48,16 +48,19 @@ export function SwarmPanel({ entry }: SwarmPanelProps) {
         </span>
       </div>
       {entry.aromaCounts.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {entry.aromaCounts.map((a) => (
-            <span
-              key={a.label}
-              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs"
-            >
-              <span className="capitalize">{a.label}</span>
-              <span className="text-muted-foreground">({a.count})</span>
-            </span>
-          ))}
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">Smaker</p>
+          <div className="flex flex-wrap gap-1.5">
+            {entry.aromaCounts.map((a) => (
+              <span
+                key={a.label}
+                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs"
+              >
+                <span className="capitalize">{a.label}</span>
+                <span className="text-muted-foreground">({a.count})</span>
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>
