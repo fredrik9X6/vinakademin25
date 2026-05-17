@@ -327,30 +327,26 @@ export async function GET(
             if (pour == null) continue
             const acc = (accs[pour] ||= { ratings: [], aromas: new Map() })
             if (typeof r.rating === 'number') acc.ratings.push(r.rating)
-            const aromas = r.wsetTasting?.nose?.primaryAromas
-            // Debug: log the wsetTasting shape ONCE per swarm build to diagnose
-            // why aroma chips aren't showing on real-world sessions.
-            if (!(global as any).__vk_swarm_debug_logged) {
-              ;(global as any).__vk_swarm_debug_logged = true
-              log.info(
-                {
-                  sessionId,
-                  reviewId: (r as any).id,
-                  hasWsetTasting: !!r.wsetTasting,
-                  hasNose: !!r.wsetTasting?.nose,
-                  primaryAromas: r.wsetTasting?.nose?.primaryAromas,
-                },
-                'swarm_aroma_debug',
-              )
-            }
-            if (Array.isArray(aromas)) {
-              for (const a of aromas) {
+            // Aggregate all three palate flavour tiers (primary/secondary/
+            // tertiary) into a single "Smaker" count. Dedupe within a single
+            // review so a label appearing across tiers still counts as one
+            // reviewer's vote, not two or three.
+            const palate = r.wsetTasting?.palate
+            const perReviewLabels = new Set<string>()
+            for (const source of [
+              palate?.primaryFlavours,
+              palate?.secondaryFlavours,
+              palate?.tertiaryFlavours,
+            ]) {
+              if (!Array.isArray(source)) continue
+              for (const a of source) {
                 const label = typeof a === 'string' ? a.trim() : ''
                 if (!label) continue
-                const key = label.toLocaleLowerCase('sv')
-                const prev = acc.aromas.get(key)
-                acc.aromas.set(key, (prev ?? 0) + 1)
+                perReviewLabels.add(label.toLocaleLowerCase('sv'))
               }
+            }
+            for (const key of perReviewLabels) {
+              acc.aromas.set(key, (acc.aromas.get(key) ?? 0) + 1)
             }
           }
 
