@@ -106,6 +106,7 @@ export async function GET(
         currentWineFocusStartedAt: string | null
         revealedPourOrders: number[]
         blindTasting: boolean
+        status: string | null
       }> => {
         try {
           const fresh = await payload.findByID({
@@ -120,6 +121,7 @@ export async function GET(
               currentWineFocusStartedAt: null,
               revealedPourOrders: [],
               blindTasting: false,
+              status: null,
             }
           const cl = (fresh as any).currentLesson
           const wp = (fresh as any).currentWinePourOrder
@@ -134,6 +136,7 @@ export async function GET(
               ? (revealedRaw as number[]).filter((n) => typeof n === 'number')
               : [],
             blindTasting: Boolean((fresh as any).blindTasting),
+            status: typeof (fresh as any).status === 'string' ? (fresh as any).status : null,
           }
         } catch (err) {
           log.error({ err, sessionId }, 'sse_read_host_pointer_failed')
@@ -143,6 +146,7 @@ export async function GET(
             currentWineFocusStartedAt: null,
             revealedPourOrders: [],
             blindTasting: false,
+            status: null,
           }
         }
       }

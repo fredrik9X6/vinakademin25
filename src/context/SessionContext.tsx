@@ -58,6 +58,13 @@ interface SessionContextValue {
   setSwarm: (s: SessionContextValue['swarm']) => void
   roster: RosterEntry[]
   setRoster: (r: RosterEntry[]) => void
+  /** Latest session status pushed via SSE. `null` until the first event lands. */
+  sessionStatus: string | null
+  setSessionStatus: (s: string | null) => void
+  /** Force-clear the active session state + localStorage. Used when the host
+   * ends the session — RealtimeSync calls this after it has redirected the
+   * client to the recap so the ActiveSessionBanner doesn't reappear. */
+  clearActiveSession: () => void
 }
 
 const SessionContext = createContext<SessionContextValue | undefined>(undefined)
@@ -79,6 +86,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [revealedPourOrders, setRevealedPourOrdersState] = useState<number[]>([])
   const [swarm, setSwarmState] = useState<SessionContextValue['swarm']>({})
   const [roster, setRoster] = useState<RosterEntry[]>([])
+  const [sessionStatus, setSessionStatus] = useState<string | null>(null)
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -214,6 +222,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setSwarmState(s)
   }, [])
 
+  const clearActiveSession = useCallback(() => {
+    setActiveSession(null)
+    setSessionStatus(null)
+    try {
+      localStorage.removeItem(SESSION_STORAGE_KEY)
+    } catch {
+      // ignore
+    }
+  }, [])
+
   const leaveSession = useCallback(async () => {
     if (!activeSession) return
 
@@ -276,6 +294,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setSwarm,
     roster,
     setRoster,
+    sessionStatus,
+    setSessionStatus,
+    clearActiveSession,
   }
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
