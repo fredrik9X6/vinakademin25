@@ -17,8 +17,14 @@ import {
 } from '@/components/ui/alert-dialog'
 
 export function ActiveSessionBanner() {
-  const { activeSession, isOnSessionPage, leaveSession, getSessionUrl, timeRemaining } =
-    useActiveSession()
+  const {
+    activeSession,
+    isOnSessionPage,
+    leaveSession,
+    getSessionUrl,
+    timeRemaining,
+    sessionStatus,
+  } = useActiveSession()
   const router = useRouter()
   const [isHidden, setIsHidden] = useState(false)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false)
@@ -27,7 +33,16 @@ export function ActiveSessionBanner() {
   // - No active session
   // - User is already on the session page
   // - Banner is temporarily hidden
-  if (!activeSession || isOnSessionPage || isHidden) {
+  // - The session has flipped out of 'active' (host ended it). RealtimeSync
+  //   also clears `activeSession` on completion, but the banner double-checks
+  //   so a stale context value during the SSE-to-redirect transition can't
+  //   leave a dead CTA on screen.
+  if (
+    !activeSession ||
+    isOnSessionPage ||
+    isHidden ||
+    (sessionStatus && sessionStatus !== 'active')
+  ) {
     return null
   }
 

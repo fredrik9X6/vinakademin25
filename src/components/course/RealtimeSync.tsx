@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
 
 /**
@@ -11,6 +12,7 @@ import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
  * stream); only one instance per page is needed.
  */
 export function RealtimeSync({ sessionId }: { sessionId: string }) {
+  const router = useRouter()
   const {
     setHostCurrentLessonId,
     setHostCurrentWinePourOrder,
@@ -18,7 +20,12 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     setRevealedPourOrders,
     setRoster,
     setSwarm,
+    setSessionStatus,
+    clearActiveSession,
   } = useActiveSession()
+  // Guard so we only fire the post-end navigation once even if multiple
+  // `lesson` events arrive with status='completed' before the redirect lands.
+  const endedRef = useRef(false)
 
   useEffect(() => {
     const url = `/api/sessions/${encodeURIComponent(sessionId)}/stream`
@@ -32,6 +39,7 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
           currentWineFocusStartedAt?: string | null
           revealedPourOrders?: number[]
           blindTasting?: boolean
+          status?: string | null
         }
         setHostCurrentLessonId(data.currentLessonId)
         if ('currentWinePourOrder' in data) {
@@ -42,6 +50,18 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
         }
         if (Array.isArray(data.revealedPourOrders)) {
           setRevealedPourOrders(data.revealedPourOrders)
+        }
+        if ('status' in data) {
+          setSessionStatus(data.status ?? null)
+          // The host explicitly ends the session by setting status to
+          // 'completed'. Every connected client (host + guests) navigates to
+          // the recap and clears its in-memory active-session state so the
+          // ActiveSessionBanner does not reappear on subsequent navigations.
+          if (data.status === 'completed' && !endedRef.current) {
+            endedRef.current = true
+            clearActiveSession()
+            router.push(`/mina-provningar/historik/${sessionId}`)
+          }
         }
       } catch {
         // Malformed payload — ignore. EventSource will keep streaming.
@@ -86,6 +106,9 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     setRevealedPourOrders,
     setRoster,
     setSwarm,
+    setSessionStatus,
+    clearActiveSession,
+    router,
   ])
 
   return null
