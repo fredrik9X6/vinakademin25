@@ -3,6 +3,7 @@ import type { TastingPlan, Wine } from '@/payload-types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ExternalLink, Search } from 'lucide-react'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 
 export interface PlanShoppingListProps {
   plan: TastingPlan
@@ -85,15 +86,18 @@ export function PlanShoppingList({ plan }: PlanShoppingListProps) {
                   <div className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-400/10 text-brand-400 text-sm font-semibold flex items-center justify-center">
                     {pourOrder}
                   </div>
-                  {thumb ? (
-                    <img
-                      src={thumb}
-                      alt=""
-                      className="h-12 w-12 rounded object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 rounded bg-muted flex-shrink-0" />
-                  )}
+                  <div className="h-12 w-12 rounded bg-muted/40 flex-shrink-0 relative overflow-hidden">
+                    {thumb ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={thumb}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <WineImagePlaceholder />
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{title}</p>
                     {subtitle && (
