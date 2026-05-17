@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { TastingTemplate, Wine, Media } from '@/payload-types'
 import { Card } from '@/components/ui/card'
 import { ArrowLeft, Wine as WineIcon, Users } from 'lucide-react'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { UseTemplateButton } from './UseTemplateButton'
 
 function wineTitle(w: NonNullable<TastingTemplate['wines']>[number]): string {
@@ -114,7 +115,9 @@ export function TemplateDetailView({ template }: TemplateDetailViewProps) {
                           alt=""
                           className="relative w-full h-full object-contain"
                         />
-                      ) : null}
+                      ) : (
+                        <WineImagePlaceholder />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0 pt-1">
                       <p className="text-sm sm:text-base font-medium truncate">{wineTitle(w)}</p>

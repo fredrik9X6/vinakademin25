@@ -7,6 +7,7 @@ import { Badge } from '../ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Wine as WineIcon, ShoppingCart, ExternalLink, Sparkles } from 'lucide-react'
 import { Button } from '../ui/button'
+import { WineImagePlaceholder } from '../wine/WineImagePlaceholder'
 import type { Wine, Media } from '../../payload-types'
 
 /** Resolve image URLs for a list of wines, fetching media records when needed */
@@ -251,11 +252,7 @@ export function WineListBlock({
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <div className="p-6 rounded-full bg-brand-300/15">
-                              <WineIcon className="w-16 h-16 text-muted-foreground/40" />
-                            </div>
-                          </div>
+                          <WineImagePlaceholder />
                         )}
                         {/* Hover overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -351,11 +348,7 @@ export function WineListBlock({
                             sizes="(max-width: 640px) 100vw, 160px"
                           />
                         ) : (
-                          <div className="p-4">
-                            <div className="p-4 rounded-lg bg-brand-300/15">
-                              <WineIcon className="w-12 h-12 text-muted-foreground/40" />
-                            </div>
-                          </div>
+                          <WineImagePlaceholder />
                         )}
                       </div>
                     )}

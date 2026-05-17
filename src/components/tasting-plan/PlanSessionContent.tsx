@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Wine as WineIcon, Crown, LogOut } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { useActiveSession } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
 import { SwarmPanel } from './SwarmPanel'
@@ -364,7 +365,9 @@ export function PlanSessionContent({
                             alt=""
                             className="relative w-full h-full object-contain"
                           />
-                        ) : null}
+                        ) : (
+                          <WineImagePlaceholder />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import type { Review, Wine, Media } from '@/payload-types'
 
 type WineType = 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
@@ -95,7 +96,9 @@ export function WineReviewListItem({ review, href, showPublishedBadge = true }: 
               alt=""
               className="absolute inset-0 w-full h-full object-contain p-1"
             />
-          ) : null}
+          ) : (
+            <WineImagePlaceholder />
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
