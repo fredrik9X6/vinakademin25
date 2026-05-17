@@ -36,7 +36,6 @@ interface PlanSessionContentProps {
   session: CourseSession
   plan: TastingPlan
   isHost: boolean
-  followingHost: boolean
   sidebarExtra?: React.ReactNode
 }
 
@@ -133,7 +132,6 @@ export function PlanSessionContent({
   session,
   plan,
   isHost,
-  followingHost,
   sidebarExtra,
 }: PlanSessionContentProps) {
   const rows: WineRow[] = (plan.wines ?? []).map(rowFromEntry)
@@ -243,15 +241,6 @@ export function PlanSessionContent({
     hostCurrentWinePourOrder ??
     (typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null)
 
-  const scrollRefs = React.useRef<Record<string, HTMLLIElement | null>>({})
-  React.useEffect(() => {
-    if (!followingHost || activePour == null) return
-    const row = rows.find((r) => r.pourOrder === activePour)
-    if (!row) return
-    const node = scrollRefs.current[row.key]
-    if (node) node.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [activePour, followingHost, rows])
-
   async function setFocus(pourOrder: number) {
     setSettingFocus(true)
     setLocalFocus(pourOrder) // optimistic — host sees the change immediately
@@ -339,12 +328,7 @@ export function PlanSessionContent({
               const swarmEntry = swarm[row.pourOrder]
               const shouldShowSwarm = isHost || submittedPourOrders.has(row.pourOrder)
               return (
-                <li
-                  key={row.key}
-                  ref={(el) => {
-                    scrollRefs.current[row.key] = el
-                  }}
-                >
+                <li key={row.key}>
                   <Card
                     className={`p-4 transition-shadow ${
                       isActive ? 'border-brand-400 ring-2 ring-brand-400/40' : ''

@@ -56,6 +56,12 @@ interface MultiSelectProps
     value: string
     /** Optional icon component to display alongside the option. */
     icon?: React.ComponentType<{ className?: string }>
+    /**
+     * Optional group heading. When any option has `group` set, the dropdown
+     * splits into headed sections (preserving the order options were passed
+     * in within each group). When no option has `group`, renders flat.
+     */
+    group?: string
   }[]
 
   /**
@@ -287,23 +293,9 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
             <CommandInput placeholder="Sök..." onKeyDown={handleInputKeyDown} />
             <CommandList>
               <CommandEmpty>Inga resultat hittades.</CommandEmpty>
-              <CommandGroup>
-                {!disableSelectAll && (
-                  <CommandItem key="all" onSelect={toggleAll} className="cursor-pointer">
-                    <div
-                      className={cn(
-                        'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                        selectedValues.length === options.length
-                          ? 'bg-primary text-primary-foreground'
-                          : 'opacity-50 [&_svg]:invisible',
-                      )}
-                    >
-                      <CheckIcon className="h-4 w-4" />
-                    </div>
-                    <span>(Välj alla)</span>
-                  </CommandItem>
-                )}
-                {options.map((option) => {
+              {(() => {
+                const hasGroups = options.some((o) => o.group)
+                const renderItem = (option: (typeof options)[number]) => {
                   const isSelected = selectedValues.includes(option.value)
                   return (
                     <CommandItem
@@ -331,8 +323,53 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
                       <span>{option.label}</span>
                     </CommandItem>
                   )
-                })}
-              </CommandGroup>
+                }
+                const selectAllItem = !disableSelectAll && (
+                  <CommandItem key="all" onSelect={toggleAll} className="cursor-pointer">
+                    <div
+                      className={cn(
+                        'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                        selectedValues.length === options.length
+                          ? 'bg-primary text-primary-foreground'
+                          : 'opacity-50 [&_svg]:invisible',
+                      )}
+                    >
+                      <CheckIcon className="h-4 w-4" />
+                    </div>
+                    <span>(Välj alla)</span>
+                  </CommandItem>
+                )
+                if (!hasGroups) {
+                  return (
+                    <CommandGroup>
+                      {selectAllItem}
+                      {options.map(renderItem)}
+                    </CommandGroup>
+                  )
+                }
+                // Group options by `group` while preserving the order they
+                // were passed in (group iteration order = first-seen).
+                const groupOrder: string[] = []
+                const byGroup: Record<string, typeof options> = {}
+                for (const o of options) {
+                  const g = o.group || ''
+                  if (!(g in byGroup)) {
+                    byGroup[g] = []
+                    groupOrder.push(g)
+                  }
+                  byGroup[g].push(o)
+                }
+                return (
+                  <>
+                    {selectAllItem && <CommandGroup>{selectAllItem}</CommandGroup>}
+                    {groupOrder.map((g) => (
+                      <CommandGroup key={g || '_'} heading={g || undefined}>
+                        {byGroup[g].map(renderItem)}
+                      </CommandGroup>
+                    ))}
+                  </>
+                )
+              })()}
               <CommandSeparator />
               <CommandGroup>
                 <div className="flex items-center justify-between">
