@@ -35,9 +35,11 @@ function wineThumb(w: NonNullable<TastingTemplate['wines']>[number]): string | n
 
 export interface TemplateDetailViewProps {
   template: TastingTemplate
+  /** When true, render an admin-only "Redigera mallen" CTA in the right rail. */
+  isAdmin?: boolean
 }
 
-export function TemplateDetailView({ template }: TemplateDetailViewProps) {
+export function TemplateDetailView({ template, isAdmin = false }: TemplateDetailViewProps) {
   const wines = template.wines ?? []
   const featured =
     typeof template.featuredImage === 'object' && template.featuredImage
@@ -160,6 +162,16 @@ export function TemplateDetailView({ template }: TemplateDetailViewProps) {
       </div>
 
       <aside className="md:sticky md:top-20 md:self-start space-y-2">
+        {isAdmin && (
+          <Link
+            href={`/provningsmallar/redigera/${template.id}`}
+            className="block w-full"
+          >
+            <span className="block w-full text-center rounded-md border border-input bg-card px-3 py-2 text-sm font-medium hover:bg-muted/40 transition-colors">
+              Redigera mallen
+            </span>
+          </Link>
+        )}
         <UseTemplateButton templateId={template.id} templateSlug={template.slug} />
         <p className="text-xs text-muted-foreground text-center">
           Du landar på din egen redigerbara plan.

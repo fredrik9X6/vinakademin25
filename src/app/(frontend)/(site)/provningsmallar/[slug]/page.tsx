@@ -50,6 +50,7 @@ export default async function ProvningsmallDetailPage({ params }: RouteParams) {
   if (!template) notFound()
 
   const user = await getUser()
+  const isAdmin = user?.role === 'admin'
   const isLocked =
     (template as { accessLevel?: string }).accessLevel === 'members_only' &&
     !viewerIsMember(user)
@@ -67,5 +68,5 @@ export default async function ProvningsmallDetailPage({ params }: RouteParams) {
     return <LockedTemplateDetailView template={redactedTemplate} preview={preview} />
   }
 
-  return <TemplateDetailView template={template} />
+  return <TemplateDetailView template={template} isAdmin={isAdmin} />
 }
