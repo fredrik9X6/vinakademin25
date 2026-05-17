@@ -25,6 +25,7 @@ import * as migration_20260516_103250_add_media_bottle_size from './20260516_103
 import * as migration_20260516_153941_drop_occasion_field from './20260516_153941_drop_occasion_field';
 import * as migration_20260517_090445 from './20260517_090445';
 import * as migration_20260517_131056 from './20260517_131056';
+import * as migration_20260517_133743 from './20260517_133743';
 
 export const migrations = [
   {
@@ -160,6 +161,11 @@ export const migrations = [
   {
     up: migration_20260517_131056.up,
     down: migration_20260517_131056.down,
-    name: '20260517_131056'
+    name: '20260517_131056',
+  },
+  {
+    up: migration_20260517_133743.up,
+    down: migration_20260517_133743.down,
+    name: '20260517_133743'
   },
 ];

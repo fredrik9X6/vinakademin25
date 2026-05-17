@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { TastingTemplate, Media } from '@/payload-types'
 import { Card } from '@/components/ui/card'
-import { Wine as WineIcon } from 'lucide-react'
+import { Wine as WineIcon, Lock } from 'lucide-react'
 
 export interface TemplateCardProps {
   template: TastingTemplate
@@ -17,6 +17,8 @@ export function TemplateCard({ template }: TemplateCardProps) {
     image && typeof image === 'object'
       ? image.sizes?.thumbnail?.url ?? image.url ?? null
       : null
+  const isMembersOnly =
+    (template as { accessLevel?: string }).accessLevel === 'members_only'
 
   return (
     <Link href={`/provningsmallar/${template.slug}`} className="block group">
@@ -30,6 +32,22 @@ export function TemplateCard({ template }: TemplateCardProps) {
               <WineIcon className="h-10 w-10 text-muted-foreground/40" />
             </div>
           )}
+          <span
+            className={
+              isMembersOnly
+                ? 'absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-brand-400 text-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm'
+                : 'absolute top-2 right-2 inline-flex items-center rounded-full bg-emerald-500 text-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm'
+            }
+          >
+            {isMembersOnly ? (
+              <>
+                <Lock className="h-2.5 w-2.5" />
+                Medlem
+              </>
+            ) : (
+              'Fri'
+            )}
+          </span>
         </div>
         <div className="p-4 space-y-1">
           <h3 className="font-semibold truncate group-hover:text-brand-400 transition-colors">

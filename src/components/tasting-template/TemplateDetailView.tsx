@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { TastingTemplate, Wine, Media } from '@/payload-types'
 import { Card } from '@/components/ui/card'
-import { ArrowLeft, Wine as WineIcon, Users } from 'lucide-react'
+import { ArrowLeft, Wine as WineIcon, Users, Lock } from 'lucide-react'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { UseTemplateButton } from './UseTemplateButton'
 
@@ -70,7 +70,19 @@ export function TemplateDetailView({ template }: TemplateDetailViewProps) {
         )}
 
         <header>
-          <h1 className="text-3xl font-heading">{template.title}</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-3xl font-heading">{template.title}</h1>
+            {(template as { accessLevel?: string }).accessLevel === 'members_only' ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand-400/15 text-brand-400 px-2.5 py-0.5 text-xs font-medium">
+                <Lock className="h-3 w-3" />
+                Medlem
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200 px-2.5 py-0.5 text-xs font-medium">
+                Fri
+              </span>
+            )}
+          </div>
           {template.description && (
             <p className="text-base text-muted-foreground mt-2 whitespace-pre-wrap">
               {template.description}

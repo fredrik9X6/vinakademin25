@@ -84,6 +84,21 @@ export const TastingTemplates: CollectionConfig = {
       },
     },
     {
+      name: 'accessLevel',
+      type: 'select',
+      required: true,
+      defaultValue: 'free',
+      options: [
+        { label: 'Fri – alla kan se', value: 'free' },
+        { label: 'Endast medlemmar', value: 'members_only' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description:
+          'Free templates render wine details to everyone. Members-only templates redact wines for non-members; only count + total price are visible.',
+      },
+    },
+    {
       name: 'publishedStatus',
       type: 'select',
       required: true,

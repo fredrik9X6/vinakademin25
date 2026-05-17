@@ -3,6 +3,10 @@ import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { TemplateDetailView } from '@/components/tasting-template/TemplateDetailView'
+import { LockedTemplateDetailView } from '@/components/tasting-template/LockedTemplateDetailView'
+import { getUser } from '@/lib/get-user'
+import { viewerIsMember } from '@/lib/membership'
+import { getLockedTemplatePreview } from '@/lib/template-locked-preview'
 import type { TastingTemplate } from '@/payload-types'
 
 interface RouteParams {
@@ -44,5 +48,24 @@ export default async function ProvningsmallDetailPage({ params }: RouteParams) {
   const { slug } = await params
   const template = await loadTemplate(slug)
   if (!template) notFound()
+
+  const user = await getUser()
+  const isLocked =
+    (template as { accessLevel?: string }).accessLevel === 'members_only' &&
+    !viewerIsMember(user)
+
+  if (isLocked) {
+    const preview = getLockedTemplatePreview(template)
+    // IMPORTANT: build a redacted template payload so the wines array (with
+    // names, producers, hostNotes, etc.) is NEVER serialized into the page
+    // HTML. Only the fields needed by the locked view survive.
+    const redactedTemplate = {
+      ...template,
+      wines: [],
+      hostScript: null,
+    } as TastingTemplate
+    return <LockedTemplateDetailView template={redactedTemplate} preview={preview} />
+  }
+
   return <TemplateDetailView template={template} />
 }
