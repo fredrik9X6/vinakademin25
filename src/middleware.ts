@@ -119,6 +119,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Same carve-out for the post-session recap: an unauthenticated guest who
+  // attended a session via their participant cookie should be able to see the
+  // recap after the host ends. The historik page validates the cookie against
+  // the session and redirects to /logga-in itself when the cookie is missing
+  // or stale. Without this, the middleware bounces all guests before they
+  // ever reach the page.
+  if (
+    /^\/mina-provningar\/historik\/\d+$/.test(pathname) &&
+    request.cookies.has('vk_participant_token')
+  ) {
+    return NextResponse.next()
+  }
+
   // Public profile pages live under /profil/<handle> and /profil/<handle>/<planId>.
   // /profil (own settings) stays protected; only multi-segment paths under
   // /profil are public.
