@@ -7,6 +7,7 @@ import { ArrowLeft, Wine as WineIcon } from 'lucide-react'
 import { SessionRecapHeader } from './SessionRecapHeader'
 import { WineRecapCard } from './WineRecapCard'
 import { BlindLeaderboard } from './BlindLeaderboard'
+import { ClearActiveSessionOnMount } from './ClearActiveSessionOnMount'
 import type { RecapData } from '@/lib/session-recap'
 
 export interface SessionHistoryDetailProps {
@@ -51,6 +52,7 @@ export function SessionHistoryDetail({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 space-y-6 pb-24">
+      <ClearActiveSessionOnMount sessionId={session.id} />
       <Link
         href="/mina-provningar/historik"
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"

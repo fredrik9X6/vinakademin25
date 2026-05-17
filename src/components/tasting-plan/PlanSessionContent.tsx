@@ -248,6 +248,7 @@ export function PlanSessionContent({
     revealedPourOrders,
     swarm,
     leaveSession,
+    clearActiveSession,
   } = useActiveSession()
   const [endDialog, setEndDialog] = React.useState(false)
   const [leaveDialog, setLeaveDialog] = React.useState(false)
@@ -280,6 +281,13 @@ export function PlanSessionContent({
         total_wines: rows.length,
       })
       toast.success('Sessionen avslutad.')
+      // Clear the local active-session state BEFORE navigating so the
+      // ActiveSessionBanner doesn't reappear on the recap (or survive a
+      // hard refresh via localStorage rehydration). RealtimeSync also
+      // calls clearActiveSession on the SSE 'completed' event, but the
+      // host's router.push unmounts the SSE stream before that event
+      // typically lands — this is the belt to the SSE handler's suspenders.
+      clearActiveSession()
       router.push(`/mina-provningar/historik/${session.id}`)
     } catch {
       toast.error('Nätverksfel — försök igen.')
