@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Wine as WineIcon, Crown, LogOut } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
-import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { useActiveSession } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
 import { SwarmPanel } from './SwarmPanel'
@@ -350,21 +349,22 @@ export function PlanSessionContent({
                       isActive ? 'border-brand-400 ring-2 ring-brand-400/40' : ''
                     }`}
                   >
-                    <div className="flex gap-3 items-start">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-400/10 text-brand-400 text-sm font-semibold flex items-center justify-center">
-                        {row.pourOrder}
-                      </div>
-                      <div className="flex-shrink-0 w-14 h-14 rounded-md overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10 relative">
+                    <div className="flex gap-3 sm:gap-4 items-center overflow-hidden">
+                      <div className="relative flex-shrink-0 w-20 h-32 sm:w-24 sm:h-36">
+                        <span
+                          className="absolute inset-0 flex items-start justify-start font-heading leading-[0.85] text-muted-foreground/25 select-none pointer-events-none text-[110px] sm:text-[130px] -ml-2 -mt-1"
+                          aria-hidden="true"
+                        >
+                          {row.pourOrder}
+                        </span>
                         {displayRow.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={displayRow.imageUrl}
                             alt=""
-                            className="w-full h-full object-contain p-1"
+                            className="relative w-full h-full object-contain"
                           />
-                        ) : (
-                          <WineImagePlaceholder size="sm" />
-                        )}
+                        ) : null}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
