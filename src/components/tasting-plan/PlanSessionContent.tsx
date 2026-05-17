@@ -201,7 +201,7 @@ export function PlanSessionContent({
         total_wines: rows.length,
       })
       toast.success('Sessionen avslutad.')
-      router.push(`/mina-provningar/planer/${plan.id}`)
+      router.push(`/mina-provningar/historik/${session.id}`)
     } catch {
       toast.error('Nätverksfel — försök igen.')
     } finally {

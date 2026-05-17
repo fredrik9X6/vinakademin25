@@ -3,7 +3,8 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { SessionHistoryDetail } from '@/components/session-history/SessionHistoryDetail'
-import type { CourseSession, Review } from '@/payload-types'
+import { getSessionRecap } from '@/lib/session-recap'
+import type { CourseSession } from '@/payload-types'
 
 interface RouteParams {
   params: Promise<{ sessionId: string }>
@@ -35,7 +36,7 @@ export default async function HistorikDetailPage({ params }: RouteParams) {
   }
   if (!session) notFound()
 
-  const hostId = typeof session.host === 'object' ? (session.host as any).id : session.host
+  const hostId = typeof session.host === 'object' ? (session.host as { id: number }).id : session.host
   const isHost = hostId === user.id
 
   let participantId: number | null = null
@@ -50,33 +51,11 @@ export default async function HistorikDetailPage({ params }: RouteParams) {
     if (partsRes.docs.length === 0) {
       notFound()
     } else {
-      participantId = (partsRes.docs[0] as any).id
+      participantId = (partsRes.docs[0] as { id: number }).id
     }
   }
 
-  let myReviews: Review[] = []
-  if (participantId !== null) {
-    const reviewsRes = await payload.find({
-      collection: 'reviews',
-      where: { sessionParticipant: { equals: participantId } },
-      limit: 100,
-      depth: 1,
-      overrideAccess: true,
-    })
-    myReviews = reviewsRes.docs as Review[]
-  } else if (isHost) {
-    // Host's own reviews tagged to this session, if they happened to submit any
-    const myReviewsRes = await payload.find({
-      collection: 'reviews',
-      where: {
-        and: [{ session: { equals: sid } }, { user: { equals: user.id } }],
-      },
-      limit: 100,
-      depth: 1,
-      overrideAccess: true,
-    })
-    myReviews = myReviewsRes.docs as Review[]
-  }
+  const recap = await getSessionRecap(payload, session, user.id, participantId)
 
-  return <SessionHistoryDetail session={session} isHost={isHost} myReviews={myReviews} />
+  return <SessionHistoryDetail session={session} isHost={isHost} recap={recap} />
 }
