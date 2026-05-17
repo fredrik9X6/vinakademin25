@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { PARTICIPANT_COOKIE } from '@/lib/sessions'
 import { loggerFor } from '@/lib/logger'
 import { buildPourMaps, resolvePourForReview } from '@/lib/session-pour-mapping'
+import { computeLivePoints } from '@/lib/session-live-scores'
 
 const log = loggerFor('api-sessions-stream')
 
@@ -171,14 +172,18 @@ export async function GET(
         currentLessonId: number | null
         isHost: boolean
         online: boolean
+        points: number
+        profileHandle: string | null
       }
 
       const buildRoster = async (): Promise<RosterEntry[]> => {
         try {
+          // depth: 2 so we get the host user + the tasting plan's wines
+          // (which carry the blind-answer fields for live scoring).
           const fresh = await payload.findByID({
             collection: 'course-sessions',
             id: sessionId,
-            depth: 1, // populate host
+            depth: 2,
           })
           if (!fresh) return []
 
@@ -192,6 +197,13 @@ export async function GET(
             typeof fresh.currentLesson === 'object'
               ? fresh.currentLesson?.id ?? null
               : (fresh.currentLesson as number | null) ?? null
+          const hostHandle =
+            hostUser &&
+            (hostUser as { profilePublic?: boolean | null }).profilePublic &&
+            typeof (hostUser as { handle?: string | null }).handle === 'string' &&
+            (hostUser as { handle?: string }).handle!.trim()
+              ? ((hostUser as { handle?: string }).handle as string)
+              : null
 
           const hostEntry: RosterEntry = {
             id: hostUser?.id ?? -1,
@@ -199,20 +211,49 @@ export async function GET(
             currentLessonId: hostCurrentLessonId,
             isHost: true,
             online: fresh.status === 'active',
+            points: 0,
+            profileHandle: hostHandle,
           }
 
+          // Bumped to depth: 1 so each participant's `user` join lands and we
+          // can read their `handle` + `profilePublic` for the clickable name.
           const partsRes = await payload.find({
             collection: 'session-participants',
             where: { session: { equals: sessionId } },
             limit: 200,
-            depth: 0,
+            depth: 1,
             overrideAccess: true,
           })
+
+          // Compute live points only when the session is blind AND something
+          // has been revealed. Saves a DB query in the lobby + every poll
+          // before the first reveal.
+          const blindTasting = Boolean((fresh as any).blindTasting)
+          const revealedRaw = (fresh as any).revealedPourOrders
+          const revealedPourOrders: number[] = Array.isArray(revealedRaw)
+            ? (revealedRaw as number[]).filter((n) => typeof n === 'number')
+            : []
+          const planWines =
+            typeof fresh.tastingPlan === 'object' && fresh.tastingPlan
+              ? ((fresh.tastingPlan as { wines?: unknown[] }).wines ?? [])
+              : []
+          const livePoints =
+            blindTasting && revealedPourOrders.length > 0
+              ? await computeLivePoints(payload, sessionId, planWines, revealedPourOrders)
+              : { byParticipantId: new Map<number, number>(), byUserId: new Map<number, number>() }
 
           const now = Date.now()
           const partEntries: RosterEntry[] = (partsRes.docs as any[]).map((p) => {
             const last = p.lastActivityAt ? new Date(p.lastActivityAt).getTime() : 0
             const cl = p.currentLessonId
+            const userObj = typeof p.user === 'object' && p.user ? p.user : null
+            const handle =
+              userObj &&
+              (userObj as { profilePublic?: boolean | null }).profilePublic &&
+              typeof (userObj as { handle?: string | null }).handle === 'string' &&
+              (userObj as { handle?: string }).handle!.trim()
+                ? ((userObj as { handle?: string }).handle as string)
+                : null
             return {
               id: p.id,
               nickname: p.nickname || 'Anonym',
@@ -220,14 +261,20 @@ export async function GET(
                 typeof cl === 'object' && cl ? cl.id : (cl as number | null) ?? null,
               isHost: false,
               online: now - last < ONLINE_THRESHOLD_MS,
+              points: livePoints.byParticipantId.get(p.id) ?? 0,
+              profileHandle: handle,
             }
           })
 
-          // Host first, then participants by nickname asc.
-          return [
-            hostEntry,
-            ...partEntries.sort((a, b) => a.nickname.localeCompare(b.nickname, 'sv')),
-          ]
+          // Host renders separately (the client surfaces them in their own
+          // section); participants sort by points desc → nickname asc for
+          // stable ties. With points always 0 on non-blind sessions, the
+          // effective ordering stays alphabetical there.
+          partEntries.sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points
+            return a.nickname.localeCompare(b.nickname, 'sv')
+          })
+          return [hostEntry, ...partEntries]
         } catch (err) {
           log.error({ err, sessionId }, 'sse_build_roster_failed')
           return []
@@ -244,7 +291,9 @@ export async function GET(
             x.nickname !== y.nickname ||
             x.currentLessonId !== y.currentLessonId ||
             x.isHost !== y.isHost ||
-            x.online !== y.online
+            x.online !== y.online ||
+            x.points !== y.points ||
+            x.profileHandle !== y.profileHandle
           ) {
             return false
           }

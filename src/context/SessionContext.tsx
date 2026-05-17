@@ -23,6 +23,13 @@ export interface RosterEntry {
   currentLessonId: number | null
   isHost: boolean
   online: boolean
+  /** Cumulative points from blind-tasting guesses scored against revealed
+   * wines. 0 on non-blind sessions or before the first reveal. */
+  points: number
+  /** Public profile slug — set only when the underlying user has `handle`
+   * set AND `profilePublic: true`. Null for hosts/guests without a public
+   * profile and for anonymous (cookie-only) participants. */
+  profileHandle: string | null
 }
 
 interface SessionContextValue {
