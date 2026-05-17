@@ -302,6 +302,10 @@ export interface User {
    * Date when the subscription expires
    */
   subscriptionExpiry?: string | null;
+  /**
+   * Linked Stripe customer for billing. Set by the subscription webhook on first checkout.
+   */
+  stripeCustomerId?: string | null;
   onboarding?: {
     goal?: ('learn_basics' | 'pairing_confident' | 'explore_regions' | 'deep_knowledge') | null;
     completedAt?: string | null;
@@ -3495,6 +3499,7 @@ export interface UsersSelect<T extends boolean = true> {
   subscriptionStatus?: T;
   subscriptionPlan?: T;
   subscriptionExpiry?: T;
+  stripeCustomerId?: T;
   onboarding?:
     | T
     | {

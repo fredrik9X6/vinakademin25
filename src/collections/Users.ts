@@ -535,6 +535,20 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: 'stripeCustomerId',
+      type: 'text',
+      label: 'Stripe Customer ID',
+      access: {
+        update: adminFieldLevel,
+      },
+      admin: {
+        description:
+          'Linked Stripe customer for billing. Set by the subscription webhook on first checkout.',
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+    {
       name: 'onboarding',
       type: 'group',
       label: 'Onboarding',

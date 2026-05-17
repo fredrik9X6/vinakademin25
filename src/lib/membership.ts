@@ -15,5 +15,7 @@ export function viewerIsMember(user: User | null | undefined): boolean {
   if (user.role === 'admin') return true
   if (user.role === 'subscriber') return true
   const status = (user as { subscriptionStatus?: string | null }).subscriptionStatus
-  return status === 'active' || status === 'trialing'
+  // Note: Users.subscriptionStatus uses 'free_trial' (Stripe maps 'trialing' → this value
+  // in the webhook handler).
+  return status === 'active' || status === 'free_trial'
 }

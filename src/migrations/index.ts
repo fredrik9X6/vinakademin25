@@ -26,6 +26,7 @@ import * as migration_20260516_153941_drop_occasion_field from './20260516_15394
 import * as migration_20260517_090445 from './20260517_090445';
 import * as migration_20260517_131056 from './20260517_131056';
 import * as migration_20260517_133743 from './20260517_133743';
+import * as migration_20260517_140512 from './20260517_140512';
 
 export const migrations = [
   {
@@ -166,6 +167,11 @@ export const migrations = [
   {
     up: migration_20260517_133743.up,
     down: migration_20260517_133743.down,
-    name: '20260517_133743'
+    name: '20260517_133743',
+  },
+  {
+    up: migration_20260517_140512.up,
+    down: migration_20260517_140512.down,
+    name: '20260517_140512'
   },
 ];
