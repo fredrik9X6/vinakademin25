@@ -81,6 +81,11 @@ export default async function PlanDetailPage({
               libraryWine: null,
               customWine: undefined,
               hostNotes: null,
+              // Strip the blind-tasting answers too — they'd otherwise leak
+              // the country/grape/price-bucket to the guest before reveal.
+              blindAnswerCountry: null,
+              blindAnswerGrape: null,
+              blindAnswerPriceBucket: null,
             }
           }),
         } as typeof plan

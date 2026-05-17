@@ -17,11 +17,16 @@ type CustomWine = {
   imageUrl?: string
 }
 
+type PriceBucket = 'under_100' | '100_200' | '200_300' | '300_500' | '500_plus'
+
 type WineEntry = {
   libraryWine?: number
   customWine?: CustomWine
   pourOrder?: number
   hostNotes?: string
+  blindAnswerCountry?: string | null
+  blindAnswerGrape?: string | null
+  blindAnswerPriceBucket?: PriceBucket | null
 }
 
 type CreateBody = {
@@ -90,6 +95,9 @@ export async function POST(request: NextRequest) {
           customWine: w.customWine?.name?.trim() ? w.customWine : undefined,
           pourOrder: w.pourOrder ?? idx + 1,
           hostNotes: w.hostNotes ?? '',
+          blindAnswerCountry: w.blindAnswerCountry ?? null,
+          blindAnswerGrape: w.blindAnswerGrape ?? null,
+          blindAnswerPriceBucket: w.blindAnswerPriceBucket ?? null,
         })),
         hostScript: body.hostScript ?? undefined,
         status: 'draft',

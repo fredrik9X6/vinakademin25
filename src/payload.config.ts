@@ -35,6 +35,7 @@ import { BlogCategories } from './collections/BlogCategories'
 import { BlogTags } from './collections/BlogTags'
 import { CourseSessions } from './collections/CourseSessions'
 import { SessionParticipants } from './collections/SessionParticipants'
+import { SessionGuesses } from './collections/SessionGuesses'
 import { TastingPlans } from './collections/TastingPlans'
 import { TastingTemplates } from './collections/TastingTemplates'
 import { Subscribers } from './collections/Subscribers'
@@ -221,6 +222,7 @@ export default buildConfig({
     BlogTags,
     CourseSessions,
     SessionParticipants,
+    SessionGuesses,
     TastingPlans,
     TastingTemplates,
     Subscribers,
