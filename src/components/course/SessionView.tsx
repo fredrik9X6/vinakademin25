@@ -185,7 +185,6 @@ export default function SessionView({
           session={session}
           plan={session.tastingPlan as TastingPlan}
           isHost={isHost}
-          followingHost={followingHost}
           sidebarExtra={<SessionRoster lessonTitleById={new Map()} />}
         />
       </>

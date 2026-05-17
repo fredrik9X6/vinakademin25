@@ -21,6 +21,13 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import ReviewComparison, { WineReview as ComparisonReview } from './ReviewComparison'
 import { Section, InputRow } from './WineReviewFormHelpers'
+import {
+  PRIMARY_VOCAB,
+  SECONDARY_VOCAB,
+  TERTIARY_VOCAB,
+  buildFlavourOptions,
+  type WineType,
+} from '@/lib/wset-flavour-vocab'
 
 interface CustomWineSnapshot {
   name: string
@@ -95,6 +102,41 @@ export function WineReviewForm({
   const [attemptSubmit, setAttemptSubmit] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const [wineId, setWineId] = React.useState<number | string | null>(wineIdProp || null)
+  const [wishlistSaved, setWishlistSaved] = React.useState(false)
+
+  // Type + Systembolaget URL of the wine being reviewed. Type drives the
+  // suggested-flavours order in the WSET MultiSelects; the URL powers the
+  // post-submit "Köp på Systembolaget" CTA. Source priority: customWine
+  // snapshot > fetched library wine doc > unknown.
+  const [wineType, setWineType] = React.useState<WineType | null>(
+    (customWineSnapshot?.type as WineType | undefined) ?? null,
+  )
+  const [libraryWineSystembolagetUrl, setLibraryWineSystembolagetUrl] = React.useState<
+    string | null
+  >(null)
+  React.useEffect(() => {
+    if (customWineSnapshot?.type) {
+      setWineType(customWineSnapshot.type as WineType)
+    }
+    if (!wineId) {
+      if (!customWineSnapshot?.type) setWineType(null)
+      setLibraryWineSystembolagetUrl(null)
+      return
+    }
+    let aborted = false
+    fetch(`/api/wines/${wineId}?depth=0`, { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((doc) => {
+        if (aborted) return
+        const d = doc as { type?: string | null; systembolagetUrl?: string | null } | null
+        if (d?.type && !customWineSnapshot?.type) setWineType(d.type as WineType)
+        if (d?.systembolagetUrl) setLibraryWineSystembolagetUrl(d.systembolagetUrl)
+      })
+      .catch(() => {})
+    return () => {
+      aborted = true
+    }
+  }, [wineId, customWineSnapshot?.type])
 
   // Get participant ID from localStorage if in a session
   const participantId = React.useMemo(() => {
@@ -561,6 +603,64 @@ export function WineReviewForm({
     }
   }
 
+  // High-rating post-review CTAs: surface "wishlist save" + Systembolaget jump
+  // when the just-submitted review is 4★ or more, gated on identity hooks
+  // (library wineId for save, any URL/productNumber source for the buy link).
+  function computeSystembolagetUrl(): string | null {
+    if (customWineSnapshot?.systembolagetUrl) return customWineSnapshot.systembolagetUrl
+    if (libraryWineSystembolagetUrl) return libraryWineSystembolagetUrl
+    if (customWineSnapshot?.systembolagetProductNumber) {
+      return `https://www.systembolaget.se/sok/?sok=${encodeURIComponent(
+        customWineSnapshot.systembolagetProductNumber,
+      )}`
+    }
+    return null
+  }
+  async function handleSaveToWishlist() {
+    if (!wineId || !user) return
+    try {
+      const res = await fetch('/api/user-wines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ wine: Number(wineId) }),
+      })
+      if (!res.ok) throw new Error()
+      setWishlistSaved(true)
+      toast.success('Sparat till dina viner')
+    } catch {
+      toast.error('Kunde inte spara — prova igen.')
+    }
+  }
+  function renderHighRatingCTAs() {
+    const rating = (submittedReview as any)?.rating ?? 0
+    if (rating < 4) return null
+    const sysUrl = computeSystembolagetUrl()
+    const canSave = Boolean(wineId && user)
+    if (!canSave && !sysUrl) return null
+    return (
+      <div className="flex flex-wrap gap-2 justify-center pt-2">
+        {canSave && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={wishlistSaved}
+            onClick={handleSaveToWishlist}
+          >
+            {wishlistSaved ? '✓ Sparat till mina viner' : 'Spara till mina viner'}
+          </Button>
+        )}
+        {sysUrl && (
+          <Button asChild variant="outline" size="sm">
+            <a href={sysUrl} target="_blank" rel="noopener noreferrer">
+              Köp på Systembolaget
+            </a>
+          </Button>
+        )}
+      </div>
+    )
+  }
+
   // In group sessions, show a success message instead of the comparison
   if (!standalone && submittedReview && sessionId) {
     return (
@@ -640,6 +740,7 @@ export function WineReviewForm({
               >
                 Redigera recension
               </Button>
+              {renderHighRatingCTAs()}
             </div>
           </CardContent>
         </Card>
@@ -700,53 +801,7 @@ export function WineReviewForm({
               >
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={[
-                    'Jordgubbe',
-                    'Päron',
-                    'Persika',
-                    'Apelsin',
-                    'Citron',
-                    'Äpple',
-                    'Krusbär',
-                    'Grapefrukt',
-                    'Druva',
-                    'Lime',
-                    'Aprikos',
-                    'Banan',
-                    'Nektarin',
-                    'Litchi',
-                    'Mango',
-                    'Passionsfrukt',
-                    'Melon',
-                    'Ananas',
-                    'Tranbär',
-                    'Röda vinbär',
-                    'Hallon',
-                    'Röda körsbär',
-                    'Svarta vinbär',
-                    'Björnbär',
-                    'Mörka körsbär',
-                    'Blåbär',
-                    'Mörka plommon',
-                    'Röda plommon',
-                    'Blomma',
-                    'Ros',
-                    'Viol',
-                    'Grön paprika',
-                    'Gräs',
-                    'Tomatblad',
-                    'Sparris',
-                    'Eukalyptus',
-                    'Mynta',
-                    'Fänkål',
-                    'Dill',
-                    'Torkade örter',
-                    'Svart- & Vitpeppar',
-                    'Lakrits',
-                    'Omogen frukt',
-                    'Mogen frukt',
-                    'Blöta stenar',
-                  ].map((v) => ({ label: v, value: v }))}
+                  options={buildFlavourOptions(PRIMARY_VOCAB, 'primary', wineType)}
                   value={primaryFlavours}
                   onValueChange={setPrimaryFlavours}
                   placeholder="Välj smaker"
@@ -909,53 +964,7 @@ export function WineReviewForm({
               >
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={[
-                    'Jordgubbe',
-                    'Päron',
-                    'Persika',
-                    'Apelsin',
-                    'Citron',
-                    'Äpple',
-                    'Krusbär',
-                    'Grapefrukt',
-                    'Druva',
-                    'Lime',
-                    'Aprikos',
-                    'Banan',
-                    'Nektarin',
-                    'Litchi',
-                    'Mango',
-                    'Passionsfrukt',
-                    'Melon',
-                    'Ananas',
-                    'Tranbär',
-                    'Röda vinbär',
-                    'Hallon',
-                    'Röda körsbär',
-                    'Svarta vinbär',
-                    'Björnbär',
-                    'Mörka körsbär',
-                    'Blåbär',
-                    'Mörka plommon',
-                    'Röda plommon',
-                    'Blomma',
-                    'Ros',
-                    'Viol',
-                    'Grön paprika',
-                    'Gräs',
-                    'Tomatblad',
-                    'Sparris',
-                    'Eukalyptus',
-                    'Mynta',
-                    'Fänkål',
-                    'Dill',
-                    'Torkade örter',
-                    'Svart- & Vitpeppar',
-                    'Lakrits',
-                    'Omogen frukt',
-                    'Mogen frukt',
-                    'Blöta stenar',
-                  ].map((v) => ({ label: v, value: v }))}
+                  options={buildFlavourOptions(PRIMARY_VOCAB, 'primary', wineType)}
                   value={primaryAromas}
                   onValueChange={setPrimaryAromas}
                   placeholder="Välj aromer"
@@ -965,29 +974,7 @@ export function WineReviewForm({
               <InputRow label="Sekundära aromer" attemptSubmit={attemptSubmit}>
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={[
-                    'Vanilj',
-                    'Ceder',
-                    'Kex',
-                    'Bröd',
-                    'Bröddeg',
-                    'yoghurt',
-                    'Grädde',
-                    'Smör',
-                    'Ost',
-                    'Kokosnöt',
-                    'Förkolnat trä',
-                    'Rök',
-                    'Godis',
-                    'Bakverk',
-                    'Rostat bröd',
-                    'Kryddnejlika',
-                    'Kanel',
-                    'Muskot',
-                    'Ingefära',
-                    'Kokt frukt',
-                    'Kaffe',
-                  ].map((v) => ({ label: v, value: v }))}
+                  options={buildFlavourOptions(SECONDARY_VOCAB, 'secondary', wineType)}
                   value={secondaryAromas}
                   onValueChange={setSecondaryAromas}
                   placeholder="Välj aromer"
@@ -997,23 +984,7 @@ export function WineReviewForm({
               <InputRow label="Tertiära aromer" attemptSubmit={attemptSubmit}>
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={[
-                    'Choklad',
-                    'Läder',
-                    'Kola',
-                    'Jord',
-                    'Svamp',
-                    'Kött',
-                    'Tobak',
-                    'Blöta löv',
-                    'Skogsbotten',
-                    'Apelsinmarmelad',
-                    'Bensin',
-                    'Mandel',
-                    'Hasselnöt',
-                    'Honung',
-                    'Torkad frukt',
-                  ].map((v) => ({ label: v, value: v }))}
+                  options={buildFlavourOptions(TERTIARY_VOCAB, 'tertiary', wineType)}
                   value={tertiaryAromas}
                   onValueChange={setTertiaryAromas}
                   placeholder="Välj aromer"
@@ -1065,53 +1036,7 @@ export function WineReviewForm({
               >
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={[
-                    'Jordgubbe',
-                    'Päron',
-                    'Persika',
-                    'Apelsin',
-                    'Citron',
-                    'Äpple',
-                    'Krusbär',
-                    'Grapefrukt',
-                    'Druva',
-                    'Lime',
-                    'Aprikos',
-                    'Banan',
-                    'Nektarin',
-                    'Litchi',
-                    'Mango',
-                    'Passionsfrukt',
-                    'Melon',
-                    'Ananas',
-                    'Tranbär',
-                    'Röda vinbär',
-                    'Hallon',
-                    'Röda körsbär',
-                    'Svarta vinbär',
-                    'Björnbär',
-                    'Mörka körsbär',
-                    'Blåbär',
-                    'Mörka plommon',
-                    'Röda plommon',
-                    'Blomma',
-                    'Ros',
-                    'Viol',
-                    'Grön paprika',
-                    'Gräs',
-                    'Tomatblad',
-                    'Sparris',
-                    'Eukalyptus',
-                    'Mynta',
-                    'Fänkål',
-                    'Dill',
-                    'Torkade örter',
-                    'Svart- & Vitpeppar',
-                    'Lakrits',
-                    'Omogen frukt',
-                    'Mogen frukt',
-                    'Blöta stenar',
-                  ].map((v) => ({ label: v, value: v }))}
+                  options={buildFlavourOptions(PRIMARY_VOCAB, 'primary', wineType)}
                   value={primaryFlavours}
                   onValueChange={setPrimaryFlavours}
                   placeholder="Välj smaker"
@@ -1121,29 +1046,7 @@ export function WineReviewForm({
               <InputRow label="Sekundära smaker" attemptSubmit={attemptSubmit}>
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={[
-                    'Vanilj',
-                    'Ceder',
-                    'Kex',
-                    'Bröd',
-                    'Bröddeg',
-                    'yoghurt',
-                    'Grädde',
-                    'Smör',
-                    'Ost',
-                    'Kokosnöt',
-                    'Förkolnat trä',
-                    'Rök',
-                    'Godis',
-                    'Bakverk',
-                    'Rostat bröd',
-                    'Kryddnejlika',
-                    'Kanel',
-                    'Muskot',
-                    'Ingefära',
-                    'Kokt frukt',
-                    'Kaffe',
-                  ].map((v) => ({ label: v, value: v }))}
+                  options={buildFlavourOptions(SECONDARY_VOCAB, 'secondary', wineType)}
                   value={secondaryFlavours}
                   onValueChange={setSecondaryFlavours}
                   placeholder="Välj smaker"
@@ -1153,23 +1056,7 @@ export function WineReviewForm({
               <InputRow label="Tertiära smaker" attemptSubmit={attemptSubmit}>
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={[
-                    'Choklad',
-                    'Läder',
-                    'Kola',
-                    'Jord',
-                    'Svamp',
-                    'Kött',
-                    'Tobak',
-                    'Blöta löv',
-                    'Skogsbotten',
-                    'Apelsinmarmelad',
-                    'Bensin',
-                    'Mandel',
-                    'Hasselnöt',
-                    'Honung',
-                    'Torkad frukt',
-                  ].map((v) => ({ label: v, value: v }))}
+                  options={buildFlavourOptions(TERTIARY_VOCAB, 'tertiary', wineType)}
                   value={tertiaryFlavours}
                   onValueChange={setTertiaryFlavours}
                   placeholder="Välj smaker"
