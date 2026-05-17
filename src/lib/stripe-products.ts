@@ -40,6 +40,54 @@ export interface SubscriptionPlan {
   stripeProductId?: string
 }
 
+/**
+ * The "Vinakademin Premium" digital membership tier — single all-you-can-taste
+ * subscription that unlocks members-only TastingTemplates.
+ *
+ * Created in Stripe by scripts/setup-stripe-premium.ts (idempotent). The
+ * resulting price ids land in env vars below.
+ */
+export const VINAKADEMIN_PREMIUM = {
+  productKey: 'vinakademin_premium',
+  productName: 'Vinakademin Premium',
+  productDescription:
+    'Tillgång till alla provningsmallar i biblioteket samt verktyg för att hosta egna provningar.',
+  monthly: {
+    planId: 'monthly' as const,
+    amountSek: 99,
+    nickname: 'Premium - Månadsvis',
+    envVar: 'STRIPE_PREMIUM_MONTHLY_PRICE_ID',
+  },
+  yearly: {
+    planId: 'annual' as const,
+    amountSek: 990,
+    nickname: 'Premium - Årlig',
+    envVar: 'STRIPE_PREMIUM_YEARLY_PRICE_ID',
+  },
+  trialDays: 14,
+  features: [
+    'Tillgång till alla provningsmallar i biblioteket',
+    'Skapa egna provningar och dela med vänner',
+    'Live gissningsspel i blindprovningar',
+    'Detaljerad post-tasting analys + leaderboard',
+    'Stötta Vinakademin direkt',
+  ],
+} as const
+
+export function getPremiumMonthlyPriceId(): string | null {
+  return process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID || null
+}
+
+export function getPremiumYearlyPriceId(): string | null {
+  return process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID || null
+}
+
+export function isPremiumPriceId(priceId: string): 'monthly' | 'annual' | null {
+  if (priceId === process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID) return 'monthly'
+  if (priceId === process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID) return 'annual'
+  return null
+}
+
 // Pre-defined subscription plans for wine club memberships
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {

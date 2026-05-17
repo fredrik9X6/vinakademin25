@@ -297,19 +297,174 @@ async function handleSubscriptionPaymentFailed(invoice: any, _payload: any) {
   // Handle subscription payment failure
 }
 
-async function handleSubscriptionCreated(subscription: any, _payload: any) {
+/**
+ * Vinakademin Premium webhook handlers.
+ *
+ * Stripe is the source of truth for subscription state. We mirror status onto
+ * the User row so /provningsmallar gating + `viewerIsMember` are O(1) reads.
+ * All updates are idempotent — Stripe retries are safe.
+ */
+
+const VINAKADEMIN_PRODUCT_KEY = 'vinakademin_premium'
+
+/** Map Stripe subscription.status onto our Users.subscriptionStatus enum. */
+function mapStripeStatusToUserStatus(
+  stripeStatus: string,
+): 'active' | 'free_trial' | 'past_due' | 'canceled' | 'none' {
+  switch (stripeStatus) {
+    case 'active':
+      return 'active'
+    case 'trialing':
+      return 'free_trial'
+    case 'past_due':
+      return 'past_due'
+    case 'canceled':
+    case 'incomplete_expired':
+    case 'unpaid':
+      return 'canceled'
+    default:
+      return 'none'
+  }
+}
+
+function mapStripeStatusToUserRole(stripeStatus: string): 'subscriber' | 'user' {
+  // Keep access during grace periods (past_due). Lose it on cancel/unpaid.
+  if (
+    stripeStatus === 'active' ||
+    stripeStatus === 'trialing' ||
+    stripeStatus === 'past_due'
+  ) {
+    return 'subscriber'
+  }
+  return 'user'
+}
+
+/**
+ * Look up the user this subscription belongs to. Prefer the metadata.userId
+ * stamped at checkout time; fall back to matching by stripeCustomerId then
+ * by customer email if needed.
+ */
+async function resolveSubscriptionUser(
+  subscription: any,
+  payload: any,
+): Promise<{ id: number; role?: string | null } | null> {
+  const metadataUserId = Number(subscription?.metadata?.userId)
+  if (Number.isInteger(metadataUserId)) {
+    try {
+      const u = await payload.findByID({
+        collection: 'users',
+        id: metadataUserId,
+        overrideAccess: true,
+      })
+      if (u) return u
+    } catch {
+      // fall through
+    }
+  }
+  const customerId =
+    typeof subscription.customer === 'string'
+      ? subscription.customer
+      : subscription.customer?.id
+  if (customerId) {
+    const byCustomer = await payload.find({
+      collection: 'users',
+      where: { stripeCustomerId: { equals: customerId } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (byCustomer.docs.length > 0) return byCustomer.docs[0]
+  }
+  return null
+}
+
+/**
+ * Check whether a subscription is the Vinakademin Premium product. We tag
+ * both the subscription metadata AND the price metadata in setup-stripe-
+ * premium, but other subscription kinds (future products) may live on the
+ * same Stripe account — this guard keeps us from clobbering unrelated rows.
+ */
+function isPremiumSubscription(subscription: any): boolean {
+  if (subscription?.metadata?.kind === VINAKADEMIN_PRODUCT_KEY) return true
+  const items = subscription?.items?.data ?? []
+  for (const item of items) {
+    const md = item?.price?.metadata?.kind
+    if (md === VINAKADEMIN_PRODUCT_KEY) return true
+  }
+  return false
+}
+
+async function syncSubscriptionToUser(subscription: any, payload: any) {
+  if (!isPremiumSubscription(subscription)) {
+    log.info(
+      { subscriptionId: subscription.id, status: subscription.status },
+      'subscription_skipped_not_premium',
+    )
+    return
+  }
+  const user = await resolveSubscriptionUser(subscription, payload)
+  if (!user) {
+    log.warn(
+      { subscriptionId: subscription.id, customer: subscription.customer },
+      'subscription_no_matching_user',
+    )
+    return
+  }
+  const stripeStatus: string = subscription.status
+  const nextStatus = mapStripeStatusToUserStatus(stripeStatus)
+  const nextRole = mapStripeStatusToUserRole(stripeStatus)
+  const customerId =
+    typeof subscription.customer === 'string'
+      ? subscription.customer
+      : subscription.customer?.id
+  const planFromInterval =
+    subscription?.items?.data?.[0]?.price?.recurring?.interval === 'year' ? 'annual' : 'monthly'
+  const expiryTs = subscription.current_period_end as number | undefined
+  const subscriptionExpiry =
+    typeof expiryTs === 'number' ? new Date(expiryTs * 1000).toISOString() : undefined
+
+  // Don't downgrade an admin — admin role is editorial, not subscription-driven.
+  const data: Record<string, unknown> = {
+    subscriptionStatus: nextStatus,
+    subscriptionPlan: nextStatus === 'canceled' || nextStatus === 'none' ? 'none' : planFromInterval,
+  }
+  if (subscriptionExpiry) data.subscriptionExpiry = subscriptionExpiry
+  if (customerId) data.stripeCustomerId = customerId
+  if (user.role !== 'admin') {
+    data.role = nextRole
+  }
+
+  await payload.update({
+    collection: 'users',
+    id: user.id,
+    data: data as never,
+    overrideAccess: true,
+  })
+  log.info(
+    {
+      subscriptionId: subscription.id,
+      userId: user.id,
+      stripeStatus,
+      nextStatus,
+      nextRole,
+    },
+    'subscription_user_synced',
+  )
+}
+
+async function handleSubscriptionCreated(subscription: any, payload: any) {
   log.info({ subscriptionId: subscription.id }, 'Subscription created')
-  // Handle subscription creation
+  await syncSubscriptionToUser(subscription, payload)
 }
 
-async function handleSubscriptionUpdated(subscription: any, _payload: any) {
-  log.info({ subscriptionId: subscription.id }, 'Subscription updated')
-  // Handle subscription updates
+async function handleSubscriptionUpdated(subscription: any, payload: any) {
+  log.info({ subscriptionId: subscription.id, status: subscription.status }, 'Subscription updated')
+  await syncSubscriptionToUser(subscription, payload)
 }
 
-async function handleSubscriptionDeleted(subscription: any, _payload: any) {
+async function handleSubscriptionDeleted(subscription: any, payload: any) {
   log.info({ subscriptionId: subscription.id }, 'Subscription deleted')
-  // Handle subscription deletion
+  // Stripe sends status='canceled' on the deleted subscription — same path.
+  await syncSubscriptionToUser({ ...subscription, status: 'canceled' }, payload)
 }
 
 const getCheckoutEmail = (session: any): string | null => {

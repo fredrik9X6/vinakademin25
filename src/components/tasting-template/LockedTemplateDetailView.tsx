@@ -102,9 +102,8 @@ export function LockedTemplateDetailView({
               </div>
             </div>
             <div className="flex-shrink-0">
-              {/* Chunk Q will swap this for a real /bli-medlem CTA. */}
-              <Button size="sm" disabled>
-                Kommer snart
+              <Button asChild size="sm">
+                <Link href="/bli-medlem">Bli medlem</Link>
               </Button>
             </div>
           </CardContent>
@@ -146,11 +145,11 @@ export function LockedTemplateDetailView({
       </div>
 
       <aside className="md:sticky md:top-20 md:self-start space-y-2">
-        <Button disabled className="w-full">
-          Kommer snart
+        <Button asChild className="w-full">
+          <Link href="/bli-medlem">Bli medlem</Link>
         </Button>
         <p className="text-xs text-muted-foreground text-center">
-          Medlemskap kommer snart — då kan du använda mallen som grund för en egen provning.
+          Bli medlem för att låsa upp mallen och använda den som grund för en egen provning.
         </p>
       </aside>
     </div>
