@@ -64,6 +64,13 @@ type WineRow = {
    * with fallback to joined library wine data + raw price. Null fields mean
    * that scoring tier is disabled for this wine. */
   blindAnswer: BlindAnswer
+  /** Server-baked easy-mode dropdown options. Present only when the session
+   * has `blindGuessEasyMode: true` AND the wine isn't yet revealed AND the
+   * viewer is a guest. Null tiers fall back to the full enum. */
+  easyModeOptions: {
+    countries: string[] | null
+    grapes: string[] | null
+  } | null
 }
 
 function rowFromEntry(
@@ -75,10 +82,24 @@ function rowFromEntry(
     typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry === 'string'
       ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
       : null
-  const overrideGrape =
-    typeof (w as { blindAnswerGrape?: string | null }).blindAnswerGrape === 'string'
-      ? ((w as { blindAnswerGrape?: string | null }).blindAnswerGrape as string)
-      : null
+  const overrideGrapes = Array.isArray(
+    (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes,
+  )
+    ? ((w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes as string[]).filter(
+        (g) => typeof g === 'string' && g.trim().length > 0,
+      )
+    : []
+  // Easy-mode decoy set + flag are baked onto the wine entry by the page's
+  // redaction logic when session.blindGuessEasyMode is true and the wine
+  // isn't revealed yet. Pre-revealed wines pass through with no field, so
+  // both undefined and null collapse to "render the full enum".
+  const easyModeOptions =
+    (w as {
+      easyModeOptions?: {
+        countries: string[] | null
+        grapes: string[] | null
+      } | null
+    }).easyModeOptions ?? null
   const overridePriceBucket =
     ((w as { blindAnswerPriceBucket?: PriceBucket | null }).blindAnswerPriceBucket ?? null) as
       | PriceBucket
@@ -114,10 +135,11 @@ function rowFromEntry(
       customWineSnapshot: null,
       blindAnswer: {
         country: overrideCountry ?? libCountry,
-        grape: overrideGrape ?? libGrape,
+        grapes: overrideGrapes.length > 0 ? overrideGrapes : libGrape ? [libGrape] : [],
         priceBucket: overridePriceBucket,
         priceSek: libPriceSek,
       },
+      easyModeOptions,
     }
   }
   const c = w.customWine
@@ -151,10 +173,11 @@ function rowFromEntry(
       : null,
     blindAnswer: {
       country: overrideCountry,
-      grape: overrideGrape,
+      grapes: overrideGrapes,
       priceBucket: overridePriceBucket,
       priceSek: c?.priceSek ?? null,
     },
+    easyModeOptions,
   }
 }
 
@@ -521,6 +544,7 @@ export function PlanSessionContent({
                             pourOrder={row.pourOrder}
                             isRevealed={effectiveRevealed.has(row.pourOrder)}
                             answer={row.blindAnswer}
+                            easyModeOptions={row.easyModeOptions}
                             initialGuess={(() => {
                               const g = myGuesses.get(row.pourOrder)
                               return g ?? null

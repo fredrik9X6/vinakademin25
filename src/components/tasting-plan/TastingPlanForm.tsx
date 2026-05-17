@@ -51,7 +51,7 @@ type PriceBucket = 'under_100' | '100_200' | '200_300' | '300_500' | '500_plus'
 
 type BlindAnswersState = {
   country: string | null
-  grape: string | null
+  grapes: string[]
   priceBucket: PriceBucket | null
 }
 
@@ -164,9 +164,20 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
     const pourOrder = w.pourOrder ?? idx + 1
     const hostNotes = w.hostNotes ?? ''
     const key = w.id ?? nextKey()
+    // Read the new `blindAnswerGrapes` array; fall back to the legacy
+    // single-value `blindAnswerGrape` (now removed in DB but stale in
+    // in-flight unsaved drafts on older clients — defensive read).
+    const storedGrapesRaw =
+      (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes ??
+      ((w as { blindAnswerGrape?: string | null }).blindAnswerGrape
+        ? [(w as { blindAnswerGrape: string }).blindAnswerGrape]
+        : [])
+    const storedGrapes = Array.isArray(storedGrapesRaw)
+      ? storedGrapesRaw.filter((g) => typeof g === 'string' && g.trim().length > 0)
+      : []
     const storedBlind: BlindAnswersState = {
       country: (w as { blindAnswerCountry?: string | null }).blindAnswerCountry ?? null,
-      grape: (w as { blindAnswerGrape?: string | null }).blindAnswerGrape ?? null,
+      grapes: storedGrapes,
       priceBucket:
         ((w as { blindAnswerPriceBucket?: PriceBucket | null }).blindAnswerPriceBucket ??
           null) as PriceBucket | null,
@@ -191,10 +202,16 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
           ? (lib.grapes[0] as { name?: string }).name ?? null
           : null
       // Pre-fill blind answers from the library wine when the host hasn't set
-      // their own override. Stored values always win.
+      // their own override. Stored values always win. For grapes: if no
+      // override is stored AND the library wine has a known grape, seed the
+      // array with that single value (the host can add more for blends).
       const blindAnswers: BlindAnswersState = {
         country: storedBlind.country ?? country ?? null,
-        grape: storedBlind.grape ?? libGrape ?? null,
+        grapes: storedBlind.grapes.length > 0
+          ? storedBlind.grapes
+          : libGrape
+            ? [libGrape]
+            : [],
         priceBucket: storedBlind.priceBucket,
       }
       return {
@@ -250,6 +267,10 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
   const [blindTastingByDefault, setBlindTastingByDefault] = React.useState<boolean>(
     initialPlan?.blindTastingByDefault ?? false,
   )
+  const [blindGuessEasyModeByDefault, setBlindGuessEasyModeByDefault] = React.useState<boolean>(
+    (initialPlan as { blindGuessEasyModeByDefault?: boolean } | undefined)
+      ?.blindGuessEasyModeByDefault ?? false,
+  )
   const [defaultMinutesPerWine, setDefaultMinutesPerWine] = React.useState<number | ''>(
     initialPlan?.defaultMinutesPerWine ?? '',
   )
@@ -264,6 +285,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
   // non-default value exists, so most members never see the section.
   const hasNonDefaultAdvanced =
     blindTastingByDefault ||
+    blindGuessEasyModeByDefault ||
     (defaultMinutesPerWine !== '' && defaultMinutesPerWine !== null) ||
     publishedToProfile ||
     (hostScript ?? '').trim().length > 0
@@ -322,7 +344,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           // price bucket are left to the host to fill in or auto-derive.
           blindAnswers: {
             country: meta?.country ?? null,
-            grape: null,
+            grapes: [],
             priceBucket: null,
           },
         },
@@ -389,6 +411,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
       description: description || undefined,
       targetParticipants,
       blindTastingByDefault,
+      blindGuessEasyModeByDefault,
       defaultMinutesPerWine:
         defaultMinutesPerWine === '' ? null : Number(defaultMinutesPerWine),
       publishedToProfile,
@@ -399,7 +422,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         pourOrder: idx + 1,
         hostNotes: w.hostNotes,
         blindAnswerCountry: w.blindAnswers.country,
-        blindAnswerGrape: w.blindAnswers.grape,
+        blindAnswerGrapes: w.blindAnswers.grapes,
         blindAnswerPriceBucket: w.blindAnswers.priceBucket,
       })),
     }
@@ -490,6 +513,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     description,
     targetParticipants,
     blindTastingByDefault,
+    blindGuessEasyModeByDefault,
     defaultMinutesPerWine,
     publishedToProfile,
     hostScript,
@@ -720,6 +744,25 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
                 <span className="font-medium">Blindprovning</span>{' '}
                 <span className="text-muted-foreground">
                   — viner visas anonymt tills du avslöjar dem.
+                </span>
+              </span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-input accent-brand-400"
+                checked={blindGuessEasyModeByDefault}
+                onChange={(e) => setBlindGuessEasyModeByDefault(e.target.checked)}
+                disabled={!blindTastingByDefault}
+              />
+              <span className="text-sm">
+                <span
+                  className={`font-medium${!blindTastingByDefault ? ' text-muted-foreground' : ''}`}
+                >
+                  Lättare gissningar
+                </span>{' '}
+                <span className="text-muted-foreground">
+                  — gäster väljer från 4 alternativ per fråga istället för hela listan.
                 </span>
               </span>
             </label>

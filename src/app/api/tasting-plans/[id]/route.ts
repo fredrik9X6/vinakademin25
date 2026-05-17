@@ -25,7 +25,7 @@ type WineEntry = {
   pourOrder?: number
   hostNotes?: string
   blindAnswerCountry?: string | null
-  blindAnswerGrape?: string | null
+  blindAnswerGrapes?: string[] | null
   blindAnswerPriceBucket?: PriceBucket | null
 }
 
@@ -34,6 +34,7 @@ type PatchBody = {
   description?: string
   targetParticipants?: number
   blindTastingByDefault?: boolean
+  blindGuessEasyModeByDefault?: boolean
   defaultMinutesPerWine?: number | null
   publishedToProfile?: boolean
   wines?: WineEntry[]
@@ -109,6 +110,8 @@ export async function PATCH(
   if (body.targetParticipants !== undefined) data.targetParticipants = body.targetParticipants
   if (body.blindTastingByDefault !== undefined)
     data.blindTastingByDefault = body.blindTastingByDefault
+  if (body.blindGuessEasyModeByDefault !== undefined)
+    data.blindGuessEasyModeByDefault = body.blindGuessEasyModeByDefault
   if (body.defaultMinutesPerWine !== undefined)
     data.defaultMinutesPerWine = body.defaultMinutesPerWine
   if (body.publishedToProfile !== undefined)
@@ -120,7 +123,7 @@ export async function PATCH(
       pourOrder: w.pourOrder ?? idx + 1,
       hostNotes: w.hostNotes ?? '',
       blindAnswerCountry: w.blindAnswerCountry ?? null,
-      blindAnswerGrape: w.blindAnswerGrape ?? null,
+      blindAnswerGrapes: Array.isArray(w.blindAnswerGrapes) ? w.blindAnswerGrapes : [],
       blindAnswerPriceBucket: w.blindAnswerPriceBucket ?? null,
     }))
   }

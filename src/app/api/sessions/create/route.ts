@@ -107,6 +107,14 @@ export async function POST(request: NextRequest) {
         : false
     const effectiveBlind = explicitBlind ?? planDefaultBlind
 
+    // Same shape for easy-mode toggle: copied from the plan default at create
+    // time. We don't expose a body override yet — the session-time toggle UI
+    // is a future addition.
+    const planDefaultEasyMode =
+      tastingPlanId && typeof (plan as any)?.blindGuessEasyModeByDefault === 'boolean'
+        ? Boolean((plan as any).blindGuessEasyModeByDefault)
+        : false
+
     // Generate unique join code
     let joinCode = generateJoinCode()
     let isUnique = false
@@ -155,6 +163,7 @@ export async function POST(request: NextRequest) {
         maxParticipants,
         expiresAt: expiresAt.toISOString(),
         blindTasting: effectiveBlind,
+        blindGuessEasyMode: planDefaultEasyMode,
         revealedPourOrders: [],
       },
     })

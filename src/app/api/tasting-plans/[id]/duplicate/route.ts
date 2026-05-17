@@ -69,6 +69,23 @@ export async function POST(
       : undefined,
     pourOrder: w.pourOrder ?? idx + 1,
     hostNotes: w.hostNotes ?? '',
+    // Carry blind-tasting answers across the duplicate so the host doesn't
+    // have to re-enter them on the clone.
+    blindAnswerCountry:
+      (w as { blindAnswerCountry?: string | null }).blindAnswerCountry ?? null,
+    blindAnswerGrapes: Array.isArray(
+      (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes,
+    )
+      ? ((w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes as string[])
+      : [],
+    blindAnswerPriceBucket:
+      ((w as { blindAnswerPriceBucket?: unknown }).blindAnswerPriceBucket ?? null) as
+        | 'under_100'
+        | '100_200'
+        | '200_300'
+        | '300_500'
+        | '500_plus'
+        | null,
   }))
 
   const titleBase = source.title.replace(/\s*\(kopia\)$/i, '').trim()
@@ -83,6 +100,9 @@ export async function POST(
         description: source.description || undefined,
         targetParticipants: source.targetParticipants ?? 4,
         blindTastingByDefault: source.blindTastingByDefault ?? false,
+        blindGuessEasyModeByDefault:
+          (source as { blindGuessEasyModeByDefault?: boolean }).blindGuessEasyModeByDefault ??
+          false,
         defaultMinutesPerWine: source.defaultMinutesPerWine ?? null,
         // Clone starts unpublished — host can re-publish once happy with it.
         publishedToProfile: false,

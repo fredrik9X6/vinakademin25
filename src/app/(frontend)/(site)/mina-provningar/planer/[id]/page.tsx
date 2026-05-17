@@ -4,7 +4,12 @@ import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { PlanDetailView } from '@/components/tasting-plan/PlanDetailView'
 import { PlanSessionShell } from '@/components/tasting-plan/PlanSessionShell'
+import { COUNTRIES, GRAPES } from '@/lib/blind-guess-vocab'
+import { pickEasyModeOptions } from '@/lib/blind-guess-decoys'
 import type { TastingPlan, CourseSession } from '@/payload-types'
+
+/** Default options-per-tier in easy mode (correct + 3 decoys, or all corrects if a blend hits the cap). */
+const EASY_MODE_OPTION_COUNT = 4
 
 export default async function PlanDetailPage({
   params,
@@ -69,11 +74,49 @@ export default async function PlanDetailPage({
         const revealed: number[] = Array.isArray((session as any).revealedPourOrders)
           ? ((session as any).revealedPourOrders as number[])
           : []
+        const easyMode = Boolean((session as any).blindGuessEasyMode)
         renderPlan = {
           ...plan,
           wines: (plan.wines ?? []).map((w, idx) => {
             const pourOrder = w.pourOrder ?? idx + 1
             if (revealed.includes(pourOrder)) return w
+
+            // Compute easy-mode decoy options from the ORIGINAL (unredacted)
+            // wine entry so the correct answer is guaranteed in the set. The
+            // resulting `easyModeOptions` field is non-persistent — it lives
+            // only on the render payload for the BlindGuessCard to consume.
+            let easyModeOptions: {
+              countries: string[] | null
+              grapes: string[] | null
+            } | null = null
+            if (easyMode) {
+              const origCountry =
+                typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry ===
+                'string'
+                  ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
+                  : null
+              const origGrapes = Array.isArray(
+                (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes,
+              )
+                ? ((w as { blindAnswerGrapes?: string[] | null })
+                    .blindAnswerGrapes as string[])
+                : []
+              easyModeOptions = {
+                countries: pickEasyModeOptions({
+                  pool: COUNTRIES as ReadonlyArray<string>,
+                  answers: origCountry ? [origCountry] : [],
+                  count: EASY_MODE_OPTION_COUNT,
+                  seed: `${session.id}:${pourOrder}:country`,
+                }),
+                grapes: pickEasyModeOptions({
+                  pool: GRAPES as ReadonlyArray<string>,
+                  answers: origGrapes,
+                  count: EASY_MODE_OPTION_COUNT,
+                  seed: `${session.id}:${pourOrder}:grape`,
+                }),
+              }
+            }
+
             return {
               ...w,
               libraryWine: null,
@@ -82,8 +125,9 @@ export default async function PlanDetailPage({
               // Strip the blind-tasting answers too — they'd otherwise leak
               // the country/grape/price-bucket to the guest before reveal.
               blindAnswerCountry: null,
-              blindAnswerGrape: null,
+              blindAnswerGrapes: null,
               blindAnswerPriceBucket: null,
+              easyModeOptions,
             }
           }),
         } as typeof plan
