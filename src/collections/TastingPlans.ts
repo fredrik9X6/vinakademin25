@@ -63,6 +63,15 @@ export const TastingPlans: CollectionConfig = {
       },
     },
     {
+      name: 'blindGuessEasyModeByDefault',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description:
+          'Easy mode: blind-guess dropdowns show only 4 options (correct + 3 decoys) instead of the full list. Default for sessions started from this plan.',
+      },
+    },
+    {
       name: 'defaultMinutesPerWine',
       type: 'number',
       min: 1,
@@ -135,9 +144,13 @@ export const TastingPlans: CollectionConfig = {
           admin: { description: 'Land som rätt svar i blind provning (frivilligt).' },
         },
         {
-          name: 'blindAnswerGrape',
+          name: 'blindAnswerGrapes',
           type: 'text',
-          admin: { description: 'Ange den dominerande druvan som rätt svar (frivilligt).' },
+          hasMany: true,
+          admin: {
+            description:
+              'Acceptabla druvor som rätt svar (frivilligt). Lägg till flera för blends — gäster får poäng om de gissar någon av dem.',
+          },
         },
         {
           name: 'blindAnswerPriceBucket',

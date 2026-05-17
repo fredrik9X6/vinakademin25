@@ -31,7 +31,7 @@ function buildAnswerByPour(wines: ReadonlyArray<unknown>): Map<number, BlindAnsw
         | null
       customWine?: { priceSek?: number | null } | null
       blindAnswerCountry?: string | null
-      blindAnswerGrape?: string | null
+      blindAnswerGrapes?: string[] | null
       blindAnswerPriceBucket?: PriceBucket | null
     }
     const pour = w.pourOrder ?? idx + 1
@@ -46,9 +46,14 @@ function buildAnswerByPour(wines: ReadonlyArray<unknown>): Map<number, BlindAnsw
         : null
     const libPrice = typeof lib?.price === 'number' ? lib.price : null
     const cust = !lib && w.customWine ? w.customWine : null
+    const overrideGrapes = Array.isArray(w.blindAnswerGrapes)
+      ? (w.blindAnswerGrapes as string[]).filter(
+          (g) => typeof g === 'string' && g.trim().length > 0,
+        )
+      : []
     out.set(pour, {
       country: w.blindAnswerCountry ?? libCountry,
-      grape: w.blindAnswerGrape ?? libGrape,
+      grapes: overrideGrapes.length > 0 ? overrideGrapes : libGrape ? [libGrape] : [],
       priceBucket: w.blindAnswerPriceBucket ?? null,
       priceSek: libPrice ?? cust?.priceSek ?? null,
     })

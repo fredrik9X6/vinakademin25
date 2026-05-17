@@ -378,17 +378,20 @@ export async function getSessionRecap(
         typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry === 'string'
           ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
           : null
-      const overrideGrape =
-        typeof (w as { blindAnswerGrape?: string | null }).blindAnswerGrape === 'string'
-          ? ((w as { blindAnswerGrape?: string | null }).blindAnswerGrape as string)
-          : null
+      const overrideGrapes = Array.isArray(
+        (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes,
+      )
+        ? ((w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes as string[]).filter(
+            (g) => typeof g === 'string' && g.trim().length > 0,
+          )
+        : []
       const overridePriceBucket =
         ((w as { blindAnswerPriceBucket?: PriceBucket | null }).blindAnswerPriceBucket ?? null) as
           | PriceBucket
           | null
       answerByPour.set(pourOrder, {
         country: overrideCountry ?? libCountry,
-        grape: overrideGrape ?? libGrape,
+        grapes: overrideGrapes.length > 0 ? overrideGrapes : libGrape ? [libGrape] : [],
         priceBucket: overridePriceBucket,
         priceSek: libPrice ?? cust?.priceSek ?? null,
       })

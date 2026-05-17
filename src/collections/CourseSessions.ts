@@ -100,6 +100,16 @@ export const CourseSessions: CollectionConfig = {
       },
     },
     {
+      name: 'blindGuessEasyMode',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description:
+          'When true, blind-guess dropdowns surface only 4 options per tier (correct + 3 decoys). Stamped from plan.blindGuessEasyModeByDefault at create-time.',
+      },
+    },
+    {
       name: 'revealedPourOrders',
       type: 'json',
       defaultValue: [],

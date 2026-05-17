@@ -25,7 +25,7 @@ type WineEntry = {
   pourOrder?: number
   hostNotes?: string
   blindAnswerCountry?: string | null
-  blindAnswerGrape?: string | null
+  blindAnswerGrapes?: string[] | null
   blindAnswerPriceBucket?: PriceBucket | null
 }
 
@@ -34,6 +34,7 @@ type CreateBody = {
   description?: string
   targetParticipants?: number
   blindTastingByDefault?: boolean
+  blindGuessEasyModeByDefault?: boolean
   defaultMinutesPerWine?: number | null
   publishedToProfile?: boolean
   wines?: WineEntry[]
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest) {
         description: body.description?.trim() || undefined,
         targetParticipants: body.targetParticipants ?? 4,
         blindTastingByDefault: body.blindTastingByDefault ?? false,
+        blindGuessEasyModeByDefault: body.blindGuessEasyModeByDefault ?? false,
         defaultMinutesPerWine: body.defaultMinutesPerWine ?? null,
         publishedToProfile: body.publishedToProfile ?? false,
         wines: (body.wines || []).map((w, idx) => ({
@@ -96,7 +98,7 @@ export async function POST(request: NextRequest) {
           pourOrder: w.pourOrder ?? idx + 1,
           hostNotes: w.hostNotes ?? '',
           blindAnswerCountry: w.blindAnswerCountry ?? null,
-          blindAnswerGrape: w.blindAnswerGrape ?? null,
+          blindAnswerGrapes: Array.isArray(w.blindAnswerGrapes) ? w.blindAnswerGrapes : [],
           blindAnswerPriceBucket: w.blindAnswerPriceBucket ?? null,
         })),
         hostScript: body.hostScript ?? undefined,

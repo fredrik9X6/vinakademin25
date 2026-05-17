@@ -33,6 +33,13 @@ export interface BlindGuessCardProps {
     grape: string | null
     priceBucket: PriceBucket | null
   } | null
+  /** Server-baked easy-mode dropdown options. When provided, the country /
+   * grape dropdowns render only these values instead of the full COUNTRIES /
+   * GRAPES enums. Price-bucket always renders all 5 buckets. */
+  easyModeOptions?: {
+    countries: string[] | null
+    grapes: string[] | null
+  } | null
 }
 
 interface FormState {
@@ -47,7 +54,14 @@ export function BlindGuessCard({
   isRevealed,
   answer,
   initialGuess,
+  easyModeOptions = null,
 }: BlindGuessCardProps) {
+  const countryOptions = easyModeOptions?.countries ?? (COUNTRIES as ReadonlyArray<string>)
+  const grapeOptions = easyModeOptions?.grapes ?? (GRAPES as ReadonlyArray<string>)
+  const isEasyMode = easyModeOptions != null
+  // First acceptable grape for the "rätt:" hint in the post-reveal scored row.
+  const firstAnswerGrape =
+    Array.isArray(answer.grapes) && answer.grapes.length > 0 ? answer.grapes[0] : null
   const [submitted, setSubmitted] = React.useState<FormState | null>(
     initialGuess
       ? {
@@ -128,7 +142,7 @@ export function BlindGuessCard({
               correct={scored.grapeCorrect}
               label="Druva"
               guess={submitted.grape}
-              answer={answer.grape ?? null}
+              answer={firstAnswerGrape}
             />
           )}
           {scored.priceScored && (
@@ -193,9 +207,16 @@ export function BlindGuessCard({
   // Edit mode (initial or after "Ändra")
   return (
     <div className="mt-3 rounded-md border bg-card p-3 space-y-2">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-        Gissa innan värden avslöjar
-      </p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Gissa innan värden avslöjar
+        </p>
+        {isEasyMode && (
+          <span className="inline-flex items-center rounded-full bg-brand-400/10 text-brand-400 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
+            Lättare läge
+          </span>
+        )}
+      </div>
       <div className="grid gap-2 sm:grid-cols-3">
         <Select
           value={editing.country ?? ''}
@@ -205,7 +226,7 @@ export function BlindGuessCard({
             <SelectValue placeholder="Land" />
           </SelectTrigger>
           <SelectContent>
-            {COUNTRIES.map((c) => (
+            {countryOptions.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
               </SelectItem>
@@ -220,7 +241,7 @@ export function BlindGuessCard({
             <SelectValue placeholder="Druva" />
           </SelectTrigger>
           <SelectContent>
-            {GRAPES.map((g) => (
+            {grapeOptions.map((g) => (
               <SelectItem key={g} value={g}>
                 {g}
               </SelectItem>

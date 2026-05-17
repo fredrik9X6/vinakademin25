@@ -1350,6 +1350,10 @@ export interface CourseSession {
    */
   blindTasting?: boolean | null;
   /**
+   * When true, blind-guess dropdowns surface only 4 options per tier (correct + 3 decoys). Stamped from plan.blindGuessEasyModeByDefault at create-time.
+   */
+  blindGuessEasyMode?: boolean | null;
+  /**
    * Pour orders the host has revealed (blind mode). JSON array of numbers.
    */
   revealedPourOrders?:
@@ -1436,6 +1440,10 @@ export interface TastingPlan {
    */
   blindTastingByDefault?: boolean | null;
   /**
+   * Easy mode: blind-guess dropdowns show only 4 options (correct + 3 decoys) instead of the full list. Default for sessions started from this plan.
+   */
+  blindGuessEasyModeByDefault?: boolean | null;
+  /**
    * Optional per-wine timer in minutes (1–60). Leave empty for no timer.
    */
   defaultMinutesPerWine?: number | null;
@@ -1471,9 +1479,9 @@ export interface TastingPlan {
          */
         blindAnswerCountry?: string | null;
         /**
-         * Ange den dominerande druvan som rätt svar (frivilligt).
+         * Acceptabla druvor som rätt svar (frivilligt). Lägg till flera för blends — gäster får poäng om de gissar någon av dem.
          */
-        blindAnswerGrape?: string | null;
+        blindAnswerGrapes?: string[] | null;
         /**
          * Prisintervall som rätt svar. Lämna tom så härleds det från vinets pris (om satt).
          */
@@ -4332,6 +4340,7 @@ export interface CourseSessionsSelect<T extends boolean = true> {
   currentLesson?: T;
   currentWinePourOrder?: T;
   blindTasting?: T;
+  blindGuessEasyMode?: T;
   revealedPourOrders?: T;
   currentWineFocusStartedAt?: T;
   currentQuiz?: T;
@@ -4393,6 +4402,7 @@ export interface TastingPlansSelect<T extends boolean = true> {
   description?: T;
   targetParticipants?: T;
   blindTastingByDefault?: T;
+  blindGuessEasyModeByDefault?: T;
   defaultMinutesPerWine?: T;
   wines?:
     | T
@@ -4413,7 +4423,7 @@ export interface TastingPlansSelect<T extends boolean = true> {
         pourOrder?: T;
         hostNotes?: T;
         blindAnswerCountry?: T;
-        blindAnswerGrape?: T;
+        blindAnswerGrapes?: T;
         blindAnswerPriceBucket?: T;
         id?: T;
       };
