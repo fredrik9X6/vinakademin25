@@ -1536,6 +1536,10 @@ export interface TastingTemplate {
    * Free-form tags shown as filter chips on /provningsmallar.
    */
   tags?: string[] | null;
+  /**
+   * Free templates render wine details to everyone. Members-only templates redact wines for non-members; only count + total price are visible.
+   */
+  accessLevel: 'free' | 'members_only';
   publishedStatus: 'draft' | 'published';
   /**
    * Stamped automatically the first time the template is published.
@@ -4456,6 +4460,7 @@ export interface TastingTemplatesSelect<T extends boolean = true> {
   seoTitle?: T;
   seoDescription?: T;
   tags?: T;
+  accessLevel?: T;
   publishedStatus?: T;
   publishedAt?: T;
   updatedAt?: T;
