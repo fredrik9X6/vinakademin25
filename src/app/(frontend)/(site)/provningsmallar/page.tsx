@@ -4,6 +4,9 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { TemplateCard } from '@/components/tasting-template/TemplateCard'
 import { TagFilter, type TagCount } from '@/components/tasting-template/TagFilter'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
+import { getUser } from '@/lib/get-user'
 import { cn } from '@/lib/utils'
 import type { TastingTemplate } from '@/payload-types'
 
@@ -26,6 +29,9 @@ export default async function ProvningsmallarListing({
   const activeTag = (sp.tag || '').trim() || null
   const accessFilter: AccessFilter =
     sp.access === 'free' || sp.access === 'members_only' ? sp.access : null
+
+  const user = await getUser()
+  const isAdmin = user?.role === 'admin'
 
   const payload = await getPayload({ config })
 
@@ -98,12 +104,22 @@ export default async function ProvningsmallarListing({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <header className="mb-6">
-        <h1 className="text-2xl font-heading">Provningsmallar</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Färdiga provningsupplägg från Vinakademin. Klona en mall, anpassa, och starta din egen
-          provning.
-        </p>
+      <header className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-heading">Provningsmallar</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Färdiga provningsupplägg från Vinakademin. Klona en mall, anpassa, och starta din
+            egen provning.
+          </p>
+        </div>
+        {isAdmin && (
+          <Button asChild size="sm" className="flex-shrink-0">
+            <Link href="/provningsmallar/ny">
+              <Plus className="h-4 w-4 mr-1" />
+              Skapa ny mall
+            </Link>
+          </Button>
+        )}
       </header>
 
       <div className="mb-4 flex flex-wrap gap-2">
