@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Wine as WineIcon, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { getUser } from '@/lib/get-user'
 import { viewerIsMember } from '@/lib/membership'
 import {
@@ -90,11 +90,8 @@ export default async function BliMedlemPage({
       <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16 space-y-10">
         {/* Hero */}
         <header className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-brand-gradient-diagonal text-white shadow-[0_10px_24px_-8px_rgba(251,145,76,0.45)]">
-            <WineIcon className="h-6 w-6" />
-          </div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            Vinakademin Premium
+          <p className="font-heading tracking-[-0.015em] leading-[1] text-4xl sm:text-5xl bg-clip-text text-transparent bg-brand-gradient inline-block">
+            Vinakademin+
           </p>
           <h1 className="font-heading tracking-[-0.015em] leading-[1.05] text-4xl sm:text-5xl md:text-6xl">
             Hela vinvärlden{' '}
