@@ -10,7 +10,8 @@ function wineTitle(w: NonNullable<TastingTemplate['wines']>[number]): string {
     const lib = w.libraryWine as Wine
     return lib.name || `Vin #${lib.id}`
   }
-  return 'Vin'
+  const c = (w as { customWine?: { name?: string } }).customWine
+  return c?.name || 'Vin'
 }
 
 function wineSubtitle(w: NonNullable<TastingTemplate['wines']>[number]): string {
@@ -22,15 +23,20 @@ function wineSubtitle(w: NonNullable<TastingTemplate['wines']>[number]): string 
       .filter(Boolean)
       .join(' · ')
   }
-  return ''
+  const c = (w as { customWine?: { producer?: string; vintage?: string } }).customWine
+  if (!c) return ''
+  return [c.producer, c.vintage].filter(Boolean).join(' · ')
 }
 
 function wineThumb(w: NonNullable<TastingTemplate['wines']>[number]): string | null {
-  if (!(w.libraryWine && typeof w.libraryWine === 'object')) return null
-  const lib = w.libraryWine as Wine
-  const image = typeof lib.image === 'object' && lib.image ? lib.image : null
-  if (!image) return null
-  return image.sizes?.bottle?.url ?? image.sizes?.thumbnail?.url ?? image.url ?? null
+  if (w.libraryWine && typeof w.libraryWine === 'object') {
+    const lib = w.libraryWine as Wine
+    const image = typeof lib.image === 'object' && lib.image ? lib.image : null
+    if (!image) return null
+    return image.sizes?.bottle?.url ?? image.sizes?.thumbnail?.url ?? image.url ?? null
+  }
+  const c = (w as { customWine?: { imageUrl?: string } }).customWine
+  return c?.imageUrl ?? null
 }
 
 export interface TemplateDetailViewProps {

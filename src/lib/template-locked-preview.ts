@@ -32,6 +32,13 @@ export function getLockedTemplatePreview(template: TastingTemplate): LockedTempl
         total += price
         hasAnyPrice = true
       }
+      continue
+    }
+    const cust = (w as { customWine?: { priceSek?: number | null } }).customWine
+    const custPrice = typeof cust?.priceSek === 'number' ? cust.priceSek : null
+    if (custPrice != null && custPrice >= 0) {
+      total += custPrice
+      hasAnyPrice = true
     }
   }
 

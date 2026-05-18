@@ -6,8 +6,20 @@ import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('api-tasting-templates-id')
 
+type CustomWine = {
+  name?: string
+  producer?: string
+  vintage?: string
+  type?: 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
+  systembolagetUrl?: string
+  priceSek?: number
+  systembolagetProductNumber?: string
+  imageUrl?: string
+}
+
 type WineEntry = {
-  libraryWine: number
+  libraryWine?: number
+  customWine?: CustomWine
   pourOrder?: number
   hostNotes?: string
 }
@@ -96,7 +108,8 @@ export async function PATCH(
   if (body.hostScript !== undefined) data.hostScript = body.hostScript.trim() || null
   if (body.wines !== undefined) {
     data.wines = body.wines.map((w, idx) => ({
-      libraryWine: w.libraryWine,
+      libraryWine: typeof w.libraryWine === 'number' ? w.libraryWine : null,
+      customWine: w.customWine?.name?.trim() ? w.customWine : undefined,
       pourOrder: w.pourOrder ?? idx + 1,
       hostNotes: w.hostNotes ?? '',
     }))

@@ -5,9 +5,11 @@ import { Wine as WineIcon, Lock } from 'lucide-react'
 
 export interface TemplateCardProps {
   template: TastingTemplate
+  /** Override the destination href. Default: /provningsmallar/<slug>. */
+  href?: string
 }
 
-export function TemplateCard({ template }: TemplateCardProps) {
+export function TemplateCard({ template, href }: TemplateCardProps) {
   const wineCount = template.wines?.length ?? 0
   const image =
     typeof template.featuredImage === 'object' && template.featuredImage
@@ -21,7 +23,7 @@ export function TemplateCard({ template }: TemplateCardProps) {
     (template as { accessLevel?: string }).accessLevel === 'members_only'
 
   return (
-    <Link href={`/provningsmallar/${template.slug}`} className="block group">
+    <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group">
       <Card className="overflow-hidden hover:shadow-md transition-shadow">
         <div className="aspect-[4/3] bg-muted relative">
           {imageUrl ? (
