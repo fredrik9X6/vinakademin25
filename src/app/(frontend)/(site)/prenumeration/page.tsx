@@ -59,7 +59,7 @@ export default async function PrenumerationPage({
             <div>
               <p className="text-sm font-medium">Välkommen till Vinakademin Premium!</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Det kan ta en stund innan ditt medlemskap aktiveras. Ladda om sidan om statusen
+                Det kan ta någon sekund innan ditt medlemskap aktiveras. Ladda om sidan om statusen
                 inte uppdateras inom någon minut.
               </p>
             </div>
@@ -75,9 +75,7 @@ export default async function PrenumerationPage({
                 <WineIcon className="h-4 w-4" />
               </div>
               <div>
-                <p className="font-medium">
-                  {status === 'free_trial' ? 'Provperiod aktiv' : 'Du är medlem'}
-                </p>
+                <p className="font-medium">Du är medlem</p>
                 <p className="text-xs text-muted-foreground">
                   Plan: {plan === 'annual' ? 'Årlig' : plan === 'monthly' ? 'Månadsvis' : 'Premium'}
                   {expiry && ` · Förnyas ${formatDate(expiry)}`}

@@ -88,7 +88,6 @@ export async function POST(request: NextRequest) {
       customer: customer.id,
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        trial_period_days: VINAKADEMIN_PREMIUM.trialDays,
         metadata: {
           userId: String(user.id),
           plan,

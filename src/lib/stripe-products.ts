@@ -64,13 +64,12 @@ export const VINAKADEMIN_PREMIUM = {
     nickname: 'Premium - Årlig',
     envVar: 'STRIPE_PREMIUM_YEARLY_PRICE_ID',
   },
-  trialDays: 14,
   features: [
     'Tillgång till alla provningsmallar i biblioteket',
-    'Skapa egna provningar och dela med vänner',
-    'Live gissningsspel i blindprovningar',
-    'Detaljerad post-tasting analys + leaderboard',
-    'Stötta Vinakademin direkt',
+    'Obegränsat antal egna provningar',
+    'Hosta provningar med fler än 4 deltagare',
+    'Avancerade funktioner — live-poäng, blind-gissning, recap',
+    'Förtur till nya släpp och erbjudanden',
   ],
 } as const
 

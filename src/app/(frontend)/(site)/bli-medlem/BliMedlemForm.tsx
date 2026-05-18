@@ -3,16 +3,14 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Check } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export interface BliMedlemFormProps {
   monthlyPriceId: string
   yearlyPriceId: string
   monthlyAmountSek: number
   yearlyAmountSek: number
-  trialDays: number
   features: ReadonlyArray<string>
   /** When true, viewer is logged out — clicking the CTA bounces to /logga-in. */
   unauthenticated: boolean
@@ -23,7 +21,6 @@ export function BliMedlemForm({
   yearlyPriceId,
   monthlyAmountSek,
   yearlyAmountSek,
-  trialDays,
   features,
   unauthenticated,
 }: BliMedlemFormProps) {
@@ -31,7 +28,7 @@ export function BliMedlemForm({
   const [plan, setPlan] = React.useState<'monthly' | 'yearly'>('yearly')
   const [busy, setBusy] = React.useState(false)
 
-  const yearlyEquivMonthly = (yearlyAmountSek / 12).toFixed(0)
+  const yearlyEquivMonthly = Math.round(yearlyAmountSek / 12)
   const yearlySavings = monthlyAmountSek * 12 - yearlyAmountSek
   const savingsMonths = Math.round(yearlySavings / monthlyAmountSek)
 
@@ -68,75 +65,139 @@ export function BliMedlemForm({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => setPlan('monthly')}
-          className={
-            plan === 'monthly'
-              ? 'rounded-lg border-2 border-brand-400 bg-brand-400/5 p-4 text-left'
-              : 'rounded-lg border-2 border-border bg-card p-4 text-left hover:border-muted-foreground/40 transition-colors'
-          }
-        >
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Månadsvis</div>
-          <div className="mt-1 text-2xl font-heading">
-            {monthlyAmountSek} kr
-            <span className="text-sm font-normal text-muted-foreground"> /mån</span>
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">Avbryt när som helst.</div>
-        </button>
-        <button
-          type="button"
-          onClick={() => setPlan('yearly')}
-          className={
-            plan === 'yearly'
-              ? 'relative rounded-lg border-2 border-brand-400 bg-brand-400/5 p-4 text-left'
-              : 'relative rounded-lg border-2 border-border bg-card p-4 text-left hover:border-muted-foreground/40 transition-colors'
-          }
-        >
-          {savingsMonths > 0 && (
-            <span className="absolute top-2 right-2 inline-flex items-center rounded-full bg-emerald-500 text-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
-              Spara {savingsMonths} månader
-            </span>
-          )}
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Årligen</div>
-          <div className="mt-1 text-2xl font-heading">
-            {yearlyAmountSek} kr
-            <span className="text-sm font-normal text-muted-foreground"> /år</span>
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            Motsvarar {yearlyEquivMonthly} kr/mån.
-          </div>
-        </button>
+    <div className="space-y-8">
+      {/* Plan toggle — two cards, selected one wears the brand gradient border + soft glow. */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <PlanCard
+          selected={plan === 'monthly'}
+          onSelect={() => setPlan('monthly')}
+          eyebrow="Månadsvis"
+          amount={monthlyAmountSek}
+          period="/mån"
+          subline="Avbryt när som helst."
+        />
+        <PlanCard
+          selected={plan === 'yearly'}
+          onSelect={() => setPlan('yearly')}
+          eyebrow="Årligen"
+          amount={yearlyAmountSek}
+          period="/år"
+          subline={`Motsvarar ${yearlyEquivMonthly} kr/mån.`}
+          badge={savingsMonths > 0 ? `Spara ${savingsMonths} månader` : null}
+        />
       </div>
 
-      <Card>
-        <CardContent className="p-4 sm:p-5 space-y-2">
-          <p className="text-sm font-medium">Du får:</p>
-          <ul className="space-y-1.5">
-            {features.map((f) => (
-              <li key={f} className="flex items-start gap-2 text-sm">
-                <Check className="h-4 w-4 mt-0.5 text-brand-400 flex-shrink-0" />
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      {/* Feature list — mirrors the styleguide's stat-tile pattern: brand-tinted square, brand-coloured icon, readable label. */}
+      <div className="rounded-2xl border border-border bg-card p-6 sm:p-7 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Det här ingår
+        </p>
+        <ul className="mt-4 space-y-3">
+          {features.map((f) => (
+            <li key={f} className="flex items-start gap-3 text-[15px] leading-relaxed">
+              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-brand-400/10 text-brand-400">
+                <Check className="h-4 w-4" strokeWidth={2.5} />
+              </span>
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
+      {/* CTA */}
       <div className="space-y-2">
-        <Button onClick={handleSubscribe} disabled={busy} className="w-full" size="lg">
-          {busy
-            ? 'Skickar dig vidare…'
-            : unauthenticated
-              ? 'Logga in för att fortsätta'
-              : `Starta ${trialDays} dagar gratis →`}
-        </Button>
+        <button
+          type="button"
+          onClick={handleSubscribe}
+          disabled={busy}
+          className={cn(
+            'group inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-6 text-[15px] font-medium text-white transition-transform',
+            'bg-brand-gradient hover:bg-brand-gradient-reverse',
+            'shadow-[0_10px_24px_-8px_rgba(251,145,76,0.45)]',
+            'active:scale-[0.99]',
+            busy && 'opacity-70 cursor-not-allowed',
+          )}
+        >
+          {busy ? (
+            'Skickar dig vidare…'
+          ) : unauthenticated ? (
+            <>
+              Logga in för att fortsätta
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </>
+          ) : (
+            <>
+              Bli medlem
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </>
+          )}
+        </button>
         <p className="text-xs text-muted-foreground text-center">
           Avbryt när som helst. Inga bindningstider. Betalning sker via Stripe.
         </p>
       </div>
     </div>
+  )
+}
+
+function PlanCard({
+  selected,
+  onSelect,
+  eyebrow,
+  amount,
+  period,
+  subline,
+  badge,
+}: {
+  selected: boolean
+  onSelect: () => void
+  eyebrow: string
+  amount: number
+  period: string
+  subline: string
+  badge?: string | null
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={cn(
+        'group relative rounded-[20px] p-0.5 text-left transition-all',
+        selected
+          ? 'bg-brand-gradient-tri shadow-[0_10px_30px_-12px_rgba(251,145,76,0.35)]'
+          : 'bg-border hover:bg-muted-foreground/30',
+      )}
+    >
+      <div className="relative h-full rounded-[18px] bg-card p-5 sm:p-6">
+        {badge && (
+          <span className="absolute top-3 right-3 inline-flex items-center rounded-full bg-brand-gradient text-white px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider shadow-sm">
+            {badge}
+          </span>
+        )}
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {eyebrow}
+        </p>
+        <div className="mt-2 flex items-baseline gap-1.5">
+          <span className="font-heading tracking-[-0.015em] text-3xl sm:text-4xl text-foreground">
+            {amount} kr
+          </span>
+          <span className="text-sm text-muted-foreground">{period}</span>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">{subline}</p>
+        {/* Selected-state indicator pip — tiny radio-like circle bottom-right */}
+        <span
+          className={cn(
+            'absolute bottom-3 right-3 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors',
+            selected
+              ? 'border-brand-400 bg-brand-400 text-white'
+              : 'border-muted-foreground/40 bg-transparent',
+          )}
+          aria-hidden
+        >
+          {selected && <Check className="h-3 w-3" strokeWidth={3} />}
+        </span>
+      </div>
+    </button>
   )
 }
