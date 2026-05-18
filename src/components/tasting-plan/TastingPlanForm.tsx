@@ -615,7 +615,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         </div>
         <div>
           <Label>Antal deltagare</Label>
-          <div className="mt-1 inline-flex items-center gap-1 rounded-md border bg-background p-1">
+          <div className="mt-1 flex w-fit items-center gap-1 rounded-md border bg-background p-1">
             <button
               type="button"
               onClick={() => setTargetParticipants((n) => Math.max(1, n - 1))}

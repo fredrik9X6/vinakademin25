@@ -18,19 +18,93 @@ interface BreadcrumbEntry {
   isCurrentPage: boolean
 }
 
-// Route config: section -> { label, apiPath for slug resolution }
-const ROUTE_CONFIG: Record<string, { label: string; titleApi?: string }> = {
-  vinprovningar: { label: 'Vinprovningar', titleApi: '/api/vinprovningar/title' },
-  kurser: { label: 'Vinprovningar', titleApi: '/api/vinprovningar/title' },
-  artiklar: { label: 'Artiklar', titleApi: '/api/blog-posts/title' },
-  vinlistan: { label: 'Vinlistan', titleApi: '/api/wines/title' },
-  regioner: { label: 'Regioner', titleApi: '/api/regions/title' },
-  lander: { label: 'Lander', titleApi: '/api/countries/title' },
-  nyhetsbrev: { label: 'Nyhetsbrev' },
-  'om-oss': { label: 'Om oss' },
-  'mina-provningar': { label: 'Mina Provningar' },
-  profil: { label: 'Profil' },
-  checkout: { label: 'Kassa' },
+/**
+ * Display label for every first-level path segment. Covers both single-page
+ * routes (e.g. `/skapa-provning`) and section roots (e.g. `/vinprovningar`).
+ * Anything not here falls through to `formatSlug()` which does a hyphen-to-
+ * space replacement so we never render "Skapa-provning" again.
+ */
+const PAGE_LABELS: Record<string, string> = {
+  // Section roots
+  vinprovningar: 'Vinprovningar',
+  kurser: 'Vinprovningar',
+  provningsmallar: 'Provningsmallar',
+  artiklar: 'Artiklar',
+  vinlistan: 'Vinlistan',
+  regioner: 'Regioner',
+  lander: 'Länder',
+  // Sections without a detail-title API (or that don't need slug resolution)
+  'mina-provningar': 'Mina provningar',
+  'mina-recensioner': 'Mina recensioner',
+  'mina-sidor': 'Mina sidor',
+  profil: 'Profil',
+  checkout: 'Kassa',
+  // Standalone single-page routes
+  'bli-medlem': 'Bli medlem',
+  prenumeration: 'Prenumeration',
+  'recensera-vin': 'Recensera vin',
+  'skapa-provning': 'Skapa provning',
+  vinkompassen: 'Vinkompassen',
+  'grunderna-i-vin': 'Grunderna i vin',
+  'om-oss': 'Om oss',
+  kontakt: 'Kontakt',
+  nyhetsbrev: 'Nyhetsbrev',
+  hjalp: 'Hjälp',
+  villkor: 'Villkor',
+  integritetspolicy: 'Integritetspolicy',
+  cookies: 'Cookies',
+  sok: 'Sök',
+  installningar: 'Inställningar',
+  styleguide: 'Designsystem',
+  delta: 'Delta',
+  join: 'Anslut',
+  internt: 'Internt',
+  // Auth routes (rarely show breadcrumbs but kept for completeness)
+  'logga-in': 'Logga in',
+  registrera: 'Registrera',
+  'glomt-losenord': 'Glömt lösenord',
+  'aterstall-losenord': 'Återställ lösenord',
+  'verifiera-epost': 'Verifiera e-post',
+  'verifiera-epost-meddelande': 'Verifiera e-post',
+  'aktivera-konto': 'Aktivera konto',
+  onboarding: 'Onboarding',
+}
+
+/**
+ * Static labels for known second-level (and deeper) segments inside a
+ * section. Lets us turn `/provningsmallar/ny` into "Skapa ny mall" instead of
+ * the crude slug fallback.
+ */
+const SUB_LABELS: Record<string, Record<string, string>> = {
+  provningsmallar: {
+    ny: 'Skapa ny mall',
+    redigera: 'Redigera mall',
+  },
+  'mina-provningar': {
+    historik: 'Historik',
+    planer: 'Planer',
+  },
+  artiklar: {
+    kategori: 'Kategori',
+    tagg: 'Tagg',
+  },
+  vinkompassen: {
+    resultat: 'Resultat',
+  },
+  checkout: {
+    success: 'Betalning genomförd',
+  },
+  'skapa-provning': {},
+}
+
+/** Which sections resolve a slug → title via API for the detail breadcrumb. */
+const TITLE_APIS: Record<string, string> = {
+  vinprovningar: '/api/vinprovningar/title',
+  kurser: '/api/vinprovningar/title',
+  artiklar: '/api/blog-posts/title',
+  vinlistan: '/api/wines/title',
+  regioner: '/api/regions/title',
+  lander: '/api/countries/title',
 }
 
 export function BreadcrumbBar() {
@@ -50,8 +124,6 @@ export function BreadcrumbBar() {
   const itemId = lessonId || quizId
 
   // Fetch the real title for detail pages
-  // IMPORTANT: This hook must always run (React rules of hooks) — the
-  // homepage early-return is handled AFTER all hooks.
   React.useEffect(() => {
     if (isHomepage) {
       setResolvedTitle(null)
@@ -62,18 +134,16 @@ export function BreadcrumbBar() {
     const section = pathSegments[0]
     const slug = pathSegments[1]
 
-    const config = section ? ROUTE_CONFIG[section] : undefined
-    // Resolve course/post title for /section/slug and nested routes like /vinprovningar/slug/recension
-    if (!config?.titleApi || !slug) {
+    const titleApi = section ? TITLE_APIS[section] : undefined
+    if (!titleApi || !slug) {
       setResolvedTitle(null)
       return
     }
 
     const controller = new AbortController()
-
-    const fetchTitle = async () => {
+    ;(async () => {
       try {
-        const url = new URL(config.titleApi!, window.location.origin)
+        const url = new URL(titleApi, window.location.origin)
         url.searchParams.set('slug', slug)
         if (searchParams.get('preview') === 'true') {
           url.searchParams.set('preview', 'true')
@@ -94,9 +164,7 @@ export function BreadcrumbBar() {
         if ((err as any)?.name === 'AbortError') return
         setResolvedTitle(null)
       }
-    }
-
-    fetchTitle()
+    })()
     return () => controller.abort()
   }, [pathname, searchParams, isHomepage])
 
@@ -133,12 +201,15 @@ export function BreadcrumbBar() {
   // Hide on homepage — AFTER all hooks have been called
   if (isHomepage) return null
 
-  // Format a slug into a display label
-  const formatSlug = (slug: string) =>
-    slug
-      .split('-')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
+  /** Friendly fallback: "skapa-provning" → "Skapa provning". */
+  const formatSlug = (slug: string) => {
+    const spaced = slug.replace(/-/g, ' ').trim()
+    if (!spaced) return ''
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+  }
+
+  /** Numeric id segment — hide from breadcrumb (e.g. /provningsmallar/redigera/123). */
+  const isNumericId = (s: string) => /^\d+$/.test(s)
 
   // Generate breadcrumb items based on the current path
   const generateBreadcrumbs = () => {
@@ -155,36 +226,33 @@ export function BreadcrumbBar() {
     for (let i = 0; i < pathSegments.length; i++) {
       const segment = pathSegments[i]
       currentPath += `/${segment}`
+
+      // Skip raw numeric ids — they make for ugly breadcrumb crumbs and the
+      // previous segment (e.g. "Redigera mall") already conveys the page.
+      if (i > 0 && isNumericId(segment)) continue
+
       const isLast = i === pathSegments.length - 1
+      const section = pathSegments[0]
 
-      let label = segment
-
-      if (i === 0 && ROUTE_CONFIG[segment]) {
-        label = ROUTE_CONFIG[segment].label
-      } else if (segment === 'kategori' && pathSegments[0] === 'artiklar') {
-        label = 'Kategori'
-      } else if (segment === 'tagg' && pathSegments[0] === 'artiklar') {
-        label = 'Tagg'
-      } else if (segment === 'success' && pathSegments[0] === 'checkout') {
-        label = 'Betalning genomford'
-      } else if (i === 1 && ROUTE_CONFIG[pathSegments[0]]) {
+      let label: string
+      if (i === 0) {
+        // Top-level segment — look up the page label, or fall back to slugify.
+        label = PAGE_LABELS[segment] ?? formatSlug(segment)
+      } else if (SUB_LABELS[section]?.[segment]) {
+        // Known sub-path under a section (e.g. /provningsmallar/ny).
+        label = SUB_LABELS[section][segment]
+      } else if (i === 1 && section && TITLE_APIS[section]) {
+        // Detail page — show the resolved title (or temporary slug).
         label = resolvedTitle ?? formatSlug(segment)
-      } else if (
-        i === 2 &&
-        pathSegments[0] === 'artiklar' &&
-        (pathSegments[1] === 'kategori' || pathSegments[1] === 'tagg')
-      ) {
-        label = formatSlug(segment)
       } else {
-        label = segment.charAt(0).toUpperCase() + segment.slice(1)
+        // Generic fallback — slugified human label.
+        label = formatSlug(segment)
       }
-
-      const isCurrentPage = isLast && !itemKind
 
       breadcrumbs.push({
         label,
         href: currentPath,
-        isCurrentPage,
+        isCurrentPage: isLast && !itemKind,
       })
     }
 
@@ -195,8 +263,6 @@ export function BreadcrumbBar() {
       (pathSegments[0] === 'kurser' || pathSegments[0] === 'vinprovningar') &&
       pathSegments[1]
     ) {
-      // Prefer the resolved content-item title; fall back to a numeric label
-      // until it loads (avoids a flash of "undefined").
       const fallback = itemKind === 'quiz' ? `Quiz ${itemId}` : `Moment ${itemId}`
       breadcrumbs.push({
         label: resolvedItemTitle ?? fallback,
@@ -206,6 +272,12 @@ export function BreadcrumbBar() {
       if (breadcrumbs.length > 2) {
         breadcrumbs[breadcrumbs.length - 2].isCurrentPage = false
       }
+    }
+
+    // If we trimmed numeric id segments, the last remaining crumb should be
+    // the current page (it wasn't necessarily flagged in the loop above).
+    if (!itemKind && breadcrumbs.length > 1) {
+      breadcrumbs[breadcrumbs.length - 1].isCurrentPage = true
     }
 
     return breadcrumbs
