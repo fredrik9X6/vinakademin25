@@ -20,19 +20,29 @@ import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-ki
 import { X, Upload, Image as ImageIcon } from 'lucide-react'
 import { LibraryWinePicker, type LibraryWineHit } from './LibraryWinePicker'
 import { TemplateSortableWineRow } from './TemplateSortableWineRow'
+import { WinePicker, type CustomWineInput } from '@/components/tasting-plan/WinePicker'
 
 export interface TemplateFormProps {
   /** Undefined for create; populated for edit. */
   initialTemplate?: TastingTemplate
 }
 
-type WineEntry = {
-  key: string
-  libraryWineId: number
-  hit: LibraryWineHit
-  pourOrder: number
-  hostNotes: string
-}
+type WineEntry =
+  | {
+      key: string
+      kind: 'library'
+      libraryWineId: number
+      hit: LibraryWineHit
+      pourOrder: number
+      hostNotes: string
+    }
+  | {
+      key: string
+      kind: 'custom'
+      customWine: CustomWineInput
+      pourOrder: number
+      hostNotes: string
+    }
 
 function nextKey(): string {
   return Math.random().toString(36).slice(2, 10)
@@ -50,9 +60,12 @@ function slugify(input: string): string {
 
 function hydrateInitialWines(template?: TastingTemplate): WineEntry[] {
   if (!template?.wines) return []
-  return template.wines
-    .filter((w) => w.libraryWine != null)
-    .map((w, idx) => {
+  const out: WineEntry[] = []
+  template.wines.forEach((w, idx) => {
+    const pourOrder = w.pourOrder ?? idx + 1
+    const hostNotes = w.hostNotes ?? ''
+    const key = w.id ?? nextKey()
+    if (w.libraryWine != null) {
       const lib =
         typeof w.libraryWine === 'object' && w.libraryWine ? (w.libraryWine as Wine) : null
       const id =
@@ -66,8 +79,9 @@ function hydrateInitialWines(template?: TastingTemplate): WineEntry[] {
       const thumbnailUrl = image
         ? image.sizes?.bottle?.url ?? image.sizes?.thumbnail?.url ?? image.url ?? null
         : null
-      return {
-        key: w.id ?? nextKey(),
+      out.push({
+        key,
+        kind: 'library',
         libraryWineId: id,
         hit: {
           id,
@@ -77,10 +91,33 @@ function hydrateInitialWines(template?: TastingTemplate): WineEntry[] {
           region,
           thumbnailUrl,
         },
-        pourOrder: w.pourOrder ?? idx + 1,
-        hostNotes: w.hostNotes ?? '',
-      }
-    })
+        pourOrder,
+        hostNotes,
+      })
+      return
+    }
+    const c = (w as { customWine?: Record<string, unknown> }).customWine
+    if (c && typeof c.name === 'string' && c.name.trim()) {
+      out.push({
+        key,
+        kind: 'custom',
+        customWine: {
+          name: c.name as string,
+          producer: (c.producer as string | undefined) ?? undefined,
+          vintage: (c.vintage as string | undefined) ?? undefined,
+          type: (c.type as CustomWineInput['type'] | undefined) ?? undefined,
+          systembolagetUrl: (c.systembolagetUrl as string | undefined) ?? undefined,
+          priceSek: (c.priceSek as number | undefined) ?? undefined,
+          systembolagetProductNumber:
+            (c.systembolagetProductNumber as string | undefined) ?? undefined,
+          imageUrl: (c.imageUrl as string | undefined) ?? undefined,
+        },
+        pourOrder,
+        hostNotes,
+      })
+    }
+  })
+  return out
 }
 
 export function TemplateForm({ initialTemplate }: TemplateFormProps) {
@@ -134,10 +171,10 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
-  function pickWine(hit: LibraryWineHit) {
+  function pickLibraryWine(hit: LibraryWineHit) {
     setWines((prev) => {
-      // Prevent adding the same wine twice
-      if (prev.some((w) => w.libraryWineId === hit.id)) {
+      // Prevent adding the same library wine twice
+      if (prev.some((w) => w.kind === 'library' && w.libraryWineId === hit.id)) {
         toast.info('Vinet finns redan i mallen.')
         return prev
       }
@@ -145,6 +182,7 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
         ...prev,
         {
           key: nextKey(),
+          kind: 'library' as const,
           libraryWineId: hit.id,
           hit,
           pourOrder: prev.length + 1,
@@ -152,6 +190,19 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
         },
       ]
     })
+  }
+
+  function pickCustomWine(w: CustomWineInput) {
+    setWines((prev) => [
+      ...prev,
+      {
+        key: nextKey(),
+        kind: 'custom' as const,
+        customWine: w,
+        pourOrder: prev.length + 1,
+        hostNotes: '',
+      },
+    ])
   }
 
   function removeAt(key: string) {
@@ -247,7 +298,8 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
         accessLevel,
         hostScript: hostScript.trim() || undefined,
         wines: wines.map((w, idx) => ({
-          libraryWine: w.libraryWineId,
+          libraryWine: w.kind === 'library' ? w.libraryWineId : undefined,
+          customWine: w.kind === 'custom' ? w.customWine : undefined,
           pourOrder: idx + 1,
           hostNotes: w.hostNotes,
         })),
@@ -430,11 +482,24 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-4">
         <Label>Viner</Label>
-        <LibraryWinePicker onPick={pickWine} disabled={submitting} />
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-1.5">Från biblioteket</p>
+            <LibraryWinePicker onPick={pickLibraryWine} disabled={submitting} />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-1.5">
+              Från Systembolaget eller eget vin
+            </p>
+            <WinePicker onPickCustom={pickCustomWine} disabled={submitting} />
+          </div>
+        </div>
         {wines.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Inga viner än — sök i biblioteket ovan.</p>
+          <p className="text-sm text-muted-foreground">
+            Inga viner än — sök i biblioteket eller Systembolaget ovan.
+          </p>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext
@@ -442,28 +507,34 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
               strategy={verticalListSortingStrategy}
             >
               <ul className="space-y-2">
-                {wines.map((w) => (
-                  <TemplateSortableWineRow
-                    key={w.key}
-                    item={{
-                      key: w.key,
-                      pourOrder: w.pourOrder,
-                      title: w.hit.title,
-                      subtitle: [
-                        w.hit.producer,
-                        w.hit.vintage ? String(w.hit.vintage) : null,
-                        w.hit.region,
-                      ]
-                        .filter(Boolean)
-                        .join(' · '),
-                      hostNotes: w.hostNotes,
-                      imageUrl: w.hit.thumbnailUrl,
-                    }}
-                    onNotesChange={(notes) => updateNotes(w.key, notes)}
-                    onRemove={() => removeAt(w.key)}
-                    disabled={submitting}
-                  />
-                ))}
+                {wines.map((w) => {
+                  const title =
+                    w.kind === 'library' ? w.hit.title : w.customWine.name || 'Namnlöst vin'
+                  const subtitle =
+                    w.kind === 'library'
+                      ? [w.hit.producer, w.hit.vintage ? String(w.hit.vintage) : null, w.hit.region]
+                          .filter(Boolean)
+                          .join(' · ')
+                      : [w.customWine.producer, w.customWine.vintage].filter(Boolean).join(' · ')
+                  const imageUrl =
+                    w.kind === 'library' ? w.hit.thumbnailUrl : w.customWine.imageUrl ?? null
+                  return (
+                    <TemplateSortableWineRow
+                      key={w.key}
+                      item={{
+                        key: w.key,
+                        pourOrder: w.pourOrder,
+                        title,
+                        subtitle,
+                        hostNotes: w.hostNotes,
+                        imageUrl,
+                      }}
+                      onNotesChange={(notes) => updateNotes(w.key, notes)}
+                      onRemove={() => removeAt(w.key)}
+                      disabled={submitting}
+                    />
+                  )
+                })}
               </ul>
             </SortableContext>
           </DndContext>

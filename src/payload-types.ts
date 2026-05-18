@@ -1526,7 +1526,23 @@ export interface TastingTemplate {
   targetParticipants?: number | null;
   wines?:
     | {
-        libraryWine: number | Wine;
+        /**
+         * Pick from our curated library, OR fill out customWine below.
+         */
+        libraryWine?: (number | null) | Wine;
+        /**
+         * Use when the wine is not in the library — usually a Systembolaget snapshot.
+         */
+        customWine?: {
+          name?: string | null;
+          producer?: string | null;
+          vintage?: string | null;
+          type?: ('red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other') | null;
+          systembolagetUrl?: string | null;
+          priceSek?: number | null;
+          systembolagetProductNumber?: string | null;
+          imageUrl?: string | null;
+        };
         pourOrder?: number | null;
         hostNotes?: string | null;
         id?: string | null;
@@ -4456,6 +4472,18 @@ export interface TastingTemplatesSelect<T extends boolean = true> {
     | T
     | {
         libraryWine?: T;
+        customWine?:
+          | T
+          | {
+              name?: T;
+              producer?: T;
+              vintage?: T;
+              type?: T;
+              systembolagetUrl?: T;
+              priceSek?: T;
+              systembolagetProductNumber?: T;
+              imageUrl?: T;
+            };
         pourOrder?: T;
         hostNotes?: T;
         id?: T;

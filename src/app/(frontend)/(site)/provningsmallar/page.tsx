@@ -23,7 +23,7 @@ type AccessFilter = 'free' | 'members_only' | null
 export default async function ProvningsmallarListing({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; access?: string }>
+  searchParams: Promise<{ tag?: string; access?: string; status?: string }>
 }) {
   const sp = await searchParams
   const activeTag = (sp.tag || '').trim() || null
@@ -32,16 +32,34 @@ export default async function ProvningsmallarListing({
 
   const user = await getUser()
   const isAdmin = user?.role === 'admin'
+  // Admin-only: ?status=draft flips the listing to show utkast instead of
+  // published. Non-admins always see published — query silently ignored.
+  const showDrafts = isAdmin && sp.status === 'draft'
 
   const payload = await getPayload({ config })
 
   // Listing query (filtered by tag + access level if active)
-  const whereAnd: any[] = [{ publishedStatus: { equals: 'published' } }]
+  const whereAnd: any[] = [
+    { publishedStatus: { equals: showDrafts ? 'draft' : 'published' } },
+  ]
   if (activeTag) {
     whereAnd.push({ tags: { contains: activeTag } })
   }
   if (accessFilter) {
     whereAnd.push({ accessLevel: { equals: accessFilter } })
+  }
+
+  // Draft count for the admin pill — query separately so we can render it
+  // even when the user isn't viewing the drafts list.
+  let draftCount = 0
+  if (isAdmin) {
+    const draftsRes = await payload.find({
+      collection: 'tasting-templates',
+      where: { publishedStatus: { equals: 'draft' } } as any,
+      limit: 0,
+      depth: 0,
+    })
+    draftCount = draftsRes.totalDocs
   }
   const { docs } = await payload.find({
     collection: 'tasting-templates',
@@ -77,6 +95,15 @@ export default async function ProvningsmallarListing({
     const params = new URLSearchParams()
     if (activeTag) params.set('tag', activeTag)
     if (next) params.set('access', next)
+    if (showDrafts) params.set('status', 'draft')
+    const qs = params.toString()
+    return qs ? `/provningsmallar?${qs}` : '/provningsmallar'
+  }
+  function statusHref(next: 'draft' | null): string {
+    const params = new URLSearchParams()
+    if (activeTag) params.set('tag', activeTag)
+    if (accessFilter) params.set('access', accessFilter)
+    if (next) params.set('status', next)
     const qs = params.toString()
     return qs ? `/provningsmallar?${qs}` : '/provningsmallar'
   }
@@ -106,10 +133,13 @@ export default async function ProvningsmallarListing({
     <div className="mx-auto max-w-6xl px-4 py-8">
       <header className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-heading">Provningsmallar</h1>
+          <h1 className="text-2xl font-heading">
+            {showDrafts ? 'Utkast' : 'Provningsmallar'}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Färdiga provningsupplägg från Vinakademin. Klona en mall, anpassa, och starta din
-            egen provning.
+            {showDrafts
+              ? 'Mallar du har sparat som utkast. Bara du som admin ser dessa.'
+              : 'Färdiga provningsupplägg från Vinakademin. Klona en mall, anpassa, och starta din egen provning.'}
           </p>
         </div>
         {isAdmin && (
@@ -137,6 +167,26 @@ export default async function ProvningsmallarListing({
             {p.label}
           </Link>
         ))}
+        {isAdmin && (
+          <>
+            <span aria-hidden className="mx-1 h-5 w-px self-center bg-border" />
+            {showDrafts ? (
+              <Link
+                href={statusHref(null)}
+                className="inline-flex items-center rounded-full border border-border bg-card hover:bg-muted/40 px-3 py-1 text-xs transition-colors"
+              >
+                Visa publicerade
+              </Link>
+            ) : (
+              <Link
+                href={statusHref('draft')}
+                className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100/40 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-3 py-1 text-xs transition-colors hover:bg-amber-100/70"
+              >
+                Visa utkast ({draftCount})
+              </Link>
+            )}
+          </>
+        )}
       </div>
 
       <TagFilter tags={tagCounts} activeTag={activeTag} />
@@ -150,7 +200,11 @@ export default async function ProvningsmallarListing({
       ) : (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {templates.map((t) => (
-            <TemplateCard key={t.id} template={t} />
+            <TemplateCard
+              key={t.id}
+              template={t}
+              href={showDrafts ? `/provningsmallar/redigera/${t.id}` : undefined}
+            />
           ))}
         </div>
       )}

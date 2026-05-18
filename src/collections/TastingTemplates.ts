@@ -65,11 +65,56 @@ export const TastingTemplates: CollectionConfig = {
           type: 'relationship',
           relationTo: 'wines',
           hasMany: false,
-          required: true,
+          admin: { description: 'Pick from our curated library, OR fill out customWine below.' },
+        },
+        {
+          name: 'customWine',
+          type: 'group',
+          admin: {
+            description:
+              'Use when the wine is not in the library — usually a Systembolaget snapshot.',
+          },
+          fields: [
+            { name: 'name', type: 'text' },
+            { name: 'producer', type: 'text' },
+            { name: 'vintage', type: 'text' },
+            {
+              name: 'type',
+              type: 'select',
+              options: [
+                { label: 'Rött', value: 'red' },
+                { label: 'Vitt', value: 'white' },
+                { label: 'Rosé', value: 'rose' },
+                { label: 'Mousserande', value: 'sparkling' },
+                { label: 'Dessert', value: 'dessert' },
+                { label: 'Fortifierat', value: 'fortified' },
+                { label: 'Annat', value: 'other' },
+              ],
+            },
+            { name: 'systembolagetUrl', type: 'text' },
+            { name: 'priceSek', type: 'number', min: 0 },
+            { name: 'systembolagetProductNumber', type: 'text' },
+            { name: 'imageUrl', type: 'text' },
+          ],
         },
         { name: 'pourOrder', type: 'number', min: 1 },
         { name: 'hostNotes', type: 'textarea' },
       ],
+      validate: (value: unknown) => {
+        if (!Array.isArray(value)) return true
+        for (let i = 0; i < value.length; i++) {
+          const w = value[i] as { libraryWine?: unknown; customWine?: { name?: string } }
+          const hasLibrary = w?.libraryWine != null && w.libraryWine !== ''
+          const hasCustom = !!w?.customWine?.name && w.customWine.name.trim() !== ''
+          if (hasLibrary && hasCustom) {
+            return `Vin ${i + 1}: välj antingen ett bibliotekvin ELLER fyll i custom wine — inte båda.`
+          }
+          if (!hasLibrary && !hasCustom) {
+            return `Vin ${i + 1}: välj ett bibliotekvin eller fyll i namn på custom wine.`
+          }
+        }
+        return true
+      },
     },
     { name: 'hostScript', type: 'textarea' },
     { name: 'featuredImage', type: 'upload', relationTo: 'media' },

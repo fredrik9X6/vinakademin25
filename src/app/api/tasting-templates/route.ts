@@ -6,8 +6,20 @@ import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('api-tasting-templates')
 
+type CustomWine = {
+  name?: string
+  producer?: string
+  vintage?: string
+  type?: 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
+  systembolagetUrl?: string
+  priceSek?: number
+  systembolagetProductNumber?: string
+  imageUrl?: string
+}
+
 type WineEntry = {
-  libraryWine: number
+  libraryWine?: number
+  customWine?: CustomWine
   pourOrder?: number
   hostNotes?: string
 }
@@ -45,8 +57,13 @@ function validateBody(body: CreateBody): string | null {
   }
   for (let i = 0; i < wines.length; i++) {
     const w = wines[i]
-    if (typeof w.libraryWine !== 'number') {
-      return `Vin ${i + 1}: välj ett vin från biblioteket.`
+    const hasLib = typeof w.libraryWine === 'number'
+    const hasCustom = !!w.customWine?.name?.trim()
+    if (hasLib && hasCustom) {
+      return `Vin ${i + 1}: välj antingen ett bibliotekvin ELLER fyll i custom wine — inte båda.`
+    }
+    if (!hasLib && !hasCustom) {
+      return `Vin ${i + 1}: välj ett bibliotekvin eller fyll i namn på custom wine.`
     }
   }
   return null
@@ -105,7 +122,8 @@ export async function POST(request: NextRequest) {
         accessLevel: body.accessLevel ?? 'free',
         hostScript: body.hostScript?.trim() || undefined,
         wines: (body.wines || []).map((w, idx) => ({
-          libraryWine: w.libraryWine,
+          libraryWine: typeof w.libraryWine === 'number' ? w.libraryWine : null,
+          customWine: w.customWine?.name?.trim() ? w.customWine : undefined,
           pourOrder: w.pourOrder ?? idx + 1,
           hostNotes: w.hostNotes ?? '',
         })),
