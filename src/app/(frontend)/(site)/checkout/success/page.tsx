@@ -8,6 +8,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/stripe'
 import { loggerFor } from '@/lib/logger'
+import { PurchaseTracker } from './PurchaseTracker'
 
 const log = loggerFor('(frontend)-(site)-checkout-success-page')
 
@@ -98,6 +99,13 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <PurchaseTracker
+        courseId={course?.id ?? null}
+        courseSlug={course?.slug ?? null}
+        courseTitle={course?.title ?? null}
+        amount={order?.amount ?? null}
+        checkoutMode={checkoutOrigin === 'guest' ? 'guest' : checkoutOrigin === 'authenticated' ? 'authenticated' : null}
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Success Header */}
         <div className="text-center mb-8 sm:mb-12">
