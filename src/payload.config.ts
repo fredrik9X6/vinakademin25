@@ -45,6 +45,7 @@ import { VinkompassArchetypes } from './collections/VinkompassArchetypes'
 import { VinkompassAttempts } from './collections/VinkompassAttempts'
 import { WineClubs } from './collections/WineClubs'
 import { BlindBattles } from './collections/BlindBattles'
+import { BlindBattleSubmissions } from './collections/BlindBattleSubmissions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -234,6 +235,7 @@ export default buildConfig({
     VinkompassAttempts,
     WineClubs,
     BlindBattles,
+    BlindBattleSubmissions,
   ],
   editor: lexicalEditor(),
   secret: payloadSecret,
