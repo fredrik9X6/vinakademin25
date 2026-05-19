@@ -32,6 +32,7 @@ import {
 const NAV_LINKS = [
   { label: 'Vinprovningar', href: '/vinprovningar' },
   { label: 'Provningsmallar', href: '/provningsmallar' },
+  { label: 'Vinklubbar', href: '/vinklubbar' },
   { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },
 ]
