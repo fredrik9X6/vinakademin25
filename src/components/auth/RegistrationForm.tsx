@@ -22,6 +22,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useEffect } from 'react'
+import { trackEvent } from '@/components/analytics'
 
 // Define Zod schema for validation (Swedish messages)
 const RegistrationSchema = z
@@ -89,6 +90,10 @@ export function RegistrationForm({ className, returnTo, ...props }: Registration
 
     const success = await registerUser(userData as any)
     if (success) {
+      trackEvent('account_created', {
+        acceptsMarketing: values.acceptsMarketing,
+        source: claimGuestSession ? 'guest_claim' : 'organic',
+      })
       // If the user came from a guest tasting session, claim their guest
       // participants + reviews now that an authed user exists with the same
       // email. Best-effort — don't block the redirect on failure.
