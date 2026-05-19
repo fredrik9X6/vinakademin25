@@ -1,17 +1,26 @@
 import type { Payload, PayloadRequest } from 'payload'
 import type { WineClub, BlindBattle } from '@/payload-types'
+import { loggerFor } from '../logger'
+
+const log = loggerFor('lib-blindkamp-access')
 
 export async function loadClubMembership(
   payload: Payload,
   clubId: number,
   userId: number,
 ): Promise<{ role: 'owner' | 'admin' | 'member' } | null> {
-  const club = (await payload.findByID({
-    collection: 'wine-clubs',
-    id: clubId,
-    depth: 0,
-    overrideAccess: true,
-  })) as WineClub
+  let club: WineClub
+  try {
+    club = (await payload.findByID({
+      collection: 'wine-clubs',
+      id: clubId,
+      depth: 0,
+      overrideAccess: true,
+    })) as WineClub
+  } catch (err) {
+    log.warn({ err, clubId }, 'club_not_found_for_membership_lookup')
+    return null
+  }
   const m = (club.members ?? []).find((mm) => {
     const uid = typeof mm.user === 'object' ? mm.user?.id : mm.user
     return uid === userId
@@ -31,6 +40,11 @@ export async function viewerCanHostBattle(
   if (!clubRef) return false
   const clubId = typeof clubRef === 'object' ? clubRef.id : clubRef
   if (clubId == null) return false
-  const membership = await loadClubMembership(req.payload, clubId, req.user.id)
-  return membership?.role === 'owner' || membership?.role === 'admin'
+  try {
+    const membership = await loadClubMembership(req.payload, clubId, req.user.id)
+    return membership?.role === 'owner' || membership?.role === 'admin'
+  } catch (err) {
+    log.warn({ err, clubId }, 'viewerCanHostBattle_club_lookup_failed')
+    return false
+  }
 }
