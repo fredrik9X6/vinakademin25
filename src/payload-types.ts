@@ -306,6 +306,10 @@ export interface User {
    * Linked Stripe customer for billing. Set by the subscription webhook on first checkout.
    */
   stripeCustomerId?: string | null;
+  /**
+   * Stamped when the Vinakademin+ welcome email was sent. Prevents duplicate sends on subsequent subscription events.
+   */
+  welcomeEmailSentAt?: string | null;
   onboarding?: {
     goal?: ('learn_basics' | 'pairing_confident' | 'explore_regions' | 'deep_knowledge') | null;
     completedAt?: string | null;
@@ -3516,6 +3520,7 @@ export interface UsersSelect<T extends boolean = true> {
   subscriptionPlan?: T;
   subscriptionExpiry?: T;
   stripeCustomerId?: T;
+  welcomeEmailSentAt?: T;
   onboarding?:
     | T
     | {

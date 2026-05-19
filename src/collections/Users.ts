@@ -549,6 +549,21 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: 'welcomeEmailSentAt',
+      type: 'date',
+      label: 'Welcome Email Sent At',
+      access: {
+        update: adminFieldLevel,
+      },
+      admin: {
+        description:
+          'Stamped when the Vinakademin+ welcome email was sent. Prevents duplicate sends on subsequent subscription events.',
+        position: 'sidebar',
+        readOnly: true,
+        date: { pickerAppearance: 'dayAndTime' },
+      },
+    },
+    {
       name: 'onboarding',
       type: 'group',
       label: 'Onboarding',

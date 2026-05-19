@@ -9,6 +9,7 @@ import { loggerFor } from '@/lib/logger'
 import { sendTeamNotification } from '@/lib/notify-team'
 import { buildOrderPaidEmail } from '@/lib/team-emails/order-paid'
 import { recordEvent } from '@/lib/events'
+import { sendWelcomePremiumEmail } from '@/lib/send-welcome-premium-email'
 
 const log = loggerFor('stripe-webhook')
 
@@ -449,6 +450,49 @@ async function syncSubscriptionToUser(subscription: any, payload: any) {
     },
     'subscription_user_synced',
   )
+
+  // First-activation welcome email — sent once per user, gated on
+  // `welcomeEmailSentAt`. Don't fire on past_due / canceled / none.
+  const isFirstActivation =
+    (nextStatus === 'active' || nextStatus === 'free_trial') &&
+    !(user as any).welcomeEmailSentAt
+  if (isFirstActivation && typeof (user as any).email === 'string' && (user as any).email) {
+    const sent = await sendWelcomePremiumEmail({
+      payload,
+      to: (user as any).email,
+      firstName: (user as any).firstName ?? null,
+      plan: data.subscriptionPlan === 'annual' ? 'annual' : 'monthly',
+      renewsOn: subscriptionExpiry ? new Date(subscriptionExpiry) : null,
+    })
+    if (sent) {
+      try {
+        await payload.update({
+          collection: 'users',
+          id: user.id,
+          data: { welcomeEmailSentAt: new Date().toISOString() } as never,
+          overrideAccess: true,
+        })
+      } catch (stampErr) {
+        log.error(
+          { err: stampErr, userId: user.id },
+          'welcome_email_stamp_failed',
+        )
+      }
+      await recordEvent({
+        payload,
+        type: 'enrollment_started',
+        contactEmail: (user as any).email,
+        label: 'Vinakademin+ aktiverat',
+        userId: user.id,
+        source: 'webhook',
+        metadata: {
+          subscriptionId: subscription.id,
+          plan: data.subscriptionPlan,
+          stripeStatus,
+        },
+      })
+    }
+  }
 }
 
 async function handleSubscriptionCreated(subscription: any, payload: any) {

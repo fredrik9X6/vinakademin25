@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ArrowRight, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { trackEvent } from '@/components/analytics'
 
 export interface BliMedlemFormProps {
   monthlyPriceId: string
@@ -28,15 +29,21 @@ export function BliMedlemForm({
   const [plan, setPlan] = React.useState<'monthly' | 'yearly'>('yearly')
   const [busy, setBusy] = React.useState(false)
 
+  React.useEffect(() => {
+    trackEvent('bli_medlem_viewed', { unauthenticated })
+  }, [unauthenticated])
+
   const yearlyEquivMonthly = Math.round(yearlyAmountSek / 12)
   const yearlySavings = monthlyAmountSek * 12 - yearlyAmountSek
   const savingsMonths = Math.round(yearlySavings / monthlyAmountSek)
 
   async function handleSubscribe() {
     if (unauthenticated) {
+      trackEvent('subscription_checkout_started', { plan, unauthenticated: true })
       router.push('/logga-in?from=/bli-medlem')
       return
     }
+    trackEvent('subscription_checkout_started', { plan, unauthenticated: false })
     setBusy(true)
     try {
       const priceId = plan === 'monthly' ? monthlyPriceId : yearlyPriceId

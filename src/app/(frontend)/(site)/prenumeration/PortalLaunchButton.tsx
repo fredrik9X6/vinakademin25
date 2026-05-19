@@ -3,11 +3,13 @@
 import * as React from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { trackEvent } from '@/components/analytics'
 
 export function PortalLaunchButton({ children = 'Hantera prenumeration' }: { children?: React.ReactNode }) {
   const [busy, setBusy] = React.useState(false)
   async function open() {
     setBusy(true)
+    trackEvent('subscription_portal_opened')
     try {
       const res = await fetch('/api/subscriptions/portal', {
         method: 'POST',
