@@ -11,10 +11,33 @@ async function viewerIsMember(req: PayloadRequest, clubId: number | string): Pro
     depth: 0,
     overrideAccess: true,
   })
-  return (club as any)?.members?.some((m: any) => {
-    const uid = typeof m.user === 'object' ? m.user?.id : m.user
-    return uid === req.user!.id
+  return (
+    (club as any)?.members?.some((m: any) => {
+      const uid = typeof m.user === 'object' ? m.user?.id : m.user
+      return uid === req.user!.id
+    }) ?? false
+  )
+}
+
+/** True if viewer is a member of the club with one of the given roles. */
+async function viewerHasRole(
+  req: PayloadRequest,
+  clubId: number | string,
+  roles: Array<'owner' | 'admin' | 'member'>,
+): Promise<boolean> {
+  if (!req.user) return false
+  const club = await req.payload.findByID({
+    collection: 'wine-clubs',
+    id: clubId,
+    depth: 0,
+    overrideAccess: true,
   })
+  return (
+    (club as any)?.members?.some((m: any) => {
+      const uid = typeof m.user === 'object' ? m.user?.id : m.user
+      return uid === req.user!.id && roles.includes(m.role)
+    }) ?? false
+  )
 }
 
 const readAccess: Access = async ({ req, id }) => {
@@ -30,16 +53,7 @@ const readAccess: Access = async ({ req, id }) => {
 const updateAccess: Access = async ({ req, id }) => {
   if (!req.user || !id) return false
   if (req.user.role === 'admin') return true
-  const club = await req.payload.findByID({
-    collection: 'wine-clubs',
-    id,
-    depth: 0,
-    overrideAccess: true,
-  })
-  return (club as any)?.members?.some((m: any) => {
-    const uid = typeof m.user === 'object' ? m.user?.id : m.user
-    return uid === req.user!.id && (m.role === 'owner' || m.role === 'admin')
-  })
+  return viewerHasRole(req, id, ['owner', 'admin'])
 }
 
 const deleteAccess: Access = async ({ req, id }) => {
@@ -53,11 +67,15 @@ const deleteAccess: Access = async ({ req, id }) => {
   })
   const ownerId =
     typeof (club as any)?.owner === 'object' ? (club as any).owner?.id : (club as any).owner
-  return ownerId === req.user.id
+  return ownerId != null && ownerId === req.user.id
 }
 
 export const WineClubs: CollectionConfig = {
   slug: 'wine-clubs',
+  labels: {
+    singular: 'Vinklubb',
+    plural: 'Vinklubbar',
+  },
   admin: {
     group: 'Social',
     useAsTitle: 'name',
