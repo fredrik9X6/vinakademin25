@@ -9,14 +9,14 @@ import { HelpExplainer } from '@/components/blindkamp/HelpExplainer'
 
 export function ProvningClient({
   battleId,
-  sessionId,
+  joinCode,
   mySlot,
   myWineLabel,
   isHost,
   totalSlots,
 }: {
   battleId: number
-  sessionId: number
+  joinCode: string
   mySlot: number
   myWineLabel: string
   isHost: boolean
@@ -63,7 +63,7 @@ export function ProvningClient({
               till nästa plats.
             </p>
             <Button asChild className="w-full">
-              <Link href={`/mina-provningar/historik/${sessionId}`}>Gå till provningen</Link>
+              <Link href={`/delta?code=${encodeURIComponent(joinCode)}`}>Gå till provningen</Link>
             </Button>
             <p className="text-xs text-muted-foreground">
               Du ser ditt eget vin på plats {mySlot} när det är dags att smaka. Ditt eget betyg

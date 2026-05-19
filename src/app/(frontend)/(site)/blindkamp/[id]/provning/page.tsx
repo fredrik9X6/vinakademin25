@@ -53,11 +53,26 @@ export default async function ProvningPage({
       ? battle.currentSession?.id
       : battle.currentSession
 
+  let joinCode: string | null = null
+  if (typeof sessionId === 'number') {
+    try {
+      const session = (await payload.findByID({
+        collection: 'course-sessions',
+        id: sessionId,
+        overrideAccess: true,
+      })) as any
+      joinCode = session?.joinCode ?? null
+    } catch {
+      // session vanished; redirect back to battle home
+    }
+  }
+  if (!joinCode) redirect(`/blindkamp/${battleId}`)
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
       <ProvningClient
         battleId={battleId}
-        sessionId={sessionId}
+        joinCode={joinCode}
         mySlot={mySubmission.pourOrder}
         myWineLabel={wineLabel}
         isHost={isHost}
