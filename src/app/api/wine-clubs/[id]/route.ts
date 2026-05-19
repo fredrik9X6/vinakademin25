@@ -5,7 +5,7 @@ import { getUser } from '@/lib/get-user'
 async function isAdminOrOwner(
   payload: any,
   clubId: number,
-  userId: number,
+  userId: number | string,
 ): Promise<boolean> {
   let club: any
   try {
@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const clubId = parseInt(id, 10)
   if (Number.isNaN(clubId)) return NextResponse.json({ error: 'Ogiltigt id' }, { status: 400 })
   const payload = await getPayloadClient()
-  if (!(await isAdminOrOwner(payload, clubId, user.id as number))) {
+  if (!(await isAdminOrOwner(payload, clubId, user.id))) {
     return NextResponse.json({ error: 'Saknar rättigheter' }, { status: 403 })
   }
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>

@@ -8,7 +8,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const { id } = await ctx.params
   const clubId = parseInt(id, 10)
   if (Number.isNaN(clubId)) return NextResponse.json({ error: 'Ogiltigt id' }, { status: 400 })
-  const body = (await req.json()) as {
+  const body = (await req.json().catch(() => ({}))) as {
     action: 'invite' | 'remove' | 'role'
     email?: string
     userId?: number

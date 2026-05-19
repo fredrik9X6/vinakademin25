@@ -5,7 +5,7 @@ import { getUser } from '@/lib/get-user'
 export async function POST(req: NextRequest) {
   const user = await getUser()
   if (!user) return NextResponse.json({ error: 'Logga in först' }, { status: 401 })
-  const { inviteCode } = (await req.json()) as { inviteCode?: string }
+  const { inviteCode } = (await req.json().catch(() => ({}))) as { inviteCode?: string }
   if (!inviteCode) return NextResponse.json({ error: 'Kod saknas' }, { status: 400 })
 
   const payload = await getPayloadClient()
