@@ -8,6 +8,7 @@ import {
   type WrapUpRecommendation,
 } from './session-emails/wrap-up'
 import { recommendByGrape } from './wines/recommend-by-grape'
+import { computeBattleResult } from './blindkamp/compute-battle-result'
 import type { Wine, Review, TastingPlan, Vinprovningar, CourseSession } from '@/payload-types'
 
 const log = loggerFor('lib-send-wrap-up-emails')
@@ -421,6 +422,37 @@ async function buildEmailInput({
     : `${siteUrl}/vinlistan`
   const ctaLabel = isGuest ? 'Spara dina betyg →' : 'Utforska Vinlistan →'
 
+  // Look up the blind battle (if any) that owns this session. CourseSessions
+  // have no metadata field, so we reverse-look up via blind-battles.currentSession.
+  let blindBattle: WrapUpEmailInput['blindBattle'] = null
+  try {
+    const battleRes = await payload.find({
+      collection: 'blind-battles',
+      where: { currentSession: { equals: session.id } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
+    if (battleRes.docs.length > 0) {
+      const battleId = (battleRes.docs[0] as any).id as number
+      const result = await computeBattleResult(payload, battleId)
+      if (result.winner) {
+        const yourRow = result.rows.find((r) => r.submitterId === userId)
+        const battleTitle = ((battleRes.docs[0] as any).title as string) || 'Blindkamp'
+        blindBattle = {
+          battleTitle,
+          winnerName: result.winner.submitterName,
+          winnerWineTitle: result.winner.wineTitle,
+          yourSubmittedWineTitle: yourRow?.wineTitle ?? null,
+          yourSubmittedAvgRating: yourRow?.averageRating ?? null,
+        }
+      }
+    }
+  } catch {
+    // Battle lookup failure shouldn't block the wrap-up email — proceed without
+    // the battle block.
+  }
+
   return {
     nickname: participant.nickname ?? null,
     title: sessionContext.title,
@@ -437,6 +469,7 @@ async function buildEmailInput({
     recommendations,
     ctaUrl,
     ctaLabel,
+    blindBattle,
   }
 }
 

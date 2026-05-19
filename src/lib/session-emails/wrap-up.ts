@@ -59,6 +59,14 @@ export interface WrapUpEmailInput {
   ctaUrl: string
   /** Primary CTA label. */
   ctaLabel: string
+  /** When the wrapped-up session was a blindkamp, append the results block. */
+  blindBattle?: {
+    battleTitle: string
+    winnerName: string
+    winnerWineTitle: string
+    yourSubmittedWineTitle: string | null
+    yourSubmittedAvgRating: number | null
+  } | null
 }
 
 function renderStars(rating: number | null): string {
@@ -124,6 +132,13 @@ export function buildWrapUpEmail(input: WrapUpEmailInput): {
     textLines.push('', 'Vinakademins rekommendationer:')
     for (const rec of input.recommendations) {
       textLines.push(`- ${rec.title} — ${rec.subtitle}`)
+    }
+  }
+
+  if (input.blindBattle) {
+    textLines.push('', `Vinnare: ${input.blindBattle.winnerName} med ${input.blindBattle.winnerWineTitle}`)
+    if (input.blindBattle.yourSubmittedWineTitle) {
+      textLines.push(`Ditt vin: ${input.blindBattle.yourSubmittedWineTitle} (${input.blindBattle.yourSubmittedAvgRating?.toFixed(2) ?? '—'} stjärnor)`)
     }
   }
 
@@ -229,6 +244,16 @@ export function buildWrapUpEmail(input: WrapUpEmailInput): {
       </tr>`
     : ''
 
+  const battleBlock = input.blindBattle
+    ? `<tr><td style="padding: 8px 40px 16px">
+      <h3 style="margin: 0 0 8px; color: #18181b; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em">Resultat</h3>
+      <p style="margin: 0; color: #18181b; font-size: 15px">
+        Vinnare: <strong>${escapeHtml(input.blindBattle.winnerName)}</strong> med <em>${escapeHtml(input.blindBattle.winnerWineTitle)}</em>.
+      </p>
+      ${input.blindBattle.yourSubmittedWineTitle ? `<p style="margin: 6px 0 0; color: #71717a; font-size: 14px">Ditt vin: ${escapeHtml(input.blindBattle.yourSubmittedWineTitle)} (${input.blindBattle.yourSubmittedAvgRating?.toFixed(2) ?? '—'} ★)</p>` : ''}
+    </td></tr>`
+    : ''
+
   const html = `<!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -288,6 +313,8 @@ export function buildWrapUpEmail(input: WrapUpEmailInput): {
               ${recsHtml}
             </td>
           </tr>
+
+          ${battleBlock}
 
           <tr>
             <td align="center" style="padding: 32px;">
