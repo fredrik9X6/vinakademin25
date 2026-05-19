@@ -23,6 +23,7 @@ export function ProvningClient({
   totalSlots: number
 }) {
   const [phase, setPhase] = React.useState<'placement' | 'tasting'>('placement')
+  const [useHelper, setUseHelper] = React.useState(false)
 
   return (
     <div className="space-y-4">
@@ -33,21 +34,61 @@ export function ProvningClient({
 
       {phase === 'placement' && (
         <>
-          <SecretSlotPanel slot={mySlot} wineLabel={myWineLabel} />
           {isHost && (
+            <div className="flex justify-end">
+              <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={useHelper}
+                  onChange={(e) => setUseHelper(e.target.checked)}
+                  className="h-3.5 w-3.5"
+                />
+                Använd neutral hjälpare istället för hemlig plats
+              </label>
+            </div>
+          )}
+
+          {!useHelper && (
+            <>
+              <SecretSlotPanel slot={mySlot} wineLabel={myWineLabel} />
+              {isHost ? (
+                <Card>
+                  <CardContent className="p-5 space-y-3 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      När alla har slagit in sina flaskor och tittar bort, klicka för att räkna ner.
+                    </p>
+                    <CountdownButton onComplete={() => setPhase('tasting')} />
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="p-5 text-center text-sm text-muted-foreground">
+                    Väntar på värden att starta nedräkningen…
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+
+          {useHelper && isHost && (
             <Card>
-              <CardContent className="p-5 space-y-3 text-center">
+              <CardContent className="p-5 space-y-3">
+                <p className="font-medium">Neutral hjälpare</p>
                 <p className="text-sm text-muted-foreground">
-                  När alla har slagit in sina flaskor och tittar bort, klicka för att räkna ner.
+                  Be någon som inte ska smaka att blanda och numrera de inslagna flaskorna 1–{totalSlots}.
+                  När det är klart, klicka för att börja provningen.
                 </p>
-                <CountdownButton onComplete={() => setPhase('tasting')} />
+                <Button onClick={() => setPhase('tasting')} className="w-full">
+                  Allt klart — starta provningen
+                </Button>
               </CardContent>
             </Card>
           )}
-          {!isHost && (
+
+          {useHelper && !isHost && (
             <Card>
               <CardContent className="p-5 text-center text-sm text-muted-foreground">
-                Väntar på värden att starta nedräkningen…
+                Värden använder en neutral hjälpare för att blanda flaskorna. Väntar på att de blir klara…
               </CardContent>
             </Card>
           )}
