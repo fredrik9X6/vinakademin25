@@ -3,11 +3,10 @@ import * as React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { SecretSlotPanel } from '@/components/blindkamp/SecretSlotPanel'
-import { CountdownButton } from '@/components/blindkamp/CountdownButton'
 import { HelpExplainer } from '@/components/blindkamp/HelpExplainer'
 
 export function ProvningClient({
-  battleId,
+  battleId: _battleId,
   joinCode,
   mySlot,
   myWineLabel,
@@ -47,7 +46,7 @@ export function ProvningClient({
                   onChange={(e) => setUseHelper(e.target.checked)}
                   className="h-3.5 w-3.5"
                 />
-                Använd neutral hjälpare istället för hemlig plats
+                Använd neutral hjälpare istället
               </label>
             </div>
           )}
@@ -55,24 +54,15 @@ export function ProvningClient({
           {!useHelper && (
             <>
               <SecretSlotPanel slot={mySlot} wineLabel={myWineLabel} />
-              {isHost ? (
-                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    När alla har slagit in sina flaskor och tittar bort, klicka för att räkna ner.
-                  </p>
-                  <CountdownButton onComplete={() => setPhase('tasting')} />
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    När värden räknar ner, ställ din inslagna flaska på din hemliga plats.
-                    Tryck sedan på knappen för att se vinerna och börja smaka.
-                  </p>
-                  <Button onClick={() => setPhase('tasting')} className="w-full">
-                    Jag är klar — visa vinerna
-                  </Button>
-                </div>
-              )}
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  När din flaska är märkt med <strong>#{mySlot}</strong> och står på bordet, tryck
+                  här för att gå vidare.
+                </p>
+                <Button onClick={() => setPhase('tasting')} className="w-full">
+                  Klart — visa vinerna
+                </Button>
+              </div>
             </>
           )}
 
@@ -80,8 +70,8 @@ export function ProvningClient({
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
               <p className="font-medium">Neutral hjälpare</p>
               <p className="text-sm text-muted-foreground">
-                Be någon som inte ska smaka att blanda och numrera de inslagna flaskorna 1–{totalSlots}.
-                När det är klart, klicka för att börja provningen.
+                Be någon som inte ska smaka att blanda och numrera de inslagna flaskorna 1–
+                {totalSlots}. När det är klart, klicka för att börja provningen.
               </p>
               <Button onClick={() => setPhase('tasting')} className="w-full">
                 Allt klart — starta provningen
@@ -92,8 +82,8 @@ export function ProvningClient({
           {useHelper && !isHost && (
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 text-center">
               <p className="text-sm text-muted-foreground">
-                Värden använder en neutral hjälpare för att blanda flaskorna. När hjälparen är
-                klar, tryck för att se vinerna.
+                Värden använder en neutral hjälpare. När hjälparen är klar, tryck för att se
+                vinerna.
               </p>
               <Button onClick={() => setPhase('tasting')} className="w-full">
                 Visa vinerna
@@ -107,16 +97,17 @@ export function ProvningClient({
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 text-center">
           <p className="font-medium">Provningen är igång</p>
           <p className="text-sm text-muted-foreground">
-            Vinerna är på plats 1–{totalSlots}. Häll från plats 1 till alla, sätt betyg, gå sedan
-            till nästa plats.
+            Vinerna är märkta 1–{totalSlots}. Häll från flaska #1 till alla, sätt betyg, gå sedan
+            till nästa.
           </p>
           <Button asChild className="w-full">
             <Link href={`/delta?code=${encodeURIComponent(joinCode)}`}>Gå till provningen</Link>
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Du ser ditt eget vin på plats {mySlot} när det är dags att smaka. Ditt eget betyg
-            räknas inte mot snittet.
-          </p>
+          {!useHelper && (
+            <p className="text-xs text-muted-foreground">
+              Du vet att flaska #{mySlot} är din. Ditt eget betyg räknas inte mot snittet.
+            </p>
+          )}
         </div>
       )}
     </div>
