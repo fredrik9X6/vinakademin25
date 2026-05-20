@@ -27,12 +27,12 @@ import {
   History,
   Settings,
   ChevronDown,
+  Users,
 } from 'lucide-react'
 
 const NAV_LINKS = [
   { label: 'Vinprovningar', href: '/vinprovningar' },
   { label: 'Provningsmallar', href: '/provningsmallar' },
-  { label: 'Vinklubbar', href: '/vinklubbar' },
   { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },
 ]
@@ -155,6 +155,12 @@ export function TopNavHeader() {
                     <Link href="/mina-provningar/planer" className="cursor-pointer">
                       <ClipboardList className="mr-2 h-4 w-4" />
                       Mina vinprovningar
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/vinklubbar" className="cursor-pointer">
+                      <Users className="mr-2 h-4 w-4" />
+                      Mina vinklubbar
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
