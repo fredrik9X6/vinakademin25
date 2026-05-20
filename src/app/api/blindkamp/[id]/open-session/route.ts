@@ -67,7 +67,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     )
   }
 
-  // Gather submitted wines
+  // Gather submitted wines — populate systembolagetProduct so we can snapshot it.
   const submittedRes = await payload.find({
     collection: 'blind-battle-submissions',
     where: {
@@ -77,6 +77,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
       ],
     },
     limit: 100,
+    depth: 1,
     overrideAccess: true,
   })
   const submissions = submittedRes.docs as any[]
@@ -97,18 +98,87 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
       data: { pourOrder: pourOrders[i] } as never,
       overrideAccess: true,
     })
+    // Mutate locally so the snapshot below uses the assigned pourOrder
+    submissions[i].pourOrder = pourOrders[i]
   }
+
+  // Translate the submission's wine source into a TastingPlan customWine snapshot.
+  // Submissions can have EITHER systembolagetProduct (populated when depth>=1)
+  // OR customWine (free-text fallback).
+  const SYSTEMBOLAGET_TYPE_MAP: Record<string, string> = {
+    'Rött vin': 'red',
+    'Vitt vin': 'white',
+    'Rosévin': 'rose',
+    'Mousserande vin': 'sparkling',
+    'Starkvin': 'fortified',
+    'Sött vin / dessertvin': 'dessert',
+    'Aromatiserat vin': 'other',
+    'Orangevin': 'other',
+  }
+  // submissions.customWine.type uses 'orange' which TastingPlans doesn't carry —
+  // translate to 'other'.
+  const SUBMISSION_TYPE_TO_PLAN: Record<string, string> = {
+    red: 'red',
+    white: 'white',
+    rose: 'rose',
+    sparkling: 'sparkling',
+    dessert: 'dessert',
+    orange: 'other',
+  }
+
+  function buildThumbUrl(baseUrl: string | null | undefined): string | undefined {
+    if (!baseUrl) return undefined
+    if (/\.(png|jpg|jpeg|webp)$/i.test(baseUrl)) return baseUrl
+    return `${baseUrl}_400.png`
+  }
+
+  const planWines = submissions.map((s) => {
+    if (s.systembolagetProduct && typeof s.systembolagetProduct === 'object') {
+      const p = s.systembolagetProduct
+      const name = [p.productNameBold, p.productNameThin].filter(Boolean).join(' ').trim()
+      return {
+        customWine: {
+          name: name || `Vin ${p.productNumber}`,
+          producer: p.producerName || undefined,
+          vintage: p.vintage != null ? String(p.vintage) : undefined,
+          type: p.categoryLevel2 ? SYSTEMBOLAGET_TYPE_MAP[p.categoryLevel2] : undefined,
+          systembolagetUrl: p.productUrl || undefined,
+          priceSek: p.price ?? undefined,
+          systembolagetProductNumber: p.productNumber,
+          imageUrl: buildThumbUrl(p.imageUrl),
+        },
+        pourOrder: s.pourOrder,
+      }
+    }
+    // Fallback: hand-typed customWine on the submission
+    const c = s.customWine || {}
+    return {
+      customWine: {
+        name: c.name || 'Okänt vin',
+        producer: c.producer || undefined,
+        vintage: c.vintage || undefined,
+        type: c.type ? SUBMISSION_TYPE_TO_PLAN[c.type] : undefined,
+        systembolagetUrl: c.systembolagetUrl || undefined,
+        priceSek: c.priceSek ?? undefined,
+        imageUrl: c.imageUrl || undefined,
+      },
+      pourOrder: s.pourOrder,
+    }
+  })
 
   // CourseSessions requires exactly one of `course` or `tastingPlan` (XOR).
   // A blindkamp is neither, so we create a thin synthetic TastingPlan that
-  // serves purely as a session anchor.  The canonical link back to the battle
-  // is stored on blind-battles.currentSession — this plan is a scaffolding detail.
+  // carries the blindkamp's submitted wines so the live UI has something to
+  // iterate over. The canonical link back to the battle is stored on
+  // blind-battles.currentSession.
   const sessionTitle = battle.title || `Blindkamp #${battleId}`
   const syntheticPlan = await payload.create({
     collection: 'tasting-plans',
     data: {
       title: sessionTitle,
       owner: user.id,
+      blindTastingByDefault: true,
+      wines: planWines,
     } as never,
     overrideAccess: true,
   })
