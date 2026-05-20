@@ -1,7 +1,6 @@
 'use client'
 import * as React from 'react'
 import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SecretSlotPanel } from '@/components/blindkamp/SecretSlotPanel'
 import { CountdownButton } from '@/components/blindkamp/CountdownButton'
@@ -26,9 +25,14 @@ export function ProvningClient({
   const [useHelper, setUseHelper] = React.useState(false)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-heading">Blindkamp</h1>
+        <div className="space-y-0.5">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            Provning
+          </span>
+          <h1 className="font-heading tracking-[-0.015em] leading-[1.05] text-2xl">Blindkamp</h1>
+        </div>
         <HelpExplainer />
       </header>
 
@@ -36,7 +40,7 @@ export function ProvningClient({
         <>
           {isHost && (
             <div className="flex justify-end">
-              <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+              <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={useHelper}
@@ -52,66 +56,56 @@ export function ProvningClient({
             <>
               <SecretSlotPanel slot={mySlot} wineLabel={myWineLabel} />
               {isHost ? (
-                <Card>
-                  <CardContent className="p-5 space-y-3 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      När alla har slagit in sina flaskor och tittar bort, klicka för att räkna ner.
-                    </p>
-                    <CountdownButton onComplete={() => setPhase('tasting')} />
-                  </CardContent>
-                </Card>
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    När alla har slagit in sina flaskor och tittar bort, klicka för att räkna ner.
+                  </p>
+                  <CountdownButton onComplete={() => setPhase('tasting')} />
+                </div>
               ) : (
-                <Card>
-                  <CardContent className="p-5 text-center text-sm text-muted-foreground">
-                    Väntar på värden att starta nedräkningen…
-                  </CardContent>
-                </Card>
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm text-center text-sm text-muted-foreground">
+                  Väntar på värden att starta nedräkningen…
+                </div>
               )}
             </>
           )}
 
           {useHelper && isHost && (
-            <Card>
-              <CardContent className="p-5 space-y-3">
-                <p className="font-medium">Neutral hjälpare</p>
-                <p className="text-sm text-muted-foreground">
-                  Be någon som inte ska smaka att blanda och numrera de inslagna flaskorna 1–{totalSlots}.
-                  När det är klart, klicka för att börja provningen.
-                </p>
-                <Button onClick={() => setPhase('tasting')} className="w-full">
-                  Allt klart — starta provningen
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
+              <p className="font-medium">Neutral hjälpare</p>
+              <p className="text-sm text-muted-foreground">
+                Be någon som inte ska smaka att blanda och numrera de inslagna flaskorna 1–{totalSlots}.
+                När det är klart, klicka för att börja provningen.
+              </p>
+              <Button onClick={() => setPhase('tasting')} className="w-full">
+                Allt klart — starta provningen
+              </Button>
+            </div>
           )}
 
           {useHelper && !isHost && (
-            <Card>
-              <CardContent className="p-5 text-center text-sm text-muted-foreground">
-                Värden använder en neutral hjälpare för att blanda flaskorna. Väntar på att de blir klara…
-              </CardContent>
-            </Card>
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm text-center text-sm text-muted-foreground">
+              Värden använder en neutral hjälpare för att blanda flaskorna. Väntar på att de blir klara…
+            </div>
           )}
         </>
       )}
 
       {phase === 'tasting' && (
-        <Card>
-          <CardContent className="p-5 space-y-3 text-center">
-            <p className="font-medium">Provningen är igång</p>
-            <p className="text-sm text-muted-foreground">
-              Vinerna är på plats 1–{totalSlots}. Häll från plats 1 till alla, sätt betyg, gå sedan
-              till nästa plats.
-            </p>
-            <Button asChild className="w-full">
-              <Link href={`/delta?code=${encodeURIComponent(joinCode)}`}>Gå till provningen</Link>
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Du ser ditt eget vin på plats {mySlot} när det är dags att smaka. Ditt eget betyg
-              räknas inte mot snittet.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 text-center">
+          <p className="font-medium">Provningen är igång</p>
+          <p className="text-sm text-muted-foreground">
+            Vinerna är på plats 1–{totalSlots}. Häll från plats 1 till alla, sätt betyg, gå sedan
+            till nästa plats.
+          </p>
+          <Button asChild className="w-full">
+            <Link href={`/delta?code=${encodeURIComponent(joinCode)}`}>Gå till provningen</Link>
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Du ser ditt eget vin på plats {mySlot} när det är dags att smaka. Ditt eget betyg
+            räknas inte mot snittet.
+          </p>
+        </div>
       )}
     </div>
   )

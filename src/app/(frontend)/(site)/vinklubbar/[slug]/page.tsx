@@ -43,10 +43,13 @@ export default async function VinklubbHomePage({
   const canManage = myMembership.role === 'owner' || myMembership.role === 'admin'
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-heading">{club.name}</h1>
+    <div className="mx-auto max-w-4xl px-4 lg:px-6 py-8 sm:py-12 space-y-8">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            Vinklubb
+          </span>
+          <h1 className="font-heading tracking-[-0.015em] leading-[1.05] text-3xl">{club.name}</h1>
           {club.description && (
             <p className="text-sm text-muted-foreground mt-1">{club.description}</p>
           )}
@@ -77,10 +80,10 @@ export default async function VinklubbHomePage({
           <Link
             key={t.key}
             href={`/vinklubbar/${slug}?tab=${t.key}`}
-            className={`px-4 py-2 -mb-px border-b-2 transition-colors text-sm font-medium ${
+            className={`px-4 py-2.5 -mb-px border-b-2 transition-colors text-sm font-medium ${
               tab === t.key
                 ? 'border-brand-400 text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             {t.label}
@@ -88,9 +91,11 @@ export default async function VinklubbHomePage({
         ))}
       </nav>
 
-      {tab === 'oversikt' && <OversiktTab club={club} canManage={canManage} />}
-      {tab === 'topplista' && <TopplistaTab clubId={club.id} />}
-      {tab === 'historik' && <HistorikTab clubId={club.id} />}
+      <div>
+        {tab === 'oversikt' && <OversiktTab club={club} canManage={canManage} />}
+        {tab === 'topplista' && <TopplistaTab clubId={club.id} />}
+        {tab === 'historik' && <HistorikTab clubId={club.id} />}
+      </div>
     </div>
   )
 }

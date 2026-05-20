@@ -41,10 +41,15 @@ export default async function SkapaBlindkampPage({
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10 space-y-6">
-      <header>
-        <h1 className="text-2xl font-heading">Skapa blindkamp</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:py-12 space-y-8">
+      <header className="space-y-1">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Blindkamp
+        </span>
+        <h1 className="font-heading tracking-[-0.015em] leading-[1.05] text-3xl">
+          Skapa blindkamp
+        </h1>
+        <p className="text-sm text-muted-foreground mt-2">
           {clubId
             ? 'För en av dina vinklubbar.'
             : 'Pop-up — bjud in via länk efter att kampen är skapad.'}

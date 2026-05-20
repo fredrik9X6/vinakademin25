@@ -35,6 +35,9 @@ export function JoinGuestClient({ battleId, inviteCode }: { battleId: number; in
 
   return (
     <form onSubmit={submit} className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Fyll i dina uppgifter för att delta i blindkampen.
+      </p>
       <div className="space-y-2">
         <Label htmlFor="name">Namn</Label>
         <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -49,7 +52,7 @@ export function JoinGuestClient({ battleId, inviteCode }: { battleId: number; in
           required
         />
       </div>
-      <Button type="submit" disabled={busy} className="w-full">
+      <Button type="submit" disabled={busy} className="w-full mt-2">
         {busy ? 'Ansluter…' : 'Gå med'}
       </Button>
     </form>
