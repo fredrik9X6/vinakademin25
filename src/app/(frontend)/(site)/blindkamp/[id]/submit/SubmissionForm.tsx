@@ -3,14 +3,39 @@ import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { WineSubmissionPicker, type SubmissionValue } from '@/components/blindkamp/WineSubmissionPicker'
-import type { ThemeValue } from '@/components/blindkamp/ThemePicker'
+import { WinePicker, type CustomWineInput } from '@/components/tasting-plan/WinePicker'
 import { trackEvent } from '@/components/analytics'
+
+function buildInitialPicked(initial: any): CustomWineInput | null {
+  if (initial?.systembolagetProduct?.productNumber) {
+    const sp = initial.systembolagetProduct
+    return {
+      name: [sp.productNameBold, sp.productNameThin].filter(Boolean).join(' ') || sp.productNumber,
+      producer: sp.producerName ?? undefined,
+      vintage: sp.vintage != null ? String(sp.vintage) : undefined,
+      priceSek: sp.price ?? undefined,
+      imageUrl: sp.imageUrl ?? undefined,
+      systembolagetProductNumber: sp.productNumber,
+      systembolagetUrl: sp.productUrl ?? undefined,
+    }
+  }
+  if (initial?.customWine?.name) {
+    const cw = initial.customWine
+    return {
+      name: cw.name,
+      producer: cw.producer ?? undefined,
+      vintage: cw.vintage ?? undefined,
+      type: cw.type ?? undefined,
+      priceSek: cw.priceSek ?? undefined,
+    }
+  }
+  return null
+}
 
 export function SubmissionForm({
   battleId,
   token,
-  theme,
+  theme: _theme,
   initial,
 }: {
   battleId: number
@@ -19,26 +44,14 @@ export function SubmissionForm({
   initial: any
 }) {
   const router = useRouter()
-  const [value, setValue] = React.useState<SubmissionValue>({
-    systembolagetProductNumber: initial.systembolagetProduct?.productNumber || null,
-    customName: initial.customWine?.name || '',
-    customProducer: initial.customWine?.producer || '',
-    customVintage: initial.customWine?.vintage || '',
-    customPriceSek: initial.customWine?.priceSek ?? null,
-    customType: (initial.customWine?.type || '') as SubmissionValue['customType'],
-  })
+  const [picked, setPicked] = React.useState<CustomWineInput | null>(() =>
+    buildInitialPicked(initial),
+  )
   const [busy, setBusy] = React.useState(false)
 
-  const themeValue: ThemeValue = {
-    wineType: theme?.wineType ?? 'any',
-    priceMinSek: theme?.priceMinSek ?? null,
-    priceMaxSek: theme?.priceMaxSek ?? null,
-    description: '',
-  }
-
   async function save() {
-    if (!value.systembolagetProductNumber && !value.customName.trim()) {
-      toast.error('Välj ett vin eller fyll i namn manuellt')
+    if (!picked) {
+      toast.error('Välj ett vin')
       return
     }
     setBusy(true)
@@ -50,13 +63,13 @@ export function SubmissionForm({
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
-            systembolagetProductNumber: value.systembolagetProductNumber,
+            systembolagetProductNumber: picked.systembolagetProductNumber ?? null,
             customWine: {
-              name: value.customName,
-              producer: value.customProducer || undefined,
-              vintage: value.customVintage || undefined,
-              type: value.customType || undefined,
-              priceSek: value.customPriceSek,
+              name: picked.name,
+              producer: picked.producer ?? undefined,
+              vintage: picked.vintage ?? undefined,
+              type: picked.type ?? undefined,
+              priceSek: picked.priceSek ?? undefined,
             },
           }),
         },
@@ -76,8 +89,43 @@ export function SubmissionForm({
 
   return (
     <div className="space-y-6">
-      <WineSubmissionPicker theme={themeValue} value={value} onChange={setValue} />
-      <Button onClick={save} disabled={busy} className="w-full">
+      {picked ? (
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
+          <div className="flex items-start gap-4">
+            {picked.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={picked.imageUrl}
+                alt={picked.name}
+                className="w-14 h-16 object-contain flex-shrink-0 rounded"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="font-medium truncate">{picked.name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {[picked.producer, picked.vintage, picked.priceSek != null ? `${picked.priceSek} kr` : null]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setPicked(null)}
+              disabled={busy}
+            >
+              Byt
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <WinePicker onPickCustom={(wine) => setPicked(wine)} disabled={busy} />
+        </div>
+      )}
+
+      <Button onClick={save} disabled={busy || !picked} className="w-full">
         {busy ? 'Sparar…' : 'Lämna in'}
       </Button>
     </div>
