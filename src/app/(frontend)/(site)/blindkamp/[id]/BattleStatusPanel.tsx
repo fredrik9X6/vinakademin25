@@ -132,10 +132,18 @@ export function BattleStatusPanel({
         </div>
       )}
 
-      {isHost && status === 'in_session' && (
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      {status === 'in_session' && mySubmissionToken && (
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3">
+          <p className="font-medium">
+            {isHost ? 'Du leder provningen' : 'Värden har startat provningen'}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Klicka för att se din hemliga plats och placera din inslagna flaska.
+          </p>
           <Button asChild>
-            <Link href={`/blindkamp/${battleId}/provning`}>Återgå till provningen</Link>
+            <Link href={`/blindkamp/${battleId}/provning`}>
+              {isHost ? 'Återgå till provningen' : 'Gå till provningen'}
+            </Link>
           </Button>
         </div>
       )}
