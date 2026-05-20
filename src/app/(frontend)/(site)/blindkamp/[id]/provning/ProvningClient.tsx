@@ -63,8 +63,14 @@ export function ProvningClient({
                   <CountdownButton onComplete={() => setPhase('tasting')} />
                 </div>
               ) : (
-                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm text-center text-sm text-muted-foreground">
-                  Väntar på värden att starta nedräkningen…
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    När värden räknar ner, ställ din inslagna flaska på din hemliga plats.
+                    Tryck sedan på knappen för att se vinerna och börja smaka.
+                  </p>
+                  <Button onClick={() => setPhase('tasting')} className="w-full">
+                    Jag är klar — visa vinerna
+                  </Button>
                 </div>
               )}
             </>
@@ -84,8 +90,14 @@ export function ProvningClient({
           )}
 
           {useHelper && !isHost && (
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm text-center text-sm text-muted-foreground">
-              Värden använder en neutral hjälpare för att blanda flaskorna. Väntar på att de blir klara…
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-3 text-center">
+              <p className="text-sm text-muted-foreground">
+                Värden använder en neutral hjälpare för att blanda flaskorna. När hjälparen är
+                klar, tryck för att se vinerna.
+              </p>
+              <Button onClick={() => setPhase('tasting')} className="w-full">
+                Visa vinerna
+              </Button>
             </div>
           )}
         </>
