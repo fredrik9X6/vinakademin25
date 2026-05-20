@@ -101,6 +101,9 @@ export interface Config {
     'vinkompass-questions': VinkompassQuestion;
     'vinkompass-archetypes': VinkompassArchetype;
     'vinkompass-attempts': VinkompassAttempt;
+    'wine-clubs': WineClub;
+    'blind-battles': BlindBattle;
+    'blind-battle-submissions': BlindBattleSubmission;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -141,6 +144,9 @@ export interface Config {
     'vinkompass-questions': VinkompassQuestionsSelect<false> | VinkompassQuestionsSelect<true>;
     'vinkompass-archetypes': VinkompassArchetypesSelect<false> | VinkompassArchetypesSelect<true>;
     'vinkompass-attempts': VinkompassAttemptsSelect<false> | VinkompassAttemptsSelect<true>;
+    'wine-clubs': WineClubsSelect<false> | WineClubsSelect<true>;
+    'blind-battles': BlindBattlesSelect<false> | BlindBattlesSelect<true>;
+    'blind-battle-submissions': BlindBattleSubmissionsSelect<false> | BlindBattleSubmissionsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -3245,6 +3251,100 @@ export interface VinkompassAttempt {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wine-clubs".
+ */
+export interface WineClub {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  coverImage?: (number | null) | Media;
+  /**
+   * Short code used in shareable join links.
+   */
+  inviteCode: string;
+  owner: number | User;
+  members?:
+    | {
+        user: number | User;
+        role: 'owner' | 'admin' | 'member';
+        joinedAt: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blind-battles".
+ */
+export interface BlindBattle {
+  id: number;
+  title?: string | null;
+  theme: {
+    wineType: 'any' | 'red' | 'white' | 'rose' | 'sparkling' | 'orange' | 'dessert';
+    priceMinSek?: number | null;
+    priceMaxSek?: number | null;
+    countries?: (number | Country)[] | null;
+    grapes?: (number | Grape)[] | null;
+  };
+  themeDescription?: string | null;
+  host: number | User;
+  club?: (number | null) | WineClub;
+  status: 'draft' | 'submissions_open' | 'in_session' | 'completed' | 'canceled';
+  submissionDeadline?: string | null;
+  sessionDate?: string | null;
+  wineCount?: number | null;
+  revealStrategy: 'one_by_one' | 'all_at_end';
+  inviteCode: string;
+  /**
+   * Populated when the host opens the session.
+   */
+  currentSession?: (number | null) | CourseSession;
+  /**
+   * Stamped when the 24h-before reminder fired.
+   */
+  remindersSentAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blind-battle-submissions".
+ */
+export interface BlindBattleSubmission {
+  id: number;
+  battle: number | BlindBattle;
+  user?: (number | null) | User;
+  guestEmail?: string | null;
+  guestName?: string | null;
+  systembolagetProduct?: (number | null) | SystembolagetProduct;
+  customWine?: {
+    name?: string | null;
+    producer?: string | null;
+    vintage?: string | null;
+    type?: ('red' | 'white' | 'rose' | 'sparkling' | 'orange' | 'dessert') | null;
+    priceSek?: number | null;
+    systembolagetUrl?: string | null;
+    imageUrl?: string | null;
+  };
+  /**
+   * Random slot 1..N assigned when the host opens the session. Shown to the submitter as their private "secret slot", and used as the pour order during the tasting.
+   */
+  pourOrder?: number | null;
+  submittedAt?: string | null;
+  revealedAt?: string | null;
+  status: 'invited' | 'submitted' | 'declined' | 'no_show';
+  /**
+   * Opaque token used in the per-participant submission URL.
+   */
+  submissionToken: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -3385,6 +3485,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'vinkompass-attempts';
         value: number | VinkompassAttempt;
+      } | null)
+    | ({
+        relationTo: 'wine-clubs';
+        value: number | WineClub;
+      } | null)
+    | ({
+        relationTo: 'blind-battles';
+        value: number | BlindBattle;
+      } | null)
+    | ({
+        relationTo: 'blind-battle-submissions';
+        value: number | BlindBattleSubmission;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -4607,6 +4719,86 @@ export interface VinkompassAttemptsSelect<T extends boolean = true> {
   userId?: T;
   userAgent?: T;
   referer?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wine-clubs_select".
+ */
+export interface WineClubsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  coverImage?: T;
+  inviteCode?: T;
+  owner?: T;
+  members?:
+    | T
+    | {
+        user?: T;
+        role?: T;
+        joinedAt?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blind-battles_select".
+ */
+export interface BlindBattlesSelect<T extends boolean = true> {
+  title?: T;
+  theme?:
+    | T
+    | {
+        wineType?: T;
+        priceMinSek?: T;
+        priceMaxSek?: T;
+        countries?: T;
+        grapes?: T;
+      };
+  themeDescription?: T;
+  host?: T;
+  club?: T;
+  status?: T;
+  submissionDeadline?: T;
+  sessionDate?: T;
+  wineCount?: T;
+  revealStrategy?: T;
+  inviteCode?: T;
+  currentSession?: T;
+  remindersSentAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blind-battle-submissions_select".
+ */
+export interface BlindBattleSubmissionsSelect<T extends boolean = true> {
+  battle?: T;
+  user?: T;
+  guestEmail?: T;
+  guestName?: T;
+  systembolagetProduct?: T;
+  customWine?:
+    | T
+    | {
+        name?: T;
+        producer?: T;
+        vintage?: T;
+        type?: T;
+        priceSek?: T;
+        systembolagetUrl?: T;
+        imageUrl?: T;
+      };
+  pourOrder?: T;
+  submittedAt?: T;
+  revealedAt?: T;
+  status?: T;
+  submissionToken?: T;
   updatedAt?: T;
   createdAt?: T;
 }
