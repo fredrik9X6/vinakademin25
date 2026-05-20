@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { getUser } from '@/lib/get-user'
 import { getPayloadClient } from '@/lib/payload'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { RevealCard } from '@/components/blindkamp/RevealCard'
 import { computeBattleResult } from '@/lib/blindkamp/compute-battle-result'
 
@@ -39,17 +38,20 @@ export default async function ResultatPage({
   const backHref = clubSlug ? `/vinklubbar/${clubSlug}?tab=historik` : '/vinklubbar'
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
-      <header>
-        <Link href={backHref} className="text-sm text-muted-foreground hover:underline">
-          &larr; Tillbaka
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:py-12 space-y-8">
+      <header className="space-y-1">
+        <Link
+          href={backHref}
+          className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          ← Tillbaka
         </Link>
-        <h1 className="text-2xl font-heading mt-2">
+        <h1 className="font-heading tracking-[-0.015em] leading-[1.05] text-3xl mt-1">
           {battle.title || 'Blindkamp'} — Resultat
         </h1>
       </header>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {rows.map((r) => (
           <RevealCard
             key={r.submissionId}
@@ -66,17 +68,15 @@ export default async function ResultatPage({
       </div>
 
       {!battle.club && (
-        <Card>
-          <CardContent className="p-5 space-y-3 text-center">
-            <p className="font-medium">Vill ni göra det här igen?</p>
-            <p className="text-sm text-muted-foreground">
-              Skapa en vinklubb och kör flera blindkampar med samma grupp.
-            </p>
-            <Button asChild>
-              <Link href="/vinklubbar/skapa">Skapa vinklubb</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-3 text-center">
+          <p className="font-medium">Vill ni göra det här igen?</p>
+          <p className="text-sm text-muted-foreground">
+            Skapa en vinklubb och kör flera blindkampar med samma grupp.
+          </p>
+          <Button asChild>
+            <Link href="/vinklubbar/skapa">Skapa vinklubb</Link>
+          </Button>
+        </div>
       )}
     </div>
   )

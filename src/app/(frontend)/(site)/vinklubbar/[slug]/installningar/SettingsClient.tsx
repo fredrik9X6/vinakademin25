@@ -55,7 +55,7 @@ export function SettingsClient({
 
   return (
     <div className="space-y-6">
-      <section className="space-y-3 rounded-lg border border-border p-4">
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
         <h2 className="font-medium">Klubbinformation</h2>
         <div className="space-y-2">
           <Label htmlFor="name">Namn</Label>
@@ -76,7 +76,7 @@ export function SettingsClient({
       </section>
 
       {isOwner && (
-        <section className="space-y-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
+        <section className="rounded-2xl border border-destructive/40 bg-destructive/5 p-6 space-y-4">
           <h2 className="font-medium text-destructive">Riskzon</h2>
           <p className="text-sm text-muted-foreground">
             Att ta bort klubben raderar all historik och topplista. Detta kan inte ångras.

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { getPayloadClient } from '@/lib/payload'
-import { Card, CardContent } from '@/components/ui/card'
 
 export async function HistorikTab({ clubId }: { clubId: number }) {
   const payload = await getPayloadClient()
@@ -14,20 +13,18 @@ export async function HistorikTab({ clubId }: { clubId: number }) {
   })
   if (battles.docs.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center text-sm text-muted-foreground">
-          Inga avslutade blindkampar än.
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl border border-border bg-card p-8 shadow-sm text-center text-sm text-muted-foreground">
+        Inga avslutade blindkampar än.
+      </div>
     )
   }
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-3">
       {battles.docs.map((b: any) => (
         <li key={b.id}>
           <Link
             href={`/blindkamp/${b.id}/resultat`}
-            className="block rounded-md border border-border p-4 hover:border-brand-400/50 transition-colors"
+            className="block rounded-2xl border border-border bg-card p-5 hover:border-brand-400/50 hover:shadow-sm transition-all"
           >
             <p className="font-medium">{b.title || `Blindkamp #${b.id}`}</p>
             <p className="text-xs text-muted-foreground mt-0.5">

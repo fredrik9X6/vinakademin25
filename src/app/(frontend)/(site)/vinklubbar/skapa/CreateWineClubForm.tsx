@@ -66,7 +66,7 @@ export function CreateWineClubForm() {
           rows={3}
         />
       </div>
-      <Button type="submit" disabled={busy} className="w-full">
+      <Button type="submit" disabled={busy} className="w-full mt-2">
         {busy ? 'Skapar…' : 'Skapa vinklubb'}
       </Button>
     </form>

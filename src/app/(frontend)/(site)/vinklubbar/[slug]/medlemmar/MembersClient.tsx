@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Copy, Trash2, ShieldCheck } from 'lucide-react'
 
+const ROLE_LABEL: Record<string, string> = {
+  owner: 'Ägare',
+  admin: 'Admin',
+  member: 'Medlem',
+}
+
 export function MembersClient({
   clubId,
   members,
@@ -88,7 +94,7 @@ export function MembersClient({
   return (
     <div className="space-y-6">
       {canManage && (
-        <section className="space-y-3 rounded-lg border border-border p-4">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
           <h2 className="font-medium">Bjud in fler</h2>
           <div className="flex gap-2">
             <Input
@@ -100,11 +106,11 @@ export function MembersClient({
               Bjud in
             </Button>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <p className="text-xs text-muted-foreground">Eller dela länken:</p>
             <div className="flex gap-2">
-              <Input value={inviteUrl} readOnly />
-              <Button variant="outline" onClick={copyInvite}>
+              <Input value={inviteUrl} readOnly className="text-xs" />
+              <Button variant="outline" onClick={copyInvite} size="sm">
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
@@ -112,41 +118,51 @@ export function MembersClient({
         </section>
       )}
 
-      <ul className="space-y-2">
-        {members.map((m, idx) => {
-          const u = typeof m.user === 'object' ? m.user : null
-          const uid = u?.id ?? m.user
-          const name = (u?.firstName || u?.email || `Medlem #${uid}`) as string
-          const isOwner = m.role === 'owner'
-          const isSelf = uid === viewerId
-          return (
-            <li
-              key={idx}
-              className="flex items-center justify-between gap-3 rounded-md border border-border p-3"
-            >
-              <div>
-                <p className="font-medium">{name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {m.role === 'owner' ? 'Ägare' : m.role === 'admin' ? 'Admin' : 'Medlem'}
-                </p>
-              </div>
-              {canManage && !isOwner && !isSelf && (
-                <div className="flex gap-1.5">
-                  {viewerRole === 'owner' && (
-                    <Button size="sm" variant="outline" onClick={() => toggleRole(uid, m.role)}>
-                      <ShieldCheck className="h-4 w-4 mr-1" />
-                      {m.role === 'admin' ? 'Gör till medlem' : 'Gör till admin'}
-                    </Button>
-                  )}
-                  <Button size="sm" variant="ghost" onClick={() => remove(uid)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <ul className="divide-y divide-border">
+          {members.map((m, idx) => {
+            const u = typeof m.user === 'object' ? m.user : null
+            const uid = u?.id ?? m.user
+            const name = (u?.firstName || u?.email || `Medlem #${uid}`) as string
+            const isOwner = m.role === 'owner'
+            const isSelf = uid === viewerId
+            return (
+              <li
+                key={idx}
+                className="flex items-center justify-between gap-3 px-5 py-4"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{name}</p>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium mt-0.5 ${
+                      m.role === 'owner'
+                        ? 'bg-brand-400/10 text-brand-400'
+                        : m.role === 'admin'
+                          ? 'bg-muted text-muted-foreground'
+                          : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {ROLE_LABEL[m.role] ?? m.role}
+                  </span>
                 </div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
+                {canManage && !isOwner && !isSelf && (
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    {viewerRole === 'owner' && (
+                      <Button size="sm" variant="outline" onClick={() => toggleRole(uid, m.role)}>
+                        <ShieldCheck className="h-4 w-4 mr-1" />
+                        {m.role === 'admin' ? 'Gör till medlem' : 'Gör till admin'}
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={() => remove(uid)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      </div>
     </div>
   )
 }
