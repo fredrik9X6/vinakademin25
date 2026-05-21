@@ -26,6 +26,8 @@ import { transformCourseWithModules } from '@/lib/course-utils-server'
 import { NewsletterSignupBlock } from '@/components/blocks/NewsletterSignupBlock'
 import { NeuralHeroWithBanner } from '@/components/home/NeuralHeroWithBanner'
 import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
+import { ProvningsmallarFeature } from '@/components/home/ProvningsmallarFeature'
+import type { TastingTemplate } from '@/payload-types'
 
 export const metadata: Metadata = {
   title: 'Vinprovningar online & vinkurser på svenska',
@@ -44,8 +46,15 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const payload = await getPayload({ config })
 
-  // Fetch featured course, recent courses, and recent blog posts
-  const [featuredCourseResult, recentCoursesResult, recentBlogPostsResult] = await Promise.all([
+  // Fetch featured course, recent courses, recent blog posts, and the
+  // tasting-template library showcase (3 most recent published + total count).
+  const [
+    featuredCourseResult,
+    recentCoursesResult,
+    recentBlogPostsResult,
+    featuredTemplatesResult,
+    templatesTotalResult,
+  ] = await Promise.all([
     payload.find({
       collection: 'vinprovningar',
       where: {
@@ -68,11 +77,24 @@ export default async function HomePage() {
       limit: 3,
       sort: '-publishedAt',
     }),
+    payload.find({
+      collection: 'tasting-templates',
+      where: { publishedStatus: { equals: 'published' } } as any,
+      depth: 1,
+      limit: 3,
+      sort: '-publishedAt',
+    }),
+    payload.count({
+      collection: 'tasting-templates',
+      where: { publishedStatus: { equals: 'published' } } as any,
+    }),
   ])
 
   const featuredCourse = featuredCourseResult.docs[0]
   const recentCourses = recentCoursesResult.docs
   const recentBlogPosts = recentBlogPostsResult.docs
+  const featuredTemplates = featuredTemplatesResult.docs as TastingTemplate[]
+  const templatesTotal = templatesTotalResult.totalDocs
 
   // Transform course with modules - using helper function
   const transformCourse = async (course: any) => {
@@ -107,7 +129,11 @@ export default async function HomePage() {
       {/* Neural Network Hero with Join Session Banner */}
       <NeuralHeroWithBanner featuredCourse={transformedFeaturedCourse} />
 
-      {/* How It Works Section */}
+      {/* Provningsmallar bibliotek — feature surfacing the templates library */}
+      <ProvningsmallarFeature templates={featuredTemplates} totalCount={templatesTotal} />
+
+      {/* How It Works Section — hidden for now, kept for easy restore */}
+      {false && (
       <section className="py-16 lg:py-24 relative overflow-hidden">
         {/* Background decorative elements */}
         <div className="absolute inset-0 -z-10">
@@ -254,9 +280,12 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
-      {/* Featured Course Section */}
-      {transformedFeaturedCourse && <FeaturedCourseCard course={transformedFeaturedCourse} />}
+      {/* Featured Course Section — hidden for now, kept for easy restore */}
+      {false && transformedFeaturedCourse && (
+        <FeaturedCourseCard course={transformedFeaturedCourse} />
+      )}
 
       {/* Articles Section */}
       {recentBlogPosts.length > 0 && (
