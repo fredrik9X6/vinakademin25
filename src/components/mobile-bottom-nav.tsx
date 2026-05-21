@@ -1,48 +1,304 @@
 'use client'
 
+import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Wine, Newspaper, User, List } from 'lucide-react'
+import {
+  Home,
+  Wine,
+  Newspaper,
+  User,
+  List,
+  Users,
+  ClipboardList,
+  History,
+  Star,
+  Settings,
+  LogIn,
+  LogOut,
+  UserCircle,
+  BookOpen,
+  Sun,
+  Moon,
+} from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { useAuth } from '@/context/AuthContext'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
+import { Switch } from '@/components/ui/switch'
 
-const TABS = [
+interface PrimaryTab {
+  label: string
+  href: string
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  matchExact?: boolean
+}
+
+const PRIMARY_TABS: PrimaryTab[] = [
   { label: 'Hem', href: '/', icon: Home, matchExact: true },
   { label: 'Provningar', href: '/vinprovningar', icon: Wine },
   { label: 'Vinlistan', href: '/vinlistan', icon: List },
   { label: 'Artiklar', href: '/artiklar', icon: Newspaper },
-  { label: 'Min sida', href: '/mina-sidor', hrefLoggedOut: '/logga-in', icon: User },
 ]
 
 export function MobileBottomNav() {
   const pathname = usePathname()
-  const { user } = useAuth()
+  const { user, logoutUser } = useAuth()
+  const { theme, setTheme } = useTheme()
+  const [open, setOpen] = React.useState(false)
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  React.useEffect(() => {
+    // Close the drawer on navigation
+    setOpen(false)
+  }, [pathname])
+
+  const userName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+    : ''
+  const avatarUrl =
+    user && typeof user.avatar === 'object' && user.avatar?.url ? user.avatar.url : undefined
+  const fallbackInitial = userName ? userName.charAt(0).toUpperCase() : 'U'
+  const profilePublic = user ? (user as any).profilePublic !== false : false
+
+  const isMineActive = pathname === '/mina-sidor' || pathname.startsWith('/mina-sidor/')
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden pb-[env(safe-area-inset-bottom)]">
-      <div className="flex h-16 items-center justify-around px-2">
-        {TABS.map((tab) => {
-          const href =
-            tab.hrefLoggedOut && !user ? `${tab.hrefLoggedOut}?from=${tab.href}` : tab.href
-          const isActive = tab.matchExact
-            ? pathname === tab.href
-            : pathname === tab.href || pathname.startsWith(tab.href + '/')
+    <>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden pb-[env(safe-area-inset-bottom)]">
+        <div className="flex h-16 items-center justify-around px-2">
+          {PRIMARY_TABS.map((tab) => {
+            const isActive = tab.matchExact
+              ? pathname === tab.href
+              : pathname === tab.href || pathname.startsWith(tab.href + '/')
 
-          const Icon = tab.icon
+            const Icon = tab.icon
 
-          return (
+            return (
+              <Link
+                key={tab.label}
+                href={tab.href}
+                className={`flex flex-col items-center justify-center gap-1 min-w-[64px] py-1 rounded-md transition-colors ${
+                  isActive ? 'text-brand-400' : 'text-muted-foreground'
+                }`}
+              >
+                <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-medium leading-none">{tab.label}</span>
+              </Link>
+            )
+          })}
+
+          {/* "Min sida" — opens the drawer with all nav + account items */}
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className={`flex flex-col items-center justify-center gap-1 min-w-[64px] py-1 rounded-md transition-colors ${
+              open || isMineActive ? 'text-brand-400' : 'text-muted-foreground'
+            }`}
+            aria-label="Min sida — öppna meny"
+          >
+            {user ? (
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={avatarUrl} alt={userName} />
+                <AvatarFallback className="bg-brand-300/15 text-[10px] font-medium text-brand-400">
+                  {fallbackInitial}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <User className="h-5 w-5" strokeWidth={open || isMineActive ? 2.5 : 2} />
+            )}
+            <span className="text-[10px] font-medium leading-none">Min sida</span>
+          </button>
+        </div>
+      </nav>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="bottom"
+          className="rounded-t-2xl border-t pb-[env(safe-area-inset-bottom)] max-h-[88vh] overflow-y-auto"
+        >
+          <SheetTitle className="sr-only">Min sida</SheetTitle>
+
+          {/* Header: user identity OR login prompt */}
+          {user ? (
             <Link
-              key={tab.label}
-              href={href}
-              className={`flex flex-col items-center justify-center gap-1 min-w-[64px] py-1 rounded-md transition-colors ${
-                isActive ? 'text-brand-400' : 'text-muted-foreground'
-              }`}
+              href="/mina-sidor"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-4"
             >
-              <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[10px] font-medium leading-none">{tab.label}</span>
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={avatarUrl} alt={userName} />
+                <AvatarFallback className="bg-brand-300/15 text-base font-medium text-brand-400">
+                  {fallbackInitial}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium leading-tight truncate">{userName}</p>
+                <p className="text-xs text-muted-foreground leading-tight truncate">{user.email}</p>
+              </div>
+              <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                Min sida
+              </span>
             </Link>
-          )
-        })}
-      </div>
-    </nav>
+          ) : (
+            <Link
+              href={`/logga-in?from=${encodeURIComponent(pathname)}`}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-4"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-300/15 text-brand-400">
+                <LogIn className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Logga in</p>
+                <p className="text-xs text-muted-foreground">Skapa ett konto eller logga in</p>
+              </div>
+            </Link>
+          )}
+
+          {/* Mitt konto — only for logged-in users */}
+          {user && (
+            <div className="mt-5 space-y-1.5">
+              <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Mitt konto
+              </p>
+              <ul className="rounded-lg border border-border bg-card overflow-hidden">
+                {user.handle && profilePublic && (
+                  <DrawerLink
+                    href={`/profil/${user.handle}`}
+                    icon={UserCircle}
+                    label="Visa min profil"
+                    onClose={() => setOpen(false)}
+                  />
+                )}
+                <DrawerLink
+                  href="/mina-recensioner"
+                  icon={Star}
+                  label="Mina recensioner"
+                  onClose={() => setOpen(false)}
+                />
+                <DrawerLink
+                  href="/mina-provningar/planer"
+                  icon={ClipboardList}
+                  label="Mina vinprovningar"
+                  onClose={() => setOpen(false)}
+                />
+                <DrawerLink
+                  href="/vinklubbar"
+                  icon={Users}
+                  label="Mina vinklubbar"
+                  onClose={() => setOpen(false)}
+                />
+                <DrawerLink
+                  href="/mina-provningar/historik"
+                  icon={History}
+                  label="Historik"
+                  onClose={() => setOpen(false)}
+                  last
+                />
+              </ul>
+            </div>
+          )}
+
+          {/* Utforska — public nav items not in the bottom-nav tabs */}
+          <div className="mt-5 space-y-1.5">
+            <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              Utforska
+            </p>
+            <ul className="rounded-lg border border-border bg-card overflow-hidden">
+              <DrawerLink
+                href="/provningsmallar"
+                icon={BookOpen}
+                label="Provningsmallar"
+                onClose={() => setOpen(false)}
+                last
+              />
+            </ul>
+          </div>
+
+          {/* Inställningar */}
+          <div className="mt-5 space-y-1.5">
+            <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              Inställningar
+            </p>
+            <ul className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
+              {user && (
+                <DrawerLink
+                  href="/profil?tab=uppgifter"
+                  icon={Settings}
+                  label="Konto"
+                  onClose={() => setOpen(false)}
+                />
+              )}
+
+              {/* Theme toggle */}
+              <li className="flex items-center gap-3 px-4 py-3">
+                {mounted && theme === 'dark' ? (
+                  <Moon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                ) : (
+                  <Sun className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                )}
+                <span className="flex-1 text-sm">Mörkt tema</span>
+                {mounted && (
+                  <Switch
+                    checked={theme === 'dark'}
+                    onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                    aria-label="Växla tema"
+                    className="data-[state=checked]:bg-brand-400"
+                  />
+                )}
+              </li>
+
+              {user && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setOpen(false)
+                      await logoutUser()
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted/50 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="flex-1">Logga ut</span>
+                  </button>
+                </li>
+              )}
+            </ul>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
+
+function DrawerLink({
+  href,
+  icon: Icon,
+  label,
+  onClose,
+  last,
+}: {
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  onClose: () => void
+  last?: boolean
+}) {
+  return (
+    <li className={last ? '' : 'border-b border-border'}>
+      <Link
+        href={href}
+        onClick={onClose}
+        className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted/50 transition-colors"
+      >
+        <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        <span className="flex-1">{label}</span>
+      </Link>
+    </li>
   )
 }
