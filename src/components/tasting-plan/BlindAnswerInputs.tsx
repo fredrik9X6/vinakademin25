@@ -9,12 +9,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
-import {
-  COUNTRIES,
-  GRAPES,
-  PRICE_BUCKETS,
-  type PriceBucket,
-} from '@/lib/blind-guess-vocab'
+import { COUNTRIES, PRICE_BUCKETS, type PriceBucket } from '@/lib/blind-guess-vocab'
+import { useGrapes } from '@/lib/use-grapes'
 
 export interface BlindAnswers {
   country: string | null
@@ -40,6 +36,7 @@ export interface BlindAnswerInputsProps {
  * non-blind tastings.
  */
 export function BlindAnswerInputs({ value, onChange, disabled }: BlindAnswerInputsProps) {
+  const { grapes } = useGrapes()
   return (
     <details className="mt-2 text-sm">
       <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground select-none">
@@ -90,9 +87,9 @@ export function BlindAnswerInputs({ value, onChange, disabled }: BlindAnswerInpu
           </Select>
         </div>
         <MultiSelect
-          options={GRAPES.map((g) => ({ label: g, value: g }))}
+          options={grapes.map((g) => ({ label: g, value: g }))}
           value={value.grapes}
-          onValueChange={(grapes) => onChange({ ...value, grapes })}
+          onValueChange={(next) => onChange({ ...value, grapes: next })}
           placeholder="Druvor (lägg till flera för blends)"
           className="w-full"
           disabled={disabled}

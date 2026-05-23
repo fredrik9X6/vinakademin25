@@ -13,11 +13,11 @@ import {
 import { Check, X, Pencil } from 'lucide-react'
 import {
   COUNTRIES,
-  GRAPES,
   PRICE_BUCKETS,
   priceBucketLabel,
   type PriceBucket,
 } from '@/lib/blind-guess-vocab'
+import { useGrapes } from '@/lib/use-grapes'
 import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
 
 export interface BlindGuessCardProps {
@@ -56,8 +56,9 @@ export function BlindGuessCard({
   initialGuess,
   easyModeOptions = null,
 }: BlindGuessCardProps) {
+  const { grapes: dynamicGrapes } = useGrapes()
   const countryOptions = easyModeOptions?.countries ?? (COUNTRIES as ReadonlyArray<string>)
-  const grapeOptions = easyModeOptions?.grapes ?? (GRAPES as ReadonlyArray<string>)
+  const grapeOptions = easyModeOptions?.grapes ?? dynamicGrapes
   const isEasyMode = easyModeOptions != null
   // First acceptable grape for the "rätt:" hint in the post-reveal scored row.
   const firstAnswerGrape =
