@@ -253,6 +253,14 @@ export default buildConfig({
     push: process.env.PAYLOAD_DB_PUSH === 'true',
     pool: {
       connectionString: databaseConnectionString,
+      // Cap connections to keep Neon compute usage predictable. Default `pg`
+      // max is 10; we rarely need that many. 5 covers the Next.js worker's
+      // bursts during traffic peaks; the cron container only needs 1–2.
+      max: 5,
+      // Recycle idle connections so Neon's autosuspend can kick in when the
+      // app is genuinely idle. Default behavior keeps idle connections open,
+      // which prevents the database from sleeping and burns compute hours.
+      idleTimeoutMillis: 30_000,
     },
     // Run pending migrations at server init so Railway deploys apply schema
     // changes automatically. Long-lived Node process → init-time is the right
