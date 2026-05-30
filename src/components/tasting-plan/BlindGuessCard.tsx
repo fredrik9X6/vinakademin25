@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -10,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Check, X, Pencil } from 'lucide-react'
+import { Check, X, Pencil, Loader2, CloudOff } from 'lucide-react'
 import {
   COUNTRIES,
   PRICE_BUCKETS,
@@ -19,6 +18,7 @@ import {
 } from '@/lib/blind-guess-vocab'
 import { useGrapes } from '@/lib/use-grapes'
 import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
+import { useSessionDraft, type SaveStatus } from '@/lib/use-session-draft'
 
 export interface BlindGuessCardProps {
   sessionId: number
@@ -40,6 +40,10 @@ export interface BlindGuessCardProps {
     countries: string[] | null
     grapes: string[] | null
   } | null
+  /** ISO timestamp when the guess was locked in; null = draft / autosaved. */
+  initialSubmittedAt?: string | null
+  /** Fired once on mount when a localStorage draft was restored. */
+  onRestored?: () => void
 }
 
 interface FormState {
@@ -55,6 +59,8 @@ export function BlindGuessCard({
   answer,
   initialGuess,
   easyModeOptions = null,
+  initialSubmittedAt = null,
+  onRestored,
 }: BlindGuessCardProps) {
   const { grapes: dynamicGrapes } = useGrapes()
   const countryOptions = easyModeOptions?.countries ?? (COUNTRIES as ReadonlyArray<string>)
@@ -63,64 +69,68 @@ export function BlindGuessCard({
   // First acceptable grape for the "rätt:" hint in the post-reveal scored row.
   const firstAnswerGrape =
     Array.isArray(answer.grapes) && answer.grapes.length > 0 ? answer.grapes[0] : null
-  const [submitted, setSubmitted] = React.useState<FormState | null>(
-    initialGuess
-      ? {
-          country: initialGuess.country,
-          grape: initialGuess.grape,
-          priceBucket: initialGuess.priceBucket,
-        }
-      : null,
-  )
+
   const [editing, setEditing] = React.useState<FormState>({
     country: initialGuess?.country ?? null,
     grape: initialGuess?.grape ?? null,
     priceBucket: initialGuess?.priceBucket ?? null,
   })
-  const [isEditMode, setIsEditMode] = React.useState<boolean>(!initialGuess)
-  const [busy, setBusy] = React.useState(false)
+  // "Locked in" once submittedAt is set (server-hydrated or via Lås in).
+  const [lockedIn, setLockedIn] = React.useState<boolean>(Boolean(initialSubmittedAt))
+  const [isEditMode, setIsEditMode] = React.useState<boolean>(!initialSubmittedAt)
 
-  async function handleSubmit() {
-    if (!editing.country && !editing.grape && !editing.priceBucket) {
-      toast.error('Välj minst ett svar.')
-      return
+  const { status, queueSave, lockIn, restoredFromDraft } = useSessionDraft({
+    kind: 'guess',
+    sessionId,
+    pourOrder,
+    endpoint: '/api/session-guesses',
+    buildBody: (draft) => ({
+      sessionId,
+      pourOrder,
+      guessedCountry: (draft.country as string | null) ?? null,
+      guessedGrape: (draft.grape as string | null) ?? null,
+      guessedPriceBucket: (draft.priceBucket as PriceBucket | null) ?? null,
+      ...(draft.submittedAt ? { submittedAt: draft.submittedAt } : {}),
+    }),
+  })
+
+  // Tell the parent (once) that we restored a local draft, for the banner.
+  const restoredFiredRef = React.useRef(false)
+  React.useEffect(() => {
+    if (restoredFromDraft && !restoredFiredRef.current) {
+      restoredFiredRef.current = true
+      onRestored?.()
     }
-    setBusy(true)
-    try {
-      const res = await fetch('/api/session-guesses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          sessionId,
-          pourOrder,
-          guessedCountry: editing.country,
-          guessedGrape: editing.grape,
-          guessedPriceBucket: editing.priceBucket,
-        }),
+  }, [restoredFromDraft, onRestored])
+
+  // Any field change autosaves immediately (debounced inside the hook).
+  function updateField(partial: Partial<FormState>) {
+    setEditing((s) => {
+      const next = { ...s, ...partial }
+      queueSave({
+        country: next.country,
+        grape: next.grape,
+        priceBucket: next.priceBucket,
       })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        toast.error(err?.error || 'Kunde inte spara gissningen.')
-        return
-      }
-      setSubmitted({ ...editing })
-      setIsEditMode(false)
-      toast.success('Gissning sparad.')
-    } catch {
-      toast.error('Nätverksfel — försök igen.')
-    } finally {
-      setBusy(false)
-    }
+      return next
+    })
   }
 
+  async function handleLockIn() {
+    await lockIn()
+    setLockedIn(true)
+    setIsEditMode(false)
+  }
+
+  const hasGuess = Boolean(editing.country || editing.grape || editing.priceBucket)
+
   // Reveal mode: show scored results
-  if (isRevealed && submitted) {
+  if (isRevealed && hasGuess) {
     const scored = scoreOne(
       {
-        guessedCountry: submitted.country,
-        guessedGrape: submitted.grape,
-        guessedPriceBucket: submitted.priceBucket,
+        guessedCountry: editing.country,
+        guessedGrape: editing.grape,
+        guessedPriceBucket: editing.priceBucket,
       },
       answer,
     )
@@ -134,7 +144,7 @@ export function BlindGuessCard({
             <Row
               correct={scored.countryCorrect}
               label="Land"
-              guess={submitted.country}
+              guess={editing.country}
               answer={answer.country ?? null}
             />
           )}
@@ -142,7 +152,7 @@ export function BlindGuessCard({
             <Row
               correct={scored.grapeCorrect}
               label="Druva"
-              guess={submitted.grape}
+              guess={editing.grape}
               answer={firstAnswerGrape}
             />
           )}
@@ -150,7 +160,7 @@ export function BlindGuessCard({
             <Row
               correct={scored.priceCorrect}
               label="Pris"
-              guess={priceBucketLabel(submitted.priceBucket)}
+              guess={priceBucketLabel(editing.priceBucket)}
               answer={priceBucketLabel(
                 answer.priceBucket ?? null,
               )}
@@ -166,8 +176,8 @@ export function BlindGuessCard({
     )
   }
 
-  // Reveal mode but no submission: a soft note
-  if (isRevealed && !submitted) {
+  // Reveal mode but no content at all: a soft note.
+  if (isRevealed && !hasGuess) {
     return (
       <div className="mt-3 rounded-md border border-dashed bg-card/50 p-3">
         <p className="text-xs text-muted-foreground">
@@ -177,19 +187,21 @@ export function BlindGuessCard({
     )
   }
 
-  // Pre-reveal: read-only summary if submitted (with Ändra)
-  if (submitted && !isEditMode) {
+  // Pre-reveal locked-in summary (with Ändra to re-open editing).
+  if (lockedIn && !isEditMode) {
     const summary = [
-      submitted.country,
-      submitted.grape,
-      priceBucketLabel(submitted.priceBucket),
+      editing.country,
+      editing.grape,
+      priceBucketLabel(editing.priceBucket),
     ]
       .filter(Boolean)
       .join(' · ')
     return (
       <div className="mt-3 rounded-md border bg-card p-3 flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">Din gissning</p>
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <Check className="h-3 w-3 text-green-600" /> Inlåst gissning
+          </p>
           <p className="text-sm truncate">{summary || '—'}</p>
         </div>
         <Button
@@ -221,7 +233,7 @@ export function BlindGuessCard({
       <div className="grid gap-2 sm:grid-cols-3">
         <Select
           value={editing.country ?? ''}
-          onValueChange={(v) => setEditing((s) => ({ ...s, country: v || null }))}
+          onValueChange={(v) => updateField({ country: v || null })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Land" />
@@ -236,7 +248,7 @@ export function BlindGuessCard({
         </Select>
         <Select
           value={editing.grape ?? ''}
-          onValueChange={(v) => setEditing((s) => ({ ...s, grape: v || null }))}
+          onValueChange={(v) => updateField({ grape: v || null })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Druva" />
@@ -251,9 +263,7 @@ export function BlindGuessCard({
         </Select>
         <Select
           value={editing.priceBucket ?? ''}
-          onValueChange={(v) =>
-            setEditing((s) => ({ ...s, priceBucket: (v || null) as PriceBucket | null }))
-          }
+          onValueChange={(v) => updateField({ priceBucket: (v || null) as PriceBucket | null })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Pris" />
@@ -267,30 +277,47 @@ export function BlindGuessCard({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex gap-2">
-        <Button type="button" size="sm" onClick={handleSubmit} disabled={busy}>
-          {busy ? 'Sparar…' : submitted ? 'Spara ändring' : 'Skicka gissning'}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleLockIn}
+          disabled={!editing.country && !editing.grape && !editing.priceBucket}
+        >
+          {lockedIn ? 'Uppdatera & lås in' : 'Lås in'}
         </Button>
-        {submitted && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setEditing({
-                country: submitted.country,
-                grape: submitted.grape,
-                priceBucket: submitted.priceBucket,
-              })
-              setIsEditMode(false)
-            }}
-          >
-            Avbryt
-          </Button>
-        )}
+        <SaveStatusLabel status={status} />
       </div>
     </div>
   )
+}
+
+function SaveStatusLabel({ status }: { status: SaveStatus }) {
+  if (status === 'saving') {
+    return (
+      <span className="text-xs text-muted-foreground flex items-center gap-1">
+        <Loader2 className="h-3 w-3 animate-spin" /> Sparar…
+      </span>
+    )
+  }
+  if (status === 'saved') {
+    return (
+      <span className="text-xs text-green-600 flex items-center gap-1">
+        <Check className="h-3 w-3" /> Sparat
+      </span>
+    )
+  }
+  if (status === 'retrying') {
+    return (
+      <span className="text-xs text-amber-600 flex items-center gap-1">
+        <CloudOff className="h-3 w-3" /> Återförsöker…
+      </span>
+    )
+  }
+  if (status === 'error') {
+    return <span className="text-xs text-red-600">Kunde inte spara</span>
+  }
+  return null
 }
 
 function Row({
