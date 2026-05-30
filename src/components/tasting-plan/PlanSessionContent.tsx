@@ -217,44 +217,44 @@ export function PlanSessionContent({
     country: string | null
     grape: string | null
     priceBucket: PriceBucket | null
+    submittedAt: string | null
   }
   const [myGuesses, setMyGuesses] = React.useState<Map<number, LocalGuess>>(new Map())
+  // One-time "answers restored" banner trigger.
+  const [restoredBanner, setRestoredBanner] = React.useState(false)
   React.useEffect(() => {
     let aborted = false
     fetch(`/api/sessions/${session.id}/my-submissions`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (aborted) return
-        if (data && Array.isArray(data.submittedPourOrders)) {
+        if (aborted || !data) return
+        if (Array.isArray(data.submittedPourOrders)) {
           setSubmittedPourOrders(new Set(data.submittedPourOrders))
         }
-      })
-      .catch(() => {})
-    fetch(`/api/session-guesses?session=${session.id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (aborted) return
-        const arr = (
-          data as {
-            guesses?: Array<{
+        const guesses = Array.isArray(data.guesses)
+          ? (data.guesses as Array<{
               pourOrder: number
               guessedCountry: string | null
               guessedGrape: string | null
               guessedPriceBucket: PriceBucket | null
-            }>
-          }
-        )?.guesses
-        if (Array.isArray(arr)) {
-          const map = new Map<number, LocalGuess>()
-          for (const g of arr) {
-            map.set(g.pourOrder, {
-              country: g.guessedCountry ?? null,
-              grape: g.guessedGrape ?? null,
-              priceBucket: g.guessedPriceBucket ?? null,
-            })
-          }
-          setMyGuesses(map)
+              submittedAt: string | null
+            }>)
+          : []
+        const map = new Map<number, LocalGuess>()
+        for (const g of guesses) {
+          map.set(g.pourOrder, {
+            country: g.guessedCountry ?? null,
+            grape: g.guessedGrape ?? null,
+            priceBucket: g.guessedPriceBucket ?? null,
+            submittedAt: g.submittedAt ?? null,
+          })
         }
+        setMyGuesses(map)
+        // If the server returned any content at all, the "restored" banner is
+        // warranted. BlindGuessCard / WineReviewForm also fire onRestored from
+        // their local mirror; this covers the durable-server case.
+        const reviewsCount = Array.isArray(data.reviews) ? data.reviews.length : 0
+        if (guesses.length > 0 || reviewsCount > 0) setRestoredBanner(true)
       })
       .catch(() => {})
     return () => {
@@ -549,6 +549,10 @@ export function PlanSessionContent({
                               const g = myGuesses.get(row.pourOrder)
                               return g ?? null
                             })()}
+                            initialSubmittedAt={
+                              myGuesses.get(row.pourOrder)?.submittedAt ?? null
+                            }
+                            onRestored={() => setRestoredBanner(true)}
                           />
                         )}
 
@@ -575,10 +579,13 @@ export function PlanSessionContent({
           {reviewing &&
             (reviewing.libraryWineId ? (
               <WineReviewForm
+                key={`review-${reviewing.pourOrder}`}
                 lessonId={0}
                 sessionId={String(session.id)}
+                pourOrder={reviewing.pourOrder}
                 wineIdProp={reviewing.libraryWineId}
                 insideDialog
+                onRestored={() => setRestoredBanner(true)}
                 onSubmit={() => {
                   setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
                   setReviewing(null)
@@ -586,10 +593,13 @@ export function PlanSessionContent({
               />
             ) : reviewing.customWineSnapshot ? (
               <WineReviewForm
+                key={`review-${reviewing.pourOrder}`}
                 lessonId={0}
                 sessionId={String(session.id)}
+                pourOrder={reviewing.pourOrder}
                 customWineSnapshot={reviewing.customWineSnapshot}
                 insideDialog
+                onRestored={() => setRestoredBanner(true)}
                 onSubmit={() => {
                   setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
                   setReviewing(null)
