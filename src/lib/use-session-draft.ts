@@ -251,16 +251,19 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
     // (when a debounced save is already in flight, the re-entrancy guard
     // returns immediately) or resolve before the post-success drainer has sent
     // the payload we just enqueued — so loop, re-flushing as needed.
+    const MAX_LOCKIN_ATTEMPTS = 5
+    let attempts = 0
     while (queueRef.current.pending != null || queueRef.current.inFlight) {
-      // If we can't send right now, the localStorage mirror + queue still hold
-      // the payload; the 'online' listener will flush later. Don't hang.
-      if (isOffline()) return
+      // Bail on unmount or offline — the localStorage mirror + retry timer +
+      // 'online' listener still cover eventual delivery; don't hang or hammer.
+      if (isOffline() || !mountedRef.current) return
       if (!queueRef.current.inFlight) {
+        if (attempts >= MAX_LOCKIN_ATTEMPTS) return
+        const delay = backoffMs(queueRef.current.attempt)
+        if (delay > 0) await wait(delay)
+        attempts++
         await flush()
       } else {
-        // A request is in flight (e.g. the debounced save). Yield until it
-        // settles; its success path drains any pending payload, or its failure
-        // path re-queues it for the next loop iteration.
         await wait(50)
       }
     }
