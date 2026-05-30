@@ -86,6 +86,16 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
   const queueRef = React.useRef<QueueState>(initialQueueState)
   const debounceTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const mountedRef = React.useRef(true)
+  React.useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+  const safeSetStatus = React.useCallback((next: SaveStatus) => {
+    if (mountedRef.current) setStatus(next)
+  }, [])
 
   // Restore the localStorage mirror once on mount (before any network read).
   const [restoredFromDraft] = React.useState<boolean>(() => {
@@ -124,20 +134,33 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
   // connectivity via the 'online' listener below).
   const flush = React.useCallback(
     async (useBeacon = false): Promise<void> => {
+      // Re-entrancy guard: if a request is already in flight, do nothing.
+      // `start` is a no-op while in flight (it would leave the STALE
+      // flightPayload in place), so a second concurrent flush would otherwise
+      // re-POST the stale payload and strand the freshly-enqueued one. The
+      // newer payload sits in `pending` and is drained by the post-success
+      // drainer below (or the retry/online paths).
+      if (queueRef.current.inFlight) return
+
       dispatch({ type: 'start' })
       const flight = queueRef.current.flightPayload
       if (!flight) return
 
       const body = buildBody(flight)
       track('vk_session_save_attempt')
-      setStatus('saving')
+      safeSetStatus('saving')
 
       // Unload path: fire-and-forget, can't await or retry.
       if (useBeacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
         try {
           const blob = new Blob([JSON.stringify(body)], { type: 'application/json' })
-          navigator.sendBeacon(endpoint, blob)
-          dispatch({ type: 'success' })
+          // sendBeacon returns false if the agent refused to queue the
+          // transfer; don't record a false success when it does.
+          if (navigator.sendBeacon(endpoint, blob)) {
+            dispatch({ type: 'success' })
+          } else {
+            dispatch({ type: 'failure' })
+          }
         } catch {
           dispatch({ type: 'failure' })
         }
@@ -154,17 +177,26 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
         if (!res.ok) throw new Error(String(res.status))
         dispatch({ type: 'success' })
         track('vk_session_save_success')
-        setStatus('saved')
+        safeSetStatus('saved')
+        // Post-success drainer: a payload may have been enqueued while this
+        // request was in flight (a keystroke during the await window, or a
+        // lockIn). Nothing else would send it until a later keystroke/online/
+        // beforeunload, so drain it now.
+        if (queueRef.current.pending != null) {
+          setTimeout(() => {
+            void flush()
+          }, 0)
+        }
       } catch {
         dispatch({ type: 'failure' })
         track('vk_session_save_failure')
         const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false
         if (isOffline) {
           // Queued; the 'online' listener will flush. Surface "retrying".
-          setStatus('retrying')
+          safeSetStatus('retrying')
           return
         }
-        setStatus('retrying')
+        safeSetStatus('retrying')
         track('vk_session_save_retry')
         if (retryTimer.current) clearTimeout(retryTimer.current)
         retryTimer.current = setTimeout(() => {
@@ -172,7 +204,7 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
         }, backoffMs(queueRef.current.attempt))
       }
     },
-    [buildBody, dispatch, endpoint, track],
+    [buildBody, dispatch, endpoint, safeSetStatus, track],
   )
 
   const queueSave = React.useCallback(
@@ -204,8 +236,34 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
       // ignore
     }
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    // Enqueue the stamped (submittedAt) payload. localStorage mirror + queue
+    // now hold it regardless of what happens with the network.
     dispatch({ type: 'enqueue', payload: { ...stamped } })
-    await flush()
+
+    const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false
+    const wait = (ms: number) =>
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, ms)
+      })
+
+    // Drive the queue until the stamped payload is actually delivered:
+    // pending drained AND nothing in flight. A bare `await flush()` can no-op
+    // (when a debounced save is already in flight, the re-entrancy guard
+    // returns immediately) or resolve before the post-success drainer has sent
+    // the payload we just enqueued — so loop, re-flushing as needed.
+    while (queueRef.current.pending != null || queueRef.current.inFlight) {
+      // If we can't send right now, the localStorage mirror + queue still hold
+      // the payload; the 'online' listener will flush later. Don't hang.
+      if (isOffline()) return
+      if (!queueRef.current.inFlight) {
+        await flush()
+      } else {
+        // A request is in flight (e.g. the debounced save). Yield until it
+        // settles; its success path drains any pending payload, or its failure
+        // path re-queues it for the next loop iteration.
+        await wait(50)
+      }
+    }
   }, [dispatch, flush, key])
 
   // Flush queued writes when connectivity returns; final beacon on unload.
