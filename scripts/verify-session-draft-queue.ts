@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict'
 import {
   backoffMs,
+  draftHasContent,
   initialQueueState,
   queueReducer,
   type QueueState,
@@ -98,6 +99,93 @@ run('backoffMs grows and caps', () => {
   assert.equal(backoffMs(2), 2000)
   assert.equal(backoffMs(3), 4000)
   assert.equal(backoffMs(99), 15000) // capped at 15s
+})
+
+// ---------------------------------------------------------------------------
+// draftHasContent assertions
+// ---------------------------------------------------------------------------
+
+run('draftHasContent: empty object → false', () => {
+  assert.equal(draftHasContent({}), false)
+})
+
+run('draftHasContent: only submittedAt → false (ignored key)', () => {
+  assert.equal(draftHasContent({ submittedAt: '2026-01-01T00:00:00.000Z' }), false)
+})
+
+run('draftHasContent: all-empty wsetTasting nested objects → false', () => {
+  assert.equal(
+    draftHasContent({
+      wsetTasting: { appearance: {}, nose: {}, palate: {}, conclusion: {} },
+    }),
+    false,
+  )
+})
+
+run('draftHasContent: falsy scalars + all-empty wsetTasting → false', () => {
+  assert.equal(
+    draftHasContent({
+      rating: 0,
+      buyAgain: false,
+      notes: '',
+      publishedToProfile: false,
+      wsetTasting: { appearance: {}, nose: {}, palate: {}, conclusion: {} },
+    }),
+    false,
+  )
+})
+
+run('draftHasContent: non-empty string → true', () => {
+  assert.equal(draftHasContent({ notes: 'hi' }), true)
+})
+
+run('draftHasContent: all-null object values → false', () => {
+  assert.equal(draftHasContent({ country: null, grape: null, priceBucket: null }), false)
+})
+
+run('draftHasContent: one non-null string field → true', () => {
+  assert.equal(draftHasContent({ country: 'Frankrike' }), true)
+})
+
+run('draftHasContent: nested array with a real item → true', () => {
+  assert.equal(
+    draftHasContent({ wsetTasting: { nose: { primaryAromas: ['Citrus'] } } }),
+    true,
+  )
+})
+
+// BlindGuessCard-style guesses
+run('draftHasContent: guess with one real field → true', () => {
+  assert.equal(draftHasContent({ grape: 'Pinot Noir', country: null, vintage: null }), true)
+})
+
+run('draftHasContent: all-null guess → false', () => {
+  assert.equal(draftHasContent({ grape: null, country: null, vintage: null }), false)
+})
+
+// Edge cases
+run('draftHasContent: whitespace-only string → false', () => {
+  assert.equal(draftHasContent({ notes: '   ' }), false)
+})
+
+run('draftHasContent: empty array → false', () => {
+  assert.equal(draftHasContent({ aromas: [] }), false)
+})
+
+run('draftHasContent: array of nulls → false', () => {
+  assert.equal(draftHasContent({ aromas: [null, null] }), false)
+})
+
+run('draftHasContent: true boolean → true', () => {
+  assert.equal(draftHasContent({ buyAgain: true }), true)
+})
+
+run('draftHasContent: non-zero number → true', () => {
+  assert.equal(draftHasContent({ rating: 3 }), true)
+})
+
+run('draftHasContent: ignoreKeys param excludes custom key', () => {
+  assert.equal(draftHasContent({ _internal: 'x', notes: '' }, ['_internal', 'submittedAt']), false)
 })
 
 console.log('OK')

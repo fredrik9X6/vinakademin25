@@ -4,6 +4,7 @@ import * as React from 'react'
 import { posthog } from '@/components/analytics'
 import {
   backoffMs,
+  draftHasContent,
   initialQueueState,
   queueReducer,
   type DraftPayload,
@@ -60,16 +61,6 @@ function readMirror(key: string): DraftPayload | null {
   }
 }
 
-function hasContent(draft: DraftPayload): boolean {
-  return Object.entries(draft).some(([k, v]) => {
-    if (k === 'submittedAt') return false
-    if (v == null) return false
-    if (typeof v === 'string') return v.trim().length > 0
-    if (Array.isArray(v)) return v.length > 0
-    if (typeof v === 'object') return Object.keys(v as object).length > 0
-    return true
-  })
-}
 
 export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraft {
   const {
@@ -105,7 +96,7 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
   const [restoredDraft] = React.useState<DraftPayload | null>(() => {
     if (typeof window === 'undefined') return null
     const mirror = readMirror(key)
-    if (mirror && hasContent(mirror)) {
+    if (mirror && draftHasContent(mirror)) {
       draftRef.current = mirror
       return mirror
     }
@@ -222,7 +213,7 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
         // localStorage may be blocked; in-memory + server save still apply.
       }
       // Row-creation floor: don't POST an empty draft.
-      if (!hasContent(draftRef.current)) return
+      if (!draftHasContent(draftRef.current)) return
       dispatch({ type: 'enqueue', payload: { ...draftRef.current } })
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
       debounceTimer.current = setTimeout(() => {

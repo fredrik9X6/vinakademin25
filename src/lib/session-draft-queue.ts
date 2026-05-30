@@ -67,3 +67,32 @@ export function backoffMs(attempt: number): number {
   if (attempt <= 0) return 0
   return Math.min(15000, 1000 * 2 ** (attempt - 1))
 }
+
+/**
+ * Returns true when `draft` contains at least one leaf value that is
+ * meaningfully non-empty. Keys listed in `ignoreKeys` (default: `submittedAt`)
+ * are skipped entirely. Empty is defined as: null, undefined, empty/whitespace
+ * string, 0, false, an empty array, an array whose every item is empty, or an
+ * object whose every own value is empty (recursive). Everything else is content.
+ */
+export function draftHasContent(
+  draft: DraftPayload,
+  ignoreKeys: string[] = ['submittedAt'],
+): boolean {
+  function isEmpty(value: unknown): boolean {
+    if (value === null || value === undefined) return true
+    if (typeof value === 'string') return value.trim().length === 0
+    if (typeof value === 'number') return value === 0
+    if (typeof value === 'boolean') return value === false
+    if (Array.isArray(value)) return value.every((item) => isEmpty(item))
+    if (typeof value === 'object') {
+      return Object.keys(value as object).every((k) => isEmpty((value as Record<string, unknown>)[k]))
+    }
+    return false
+  }
+
+  return Object.entries(draft).some(([k, v]) => {
+    if (ignoreKeys.includes(k)) return false
+    return !isEmpty(v)
+  })
+}
