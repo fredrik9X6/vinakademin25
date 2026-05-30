@@ -35,7 +35,7 @@ export interface BlindGuessCardProps {
   } | null
   /** Server-baked easy-mode dropdown options. When provided, the country /
    * grape dropdowns render only these values instead of the full COUNTRIES /
-   * GRAPES enums. Price-bucket always renders all 5 buckets. */
+   * GRAPES enums. Price-bucket always renders all 6 buckets. */
   easyModeOptions?: {
     countries: string[] | null
     grapes: string[] | null
