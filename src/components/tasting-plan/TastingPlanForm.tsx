@@ -19,6 +19,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import type { TastingPlan } from '@/payload-types'
+import type { PriceBucket } from '@/lib/blind-guess-vocab'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -46,8 +47,6 @@ import { WizardTour } from '@/components/onboarding/WizardTour'
 import { trackEvent } from '@/components/analytics'
 
 type WineType = NonNullable<CustomWineInput['type']>
-
-type PriceBucket = 'under_100' | '100_200' | '200_300' | '300_500' | '500_plus'
 
 type BlindAnswersState = {
   country: string | null

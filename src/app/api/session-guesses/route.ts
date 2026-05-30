@@ -9,11 +9,12 @@ import type { PriceBucket } from '@/lib/blind-guess-vocab'
 const log = loggerFor('api-session-guesses')
 
 const PRICE_BUCKETS: ReadonlyArray<PriceBucket> = [
-  'under_100',
-  '100_200',
-  '200_300',
-  '300_500',
-  '500_plus',
+  '0_99',
+  '100_149',
+  '150_199',
+  '200_249',
+  '250_299',
+  '300_plus',
 ]
 
 interface ResolvedIdentity {
