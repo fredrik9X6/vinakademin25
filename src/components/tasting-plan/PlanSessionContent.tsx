@@ -29,7 +29,7 @@ import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
 import type { BlindAnswer } from '@/lib/blind-guess-scoring'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
-import { useActiveSession } from '@/context/SessionContext'
+import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
 import { SwarmPanel } from './SwarmPanel'
 import { HostSessionTour } from '@/components/onboarding/HostSessionTour'
@@ -271,12 +271,17 @@ export function PlanSessionContent({
     hostFocusStartedAt,
     revealedPourOrders,
     swarm,
+    submissionsByPour,
+    roster,
     leaveSession,
     clearActiveSession,
   } = useActiveSession()
   const [endDialog, setEndDialog] = React.useState(false)
   const [leaveDialog, setLeaveDialog] = React.useState(false)
   const [endingOrLeaving, setEndingOrLeaving] = React.useState(false)
+  // Pour order whose reveal is awaiting host confirmation because online
+  // participants are still missing an entry. null = no pending guard.
+  const [revealGuardPour, setRevealGuardPour] = React.useState<number | null>(null)
 
   async function handleHostEnd() {
     setEndingOrLeaving(true)
@@ -375,6 +380,26 @@ export function PlanSessionContent({
     } finally {
       setSettingFocus(false)
     }
+  }
+
+  // Online non-host participants who have NO content yet for this pour.
+  function missingCountForPour(pourOrder: number): { missing: number; total: number } {
+    const guests = roster.filter((r) => !r.isHost && r.online)
+    const entry = submissionsByPour[pourOrder]
+    const withContent = new Set(entry?.withContent ?? [])
+    const missing = guests.filter((g) => !withContent.has(g.id)).length
+    return { missing, total: guests.length }
+  }
+
+  // Reveal entry point used by the UI: confirm first if anyone online is
+  // still missing an entry, otherwise reveal immediately.
+  function attemptReveal(pourOrder: number) {
+    const { missing } = missingCountForPour(pourOrder)
+    if (missing > 0) {
+      setRevealGuardPour(pourOrder)
+      return
+    }
+    void revealWine(pourOrder)
   }
 
   async function revealWine(pourOrder: number) {
@@ -516,7 +541,7 @@ export function PlanSessionContent({
                               type="button"
                               size="sm"
                               variant="outline"
-                              onClick={() => revealWine(row.pourOrder)}
+                              onClick={() => attemptReveal(row.pourOrder)}
                               {...(idx === 0 ? { 'data-tour': 'session-reveal' } : {})}
                             >
                               Avslöja vin #{row.pourOrder}
@@ -559,6 +584,13 @@ export function PlanSessionContent({
                               myGuesses.get(row.pourOrder)?.submittedAt ?? null
                             }
                             onRestored={() => setRestoredBanner(true)}
+                          />
+                        )}
+
+                        {isHost && isActive && (
+                          <HostSubmissionTracker
+                            roster={roster}
+                            entry={submissionsByPour[row.pourOrder]}
                           />
                         )}
 
@@ -662,6 +694,37 @@ export function PlanSessionContent({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={revealGuardPour !== null}
+        onOpenChange={(o) => !o && setRevealGuardPour(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Avslöja redan nu?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                if (revealGuardPour === null) return null
+                const { missing, total } = missingCountForPour(revealGuardPour)
+                return `${missing} av ${total} har inte svarat än — avslöja ändå?`
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                const pour = revealGuardPour
+                setRevealGuardPour(null)
+                if (pour !== null) void revealWine(pour)
+              }}
+            >
+              Avslöja ändå
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
@@ -722,5 +785,53 @@ function NextWineButton({
     >
       → Nästa vin
     </Button>
+  )
+}
+
+/**
+ * Host-only per-participant submission tracker for the focused wine.
+ * Status only — never shows guess/answer content. Renders against the live
+ * roster (online, non-host participants).
+ */
+function HostSubmissionTracker({
+  roster,
+  entry,
+}: {
+  roster: RosterEntry[]
+  entry: { withContent: number[]; locked: number[] } | undefined
+}) {
+  const withContent = new Set(entry?.withContent ?? [])
+  const locked = new Set(entry?.locked ?? [])
+  const guests = roster.filter((r) => !r.isHost && r.online)
+  if (guests.length === 0) {
+    return (
+      <div className="mt-3 rounded-md border bg-muted/40 p-3">
+        <p className="text-xs text-muted-foreground">Inga anslutna deltagare ännu.</p>
+      </div>
+    )
+  }
+  return (
+    <div className="mt-3 rounded-md border bg-muted/40 p-3" data-tour="session-tracker">
+      <p className="mb-2 text-xs font-medium text-muted-foreground">Vem har svarat</p>
+      <ul className="space-y-1">
+        {guests.map((g) => {
+          const isLockedIn = locked.has(g.id)
+          const hasDraft = !isLockedIn && withContent.has(g.id)
+          const { symbol, label, cls } = isLockedIn
+            ? { symbol: '✓', label: 'klar', cls: 'text-green-600' }
+            : hasDraft
+              ? { symbol: '✎', label: 'utkast', cls: 'text-amber-600' }
+              : { symbol: '—', label: 'inget', cls: 'text-muted-foreground' }
+          return (
+            <li key={g.id} className="flex items-center justify-between text-xs">
+              <span className="truncate">{g.nickname}</span>
+              <span className={`ml-2 flex-shrink-0 tabular-nums ${cls}`}>
+                {symbol} {label}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }
