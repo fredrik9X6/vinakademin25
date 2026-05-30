@@ -1175,6 +1175,7 @@ export interface Review {
       summary?: string | null;
     };
   };
+  submittedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3033,6 +3034,7 @@ export interface SessionGuess {
   guessedCountry?: string | null;
   guessedGrape?: string | null;
   guessedPriceBucket?: ('under_100' | '100_200' | '200_300' | '300_500' | '500_plus') | null;
+  submittedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -4401,6 +4403,7 @@ export interface ReviewsSelect<T extends boolean = true> {
               summary?: T;
             };
       };
+  submittedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -4531,6 +4534,7 @@ export interface SessionGuessesSelect<T extends boolean = true> {
   guessedCountry?: T;
   guessedGrape?: T;
   guessedPriceBucket?: T;
+  submittedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

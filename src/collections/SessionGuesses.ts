@@ -66,6 +66,15 @@ export const SessionGuesses: CollectionConfig = {
         { label: '500+ kr', value: '500_plus' },
       ],
     },
+    {
+      // NULL = draft / autosaved; set = "locked in" (Lås in). MUST NOT gate
+      // recap inclusion — drives the swarm/host tracker and the social
+      // "I'm done" moment only.
+      name: 'submittedAt',
+      type: 'date',
+      index: true,
+      admin: { readOnly: true },
+    },
   ],
   timestamps: true,
 }
