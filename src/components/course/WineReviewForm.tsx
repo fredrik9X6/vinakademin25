@@ -103,7 +103,15 @@ export function WineReviewForm({
   const [buyAgain, setBuyAgain] = React.useState<boolean>(false)
   const [notes, setNotes] = React.useState<string>('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [mode, setMode] = React.useState<'simple' | 'advanced'>('advanced')
+  // Task 20: default Enkel; lazy initializer reads localStorage to avoid SSR mismatch.
+  const [mode, setMode] = React.useState<'simple' | 'advanced'>(() => {
+    if (typeof window === 'undefined') return 'simple'
+    try {
+      const stored = window.localStorage.getItem('vk_review_mode')
+      if (stored === 'simple' || stored === 'advanced') return stored
+    } catch {}
+    return 'simple'
+  })
   const [submittedReview, setSubmittedReview] = React.useState<ReviewDoc | null>(null)
   const [answerKey, setAnswerKey] = React.useState<ReviewDoc | null>(null)
   const [history, setHistory] = React.useState<ReviewDoc[]>([])
@@ -630,49 +638,13 @@ export function WineReviewForm({
     e.preventDefault()
     setAttemptSubmit(true)
 
-    const newErrors: Record<string, string> = {}
-    const requiredPairs: Array<[string, string]> =
-      mode === 'simple'
-        ? [['rating', String(rating || '')]]
-        : [
-            ['appearanceClarity', appearanceClarity],
-            ['appearanceIntensity', appearanceIntensity],
-            ['appearanceColor', appearanceColor],
-            ['noseIntensity', noseIntensity],
-            ['palateSweetness', palateSweetness],
-            ['palateAcidity', palateAcidity],
-            ['palateTannin', palateTannin],
-            ['palateAlcohol', palateAlcohol],
-            ['palateBody', palateBody],
-            ['palateIntensity', palateIntensity],
-            ['palateFinish', palateFinish],
-            ['quality', quality],
-          ]
-
-    requiredPairs.forEach(([key, val]) => {
-      if (!val) newErrors[key] = 'Detta fält är obligatoriskt'
-    })
-
-    if (!rating || rating < 1 || rating > 5) {
-      newErrors['rating'] = 'Välj ett betyg mellan 1–5'
-    }
-
-    if (mode === 'simple') {
-      if (!primaryFlavours || primaryFlavours.length === 0)
-        newErrors['primaryFlavours'] = 'Välj minst en primär smak'
-    } else {
-      if (!primaryAromas || primaryAromas.length === 0)
-        newErrors['primaryAromas'] = 'Välj minst en primär arom'
-      if (!primaryFlavours || primaryFlavours.length === 0)
-        newErrors['primaryFlavours'] = 'Välj minst en primär smak'
-    }
-    if (!wineId && !customWineSnapshot) newErrors['wine'] = 'Inget vin kopplat till detta moment'
-
-    setErrors(newErrors)
-    if (Object.keys(newErrors).length > 0) {
-      toast.error('Vänligen fyll i alla obligatoriska fält')
+    // Task 22: only the wine-linkage check is mandatory — everything else is optional.
+    if (!wineId && !customWineSnapshot) {
+      setErrors({ wine: 'Inget vin kopplat till detta moment' })
+      toast.error('Inget vin kopplat till detta moment')
       return
     }
+    setErrors({})
 
     setIsSubmitting(true)
     try {
@@ -957,7 +929,11 @@ export function WineReviewForm({
       <form onSubmit={handleSubmit} className="space-y-8">
         <Tabs
           value={mode}
-          onValueChange={(v) => setMode(v as 'simple' | 'advanced')}
+          onValueChange={(v) => {
+            const next = v as 'simple' | 'advanced'
+            setMode(next)
+            try { window.localStorage.setItem('vk_review_mode', next) } catch {}
+          }}
           className="w-full"
         >
           <div className="flex justify-center mb-6">
@@ -970,7 +946,7 @@ export function WineReviewForm({
           <TabsContent value="simple" className="space-y-6">
             <Section title="Bedömning">
               <InputRow
-                label="Primära smaker"
+                label="Smaker du känner igen"
                 error={errors['primaryFlavours']}
                 attemptSubmit={attemptSubmit}
               >
@@ -983,7 +959,7 @@ export function WineReviewForm({
                   className="w-full"
                 />
               </InputRow>
-              <InputRow label="Sötma" attemptSubmit={attemptSubmit}>
+              <InputRow label="Sötma (torr → söt)" attemptSubmit={attemptSubmit}>
                 <Select value={palateSweetness} onValueChange={setPalateSweetness}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Välj" />
@@ -997,7 +973,7 @@ export function WineReviewForm({
                   </SelectContent>
                 </Select>
               </InputRow>
-              <InputRow label="Syra" attemptSubmit={attemptSubmit}>
+              <InputRow label="Syra (hur frisk?)" attemptSubmit={attemptSubmit}>
                 <Select value={palateAcidity} onValueChange={setPalateAcidity}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Välj" />
@@ -1011,7 +987,7 @@ export function WineReviewForm({
                   </SelectContent>
                 </Select>
               </InputRow>
-              <InputRow label="Fyllighet" attemptSubmit={attemptSubmit}>
+              <InputRow label="Fyllighet (lätt → kraftig)" attemptSubmit={attemptSubmit}>
                 <Select value={palateBody} onValueChange={setPalateBody}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Välj" />
