@@ -31,6 +31,10 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
   useEffect(() => {
     const url = `/api/sessions/${encodeURIComponent(sessionId)}/stream`
     const es = new EventSource(url, { withCredentials: true })
+    // Reset immediately so the banner reflects the new connection attempt —
+    // without this, a remount or sessionId change would keep the previous
+    // connection's final state until onopen fires.
+    setConnectionState('connecting')
 
     es.onopen = () => {
       setConnectionState('open')

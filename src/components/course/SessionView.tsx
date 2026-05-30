@@ -182,7 +182,11 @@ export default function SessionView({
     return (
       <>
         <RealtimeSync sessionId={sessionId} />
-        <ConnectionBanner />
+        {/* Wrap in the same container as the course-session branch for consistent
+            edge-to-edge alignment instead of rendering flush to the viewport. */}
+        <div className="max-w-7xl mx-auto px-4 pt-2 sm:px-6 lg:px-8">
+          <ConnectionBanner />
+        </div>
         <PlanSessionContent
           session={session}
           plan={session.tastingPlan as TastingPlan}

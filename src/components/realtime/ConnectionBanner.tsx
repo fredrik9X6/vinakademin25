@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useActiveSession } from '@/context/SessionContext'
-import { WifiOff, Wifi } from 'lucide-react'
+import { CloudOff, Wifi } from 'lucide-react'
 
 /**
  * Displays a sticky banner when the SSE connection is degraded.
@@ -42,8 +42,8 @@ export function ConnectionBanner() {
         aria-live="polite"
         className="flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/30 px-3 py-2 text-sm text-destructive"
       >
-        <WifiOff className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>Ingen anslutning — återförsöker…</span>
+        <CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <span>Ingen anslutning — återförsöker… Dina svar sparas ändå.</span>
       </div>
     )
   }

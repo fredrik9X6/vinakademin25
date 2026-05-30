@@ -222,6 +222,7 @@ export function PlanSessionContent({
   const [myGuesses, setMyGuesses] = React.useState<Map<number, LocalGuess>>(new Map())
   // One-time "answers restored" banner trigger.
   const [restoredBanner, setRestoredBanner] = React.useState(false)
+  const dismissRestoredBanner = React.useCallback(() => setRestoredBanner(false), [])
   React.useEffect(() => {
     let aborted = false
     fetch(`/api/sessions/${session.id}/my-submissions`)
@@ -413,7 +414,7 @@ export function PlanSessionContent({
       </header>
 
       {restoredBanner && (
-        <RestoredBanner onDismiss={() => setRestoredBanner(false)} />
+        <RestoredBanner onDismiss={dismissRestoredBanner} />
       )}
 
       {isHost && (
@@ -679,7 +680,15 @@ function RestoredBanner({ onDismiss }: { onDismiss: () => void }) {
       className="flex items-center gap-2 rounded-md bg-green-500/10 border border-green-500/30 px-3 py-2 text-sm text-green-700 dark:text-green-400 mb-4"
     >
       <CheckCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-      <span>Vi har sparat dina tidigare svar.</span>
+      <span className="flex-1">Vi har sparat dina tidigare svar.</span>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onDismiss}
+        className="h-auto py-0 px-1.5 text-green-700 dark:text-green-400 hover:bg-green-500/20 hover:text-green-800 dark:hover:text-green-300"
+      >
+        Stäng
+      </Button>
     </div>
   )
 }
