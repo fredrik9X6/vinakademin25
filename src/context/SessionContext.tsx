@@ -72,6 +72,11 @@ interface SessionContextValue {
    * ends the session — RealtimeSync calls this after it has redirected the
    * client to the recap so the ActiveSessionBanner doesn't reappear. */
   clearActiveSession: () => void
+  /** SSE connection state. 'connecting' on mount, 'open' once the stream
+   * handshakes, 'reconnecting' when the EventSource fires onerror (the browser
+   * will auto-reconnect). Set by RealtimeSync. */
+  connectionState: 'connecting' | 'open' | 'reconnecting'
+  setConnectionState: (s: 'connecting' | 'open' | 'reconnecting') => void
 }
 
 const SessionContext = createContext<SessionContextValue | undefined>(undefined)
@@ -94,6 +99,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [swarm, setSwarmState] = useState<SessionContextValue['swarm']>({})
   const [roster, setRoster] = useState<RosterEntry[]>([])
   const [sessionStatus, setSessionStatus] = useState<string | null>(null)
+  const [connectionState, setConnectionState] = useState<'connecting' | 'open' | 'reconnecting'>(
+    'connecting',
+  )
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -304,6 +312,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     sessionStatus,
     setSessionStatus,
     clearActiveSession,
+    connectionState,
+    setConnectionState,
   }
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

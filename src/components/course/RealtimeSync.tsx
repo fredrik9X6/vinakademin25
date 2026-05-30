@@ -22,6 +22,7 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     setSwarm,
     setSessionStatus,
     clearActiveSession,
+    setConnectionState,
   } = useActiveSession()
   // Guard so we only fire the post-end navigation once even if multiple
   // `lesson` events arrive with status='completed' before the redirect lands.
@@ -30,6 +31,19 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
   useEffect(() => {
     const url = `/api/sessions/${encodeURIComponent(sessionId)}/stream`
     const es = new EventSource(url, { withCredentials: true })
+
+    es.onopen = () => {
+      setConnectionState('open')
+    }
+
+    es.onerror = () => {
+      // EventSource auto-reconnects; onerror fires on drop OR before reconnect.
+      // readyState CLOSED (2) means the browser gave up entirely (rare — only
+      // happens with withCredentials cross-origin issues); CONNECTING (0) is the
+      // normal transient drop-and-reconnect path. Either way, surface 'reconnecting'
+      // so the UI can inform the user.
+      setConnectionState('reconnecting')
+    }
 
     es.addEventListener('lesson', (e) => {
       try {
@@ -108,6 +122,7 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     setSwarm,
     setSessionStatus,
     clearActiveSession,
+    setConnectionState,
     router,
   ])
 

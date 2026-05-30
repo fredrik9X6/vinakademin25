@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Wine as WineIcon, Crown, LogOut } from 'lucide-react'
+import { Wine as WineIcon, Crown, LogOut, CheckCircle } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
@@ -411,6 +411,11 @@ export function PlanSessionContent({
           {isHost ? 'Avsluta session' : 'Lämna session'}
         </Button>
       </header>
+
+      {restoredBanner && (
+        <RestoredBanner onDismiss={() => setRestoredBanner(false)} />
+      )}
+
       {isHost && (
         <HostSessionTour blind={isBlind} hasTimer={!!plan.defaultMinutesPerWine} />
       )}
@@ -657,6 +662,25 @@ export function PlanSessionContent({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+/** One-time banner shown when the session finds prior answers to restore. */
+function RestoredBanner({ onDismiss }: { onDismiss: () => void }) {
+  React.useEffect(() => {
+    const id = setTimeout(onDismiss, 5000)
+    return () => clearTimeout(id)
+  }, [onDismiss])
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex items-center gap-2 rounded-md bg-green-500/10 border border-green-500/30 px-3 py-2 text-sm text-green-700 dark:text-green-400 mb-4"
+    >
+      <CheckCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <span>Vi har sparat dina tidigare svar.</span>
+    </div>
   )
 }
 
