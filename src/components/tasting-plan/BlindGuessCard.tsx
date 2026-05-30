@@ -17,7 +17,7 @@ import {
   type PriceBucket,
 } from '@/lib/blind-guess-vocab'
 import { useGrapes } from '@/lib/use-grapes'
-import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
+import { scoreOne, resolveAnswerPriceBucket, type BlindAnswer } from '@/lib/blind-guess-scoring'
 import { useSessionDraft, type SaveStatus } from '@/lib/use-session-draft'
 
 export interface BlindGuessCardProps {
@@ -179,13 +179,11 @@ export function BlindGuessCard({
             />
           )}
           {scored.priceScored && (
-            <Row
+            <PriceRow
               correct={scored.priceCorrect}
-              label="Pris"
-              guess={priceBucketLabel(editing.priceBucket)}
-              answer={priceBucketLabel(
-                answer.priceBucket ?? null,
-              )}
+              guessLabel={priceBucketLabel(editing.priceBucket)}
+              answerBucket={resolveAnswerPriceBucket(answer)}
+              answerPriceSek={answer.priceSek ?? null}
             />
           )}
         </div>
@@ -370,6 +368,63 @@ function Row({
           <span className="text-muted-foreground">
             {' '}
             (rätt: <span className="text-foreground">{answer}</span>)
+          </span>
+        )}
+      </span>
+    </div>
+  )
+}
+
+/**
+ * Price reveal row — shows the guess bucket and the exact answer price.
+ * When `answerPriceSek` is available, the exact kronor amount is displayed;
+ * otherwise falls back to the bucket label alone. The bucket the real price
+ * falls into is always highlighted so participants can see which range it's in.
+ */
+function PriceRow({
+  correct,
+  guessLabel,
+  answerBucket,
+  answerPriceSek,
+}: {
+  correct: boolean
+  guessLabel: string | null | undefined
+  answerBucket: PriceBucket | null
+  answerPriceSek: number | null
+}) {
+  const bucketLabel = priceBucketLabel(answerBucket)
+  // Exact price string, e.g. "189 kr"
+  const exactPrice =
+    answerPriceSek != null ? `${answerPriceSek.toLocaleString('sv-SE')} kr` : null
+  // Compose what we show as the "right answer": exact price + bucket in parens, or bucket alone
+  const answerDisplay = exactPrice
+    ? bucketLabel
+      ? `${exactPrice} (${bucketLabel})`
+      : exactPrice
+    : (bucketLabel ?? null)
+
+  return (
+    <div className="flex items-start gap-2">
+      <span
+        className={correct ? 'text-green-600 mt-0.5' : 'text-red-600 mt-0.5'}
+        aria-hidden
+      >
+        {correct ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+      </span>
+      <span>
+        <span className="text-muted-foreground">Pris:</span>{' '}
+        <span className={correct ? '' : 'line-through text-muted-foreground'}>
+          {guessLabel || '—'}
+        </span>
+        {!correct && answerDisplay && (
+          <span className="text-muted-foreground">
+            {' '}
+            (rätt: <span className="text-foreground">{answerDisplay}</span>)
+          </span>
+        )}
+        {correct && exactPrice && (
+          <span className="text-muted-foreground ml-1">
+            — <span className="text-foreground">{exactPrice}</span>
           </span>
         )}
       </span>
