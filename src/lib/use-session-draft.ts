@@ -37,6 +37,10 @@ export interface UseSessionDraft {
   lockIn: () => Promise<void>
   /** True when mount-time localStorage held a non-empty draft. */
   restoredFromDraft: boolean
+  /** The parsed localStorage draft found at mount, or null if none existed.
+   * Consumers can use this to seed visible state so recovered answers render
+   * even when the server hasn't yet persisted them (e.g. offline autosave). */
+  restoredDraft: DraftPayload | null
 }
 
 const DEBOUNCE_DEFAULT = 800
@@ -98,15 +102,16 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
   }, [])
 
   // Restore the localStorage mirror once on mount (before any network read).
-  const [restoredFromDraft] = React.useState<boolean>(() => {
-    if (typeof window === 'undefined') return false
+  const [restoredDraft] = React.useState<DraftPayload | null>(() => {
+    if (typeof window === 'undefined') return null
     const mirror = readMirror(key)
     if (mirror && hasContent(mirror)) {
       draftRef.current = mirror
-      return true
+      return mirror
     }
-    return false
+    return null
   })
+  const restoredFromDraft = restoredDraft !== null
 
   const track = React.useCallback(
     (
@@ -296,5 +301,5 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
     }
   }, [dispatch, flush, track])
 
-  return { status, queueSave, lockIn, restoredFromDraft }
+  return { status, queueSave, lockIn, restoredFromDraft, restoredDraft }
 }

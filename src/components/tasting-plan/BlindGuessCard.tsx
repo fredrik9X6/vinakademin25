@@ -79,7 +79,7 @@ export function BlindGuessCard({
   const [lockedIn, setLockedIn] = React.useState<boolean>(Boolean(initialSubmittedAt))
   const [isEditMode, setIsEditMode] = React.useState<boolean>(!initialSubmittedAt)
 
-  const { status, queueSave, lockIn, restoredFromDraft } = useSessionDraft({
+  const { status, queueSave, lockIn, restoredFromDraft, restoredDraft } = useSessionDraft({
     kind: 'guess',
     sessionId,
     pourOrder,
@@ -93,6 +93,28 @@ export function BlindGuessCard({
       ...(draft.submittedAt ? { submittedAt: draft.submittedAt } : {}),
     }),
   })
+
+  // Seed editing state from the restored local draft (once on mount).
+  // The local draft is the freshest user input — prefer it over initialGuess,
+  // which may not yet reflect an autosave that hadn't landed before refresh.
+  const draftSeedAppliedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (draftSeedAppliedRef.current) return
+    draftSeedAppliedRef.current = true
+    if (!restoredDraft) return
+    const country = (restoredDraft.country as string | null) ?? null
+    const grape = (restoredDraft.grape as string | null) ?? null
+    const priceBucket = (restoredDraft.priceBucket as PriceBucket | null) ?? null
+    if (country || grape || priceBucket) {
+      setEditing({ country, grape, priceBucket })
+    }
+    // If the draft carried a submittedAt the user had locked in before refresh,
+    // reflect that so the locked-in summary view shows correctly.
+    if (restoredDraft.submittedAt) {
+      setLockedIn(true)
+      setIsEditMode(false)
+    }
+  }, [])
 
   // Tell the parent (once) that we restored a local draft, for the banner.
   const restoredFiredRef = React.useRef(false)
