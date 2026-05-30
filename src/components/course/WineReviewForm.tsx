@@ -28,6 +28,7 @@ import {
   buildFlavourOptions,
   type WineType,
 } from '@/lib/wset-flavour-vocab'
+import { useSessionDraft, type SaveStatus } from '@/lib/use-session-draft'
 
 interface CustomWineSnapshot {
   name: string
@@ -64,6 +65,10 @@ interface WineReviewFormProps {
    * Caller is responsible for redirecting via `onSubmit`.
    */
   standalone?: boolean
+  /** Pour order for this wine in the session — scopes the autosave draft. */
+  pourOrder?: number
+  /** Fired once when mount-time rehydration restored saved content. */
+  onRestored?: () => void
 }
 
 type ReviewDoc = {
@@ -74,6 +79,7 @@ type ReviewDoc = {
   buyAgain?: boolean
   createdAt?: string
   user?: number | { id: number }
+  wine?: number | { id: number } | null
   session?: number | { id: number } | null
   sessionParticipant?: number | { id: number } | null
   customWine?: any
@@ -90,6 +96,8 @@ export function WineReviewForm({
   insideDialog = false,
   initialReview,
   standalone = false,
+  pourOrder,
+  onRestored,
 }: WineReviewFormProps) {
   const [rating, setRating] = React.useState<number>(0)
   const [buyAgain, setBuyAgain] = React.useState<boolean>(false)
@@ -138,13 +146,10 @@ export function WineReviewForm({
     }
   }, [wineId, customWineSnapshot?.type])
 
-  // Get participant ID from localStorage if in a session
-  const participantId = React.useMemo(() => {
-    if (typeof window !== 'undefined' && sessionId) {
-      return localStorage.getItem('participantId')
-    }
-    return null
-  }, [sessionId])
+  // Identity is resolved server-side from the httpOnly participant cookie via
+  // /api/sessions/[id]/my-submissions — never from localStorage. This holds
+  // the resolved participant id (for the submit path) once rehydration runs.
+  const [participantId, setParticipantId] = React.useState<string | null>(null)
 
   // WSET field state
   const [appearanceClarity, setAppearanceClarity] = React.useState<string>('')
@@ -176,6 +181,130 @@ export function WineReviewForm({
   // Get current user from auth context
   const { user } = useAuth()
 
+  // Continuous autosave of the in-progress review. Only active in a session
+  // (lessonId=0 plan sessions included). Standalone / lesson-only reviews keep
+  // the explicit-submit flow.
+  const isSessionDraft = Boolean(sessionId) && !standalone
+  const buildReviewBody = React.useCallback(
+    (draft: Record<string, unknown>) => {
+      const wineIdentity = customWineSnapshot
+        ? { customWine: customWineSnapshot }
+        : { wine: wineId ? Number(wineId) : undefined }
+      const sessionIdNum = sessionId ? Number(sessionId) : undefined
+      return {
+        ...wineIdentity,
+        rating: (draft.rating as number) || 0,
+        buyAgain: Boolean(draft.buyAgain),
+        reviewText: (draft.notes as string) ?? '',
+        publishedToProfile: Boolean(draft.publishedToProfile),
+        session: sessionIdNum,
+        wsetTasting: (draft.wsetTasting as Record<string, unknown>) ?? {},
+        ...(draft.submittedAt ? { submittedAt: draft.submittedAt } : {}),
+      }
+    },
+    [customWineSnapshot, wineId, sessionId],
+  )
+  const {
+    status: saveStatus,
+    queueSave,
+    lockIn,
+    restoredFromDraft,
+    restoredDraft,
+  } = useSessionDraft({
+    kind: 'review',
+    sessionId: sessionId ?? 'none',
+    pourOrder: pourOrder ?? 0,
+    endpoint: '/api/reviews',
+    buildBody: buildReviewBody,
+  })
+  // Surface the "answers restored" banner once.
+  const restoredFiredRef = React.useRef(false)
+  React.useEffect(() => {
+    if (isSessionDraft && restoredFromDraft && !restoredFiredRef.current) {
+      restoredFiredRef.current = true
+      onRestored?.()
+    }
+  }, [isSessionDraft, restoredFromDraft, onRestored])
+
+  // Build the full WSET snapshot from current state (used for autosave + lock-in).
+  const buildWsetSnapshot = React.useCallback(
+    () => ({
+      appearance: {
+        clarity: appearanceClarity || undefined,
+        intensity: appearanceIntensity || undefined,
+        color: appearanceColor || undefined,
+      },
+      nose: {
+        intensity: noseIntensity || undefined,
+        primaryAromas,
+        secondaryAromas,
+        tertiaryAromas,
+      },
+      palate: {
+        sweetness: palateSweetness || undefined,
+        acidity: palateAcidity || undefined,
+        tannin: palateTannin || undefined,
+        alcohol: palateAlcohol || undefined,
+        body: palateBody || undefined,
+        flavourIntensity: palateIntensity || undefined,
+        primaryFlavours,
+        secondaryFlavours,
+        tertiaryFlavours,
+        finish: palateFinish || undefined,
+      },
+      conclusion: { quality: quality || undefined, summary: notes || undefined },
+    }),
+    [
+      appearanceClarity,
+      appearanceIntensity,
+      appearanceColor,
+      noseIntensity,
+      primaryAromas,
+      secondaryAromas,
+      tertiaryAromas,
+      palateSweetness,
+      palateAcidity,
+      palateTannin,
+      palateAlcohol,
+      palateBody,
+      palateIntensity,
+      primaryFlavours,
+      secondaryFlavours,
+      tertiaryFlavours,
+      palateFinish,
+      quality,
+      notes,
+    ],
+  )
+
+  // Autosave whenever any tracked field changes (only in session draft mode,
+  // and not while showing the submitted/locked-in summary).
+  const skipFirstAutosave = React.useRef(true)
+  React.useEffect(() => {
+    if (!isSessionDraft) return
+    if (submittedReview) return // showing locked-in summary, not editing
+    if (skipFirstAutosave.current) {
+      skipFirstAutosave.current = false
+      return
+    }
+    queueSave({
+      rating,
+      buyAgain,
+      notes,
+      publishedToProfile,
+      wsetTasting: buildWsetSnapshot(),
+    })
+  }, [
+    isSessionDraft,
+    submittedReview,
+    rating,
+    buyAgain,
+    notes,
+    publishedToProfile,
+    buildWsetSnapshot,
+    queueSave,
+  ])
+
   const fetchAnswerKey = React.useCallback(async () => {
     if (standalone) return
     // Plan-driven sessions pass lessonId=0 sentinel (no underlying lesson). Skip the fetch.
@@ -199,81 +328,9 @@ export function WineReviewForm({
     } catch {}
   }, [lessonId, standalone])
 
-  const fetchLatestSubmission = React.useCallback(async () => {
-    if (standalone) return
-    if (!wineId) return // Can't fetch without wine ID
-
-    // Only fetch if we have a user (authenticated) or participant ID (guest)
-    if (!user?.id && !participantId) return
-
-    try {
-      const params = new URLSearchParams()
-      // Query by wine ID
-      params.set('wine', String(wineId))
-
-      // Explicitly filter by current user ID if authenticated
-      if (user?.id) {
-        params.set('user', String(user.id))
-      }
-
-      // If we have a session participant ID, also filter by that
-      // Note: The API route will need to handle sessionParticipant filtering
-      if (participantId && !user?.id) {
-        params.set('sessionParticipant', participantId)
-      }
-
-      params.set('sort', '-createdAt')
-      params.set('limit', '5')
-      params.set('depth', '1') // Include wine relationship
-
-      const res = await fetch(`/api/reviews?${params.toString()}`, { credentials: 'include' })
-      if (!res.ok) return
-      const json = await res.json()
-      const docs = json?.docs || []
-
-      // Additional client-side filtering for safety:
-      // Filter to only current user's reviews or current participant's reviews
-      const filteredDocs = docs.filter((doc: ReviewDoc) => {
-        // Check if review belongs to current user
-        if (user?.id) {
-          const reviewUserId = typeof doc.user === 'object' ? doc.user.id : doc.user
-          if (reviewUserId === user.id) return true
-        }
-
-        // Check if review belongs to current session participant
-        if (participantId) {
-          const reviewParticipantId =
-            typeof doc.sessionParticipant === 'object'
-              ? doc.sessionParticipant.id
-              : doc.sessionParticipant
-          if (String(reviewParticipantId) === participantId) return true
-        }
-
-        return false
-      })
-
-      setHistory(filteredDocs)
-      const latest = filteredDocs[0]
-      if (latest) {
-        setSubmittedReview(latest)
-      } else {
-        // Clear submitted review if no matching review found
-        setSubmittedReview(null)
-      }
-    } catch {}
-  }, [wineId, user?.id, participantId, standalone])
-
   React.useEffect(() => {
     fetchAnswerKey()
   }, [fetchAnswerKey])
-
-  // Fetch latest submission when wineId is available
-  React.useEffect(() => {
-    // Custom-wine reviews have no stable id to query against — skip the fetch.
-    if (wineId && !customWineSnapshot) {
-      fetchLatestSubmission()
-    }
-  }, [wineId, customWineSnapshot, fetchLatestSubmission])
 
   // Function to populate form with existing review data
   const populateFormWithReview = React.useCallback((review: ReviewDoc) => {
@@ -317,6 +374,128 @@ export function WineReviewForm({
       setNotes(wset.conclusion.summary)
     }
   }, [])
+
+  // Declared AFTER populateFormWithReview because it calls it (R7: avoid a
+  // use-before-declaration). Session mode reads the cookie-backed
+  // /my-submissions endpoint; non-session keeps the library-wine query.
+  const fetchLatestSubmission = React.useCallback(async () => {
+    if (standalone) return
+
+    // Session mode: resolve identity + saved entries via the cookie endpoint.
+    // This rehydrates BOTH library-wine and custom-wine reviews (the old skip
+    // is gone) and never reads localStorage participantId.
+    if (sessionId) {
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/my-submissions`, {
+          credentials: 'include',
+        })
+        if (!res.ok) return
+        const data = (await res.json()) as {
+          participantId: number | null
+          reviews: Array<ReviewDoc & { pourOrder: number | null }>
+        }
+        if (data.participantId != null) setParticipantId(String(data.participantId))
+        const reviews = Array.isArray(data.reviews) ? data.reviews : []
+        // Pick this wine's review by pour order when known; else by wine id /
+        // custom-wine name snapshot.
+        const mine = reviews.find((r) => {
+          if (typeof pourOrder === 'number' && r.pourOrder != null) {
+            return r.pourOrder === pourOrder
+          }
+          if (wineId && r.wine != null) {
+            const rid = typeof r.wine === 'object' ? (r.wine as any).id : r.wine
+            return String(rid) === String(wineId)
+          }
+          if (customWineSnapshot?.name && (r as any).customWine?.name) {
+            return (
+              String((r as any).customWine.name).toLowerCase() ===
+              customWineSnapshot.name.toLowerCase()
+            )
+          }
+          return false
+        })
+        setHistory(reviews as ReviewDoc[])
+        if (mine) {
+          populateFormWithReview(mine as ReviewDoc)
+          // submittedAt set = locked in → show the "submitted" state; null =
+          // draft → keep the editable form populated.
+          setSubmittedReview((mine as any).submittedAt ? (mine as ReviewDoc) : null)
+        } else {
+          setSubmittedReview(null)
+        }
+      } catch {}
+      return
+    }
+
+    // Non-session (e.g. lesson-only / /mina-recensioner) library-wine path.
+    if (!wineId) return
+    if (!user?.id) return
+    try {
+      const params = new URLSearchParams()
+      params.set('wine', String(wineId))
+      params.set('user', String(user.id))
+      params.set('sort', '-createdAt')
+      params.set('limit', '5')
+      params.set('depth', '1')
+      const res = await fetch(`/api/reviews?${params.toString()}`, { credentials: 'include' })
+      if (!res.ok) return
+      const json = await res.json()
+      const docs: ReviewDoc[] = json?.docs || []
+      const filtered = docs.filter((doc) => {
+        const reviewUserId = typeof doc.user === 'object' ? doc.user?.id : doc.user
+        return reviewUserId === user.id
+      })
+      setHistory(filtered)
+      setSubmittedReview(filtered[0] ?? null)
+    } catch {}
+  }, [
+    standalone,
+    sessionId,
+    wineId,
+    user?.id,
+    pourOrder,
+    customWineSnapshot,
+    populateFormWithReview,
+  ])
+
+  // Rehydrate on mount. In session mode the cookie endpoint resolves identity
+  // and returns BOTH library and custom-wine reviews, so run it as soon as we
+  // know the session — no library wineId required. Non-session keeps the
+  // library-wine query.
+  React.useEffect(() => {
+    if (sessionId || (wineId && !standalone)) {
+      void fetchLatestSubmission()
+    }
+  }, [sessionId, wineId, standalone, fetchLatestSubmission])
+
+  // Seed the form from the hook's restored localStorage draft (once on mount).
+  // The local draft is the freshest user input — an autosave that hadn't yet
+  // landed on the server before refresh — so a recovered note isn't shown
+  // blank while /my-submissions catches up. Reuses populateFormWithReview's
+  // mapping shape by projecting the draft into a ReviewDoc.
+  const draftSeedAppliedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (draftSeedAppliedRef.current) return
+    draftSeedAppliedRef.current = true
+    if (!isSessionDraft || !restoredDraft) return
+    const wset = restoredDraft.wsetTasting as Record<string, unknown> | undefined
+    const draftAsReview = {
+      id: 'draft',
+      rating: (restoredDraft.rating as number) || undefined,
+      buyAgain: Boolean(restoredDraft.buyAgain),
+      reviewText:
+        typeof restoredDraft.notes === 'string' ? (restoredDraft.notes as string) : undefined,
+      wsetTasting: wset,
+    } as unknown as ReviewDoc
+    populateFormWithReview(draftAsReview)
+    if (typeof restoredDraft.buyAgain === 'boolean') setBuyAgain(restoredDraft.buyAgain)
+    if (typeof restoredDraft.publishedToProfile === 'boolean') {
+      setPublishedToProfile(restoredDraft.publishedToProfile)
+    }
+    // A draft carrying submittedAt was locked in before refresh — keep the
+    // editable form populated; fetchLatestSubmission resolves the locked state
+    // authoritatively from the server.
+  }, [isSessionDraft, restoredDraft, populateFormWithReview])
 
   const initialReviewRef = React.useRef<ReviewDoc | null>(initialReview ?? null)
   React.useEffect(() => {
@@ -497,14 +676,40 @@ export function WineReviewForm({
 
     setIsSubmitting(true)
     try {
-      // Convert IDs to numbers for Payload relationships
+      // Session mode: the draft is already autosaved continuously. "Klar / Lås
+      // in" just stamps submittedAt via the hook (queueSave already mirrored
+      // every field). Reuse the same upsert route the hook uses.
+      if (isSessionDraft) {
+        // Make sure the very latest field values are queued, then lock in.
+        queueSave({
+          rating,
+          buyAgain,
+          notes,
+          publishedToProfile,
+          wsetTasting: buildWsetSnapshot(),
+        })
+        await lockIn()
+        // Reflect "locked in" using the local state we already hold.
+        const lockedDoc = {
+          rating,
+          buyAgain,
+          reviewText: notes,
+          publishedToProfile,
+          wsetTasting: buildWsetSnapshot(),
+          submittedAt: new Date().toISOString(),
+          ...(customWineSnapshot ? { customWine: customWineSnapshot } : { wine: wineId }),
+        } as unknown as ReviewDoc
+        setSubmittedReview(lockedDoc)
+        setHistory((prev) => [lockedDoc, ...prev])
+        toast.success('Din smaknotering är inlåst')
+        onSubmit?.()
+        setIsSubmitting(false)
+        return
+      }
+
+      // Non-session (standalone / lesson-only) explicit submit.
       const sessionIdNum = sessionId ? Number(sessionId) : undefined
       const participantIdNum = participantId ? Number(participantId) : undefined
-
-      // When editing an existing review (initialReview), preserve its session
-      // context. Otherwise editing a session review via /mina-recensioner/[id]
-      // would lose the session/participant, breaking the dedup key and creating
-      // a duplicate row instead of updating.
       const effectiveSessionId =
         initialReview?.session != null
           ? typeof initialReview.session === 'object'
@@ -517,8 +722,6 @@ export function WineReviewForm({
             ? (initialReview.sessionParticipant as any).id
             : initialReview.sessionParticipant
           : participantIdNum
-
-      // Either send a library wine relationship or a custom-wine snapshot (XOR).
       const wineIdentity = customWineSnapshot
         ? { customWine: customWineSnapshot }
         : { wine: wineId ? Number(wineId) : undefined }
@@ -528,7 +731,6 @@ export function WineReviewForm({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          // Note: lesson field removed - content items reference reviews, not the other way around
           ...wineIdentity,
           rating,
           buyAgain,
@@ -536,35 +738,8 @@ export function WineReviewForm({
           publishedToProfile,
           session: effectiveSessionId || undefined,
           sessionParticipant: effectiveParticipantId || undefined,
-          wsetTasting: {
-            appearance: {
-              clarity: appearanceClarity || undefined,
-              intensity: appearanceIntensity || undefined,
-              color: appearanceColor || undefined,
-            },
-            nose: {
-              intensity: noseIntensity || undefined,
-              primaryAromas: primaryAromas,
-              secondaryAromas: secondaryAromas,
-              tertiaryAromas: tertiaryAromas,
-            },
-            palate: {
-              sweetness: palateSweetness || undefined,
-              acidity: palateAcidity || undefined,
-              tannin: palateTannin || undefined,
-              alcohol: palateAlcohol || undefined,
-              body: palateBody || undefined,
-              flavourIntensity: palateIntensity || undefined,
-              primaryFlavours,
-              secondaryFlavours,
-              tertiaryFlavours,
-              finish: palateFinish || undefined,
-            },
-            conclusion: {
-              quality: quality || undefined,
-              summary: notes || undefined,
-            },
-          },
+          submittedAt: new Date().toISOString(),
+          wsetTasting: buildWsetSnapshot(),
         }),
       })
       if (!res.ok) {
@@ -682,7 +857,7 @@ export function WineReviewForm({
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-medium">Din smaknotering är inskickad!</h3>
+            <h3 className="text-xl font-medium">Din smaknotering är inlåst</h3>
             <p className="text-muted-foreground">
               Din vinrecension har sparats. Scrolla ned för att se och jämföra alla deltagarnas
               svar.
@@ -1152,11 +1327,30 @@ export function WineReviewForm({
               Publicera på min profil
             </label>
           </div>
-          <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
-            {isSubmitting ? 'Skickar...' : 'Skicka in'}
-          </Button>
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            {isSessionDraft && <ReviewSaveStatus status={saveStatus} />}
+            <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+              {isSubmitting
+                ? isSessionDraft
+                  ? 'Låser in…'
+                  : 'Skickar...'
+                : isSessionDraft
+                  ? 'Klar / Lås in'
+                  : 'Skicka in'}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
   )
+}
+
+function ReviewSaveStatus({ status }: { status: SaveStatus }) {
+  if (status === 'saving')
+    return <span className="text-xs text-muted-foreground">Sparar…</span>
+  if (status === 'saved') return <span className="text-xs text-green-600">Sparat ✓</span>
+  if (status === 'retrying')
+    return <span className="text-xs text-amber-600">Återförsöker…</span>
+  if (status === 'error') return <span className="text-xs text-red-600">Kunde inte spara</span>
+  return null
 }
