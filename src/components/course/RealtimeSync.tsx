@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
+import type { SubmissionsByPour } from '@/lib/session-submission-status'
 
 /**
  * Mounts an EventSource to the session's SSE stream and dispatches incoming
@@ -20,6 +21,7 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     setRevealedPourOrders,
     setRoster,
     setSwarm,
+    setSubmissionsByPour,
     setSessionStatus,
     clearActiveSession,
     setConnectionState,
@@ -109,6 +111,15 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
       }
     })
 
+    es.addEventListener('submissions', (e) => {
+      try {
+        const data = JSON.parse((e as MessageEvent).data) as { byPourOrder: SubmissionsByPour }
+        if (data?.byPourOrder) setSubmissionsByPour(data.byPourOrder)
+      } catch {
+        // ignore
+      }
+    })
+
     es.addEventListener('heartbeat', () => {
       // No-op; the connection is alive. EventSource handles reconnection on drop.
     })
@@ -124,6 +135,7 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     setRevealedPourOrders,
     setRoster,
     setSwarm,
+    setSubmissionsByPour,
     setSessionStatus,
     clearActiveSession,
     setConnectionState,

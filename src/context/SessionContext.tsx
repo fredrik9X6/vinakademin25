@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
+import type { SubmissionsByPour } from '@/lib/session-submission-status'
 
 interface SessionData {
   sessionId: string
@@ -65,6 +66,9 @@ interface SessionContextValue {
   setSwarm: (s: SessionContextValue['swarm']) => void
   roster: RosterEntry[]
   setRoster: (r: RosterEntry[]) => void
+  /** Plan-mode per-pour submission status pushed via SSE. Set by RealtimeSync. */
+  submissionsByPour: SubmissionsByPour
+  setSubmissionsByPour: (s: SubmissionsByPour) => void
   /** Latest session status pushed via SSE. `null` until the first event lands. */
   sessionStatus: string | null
   setSessionStatus: (s: string | null) => void
@@ -98,6 +102,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [revealedPourOrders, setRevealedPourOrdersState] = useState<number[]>([])
   const [swarm, setSwarmState] = useState<SessionContextValue['swarm']>({})
   const [roster, setRoster] = useState<RosterEntry[]>([])
+  const [submissionsByPour, setSubmissionsByPourState] = useState<SubmissionsByPour>({})
   const [sessionStatus, setSessionStatus] = useState<string | null>(null)
   const [connectionState, setConnectionState] = useState<'connecting' | 'open' | 'reconnecting'>(
     'connecting',
@@ -237,6 +242,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setSwarmState(s)
   }, [])
 
+  const setSubmissionsByPour = useCallback((s: SubmissionsByPour) => {
+    setSubmissionsByPourState(s)
+  }, [])
+
   const clearActiveSession = useCallback(() => {
     setActiveSession(null)
     setSessionStatus(null)
@@ -309,6 +318,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setSwarm,
     roster,
     setRoster,
+    submissionsByPour,
+    setSubmissionsByPour,
     sessionStatus,
     setSessionStatus,
     clearActiveSession,
