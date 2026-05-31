@@ -42,12 +42,14 @@ export function BlindAnswerInputs({ value, onChange, disabled }: BlindAnswerInpu
   // selected grapes that aren't in the curated list (e.g. raw Systembolaget
   // strings prefilled via the wine picker). This ensures non-curated chips
   // still render with a label in the MultiSelect trigger.
-  const curatedSet = new Set(grapes)
-  const extraSelected = value.grapes.filter((g) => !curatedSet.has(g))
-  const grapeOptions = [
-    ...grapes.map((g) => ({ label: g, value: g })),
-    ...extraSelected.map((g) => ({ label: g, value: g })),
-  ]
+  const grapeOptions = React.useMemo(() => {
+    const curatedSet = new Set(grapes)
+    const extraSelected = value.grapes.filter((g) => !curatedSet.has(g))
+    return [
+      ...grapes.map((g) => ({ label: g, value: g })),
+      ...extraSelected.map((g) => ({ label: g, value: g })),
+    ]
+  }, [grapes, value.grapes])
 
   return (
     <details className="mt-2 text-sm">
