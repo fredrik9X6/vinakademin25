@@ -19,6 +19,9 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import type { TastingPlan } from '@/payload-types'
+import type { PriceBucket } from '@/lib/blind-guess-vocab'
+import { normalizeAnswer } from '@/lib/blind-guess-vocab'
+import { useGrapes } from '@/lib/use-grapes'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -46,8 +49,6 @@ import { WizardTour } from '@/components/onboarding/WizardTour'
 import { trackEvent } from '@/components/analytics'
 
 type WineType = NonNullable<CustomWineInput['type']>
-
-type PriceBucket = 'under_100' | '100_200' | '200_300' | '300_500' | '500_plus'
 
 type BlindAnswersState = {
   country: string | null
@@ -281,6 +282,9 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
   const [wines, setWines] = React.useState<WineEntry[]>(() => hydrateInitialWines(initialPlan))
   const [submitting, setSubmitting] = React.useState(false)
 
+  // Curated grapes list used to match Systembolaget grape strings to canonical names.
+  const { grapes: curatedGrapes } = useGrapes()
+
   // Advanced settings accordion — default open in edit mode only if any
   // non-default value exists, so most members never see the section.
   const hasNonDefaultAdvanced =
@@ -329,6 +333,24 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     !!suggestedTitle && suggestedTitle.trim().toLowerCase() !== title.trim().toLowerCase()
 
   function pickCustom(w: CustomWineInput, meta?: PickedWineMeta) {
+    // Map Systembolaget grape strings to canonical curated names where possible.
+    // Build a lookup of normalised curated name → canonical display name.
+    const canonicalByNorm = new Map<string, string>()
+    for (const canonical of curatedGrapes) {
+      canonicalByNorm.set(normalizeAnswer(canonical), canonical)
+    }
+    const rawGrapes = meta?.grapes ?? []
+    const mappedGrapes = Array.from(
+      new Set(
+        rawGrapes
+          .map((g) => {
+            const norm = normalizeAnswer(g)
+            return canonicalByNorm.get(norm) ?? g
+          })
+          .filter((g) => g.trim().length > 0),
+      ),
+    )
+
     setWines((prev) => {
       const next = [
         ...prev,
@@ -340,11 +362,12 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
           pourOrder: prev.length + 1,
           hostNotes: '',
           // Pre-fill the blind-answer country from the picker's hint when
-          // available (Systembolaget search results carry it). Grape and
-          // price bucket are left to the host to fill in or auto-derive.
+          // available (Systembolaget search results carry it). Grapes are
+          // seeded from the Systembolaget product, matched to canonical curated
+          // names where possible; unmatched strings pass through as-is.
           blindAnswers: {
             country: meta?.country ?? null,
-            grapes: [],
+            grapes: mappedGrapes,
             priceBucket: null,
           },
         },

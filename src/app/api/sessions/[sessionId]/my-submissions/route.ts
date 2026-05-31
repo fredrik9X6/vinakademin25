@@ -3,14 +3,18 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { PARTICIPANT_COOKIE } from '@/lib/sessions'
+import { buildPourMaps, resolvePourForReview } from '@/lib/session-pour-mapping'
 
 /**
  * GET /api/sessions/[sessionId]/my-submissions
  *
- * Returns the pour orders the calling participant has already submitted
- * reviews for. Used by PlanSessionContent to seed the swarm-gate Set on
- * mount. Identity is the participant cookie (vk_participant_token) OR the
- * authenticated user.
+ * Returns the calling participant's identity (participantId), all their
+ * review rows (incl. custom-wine), all their blind-guess rows, and the set
+ * of pour orders that have at least one review. Used by PlanSessionContent /
+ * useSessionDraft to rehydrate state after page refresh or re-join.
+ *
+ * Identity is the participant cookie (vk_participant_token) OR the
+ * authenticated user's session-participant row.
  */
 export async function GET(
   request: NextRequest,
@@ -65,10 +69,16 @@ export async function GET(
   }
 
   if (participantId === null) {
-    return NextResponse.json({ submittedPourOrders: [] })
+    return NextResponse.json({
+      participantId: null,
+      submittedPourOrders: [],
+      reviews: [],
+      guesses: [],
+    })
   }
 
-  // Find this participant's reviews in this session
+  // Find this participant's reviews in this session. depth: 0 keeps wine as an
+  // id; we resolve pour order ourselves below.
   const reviewRes = await payload.find({
     collection: 'reviews',
     where: { sessionParticipant: { equals: participantId } },
@@ -77,7 +87,16 @@ export async function GET(
     overrideAccess: true,
   })
 
-  // Map reviews to pour orders via session's plan wines
+  // This participant's guesses (blind tasting). Identity already resolved.
+  const guessRes = await payload.find({
+    collection: 'session-guesses',
+    where: { sessionParticipant: { equals: participantId } },
+    limit: 100,
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  // Map reviews to pour orders via the session's plan wines.
   const session = await payload.findByID({
     collection: 'course-sessions',
     id: sid,
@@ -85,33 +104,43 @@ export async function GET(
     overrideAccess: true,
   })
 
-  const wineIdToPour: Record<number, number> = {}
-  const titleToPour: Record<string, number> = {}
-  if (session?.tastingPlan && typeof session.tastingPlan === 'object') {
-    const wines = ((session.tastingPlan as any).wines ?? []) as any[]
-    wines.forEach((w, idx) => {
-      const pourOrder = w.pourOrder ?? idx + 1
-      if (w.libraryWine) {
-        const id = typeof w.libraryWine === 'object' ? w.libraryWine.id : w.libraryWine
-        if (typeof id === 'number') wineIdToPour[id] = pourOrder
-      } else if (w.customWine?.name) {
-        titleToPour[String(w.customWine.name).toLowerCase()] = pourOrder
-      }
-    })
-  }
+  const wines =
+    session?.tastingPlan && typeof session.tastingPlan === 'object'
+      ? (((session.tastingPlan as any).wines ?? []) as unknown[])
+      : []
+
+  const pourMaps = buildPourMaps(wines)
 
   const submittedPourOrders = new Set<number>()
-  for (const r of reviewRes.docs as any[]) {
-    if (r.wine) {
-      const id = typeof r.wine === 'object' ? r.wine.id : r.wine
-      if (typeof id === 'number' && wineIdToPour[id] != null) {
-        submittedPourOrders.add(wineIdToPour[id])
-      }
-    } else if (r.customWine?.name) {
-      const pour = titleToPour[String(r.customWine.name).toLowerCase()]
-      if (pour != null) submittedPourOrders.add(pour)
+  const reviews = (reviewRes.docs as any[]).map((r) => {
+    const pourOrder = resolvePourForReview(r, pourMaps)
+    if (pourOrder != null) submittedPourOrders.add(pourOrder)
+    return {
+      id: r.id,
+      pourOrder,
+      wine: r.wine ? (typeof r.wine === 'object' ? r.wine.id : r.wine) : null,
+      customWine: r.customWine ?? null,
+      rating: r.rating ?? null,
+      buyAgain: r.buyAgain ?? false,
+      reviewText: r.reviewText ?? null,
+      wsetTasting: r.wsetTasting ?? null,
+      publishedToProfile: r.publishedToProfile ?? false,
+      submittedAt: r.submittedAt ?? null,
     }
-  }
+  })
 
-  return NextResponse.json({ submittedPourOrders: Array.from(submittedPourOrders).sort() })
+  const guesses = (guessRes.docs as any[]).map((g) => ({
+    pourOrder: g.pourOrder,
+    guessedCountry: g.guessedCountry ?? null,
+    guessedGrape: g.guessedGrape ?? null,
+    guessedPriceBucket: g.guessedPriceBucket ?? null,
+    submittedAt: g.submittedAt ?? null,
+  }))
+
+  return NextResponse.json({
+    participantId,
+    submittedPourOrders: Array.from(submittedPourOrders).sort(),
+    reviews,
+    guesses,
+  })
 }

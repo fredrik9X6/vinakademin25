@@ -59,12 +59,22 @@ export const SessionGuesses: CollectionConfig = {
       name: 'guessedPriceBucket',
       type: 'select',
       options: [
-        { label: 'Under 100 kr', value: 'under_100' },
-        { label: '100–200 kr', value: '100_200' },
-        { label: '200–300 kr', value: '200_300' },
-        { label: '300–500 kr', value: '300_500' },
-        { label: '500+ kr', value: '500_plus' },
+        { label: 'Under 100 kr', value: '0_99' },
+        { label: '100–149 kr', value: '100_149' },
+        { label: '150–199 kr', value: '150_199' },
+        { label: '200–249 kr', value: '200_249' },
+        { label: '250–299 kr', value: '250_299' },
+        { label: '300+ kr', value: '300_plus' },
       ],
+    },
+    {
+      // NULL = draft / autosaved; set = "locked in" (Lås in). MUST NOT gate
+      // recap inclusion — drives the swarm/host tracker and the social
+      // "I'm done" moment only.
+      name: 'submittedAt',
+      type: 'date',
+      index: true,
+      admin: { readOnly: true },
     },
   ],
   timestamps: true,

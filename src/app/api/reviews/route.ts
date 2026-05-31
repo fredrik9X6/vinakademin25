@@ -395,12 +395,17 @@ export async function POST(request: NextRequest) {
 
     // Build the data payload. For guests: user stays null; sessionParticipant
     // and session are derived from the cookie token, NOT trusted from the body.
+    const submittedAt =
+      typeof body.submittedAt === 'string' && body.submittedAt.length > 0
+        ? body.submittedAt
+        : undefined
     const reviewData: any = {
       ...body,
       // Library wine path uses wineId; customWine path passes wine: null so
       // Payload's beforeValidate hook sees exactly one of {wine, customWine}.
       wine: wineId ?? null,
       user: guestParticipant ? null : user!.id,
+      submittedAt,
       session: guestParticipant
         ? guestParticipant.sessionId
         : body.session

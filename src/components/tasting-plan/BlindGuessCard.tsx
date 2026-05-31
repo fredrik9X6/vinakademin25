@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -10,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Check, X, Pencil } from 'lucide-react'
+import { Check, X, Pencil, Loader2, CloudOff } from 'lucide-react'
 import {
   COUNTRIES,
   PRICE_BUCKETS,
@@ -18,7 +17,8 @@ import {
   type PriceBucket,
 } from '@/lib/blind-guess-vocab'
 import { useGrapes } from '@/lib/use-grapes'
-import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
+import { scoreOne, resolveAnswerPriceBucket, type BlindAnswer } from '@/lib/blind-guess-scoring'
+import { useSessionDraft, type SaveStatus } from '@/lib/use-session-draft'
 
 export interface BlindGuessCardProps {
   sessionId: number
@@ -35,11 +35,22 @@ export interface BlindGuessCardProps {
   } | null
   /** Server-baked easy-mode dropdown options. When provided, the country /
    * grape dropdowns render only these values instead of the full COUNTRIES /
-   * GRAPES enums. Price-bucket always renders all 5 buckets. */
+   * GRAPES enums. Price-bucket always renders all 6 buckets. */
   easyModeOptions?: {
     countries: string[] | null
     grapes: string[] | null
   } | null
+  /** Which guess tiers the host enabled for this wine. Absent/null → default
+   * to showing all tiers (host view, revealed wines, missing-flag fallback). */
+  blindTiers?: {
+    country: boolean
+    grape: boolean
+    price: boolean
+  } | null
+  /** ISO timestamp when the guess was locked in; null = draft / autosaved. */
+  initialSubmittedAt?: string | null
+  /** Fired once on mount when a localStorage draft was restored. */
+  onRestored?: () => void
 }
 
 interface FormState {
@@ -55,7 +66,13 @@ export function BlindGuessCard({
   answer,
   initialGuess,
   easyModeOptions = null,
+  blindTiers = null,
+  initialSubmittedAt = null,
+  onRestored,
 }: BlindGuessCardProps) {
+  // Default to showing all tiers when blindTiers is absent (host path,
+  // revealed wines, any unset case) — never regress existing behaviour.
+  const show = blindTiers ?? { country: true, grape: true, price: true }
   const { grapes: dynamicGrapes } = useGrapes()
   const countryOptions = easyModeOptions?.countries ?? (COUNTRIES as ReadonlyArray<string>)
   const grapeOptions = easyModeOptions?.grapes ?? dynamicGrapes
@@ -63,64 +80,90 @@ export function BlindGuessCard({
   // First acceptable grape for the "rätt:" hint in the post-reveal scored row.
   const firstAnswerGrape =
     Array.isArray(answer.grapes) && answer.grapes.length > 0 ? answer.grapes[0] : null
-  const [submitted, setSubmitted] = React.useState<FormState | null>(
-    initialGuess
-      ? {
-          country: initialGuess.country,
-          grape: initialGuess.grape,
-          priceBucket: initialGuess.priceBucket,
-        }
-      : null,
-  )
+
   const [editing, setEditing] = React.useState<FormState>({
     country: initialGuess?.country ?? null,
     grape: initialGuess?.grape ?? null,
     priceBucket: initialGuess?.priceBucket ?? null,
   })
-  const [isEditMode, setIsEditMode] = React.useState<boolean>(!initialGuess)
-  const [busy, setBusy] = React.useState(false)
+  // "Locked in" once submittedAt is set (server-hydrated or via Lås in).
+  const [lockedIn, setLockedIn] = React.useState<boolean>(Boolean(initialSubmittedAt))
+  const [isEditMode, setIsEditMode] = React.useState<boolean>(!initialSubmittedAt)
 
-  async function handleSubmit() {
-    if (!editing.country && !editing.grape && !editing.priceBucket) {
-      toast.error('Välj minst ett svar.')
-      return
+  const { status, queueSave, lockIn, restoredFromDraft, restoredDraft } = useSessionDraft({
+    kind: 'guess',
+    sessionId,
+    pourOrder,
+    endpoint: '/api/session-guesses',
+    buildBody: (draft) => ({
+      sessionId,
+      pourOrder,
+      guessedCountry: (draft.country as string | null) ?? null,
+      guessedGrape: (draft.grape as string | null) ?? null,
+      guessedPriceBucket: (draft.priceBucket as PriceBucket | null) ?? null,
+      ...(draft.submittedAt ? { submittedAt: draft.submittedAt } : {}),
+    }),
+  })
+
+  // Seed editing state from the restored local draft (once on mount).
+  // The local draft is the freshest user input — prefer it over initialGuess,
+  // which may not yet reflect an autosave that hadn't landed before refresh.
+  const draftSeedAppliedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (draftSeedAppliedRef.current) return
+    draftSeedAppliedRef.current = true
+    if (!restoredDraft) return
+    const country = (restoredDraft.country as string | null) ?? null
+    const grape = (restoredDraft.grape as string | null) ?? null
+    const priceBucket = (restoredDraft.priceBucket as PriceBucket | null) ?? null
+    if (country || grape || priceBucket) {
+      setEditing({ country, grape, priceBucket })
     }
-    setBusy(true)
-    try {
-      const res = await fetch('/api/session-guesses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          sessionId,
-          pourOrder,
-          guessedCountry: editing.country,
-          guessedGrape: editing.grape,
-          guessedPriceBucket: editing.priceBucket,
-        }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        toast.error(err?.error || 'Kunde inte spara gissningen.')
-        return
-      }
-      setSubmitted({ ...editing })
+    // If the draft carried a submittedAt the user had locked in before refresh,
+    // reflect that so the locked-in summary view shows correctly.
+    if (restoredDraft.submittedAt) {
+      setLockedIn(true)
       setIsEditMode(false)
-      toast.success('Gissning sparad.')
-    } catch {
-      toast.error('Nätverksfel — försök igen.')
-    } finally {
-      setBusy(false)
     }
+  }, [])
+
+  // Tell the parent (once) that we restored a local draft, for the banner.
+  const restoredFiredRef = React.useRef(false)
+  React.useEffect(() => {
+    if (restoredFromDraft && !restoredFiredRef.current) {
+      restoredFiredRef.current = true
+      onRestored?.()
+    }
+  }, [restoredFromDraft, onRestored])
+
+  // Any field change autosaves immediately (debounced inside the hook).
+  function updateField(partial: Partial<FormState>) {
+    setEditing((s) => {
+      const next = { ...s, ...partial }
+      queueSave({
+        country: next.country,
+        grape: next.grape,
+        priceBucket: next.priceBucket,
+      })
+      return next
+    })
   }
 
+  async function handleLockIn() {
+    await lockIn()
+    setLockedIn(true)
+    setIsEditMode(false)
+  }
+
+  const hasGuess = Boolean(editing.country || editing.grape || editing.priceBucket)
+
   // Reveal mode: show scored results
-  if (isRevealed && submitted) {
+  if (isRevealed && hasGuess) {
     const scored = scoreOne(
       {
-        guessedCountry: submitted.country,
-        guessedGrape: submitted.grape,
-        guessedPriceBucket: submitted.priceBucket,
+        guessedCountry: editing.country,
+        guessedGrape: editing.grape,
+        guessedPriceBucket: editing.priceBucket,
       },
       answer,
     )
@@ -134,7 +177,7 @@ export function BlindGuessCard({
             <Row
               correct={scored.countryCorrect}
               label="Land"
-              guess={submitted.country}
+              guess={editing.country}
               answer={answer.country ?? null}
             />
           )}
@@ -142,18 +185,16 @@ export function BlindGuessCard({
             <Row
               correct={scored.grapeCorrect}
               label="Druva"
-              guess={submitted.grape}
+              guess={editing.grape}
               answer={firstAnswerGrape}
             />
           )}
           {scored.priceScored && (
-            <Row
+            <PriceRow
               correct={scored.priceCorrect}
-              label="Pris"
-              guess={priceBucketLabel(submitted.priceBucket)}
-              answer={priceBucketLabel(
-                answer.priceBucket ?? null,
-              )}
+              guessLabel={priceBucketLabel(editing.priceBucket)}
+              answerBucket={resolveAnswerPriceBucket(answer)}
+              answerPriceSek={answer.priceSek ?? null}
             />
           )}
         </div>
@@ -166,8 +207,8 @@ export function BlindGuessCard({
     )
   }
 
-  // Reveal mode but no submission: a soft note
-  if (isRevealed && !submitted) {
+  // Reveal mode but no content at all: a soft note.
+  if (isRevealed && !hasGuess) {
     return (
       <div className="mt-3 rounded-md border border-dashed bg-card/50 p-3">
         <p className="text-xs text-muted-foreground">
@@ -177,19 +218,21 @@ export function BlindGuessCard({
     )
   }
 
-  // Pre-reveal: read-only summary if submitted (with Ändra)
-  if (submitted && !isEditMode) {
+  // Pre-reveal locked-in summary (with Ändra to re-open editing).
+  if (lockedIn && !isEditMode) {
     const summary = [
-      submitted.country,
-      submitted.grape,
-      priceBucketLabel(submitted.priceBucket),
+      editing.country,
+      editing.grape,
+      priceBucketLabel(editing.priceBucket),
     ]
       .filter(Boolean)
       .join(' · ')
     return (
       <div className="mt-3 rounded-md border bg-card p-3 flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">Din gissning</p>
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <Check className="h-3 w-3 text-green-600" /> Inlåst gissning
+          </p>
           <p className="text-sm truncate">{summary || '—'}</p>
         </div>
         <Button
@@ -206,6 +249,26 @@ export function BlindGuessCard({
   }
 
   // Edit mode (initial or after "Ändra")
+  const shownTierCount = [show.country, show.grape, show.price].filter(Boolean).length
+
+  // Edge case: host set up a blind wine but left all tiers empty.
+  if (shownTierCount === 0) {
+    return (
+      <div className="mt-3 rounded-md border border-dashed bg-card/50 p-3">
+        <p className="text-xs text-muted-foreground">
+          Inget att gissa på det här vinet ännu.
+        </p>
+      </div>
+    )
+  }
+
+  const gridCols =
+    shownTierCount === 1
+      ? 'sm:grid-cols-1'
+      : shownTierCount === 2
+        ? 'sm:grid-cols-2'
+        : 'sm:grid-cols-3'
+
   return (
     <div className="mt-3 rounded-md border bg-card p-3 space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
@@ -218,79 +281,100 @@ export function BlindGuessCard({
           </span>
         )}
       </div>
-      <div className="grid gap-2 sm:grid-cols-3">
-        <Select
-          value={editing.country ?? ''}
-          onValueChange={(v) => setEditing((s) => ({ ...s, country: v || null }))}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Land" />
-          </SelectTrigger>
-          <SelectContent>
-            {countryOptions.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={editing.grape ?? ''}
-          onValueChange={(v) => setEditing((s) => ({ ...s, grape: v || null }))}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Druva" />
-          </SelectTrigger>
-          <SelectContent>
-            {grapeOptions.map((g) => (
-              <SelectItem key={g} value={g}>
-                {g}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={editing.priceBucket ?? ''}
-          onValueChange={(v) =>
-            setEditing((s) => ({ ...s, priceBucket: (v || null) as PriceBucket | null }))
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Pris" />
-          </SelectTrigger>
-          <SelectContent>
-            {PRICE_BUCKETS.map((b) => (
-              <SelectItem key={b.value} value={b.value}>
-                {b.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex gap-2">
-        <Button type="button" size="sm" onClick={handleSubmit} disabled={busy}>
-          {busy ? 'Sparar…' : submitted ? 'Spara ändring' : 'Skicka gissning'}
-        </Button>
-        {submitted && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setEditing({
-                country: submitted.country,
-                grape: submitted.grape,
-                priceBucket: submitted.priceBucket,
-              })
-              setIsEditMode(false)
-            }}
+      <div className={`grid gap-2 ${gridCols}`}>
+        {show.country && (
+          <Select
+            value={editing.country ?? ''}
+            onValueChange={(v) => updateField({ country: v || null })}
           >
-            Avbryt
-          </Button>
+            <SelectTrigger>
+              <SelectValue placeholder="Land" />
+            </SelectTrigger>
+            <SelectContent>
+              {countryOptions.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
+        {show.grape && (
+          <Select
+            value={editing.grape ?? ''}
+            onValueChange={(v) => updateField({ grape: v || null })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Druva" />
+            </SelectTrigger>
+            <SelectContent>
+              {grapeOptions.map((g) => (
+                <SelectItem key={g} value={g}>
+                  {g}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {show.price && (
+          <Select
+            value={editing.priceBucket ?? ''}
+            onValueChange={(v) => updateField({ priceBucket: (v || null) as PriceBucket | null })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Pris" />
+            </SelectTrigger>
+            <SelectContent>
+              {PRICE_BUCKETS.map((b) => (
+                <SelectItem key={b.value} value={b.value}>
+                  {b.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleLockIn}
+          disabled={!editing.country && !editing.grape && !editing.priceBucket}
+        >
+          {lockedIn ? 'Uppdatera & lås in' : 'Lås in'}
+        </Button>
+        <SaveStatusLabel status={status} />
       </div>
     </div>
   )
+}
+
+function SaveStatusLabel({ status }: { status: SaveStatus }) {
+  if (status === 'saving') {
+    return (
+      <span className="text-xs text-muted-foreground flex items-center gap-1">
+        <Loader2 className="h-3 w-3 animate-spin" /> Sparar…
+      </span>
+    )
+  }
+  if (status === 'saved') {
+    return (
+      <span className="text-xs text-green-600 flex items-center gap-1">
+        <Check className="h-3 w-3" /> Sparat
+      </span>
+    )
+  }
+  if (status === 'retrying') {
+    return (
+      <span className="text-xs text-amber-600 flex items-center gap-1">
+        <CloudOff className="h-3 w-3" /> Återförsöker…
+      </span>
+    )
+  }
+  if (status === 'error') {
+    return <span className="text-xs text-red-600">Kunde inte spara</span>
+  }
+  return null
 }
 
 function Row({
@@ -321,6 +405,63 @@ function Row({
           <span className="text-muted-foreground">
             {' '}
             (rätt: <span className="text-foreground">{answer}</span>)
+          </span>
+        )}
+      </span>
+    </div>
+  )
+}
+
+/**
+ * Price reveal row — shows the guess bucket and the exact answer price.
+ * When `answerPriceSek` is available, the exact kronor amount is displayed;
+ * otherwise falls back to the bucket label alone. The bucket the real price
+ * falls into is always highlighted so participants can see which range it's in.
+ */
+function PriceRow({
+  correct,
+  guessLabel,
+  answerBucket,
+  answerPriceSek,
+}: {
+  correct: boolean
+  guessLabel: string | null | undefined
+  answerBucket: PriceBucket | null
+  answerPriceSek: number | null
+}) {
+  const bucketLabel = priceBucketLabel(answerBucket)
+  // Exact price string, e.g. "189 kr"
+  const exactPrice =
+    answerPriceSek != null ? `${answerPriceSek.toLocaleString('sv-SE')} kr` : null
+  // Compose what we show as the "right answer": exact price + bucket in parens, or bucket alone
+  const answerDisplay = exactPrice
+    ? bucketLabel
+      ? `${exactPrice} (${bucketLabel})`
+      : exactPrice
+    : (bucketLabel ?? null)
+
+  return (
+    <div className="flex items-start gap-2">
+      <span
+        className={correct ? 'text-green-600 mt-0.5' : 'text-red-600 mt-0.5'}
+        aria-hidden
+      >
+        {correct ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+      </span>
+      <span>
+        <span className="text-muted-foreground">Pris:</span>{' '}
+        <span className={correct ? '' : 'line-through text-muted-foreground'}>
+          {guessLabel || '—'}
+        </span>
+        {!correct && answerDisplay && (
+          <span className="text-muted-foreground">
+            {' '}
+            (rätt: <span className="text-foreground">{answerDisplay}</span>)
+          </span>
+        )}
+        {correct && exactPrice && (
+          <span className="text-muted-foreground ml-1">
+            — <span className="text-foreground">{exactPrice}</span>
           </span>
         )}
       </span>

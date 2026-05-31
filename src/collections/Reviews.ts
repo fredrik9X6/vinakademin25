@@ -771,6 +771,14 @@ export const Reviews: CollectionConfig = {
         },
       ],
     },
+    {
+      // NULL = draft / autosaved; set = "locked in" (Klar/Lås in). MUST NOT
+      // gate recap inclusion — drives the swarm/host tracker only.
+      name: 'submittedAt',
+      type: 'date',
+      index: true,
+      admin: { readOnly: true, position: 'sidebar' },
+    },
   ],
   timestamps: true,
 }

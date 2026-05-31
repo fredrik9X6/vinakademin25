@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { PARTICIPANT_COOKIE } from '@/lib/sessions'
 import { loggerFor } from '@/lib/logger'
 import { buildPourMaps, resolvePourForReview } from '@/lib/session-pour-mapping'
+import { classifySubmissions } from '@/lib/session-submission-status'
 import { computeLivePoints } from '@/lib/session-live-scores'
 
 const log = loggerFor('api-sessions-stream')
@@ -417,6 +418,72 @@ export async function GET(
         }
       }, LESSON_POLL_INTERVAL_MS)
 
+      // ───── Submissions tracker (host-only status, no content) ─────
+      // Emits which participants have entered something and which have locked in,
+      // per pour order. NEVER includes guess/review content — only participant ids.
+      type SubmissionsPayload = {
+        byPourOrder: Record<number, { withContent: number[]; locked: number[] }>
+      }
+
+      const buildSubmissions = async (): Promise<SubmissionsPayload> => {
+        try {
+          const sess = await payload.findByID({
+            collection: 'course-sessions',
+            id: sessionId,
+            depth: 2,
+            overrideAccess: true,
+          })
+          if (!sess?.tastingPlan || typeof sess.tastingPlan !== 'object') {
+            return { byPourOrder: {} }
+          }
+
+          const wines = ((sess.tastingPlan as any).wines ?? []) as any[]
+          const pourMaps = buildPourMaps(wines)
+
+          const [guessesRes, reviewsRes] = await Promise.all([
+            payload.find({
+              collection: 'session-guesses',
+              where: { session: { equals: sessionId } },
+              limit: 1000,
+              depth: 0,
+              overrideAccess: true,
+            }),
+            payload.find({
+              collection: 'reviews',
+              where: { session: { equals: sessionId } },
+              limit: 1000,
+              depth: 0,
+              overrideAccess: true,
+            }),
+          ])
+
+          const byPourOrder = classifySubmissions(
+            guessesRes.docs as any[],
+            reviewsRes.docs as any[],
+            pourMaps,
+          )
+          return { byPourOrder }
+        } catch (err) {
+          log.error({ err, sessionId }, 'sse_build_submissions_failed')
+          return { byPourOrder: {} }
+        }
+      }
+
+      let lastSubmissionsJson = JSON.stringify({ byPourOrder: {} })
+      const initialSubmissions = await buildSubmissions()
+      lastSubmissionsJson = JSON.stringify(initialSubmissions)
+      send('submissions', initialSubmissions)
+
+      const submissionsPoll = setInterval(async () => {
+        if (closed) return
+        const next = await buildSubmissions()
+        const nextJson = JSON.stringify(next)
+        if (nextJson !== lastSubmissionsJson) {
+          lastSubmissionsJson = nextJson
+          send('submissions', next)
+        }
+      }, LESSON_POLL_INTERVAL_MS)
+
       // Heartbeat
       const heartbeat = setInterval(() => {
         send('heartbeat', { ts: Date.now() })
@@ -428,6 +495,7 @@ export async function GET(
         clearInterval(lessonPoll)
         clearInterval(rosterPoll)
         clearInterval(swarmPoll)
+        clearInterval(submissionsPoll)
         clearInterval(heartbeat)
         try {
           controller.close()

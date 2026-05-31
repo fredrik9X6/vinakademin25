@@ -1175,6 +1175,7 @@ export interface Review {
       summary?: string | null;
     };
   };
+  submittedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1499,7 +1500,7 @@ export interface TastingPlan {
         /**
          * Prisintervall som rätt svar. Lämna tom så härleds det från vinets pris (om satt).
          */
-        blindAnswerPriceBucket?: ('under_100' | '100_200' | '200_300' | '300_500' | '500_plus') | null;
+        blindAnswerPriceBucket?: ('0_99' | '100_149' | '150_199' | '200_249' | '250_299' | '300_plus') | null;
         id?: string | null;
       }[]
     | null;
@@ -3032,7 +3033,8 @@ export interface SessionGuess {
   pourOrder: number;
   guessedCountry?: string | null;
   guessedGrape?: string | null;
-  guessedPriceBucket?: ('under_100' | '100_200' | '200_300' | '300_500' | '500_plus') | null;
+  guessedPriceBucket?: ('0_99' | '100_149' | '150_199' | '200_249' | '250_299' | '300_plus') | null;
+  submittedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -4401,6 +4403,7 @@ export interface ReviewsSelect<T extends boolean = true> {
               summary?: T;
             };
       };
+  submittedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -4531,6 +4534,7 @@ export interface SessionGuessesSelect<T extends boolean = true> {
   guessedCountry?: T;
   guessedGrape?: T;
   guessedPriceBucket?: T;
+  submittedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

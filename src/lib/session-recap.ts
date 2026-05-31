@@ -15,6 +15,8 @@ export interface PerWineRecap {
   subtitle: string
   thumbUrl: string | null
   isCustomWine: boolean
+  /** Exact retail price in SEK (from library wine `price` or custom wine `priceSek`). `null` when not set. */
+  priceSek: number | null
   ratingCount: number
   avgRating: number | null
   /** Population std-dev. `null` when ratingCount < 2. */
@@ -95,6 +97,7 @@ function wineTitle(w: NonNullable<TastingPlan['wines']>[number]): {
   subtitle: string
   thumbUrl: string | null
   isCustomWine: boolean
+  priceSek: number | null
 } {
   if (w.libraryWine && typeof w.libraryWine === 'object') {
     const lib = w.libraryWine as Wine
@@ -111,6 +114,7 @@ function wineTitle(w: NonNullable<TastingPlan['wines']>[number]): {
         .join(' · '),
       thumbUrl,
       isCustomWine: false,
+      priceSek: lib.price ?? null,
     }
   }
   const c = w.customWine
@@ -119,6 +123,7 @@ function wineTitle(w: NonNullable<TastingPlan['wines']>[number]): {
     subtitle: [c?.producer, c?.vintage].filter(Boolean).join(' · '),
     thumbUrl: c?.imageUrl ?? null,
     isCustomWine: true,
+    priceSek: c?.priceSek ?? null,
   }
 }
 
@@ -287,6 +292,7 @@ export async function getSessionRecap(
       subtitle: titleInfo.subtitle,
       thumbUrl: titleInfo.thumbUrl,
       isCustomWine: titleInfo.isCustomWine,
+      priceSek: titleInfo.priceSek,
       ratingCount,
       avgRating,
       ratingStdDev,

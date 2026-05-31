@@ -12,6 +12,7 @@ import { RealtimeSync } from './RealtimeSync'
 import { Button } from '@/components/ui/button'
 import { Crown, LogOut } from 'lucide-react'
 import { PlanSessionContent } from '@/components/tasting-plan/PlanSessionContent'
+import { ConnectionBanner } from '@/components/realtime/ConnectionBanner'
 import type { CourseSession, TastingPlan } from '@/payload-types'
 
 interface SessionViewProps {
@@ -181,6 +182,11 @@ export default function SessionView({
     return (
       <>
         <RealtimeSync sessionId={sessionId} />
+        {/* Wrap in the same container as the course-session branch for consistent
+            edge-to-edge alignment instead of rendering flush to the viewport. */}
+        <div className="max-w-7xl mx-auto px-4 pt-2 sm:px-6 lg:px-8">
+          <ConnectionBanner />
+        </div>
         <PlanSessionContent
           session={session}
           plan={session.tastingPlan as TastingPlan}
@@ -229,6 +235,11 @@ export default function SessionView({
           </Button>
         </div>
       </header>
+
+      {/* Connection state banner — only visible when SSE is degraded. */}
+      <div className="max-w-7xl mx-auto px-4 pt-2 sm:px-6 lg:px-8">
+        <ConnectionBanner />
+      </div>
 
       {/* Main column — roster lives in the LessonViewer/CourseQuizViewer sidebar
        * via the sidebarExtra prop, or below the TOC in the lobby state. */}

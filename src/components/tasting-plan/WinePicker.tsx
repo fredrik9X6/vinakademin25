@@ -41,6 +41,8 @@ export type CustomWineInput = {
  */
 export type PickedWineMeta = {
   country?: string | null
+  /** Grape strings from Systembolaget (jsonb array); empty when the product has no grape data. */
+  grapes?: string[]
 }
 
 /**
@@ -85,6 +87,7 @@ type SystembolagetHit = {
   alcoholPercentage: number | null
   imageUrl: string | null
   productUrl: string | null
+  grapes?: string[]
 }
 
 const SYSTEMBOLAGET_TYPE_MAP: Record<string, NonNullable<CustomWineInput['type']>> = {
@@ -209,7 +212,10 @@ export function WinePicker({ onPickCustom, disabled }: WinePickerProps) {
                       className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-3 disabled:opacity-50"
                       disabled={disabled}
                       onClick={() => {
-                        onPickCustom(projectSystembolagetToCustom(r), { country: r.country })
+                        onPickCustom(projectSystembolagetToCustom(r), {
+                          country: r.country,
+                          grapes: r.grapes ?? [],
+                        })
                         setSbQ('')
                         setSbResults([])
                       }}

@@ -9,11 +9,12 @@ import type { PriceBucket } from '@/lib/blind-guess-vocab'
 const log = loggerFor('api-session-guesses')
 
 const PRICE_BUCKETS: ReadonlyArray<PriceBucket> = [
-  'under_100',
-  '100_200',
-  '200_300',
-  '300_500',
-  '500_plus',
+  '0_99',
+  '100_149',
+  '150_199',
+  '200_249',
+  '250_299',
+  '300_plus',
 ]
 
 interface ResolvedIdentity {
@@ -99,6 +100,9 @@ export async function POST(request: NextRequest) {
     const guessedCountryRaw = (body as { guessedCountry?: unknown }).guessedCountry
     const guessedGrapeRaw = (body as { guessedGrape?: unknown }).guessedGrape
     const guessedPriceBucketRaw = (body as { guessedPriceBucket?: unknown }).guessedPriceBucket
+    const submittedAtRaw = (body as { submittedAt?: unknown }).submittedAt
+    const submittedAt =
+      typeof submittedAtRaw === 'string' && submittedAtRaw.length > 0 ? submittedAtRaw : undefined
 
     const guessedCountry =
       typeof guessedCountryRaw === 'string' && guessedCountryRaw.trim().length > 0
@@ -175,6 +179,7 @@ export async function POST(request: NextRequest) {
       guessedCountry,
       guessedGrape,
       guessedPriceBucket,
+      ...(submittedAt ? { submittedAt } : {}),
     }
 
     if (existing.docs.length > 0) {
@@ -242,12 +247,14 @@ export async function GET(request: NextRequest) {
           guessedCountry?: string | null
           guessedGrape?: string | null
           guessedPriceBucket?: PriceBucket | null
+          submittedAt?: string | null
         }
         return {
           pourOrder: doc.pourOrder,
           guessedCountry: doc.guessedCountry ?? null,
           guessedGrape: doc.guessedGrape ?? null,
           guessedPriceBucket: doc.guessedPriceBucket ?? null,
+          submittedAt: doc.submittedAt ?? null,
         }
       }),
     })
