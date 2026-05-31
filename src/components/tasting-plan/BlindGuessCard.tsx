@@ -40,6 +40,13 @@ export interface BlindGuessCardProps {
     countries: string[] | null
     grapes: string[] | null
   } | null
+  /** Which guess tiers the host enabled for this wine. Absent/null → default
+   * to showing all tiers (host view, revealed wines, missing-flag fallback). */
+  blindTiers?: {
+    country: boolean
+    grape: boolean
+    price: boolean
+  } | null
   /** ISO timestamp when the guess was locked in; null = draft / autosaved. */
   initialSubmittedAt?: string | null
   /** Fired once on mount when a localStorage draft was restored. */
@@ -59,9 +66,13 @@ export function BlindGuessCard({
   answer,
   initialGuess,
   easyModeOptions = null,
+  blindTiers = null,
   initialSubmittedAt = null,
   onRestored,
 }: BlindGuessCardProps) {
+  // Default to showing all tiers when blindTiers is absent (host path,
+  // revealed wines, any unset case) — never regress existing behaviour.
+  const show = blindTiers ?? { country: true, grape: true, price: true }
   const { grapes: dynamicGrapes } = useGrapes()
   const countryOptions = easyModeOptions?.countries ?? (COUNTRIES as ReadonlyArray<string>)
   const grapeOptions = easyModeOptions?.grapes ?? dynamicGrapes
@@ -238,6 +249,26 @@ export function BlindGuessCard({
   }
 
   // Edit mode (initial or after "Ändra")
+  const shownTierCount = [show.country, show.grape, show.price].filter(Boolean).length
+
+  // Edge case: host set up a blind wine but left all tiers empty.
+  if (shownTierCount === 0) {
+    return (
+      <div className="mt-3 rounded-md border border-dashed bg-card/50 p-3">
+        <p className="text-xs text-muted-foreground">
+          Inget att gissa på det här vinet ännu.
+        </p>
+      </div>
+    )
+  }
+
+  const gridCols =
+    shownTierCount === 1
+      ? 'sm:grid-cols-1'
+      : shownTierCount === 2
+        ? 'sm:grid-cols-2'
+        : 'sm:grid-cols-3'
+
   return (
     <div className="mt-3 rounded-md border bg-card p-3 space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
@@ -250,52 +281,58 @@ export function BlindGuessCard({
           </span>
         )}
       </div>
-      <div className="grid gap-2 sm:grid-cols-3">
-        <Select
-          value={editing.country ?? ''}
-          onValueChange={(v) => updateField({ country: v || null })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Land" />
-          </SelectTrigger>
-          <SelectContent>
-            {countryOptions.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={editing.grape ?? ''}
-          onValueChange={(v) => updateField({ grape: v || null })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Druva" />
-          </SelectTrigger>
-          <SelectContent>
-            {grapeOptions.map((g) => (
-              <SelectItem key={g} value={g}>
-                {g}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={editing.priceBucket ?? ''}
-          onValueChange={(v) => updateField({ priceBucket: (v || null) as PriceBucket | null })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Pris" />
-          </SelectTrigger>
-          <SelectContent>
-            {PRICE_BUCKETS.map((b) => (
-              <SelectItem key={b.value} value={b.value}>
-                {b.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className={`grid gap-2 ${gridCols}`}>
+        {show.country && (
+          <Select
+            value={editing.country ?? ''}
+            onValueChange={(v) => updateField({ country: v || null })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Land" />
+            </SelectTrigger>
+            <SelectContent>
+              {countryOptions.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {show.grape && (
+          <Select
+            value={editing.grape ?? ''}
+            onValueChange={(v) => updateField({ grape: v || null })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Druva" />
+            </SelectTrigger>
+            <SelectContent>
+              {grapeOptions.map((g) => (
+                <SelectItem key={g} value={g}>
+                  {g}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {show.price && (
+          <Select
+            value={editing.priceBucket ?? ''}
+            onValueChange={(v) => updateField({ priceBucket: (v || null) as PriceBucket | null })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Pris" />
+            </SelectTrigger>
+            <SelectContent>
+              {PRICE_BUCKETS.map((b) => (
+                <SelectItem key={b.value} value={b.value}>
+                  {b.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         <Button
