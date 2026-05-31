@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
       guessedCountry,
       guessedGrape,
       guessedPriceBucket,
-      ...(submittedAt ? { submittedAt } : {}),
+      ...(submittedAt ? { submittedAt: new Date().toISOString() } : {}),
     }
 
     if (existing.docs.length > 0) {
