@@ -1,0 +1,71 @@
+name: Run DB migrations on deploy
+
+# Why this exists:
+# The Railway runtime image is a slim Next.js standalone build (`CMD node server.js`)
+# that does NOT contain the Payload CLI, the TypeScript migration files, or full
+# node_modules — so it cannot run `payload migrate` itself. The app relies on
+# `prodMigrations` at init, which in this Docker-standalone setup did not reliably
+# apply pending migrations, causing the staging DB to drift weeks behind prod.
+#
+# This workflow runs `payload migrate` in CI (full deps) on every push to the
+# deploy branches, so the database schema is brought up to date automatically:
+#   - push to `main`        -> migrates the STAGING database
+#   - push to `production`  -> migrates the PRODUCTION database
+#
+# REQUIRED ONE-TIME SETUP (GitHub repo -> Settings -> Secrets and variables -> Actions):
+#   - STAGING_DATABASE_URI     = the staging Neon connection string (ep-purple-night ...)
+#   - PRODUCTION_DATABASE_URI  = the production Neon connection string (ep-super-poetry ...)
+#   - PAYLOAD_SECRET           = the Payload secret (any stable value; only used to init the
+#                                config — migrations are DDL and don't depend on its value)
+#
+# REQUIRED for correct ordering (so the new code never serves against an un-migrated DB):
+#   In Railway, enable "Wait for CI" (Settings -> Deploy -> "Check Suites" / wait for GitHub
+#   checks) on BOTH the staging and production services. Railway then waits for this
+#   migrate check to pass before promoting the new deployment. Without it, Railway deploys
+#   the new code in parallel with this job and there is a brief window of new-code-on-old-schema.
+
+on:
+  push:
+    branches:
+      - main
+      - production
+
+# Never run two migrations against the same environment at once.
+concurrency:
+  group: migrate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve target environment
+        id: target
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/production" ]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "env_name=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run pending migrations (${{ steps.target.outputs.env_name }})
+        run: pnpm migrate
+        env:
+          # main -> staging, production -> prod. The unused one is simply empty.
+          DATABASE_URI: ${{ github.ref == 'refs/heads/production' && secrets.PRODUCTION_DATABASE_URI || secrets.STAGING_DATABASE_URI }}
+          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
+          # Migrations are migration-driven; never allow schema push in CI.
+          PAYLOAD_DB_PUSH: 'false'
