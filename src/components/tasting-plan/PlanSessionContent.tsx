@@ -71,6 +71,14 @@ type WineRow = {
     countries: string[] | null
     grapes: string[] | null
   } | null
+  /** Which guess tiers the host actually configured for this wine. Baked onto
+   * unrevealed guest entries by the page's redaction logic. Absent (null) for
+   * revealed wines and the host path → BlindGuessCard defaults to showing all. */
+  blindTiers?: {
+    country: boolean
+    grape: boolean
+    price: boolean
+  } | null
 }
 
 function rowFromEntry(
@@ -100,6 +108,13 @@ function rowFromEntry(
         grapes: string[] | null
       } | null
     }).easyModeOptions ?? null
+  // Per-tier visibility flags baked by the page redaction logic for unrevealed
+  // guest entries. Absent for revealed wines and the host path — BlindGuessCard
+  // defaults to showing all tiers when this is null/undefined.
+  const blindTiers =
+    (w as {
+      blindTiers?: { country: boolean; grape: boolean; price: boolean } | null
+    }).blindTiers ?? null
   const overridePriceBucket =
     ((w as { blindAnswerPriceBucket?: PriceBucket | null }).blindAnswerPriceBucket ?? null) as
       | PriceBucket
@@ -140,6 +155,7 @@ function rowFromEntry(
         priceSek: libPriceSek,
       },
       easyModeOptions,
+      blindTiers,
     }
   }
   const c = w.customWine
@@ -178,6 +194,7 @@ function rowFromEntry(
       priceSek: c?.priceSek ?? null,
     },
     easyModeOptions,
+    blindTiers,
   }
 }
 
@@ -576,6 +593,7 @@ export function PlanSessionContent({
                             isRevealed={effectiveRevealed.has(row.pourOrder)}
                             answer={row.blindAnswer}
                             easyModeOptions={row.easyModeOptions}
+                            blindTiers={row.blindTiers}
                             initialGuess={(() => {
                               const g = myGuesses.get(row.pourOrder)
                               return g ?? null

@@ -81,6 +81,20 @@ export default async function PlanDetailPage({
             const pourOrder = w.pourOrder ?? idx + 1
             if (revealed.includes(pourOrder)) return w
 
+            // Read original (unredacted) answer fields once — reused for both
+            // easy-mode decoy generation and blindTiers activation booleans.
+            const origCountry =
+              typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry === 'string'
+                ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
+                : null
+            const origGrapes = Array.isArray(
+              (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes,
+            )
+              ? ((w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes as string[])
+              : []
+            const origPriceBucket =
+              (w as { blindAnswerPriceBucket?: string | null }).blindAnswerPriceBucket ?? null
+
             // Compute easy-mode decoy options from the ORIGINAL (unredacted)
             // wine entry so the correct answer is guaranteed in the set. The
             // resulting `easyModeOptions` field is non-persistent — it lives
@@ -90,17 +104,6 @@ export default async function PlanDetailPage({
               grapes: string[] | null
             } | null = null
             if (easyMode) {
-              const origCountry =
-                typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry ===
-                'string'
-                  ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
-                  : null
-              const origGrapes = Array.isArray(
-                (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes,
-              )
-                ? ((w as { blindAnswerGrapes?: string[] | null })
-                    .blindAnswerGrapes as string[])
-                : []
               easyModeOptions = {
                 countries: pickEasyModeOptions({
                   pool: COUNTRIES as ReadonlyArray<string>,
@@ -117,6 +120,27 @@ export default async function PlanDetailPage({
               }
             }
 
+            // Derive per-tier activation booleans — booleans only, no answer
+            // values — so the guest knows which selects to render without
+            // leaking what the correct answers are.
+            // Raw price: an explicit bucket OR a numeric price on the source wine
+            // (library wine price or customWine.priceSek) mirrors
+            // resolveAnswerPriceBucket's inputs.
+            const libWine =
+              w.libraryWine && typeof w.libraryWine === 'object'
+                ? (w.libraryWine as { price?: number })
+                : null
+            const custWine =
+              (w as { customWine?: { priceSek?: number | null } | null }).customWine ?? null
+            const rawPriceAvailable =
+              (libWine != null && typeof libWine.price === 'number' && libWine.price > 0) ||
+              (custWine != null && typeof custWine.priceSek === 'number' && custWine.priceSek > 0)
+            const blindTiers = {
+              country: typeof origCountry === 'string' && origCountry.trim().length > 0,
+              grape: origGrapes.some((g) => typeof g === 'string' && g.trim().length > 0),
+              price: Boolean(origPriceBucket) || rawPriceAvailable,
+            }
+
             return {
               ...w,
               libraryWine: null,
@@ -128,6 +152,7 @@ export default async function PlanDetailPage({
               blindAnswerGrapes: null,
               blindAnswerPriceBucket: null,
               easyModeOptions,
+              blindTiers,
             }
           }),
         } as typeof plan
