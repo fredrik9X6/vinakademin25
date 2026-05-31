@@ -17,6 +17,7 @@ export interface SystembolagetSearchHit {
   alcoholPercentage: number | null
   imageUrl: string | null
   productUrl: string | null
+  grapes: string[]
 }
 
 // In Systembolaget's taxonomy, categoryLevel1 buckets the whole catalog into:
@@ -84,6 +85,7 @@ export async function GET(request: NextRequest) {
       alcohol_percentage,
       image_url,
       product_url,
+      grapes,
       GREATEST(
         similarity(COALESCE(search_title, ''), $1),
         similarity(COALESCE(product_name_bold, ''), $1),
@@ -116,6 +118,8 @@ export async function GET(request: NextRequest) {
     alcoholPercentage: r.alcohol_percentage != null ? Number(r.alcohol_percentage) : null,
     imageUrl: r.image_url,
     productUrl: r.product_url,
+    // `grapes` is a jsonb string array; pg returns it already parsed as JS array.
+    grapes: Array.isArray(r.grapes) ? (r.grapes as unknown[]).filter((g): g is string => typeof g === 'string') : [],
   }))
 
   return NextResponse.json({ results })
