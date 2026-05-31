@@ -23,13 +23,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Wine as WineIcon, Crown, LogOut } from 'lucide-react'
+import { Wine as WineIcon, Crown, LogOut, CheckCircle } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
 import type { BlindAnswer } from '@/lib/blind-guess-scoring'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
-import { useActiveSession } from '@/context/SessionContext'
+import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
 import { SwarmPanel } from './SwarmPanel'
 import { HostSessionTour } from '@/components/onboarding/HostSessionTour'
@@ -217,44 +217,45 @@ export function PlanSessionContent({
     country: string | null
     grape: string | null
     priceBucket: PriceBucket | null
+    submittedAt: string | null
   }
   const [myGuesses, setMyGuesses] = React.useState<Map<number, LocalGuess>>(new Map())
+  // One-time "answers restored" banner trigger.
+  const [restoredBanner, setRestoredBanner] = React.useState(false)
+  const dismissRestoredBanner = React.useCallback(() => setRestoredBanner(false), [])
   React.useEffect(() => {
     let aborted = false
     fetch(`/api/sessions/${session.id}/my-submissions`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (aborted) return
-        if (data && Array.isArray(data.submittedPourOrders)) {
+        if (aborted || !data) return
+        if (Array.isArray(data.submittedPourOrders)) {
           setSubmittedPourOrders(new Set(data.submittedPourOrders))
         }
-      })
-      .catch(() => {})
-    fetch(`/api/session-guesses?session=${session.id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (aborted) return
-        const arr = (
-          data as {
-            guesses?: Array<{
+        const guesses = Array.isArray(data.guesses)
+          ? (data.guesses as Array<{
               pourOrder: number
               guessedCountry: string | null
               guessedGrape: string | null
               guessedPriceBucket: PriceBucket | null
-            }>
-          }
-        )?.guesses
-        if (Array.isArray(arr)) {
-          const map = new Map<number, LocalGuess>()
-          for (const g of arr) {
-            map.set(g.pourOrder, {
-              country: g.guessedCountry ?? null,
-              grape: g.guessedGrape ?? null,
-              priceBucket: g.guessedPriceBucket ?? null,
-            })
-          }
-          setMyGuesses(map)
+              submittedAt: string | null
+            }>)
+          : []
+        const map = new Map<number, LocalGuess>()
+        for (const g of guesses) {
+          map.set(g.pourOrder, {
+            country: g.guessedCountry ?? null,
+            grape: g.guessedGrape ?? null,
+            priceBucket: g.guessedPriceBucket ?? null,
+            submittedAt: g.submittedAt ?? null,
+          })
         }
+        setMyGuesses(map)
+        // If the server returned any content at all, the "restored" banner is
+        // warranted. BlindGuessCard / WineReviewForm also fire onRestored from
+        // their local mirror; this covers the durable-server case.
+        const reviewsCount = Array.isArray(data.reviews) ? data.reviews.length : 0
+        if (guesses.length > 0 || reviewsCount > 0) setRestoredBanner(true)
       })
       .catch(() => {})
     return () => {
@@ -270,12 +271,17 @@ export function PlanSessionContent({
     hostFocusStartedAt,
     revealedPourOrders,
     swarm,
+    submissionsByPour,
+    roster,
     leaveSession,
     clearActiveSession,
   } = useActiveSession()
   const [endDialog, setEndDialog] = React.useState(false)
   const [leaveDialog, setLeaveDialog] = React.useState(false)
   const [endingOrLeaving, setEndingOrLeaving] = React.useState(false)
+  // Pour order whose reveal is awaiting host confirmation because online
+  // participants are still missing an entry. null = no pending guard.
+  const [revealGuardPour, setRevealGuardPour] = React.useState<number | null>(null)
 
   async function handleHostEnd() {
     setEndingOrLeaving(true)
@@ -376,6 +382,26 @@ export function PlanSessionContent({
     }
   }
 
+  // Online non-host participants who have NO content yet for this pour.
+  function missingCountForPour(pourOrder: number): { missing: number; total: number } {
+    const guests = roster.filter((r) => !r.isHost && r.online)
+    const entry = submissionsByPour[pourOrder]
+    const withContent = new Set(entry?.withContent ?? [])
+    const missing = guests.filter((g) => !withContent.has(g.id)).length
+    return { missing, total: guests.length }
+  }
+
+  // Reveal entry point used by the UI: confirm first if anyone online is
+  // still missing an entry, otherwise reveal immediately.
+  function attemptReveal(pourOrder: number) {
+    const { missing } = missingCountForPour(pourOrder)
+    if (missing > 0) {
+      setRevealGuardPour(pourOrder)
+      return
+    }
+    void revealWine(pourOrder)
+  }
+
   async function revealWine(pourOrder: number) {
     setLocalRevealed((prev) => new Set([...prev, pourOrder]))
     trackEvent('session_wine_revealed', {
@@ -411,6 +437,11 @@ export function PlanSessionContent({
           {isHost ? 'Avsluta session' : 'Lämna session'}
         </Button>
       </header>
+
+      {restoredBanner && (
+        <RestoredBanner onDismiss={dismissRestoredBanner} />
+      )}
+
       {isHost && (
         <HostSessionTour blind={isBlind} hasTimer={!!plan.defaultMinutesPerWine} />
       )}
@@ -510,7 +541,7 @@ export function PlanSessionContent({
                               type="button"
                               size="sm"
                               variant="outline"
-                              onClick={() => revealWine(row.pourOrder)}
+                              onClick={() => attemptReveal(row.pourOrder)}
                               {...(idx === 0 ? { 'data-tour': 'session-reveal' } : {})}
                             >
                               Avslöja vin #{row.pourOrder}
@@ -549,6 +580,17 @@ export function PlanSessionContent({
                               const g = myGuesses.get(row.pourOrder)
                               return g ?? null
                             })()}
+                            initialSubmittedAt={
+                              myGuesses.get(row.pourOrder)?.submittedAt ?? null
+                            }
+                            onRestored={() => setRestoredBanner(true)}
+                          />
+                        )}
+
+                        {isHost && isActive && (
+                          <HostSubmissionTracker
+                            roster={roster}
+                            entry={submissionsByPour[row.pourOrder]}
                           />
                         )}
 
@@ -575,10 +617,13 @@ export function PlanSessionContent({
           {reviewing &&
             (reviewing.libraryWineId ? (
               <WineReviewForm
+                key={`review-${reviewing.pourOrder}`}
                 lessonId={0}
                 sessionId={String(session.id)}
+                pourOrder={reviewing.pourOrder}
                 wineIdProp={reviewing.libraryWineId}
                 insideDialog
+                onRestored={() => setRestoredBanner(true)}
                 onSubmit={() => {
                   setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
                   setReviewing(null)
@@ -586,10 +631,13 @@ export function PlanSessionContent({
               />
             ) : reviewing.customWineSnapshot ? (
               <WineReviewForm
+                key={`review-${reviewing.pourOrder}`}
                 lessonId={0}
                 sessionId={String(session.id)}
+                pourOrder={reviewing.pourOrder}
                 customWineSnapshot={reviewing.customWineSnapshot}
                 insideDialog
+                onRestored={() => setRestoredBanner(true)}
                 onSubmit={() => {
                   setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
                   setReviewing(null)
@@ -646,7 +694,65 @@ export function PlanSessionContent({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={revealGuardPour !== null}
+        onOpenChange={(o) => !o && setRevealGuardPour(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Avslöja redan nu?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                if (revealGuardPour === null) return null
+                const { missing, total } = missingCountForPour(revealGuardPour)
+                return `${missing} av ${total} har inte svarat än — avslöja ändå?`
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                const pour = revealGuardPour
+                setRevealGuardPour(null)
+                if (pour !== null) void revealWine(pour)
+              }}
+            >
+              Avslöja ändå
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
+  )
+}
+
+/** One-time banner shown when the session finds prior answers to restore. */
+function RestoredBanner({ onDismiss }: { onDismiss: () => void }) {
+  React.useEffect(() => {
+    const id = setTimeout(onDismiss, 5000)
+    return () => clearTimeout(id)
+  }, [onDismiss])
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex items-center gap-2 rounded-md bg-green-500/10 border border-green-500/30 px-3 py-2 text-sm text-green-700 dark:text-green-400 mb-4"
+    >
+      <CheckCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <span className="flex-1">Vi har sparat dina tidigare svar.</span>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onDismiss}
+        className="h-auto py-0 px-1.5 text-green-700 dark:text-green-400 hover:bg-green-500/20 hover:text-green-800 dark:hover:text-green-300"
+      >
+        Stäng
+      </Button>
+    </div>
   )
 }
 
@@ -679,5 +785,53 @@ function NextWineButton({
     >
       → Nästa vin
     </Button>
+  )
+}
+
+/**
+ * Host-only per-participant submission tracker for the focused wine.
+ * Status only — never shows guess/answer content. Renders against the live
+ * roster (online, non-host participants).
+ */
+function HostSubmissionTracker({
+  roster,
+  entry,
+}: {
+  roster: RosterEntry[]
+  entry: { withContent: number[]; locked: number[] } | undefined
+}) {
+  const withContent = new Set(entry?.withContent ?? [])
+  const locked = new Set(entry?.locked ?? [])
+  const guests = roster.filter((r) => !r.isHost && r.online)
+  if (guests.length === 0) {
+    return (
+      <div className="mt-3 rounded-md border bg-muted/40 p-3">
+        <p className="text-xs text-muted-foreground">Inga anslutna deltagare ännu.</p>
+      </div>
+    )
+  }
+  return (
+    <div className="mt-3 rounded-md border bg-muted/40 p-3" data-tour="session-tracker">
+      <p className="mb-2 text-xs font-medium text-muted-foreground">Vem har svarat</p>
+      <ul className="space-y-1">
+        {guests.map((g) => {
+          const isLockedIn = locked.has(g.id)
+          const hasDraft = !isLockedIn && withContent.has(g.id)
+          const { symbol, label, cls } = isLockedIn
+            ? { symbol: '✓', label: 'klar', cls: 'text-green-600' }
+            : hasDraft
+              ? { symbol: '✎', label: 'utkast', cls: 'text-amber-600' }
+              : { symbol: '—', label: 'inget', cls: 'text-muted-foreground' }
+          return (
+            <li key={g.id} className="flex items-center justify-between text-xs">
+              <span className="truncate">{g.nickname}</span>
+              <span className={`ml-2 flex-shrink-0 tabular-nums ${cls}`}>
+                {symbol} {label}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }

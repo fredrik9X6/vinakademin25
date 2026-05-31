@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
+import type { SubmissionsByPour } from '@/lib/session-submission-status'
 
 /**
  * Mounts an EventSource to the session's SSE stream and dispatches incoming
@@ -20,8 +21,10 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     setRevealedPourOrders,
     setRoster,
     setSwarm,
+    setSubmissionsByPour,
     setSessionStatus,
     clearActiveSession,
+    setConnectionState,
   } = useActiveSession()
   // Guard so we only fire the post-end navigation once even if multiple
   // `lesson` events arrive with status='completed' before the redirect lands.
@@ -30,6 +33,23 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
   useEffect(() => {
     const url = `/api/sessions/${encodeURIComponent(sessionId)}/stream`
     const es = new EventSource(url, { withCredentials: true })
+    // Reset immediately so the banner reflects the new connection attempt —
+    // without this, a remount or sessionId change would keep the previous
+    // connection's final state until onopen fires.
+    setConnectionState('connecting')
+
+    es.onopen = () => {
+      setConnectionState('open')
+    }
+
+    es.onerror = () => {
+      // EventSource auto-reconnects; onerror fires on drop OR before reconnect.
+      // readyState CLOSED (2) means the browser gave up entirely (rare — only
+      // happens with withCredentials cross-origin issues); CONNECTING (0) is the
+      // normal transient drop-and-reconnect path. Either way, surface 'reconnecting'
+      // so the UI can inform the user.
+      setConnectionState('reconnecting')
+    }
 
     es.addEventListener('lesson', (e) => {
       try {
@@ -91,6 +111,15 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
       }
     })
 
+    es.addEventListener('submissions', (e) => {
+      try {
+        const data = JSON.parse((e as MessageEvent).data) as { byPourOrder: SubmissionsByPour }
+        if (data?.byPourOrder) setSubmissionsByPour(data.byPourOrder)
+      } catch {
+        // ignore
+      }
+    })
+
     es.addEventListener('heartbeat', () => {
       // No-op; the connection is alive. EventSource handles reconnection on drop.
     })
@@ -106,8 +135,10 @@ export function RealtimeSync({ sessionId }: { sessionId: string }) {
     setRevealedPourOrders,
     setRoster,
     setSwarm,
+    setSubmissionsByPour,
     setSessionStatus,
     clearActiveSession,
+    setConnectionState,
     router,
   ])
 

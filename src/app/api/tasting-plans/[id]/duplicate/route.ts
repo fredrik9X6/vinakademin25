@@ -4,6 +4,7 @@ import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { loggerFor } from '@/lib/logger'
 import type { TastingPlan } from '@/payload-types'
+import type { PriceBucket } from '@/lib/blind-guess-vocab'
 
 const log = loggerFor('api-tasting-plans-duplicate')
 
@@ -80,11 +81,7 @@ export async function POST(
       : [],
     blindAnswerPriceBucket:
       ((w as { blindAnswerPriceBucket?: unknown }).blindAnswerPriceBucket ?? null) as
-        | 'under_100'
-        | '100_200'
-        | '200_300'
-        | '300_500'
-        | '500_plus'
+        | PriceBucket
         | null,
   }))
 

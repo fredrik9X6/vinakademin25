@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { loggerFor } from '@/lib/logger'
+import type { PriceBucket } from '@/lib/blind-guess-vocab'
 
 const log = loggerFor('api-tasting-plans')
 
@@ -16,8 +17,6 @@ type CustomWine = {
   systembolagetProductNumber?: string
   imageUrl?: string
 }
-
-type PriceBucket = 'under_100' | '100_200' | '200_300' | '300_500' | '500_plus'
 
 type WineEntry = {
   libraryWine?: number

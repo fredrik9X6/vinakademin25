@@ -27,18 +27,20 @@ export const GRAPES: ReadonlyArray<string> = [
 ]
 
 export type PriceBucket =
-  | 'under_100'
-  | '100_200'
-  | '200_300'
-  | '300_500'
-  | '500_plus'
+  | '0_99'
+  | '100_149'
+  | '150_199'
+  | '200_249'
+  | '250_299'
+  | '300_plus'
 
 export const PRICE_BUCKETS: ReadonlyArray<{ value: PriceBucket; label: string }> = [
-  { value: 'under_100', label: 'Under 100 kr' },
-  { value: '100_200', label: '100–200 kr' },
-  { value: '200_300', label: '200–300 kr' },
-  { value: '300_500', label: '300–500 kr' },
-  { value: '500_plus', label: '500+ kr' },
+  { value: '0_99',    label: 'Under 100 kr' },
+  { value: '100_149', label: '100–149 kr' },
+  { value: '150_199', label: '150–199 kr' },
+  { value: '200_249', label: '200–249 kr' },
+  { value: '250_299', label: '250–299 kr' },
+  { value: '300_plus', label: '300+ kr' },
 ]
 
 /**
@@ -46,11 +48,28 @@ export const PRICE_BUCKETS: ReadonlyArray<{ value: PriceBucket; label: string }>
  */
 export function priceToBucket(priceSek: number | null | undefined): PriceBucket | null {
   if (priceSek == null || !Number.isFinite(priceSek) || priceSek < 0) return null
-  if (priceSek < 100) return 'under_100'
-  if (priceSek < 200) return '100_200'
-  if (priceSek < 300) return '200_300'
-  if (priceSek < 500) return '300_500'
-  return '500_plus'
+  if (priceSek < 100) return '0_99'
+  if (priceSek < 150) return '100_149'
+  if (priceSek < 200) return '150_199'
+  if (priceSek < 250) return '200_249'
+  if (priceSek < 300) return '250_299'
+  return '300_plus'
+}
+
+/**
+ * Remap a legacy (5-bucket) price-bucket value to the current (6-bucket) scheme.
+ * Used in data-migration scripts; pure function with no DB side-effects.
+ */
+export function remapLegacyPriceBucket(
+  old: 'under_100' | '100_200' | '200_300' | '300_500' | '500_plus',
+): PriceBucket {
+  switch (old) {
+    case 'under_100': return '0_99'
+    case '100_200':   return '100_149'
+    case '200_300':   return '200_249'
+    case '300_500':   return '300_plus'
+    case '500_plus':  return '300_plus'
+  }
 }
 
 /**

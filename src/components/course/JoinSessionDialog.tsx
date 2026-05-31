@@ -75,6 +75,12 @@ export default function JoinSessionDialog({
     setLoading(true)
     try {
       const body: Record<string, string> = { joinCode: joinCode.toUpperCase().trim() }
+      try {
+        const storedToken = localStorage.getItem('participantToken')
+        if (storedToken) body.participantToken = storedToken
+      } catch {
+        // localStorage may be blocked — fall through to fresh join.
+      }
       if (mode === 'guest') {
         if (!nickname.trim()) {
           setError('Ange ditt namn')

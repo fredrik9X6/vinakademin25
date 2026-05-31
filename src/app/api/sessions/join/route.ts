@@ -39,11 +39,13 @@ export async function POST(request: NextRequest) {
     })
 
     const body = await request.json().catch(() => ({}))
-    const { joinCode, nickname: nicknameRaw, email: emailRaw } = body as {
-      joinCode?: string
-      nickname?: string
-      email?: string
-    }
+    const { joinCode, nickname: nicknameRaw, email: emailRaw, participantToken: bodyToken } =
+      body as {
+        joinCode?: string
+        nickname?: string
+        email?: string
+        participantToken?: string
+      }
 
     if (!joinCode || typeof joinCode !== 'string') {
       return NextResponse.json({ error: 'joinCode is required' }, { status: 400 })
@@ -143,17 +145,22 @@ export async function POST(request: NextRequest) {
         isNewJoin = true
       }
     } else {
-      // Guest re-join: try to recover via existing cookie token
+      // Guest re-join: recover the original participant via the httpOnly cookie
+      // token, falling back to the token the client still holds in
+      // localStorage (sent in the body). This closes the orphan gap where the
+      // cookie was lost (e.g. Safari ITP) but the client retained the token.
       const cookieStore = await cookies()
-      const existingToken = cookieStore.get(PARTICIPANT_COOKIE)?.value
+      const cookieToken = cookieStore.get(PARTICIPANT_COOKIE)?.value
+      const candidateToken =
+        cookieToken || (typeof bodyToken === 'string' && bodyToken.trim() ? bodyToken.trim() : null)
       let recovered = false
-      if (existingToken) {
+      if (candidateToken) {
         const recoveredRes = await payload.find({
           collection: 'session-participants',
           where: {
             and: [
               { session: { equals: session.id } },
-              { participantToken: { equals: existingToken } },
+              { participantToken: { equals: candidateToken } },
             ],
           },
           limit: 1,

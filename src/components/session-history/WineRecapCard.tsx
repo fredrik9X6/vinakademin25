@@ -58,6 +58,11 @@ export function WineRecapCard({ wine }: WineRecapCardProps) {
           {wine.subtitle && (
             <p className="text-xs text-muted-foreground truncate">{wine.subtitle}</p>
           )}
+          {wine.priceSek != null && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {wine.priceSek.toLocaleString('sv-SE')} kr
+            </p>
+          )}
         </div>
       </div>
 
