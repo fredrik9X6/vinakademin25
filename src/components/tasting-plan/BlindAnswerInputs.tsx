@@ -37,6 +37,18 @@ export interface BlindAnswerInputsProps {
  */
 export function BlindAnswerInputs({ value, onChange, disabled }: BlindAnswerInputsProps) {
   const { grapes } = useGrapes()
+
+  // Build the options list as the union of curated grapes and any currently-
+  // selected grapes that aren't in the curated list (e.g. raw Systembolaget
+  // strings prefilled via the wine picker). This ensures non-curated chips
+  // still render with a label in the MultiSelect trigger.
+  const curatedSet = new Set(grapes)
+  const extraSelected = value.grapes.filter((g) => !curatedSet.has(g))
+  const grapeOptions = [
+    ...grapes.map((g) => ({ label: g, value: g })),
+    ...extraSelected.map((g) => ({ label: g, value: g })),
+  ]
+
   return (
     <details className="mt-2 text-sm">
       <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground select-none">
@@ -87,7 +99,7 @@ export function BlindAnswerInputs({ value, onChange, disabled }: BlindAnswerInpu
           </Select>
         </div>
         <MultiSelect
-          options={grapes.map((g) => ({ label: g, value: g }))}
+          options={grapeOptions}
           value={value.grapes}
           onValueChange={(next) => onChange({ ...value, grapes: next })}
           placeholder="Druvor (lägg till flera för blends)"
