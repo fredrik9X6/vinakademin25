@@ -407,7 +407,7 @@ export async function GET(
       const fetchSharedTickData = async (): Promise<{
         swarm: SwarmPayload
         submissions: SubmissionsPayload
-      } | null> => {
+      }> => {
         const [sess, reviewsRes, guessesRes] = await Promise.all([
           payload.findByID({
             collection: 'course-sessions',
@@ -454,15 +454,10 @@ export async function GET(
 
       try {
         const initial = await fetchSharedTickData()
-        if (initial) {
-          lastSwarmJson = JSON.stringify(initial.swarm)
-          lastSubmissionsJson = JSON.stringify(initial.submissions)
-          send('swarm', initial.swarm)
-          send('submissions', initial.submissions)
-        } else {
-          send('swarm', { byPourOrder: {} })
-          send('submissions', { byPourOrder: {} })
-        }
+        lastSwarmJson = JSON.stringify(initial.swarm)
+        lastSubmissionsJson = JSON.stringify(initial.submissions)
+        send('swarm', initial.swarm)
+        send('submissions', initial.submissions)
       } catch (err) {
         log.error({ err, sessionId }, 'sse_initial_shared_tick_failed')
         send('swarm', { byPourOrder: {} })
@@ -473,7 +468,6 @@ export async function GET(
         if (closed) return
         try {
           const next = await fetchSharedTickData()
-          if (!next) return // session gone — skip tick, don't emit garbage
 
           const nextSwarmJson = JSON.stringify(next.swarm)
           if (nextSwarmJson !== lastSwarmJson) {
