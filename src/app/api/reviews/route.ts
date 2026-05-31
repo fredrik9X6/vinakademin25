@@ -397,7 +397,7 @@ export async function POST(request: NextRequest) {
     // and session are derived from the cookie token, NOT trusted from the body.
     const submittedAt =
       typeof body.submittedAt === 'string' && body.submittedAt.length > 0
-        ? body.submittedAt
+        ? new Date().toISOString()
         : undefined
     const reviewData: any = {
       ...body,
