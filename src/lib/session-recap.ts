@@ -323,7 +323,7 @@ export async function getSessionRecap(
         !mostDivisive ||
         w.ratingStdDev > mostDivisive.ratingStdDev ||
         (w.ratingStdDev === mostDivisive.ratingStdDev &&
-          (w.avgRating ?? 0) < mostDivisive.ratingStdDev)
+          w.ratingCount > mostDivisive.ratingCount)
       ) {
         mostDivisive = {
           pourOrder: w.pourOrder,

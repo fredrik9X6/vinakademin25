@@ -315,108 +315,17 @@ export async function GET(
         }
       }, ROSTER_POLL_INTERVAL_MS)
 
-      // ───── Swarm aggregator ─────
+      // ───── Swarm + Submissions shared tick ─────
+      // Both events need the same three fetches (session depth 2, reviews, guesses).
+      // We fetch once per tick and compute both from the shared data to halve DB
+      // load when multiple clients are connected.
+
       type SwarmEntry = {
         avgRating: number
         ratingCount: number
         aromaCounts: Array<{ label: string; count: number }>
       }
       type SwarmPayload = { byPourOrder: Record<number, SwarmEntry> }
-
-      const buildSwarm = async (): Promise<SwarmPayload> => {
-        try {
-          const session = await payload.findByID({
-            collection: 'course-sessions',
-            id: sessionId,
-            depth: 2,
-            overrideAccess: true,
-          })
-          if (!session?.tastingPlan || typeof session.tastingPlan !== 'object') {
-            return { byPourOrder: {} }
-          }
-
-          const wines = ((session.tastingPlan as any).wines ?? []) as any[]
-          const pourMaps = buildPourMaps(wines)
-
-          const reviews = await payload.find({
-            collection: 'reviews',
-            where: { session: { equals: sessionId } },
-            limit: 1000,
-            depth: 0,
-            overrideAccess: true,
-          })
-
-          type Acc = { ratings: number[]; aromas: Map<string, number> }
-          const accs: Record<number, Acc> = {}
-          for (const r of reviews.docs as any[]) {
-            const pour = resolvePourForReview(r, pourMaps)
-            if (pour == null) continue
-            const acc = (accs[pour] ||= { ratings: [], aromas: new Map() })
-            if (typeof r.rating === 'number') acc.ratings.push(r.rating)
-            // Aggregate all three palate flavour tiers (primary/secondary/
-            // tertiary) into a single "Smaker" count. Dedupe within a single
-            // review so a label appearing across tiers still counts as one
-            // reviewer's vote, not two or three.
-            const palate = r.wsetTasting?.palate
-            const perReviewLabels = new Set<string>()
-            for (const source of [
-              palate?.primaryFlavours,
-              palate?.secondaryFlavours,
-              palate?.tertiaryFlavours,
-            ]) {
-              if (!Array.isArray(source)) continue
-              for (const a of source) {
-                const label = typeof a === 'string' ? a.trim() : ''
-                if (!label) continue
-                perReviewLabels.add(label.toLocaleLowerCase('sv'))
-              }
-            }
-            for (const key of perReviewLabels) {
-              acc.aromas.set(key, (acc.aromas.get(key) ?? 0) + 1)
-            }
-          }
-
-          const byPourOrder: Record<number, SwarmEntry> = {}
-          for (const [pourStr, acc] of Object.entries(accs)) {
-            const pour = Number(pourStr)
-            const avg =
-              acc.ratings.length > 0
-                ? acc.ratings.reduce((s, r) => s + r, 0) / acc.ratings.length
-                : 0
-            const allAromas = Array.from(acc.aromas.entries())
-              .map(([key, count]) => ({ label: key, count }))
-              .sort((a, b) => b.count - a.count)
-            const top = allAromas.slice(0, 10)
-            const rest = allAromas.slice(10).reduce((s, e) => s + e.count, 0)
-            const aromaCounts = top
-            if (rest > 0) aromaCounts.push({ label: 'Annat', count: rest })
-            byPourOrder[pour] = {
-              avgRating: Number(avg.toFixed(2)),
-              ratingCount: acc.ratings.length,
-              aromaCounts,
-            }
-          }
-          return { byPourOrder }
-        } catch (err) {
-          log.error({ err, sessionId }, 'sse_build_swarm_failed')
-          return { byPourOrder: {} }
-        }
-      }
-
-      let lastSwarmJson = JSON.stringify({ byPourOrder: {} })
-      const initialSwarm = await buildSwarm()
-      lastSwarmJson = JSON.stringify(initialSwarm)
-      send('swarm', initialSwarm)
-
-      const swarmPoll = setInterval(async () => {
-        if (closed) return
-        const next = await buildSwarm()
-        const nextJson = JSON.stringify(next)
-        if (nextJson !== lastSwarmJson) {
-          lastSwarmJson = nextJson
-          send('swarm', next)
-        }
-      }, LESSON_POLL_INTERVAL_MS)
 
       // ───── Submissions tracker (host-only status, no content) ─────
       // Emits which participants have entered something and which have locked in,
@@ -425,62 +334,155 @@ export async function GET(
         byPourOrder: Record<number, { withContent: number[]; locked: number[] }>
       }
 
-      const buildSubmissions = async (): Promise<SubmissionsPayload> => {
-        try {
-          const sess = await payload.findByID({
+      /** Pure compute: derive swarm aggregation from already-fetched rows. */
+      const computeSwarm = (reviews: any[], pourMaps: ReturnType<typeof buildPourMaps>): SwarmPayload => {
+        type Acc = { ratings: number[]; aromas: Map<string, number> }
+        const accs: Record<number, Acc> = {}
+        for (const r of reviews) {
+          const pour = resolvePourForReview(r, pourMaps)
+          if (pour == null) continue
+          const acc = (accs[pour] ||= { ratings: [], aromas: new Map() })
+          if (typeof r.rating === 'number') acc.ratings.push(r.rating)
+          // Aggregate all three palate flavour tiers (primary/secondary/
+          // tertiary) into a single "Smaker" count. Dedupe within a single
+          // review so a label appearing across tiers still counts as one
+          // reviewer's vote, not two or three.
+          const palate = r.wsetTasting?.palate
+          const perReviewLabels = new Set<string>()
+          for (const source of [
+            palate?.primaryFlavours,
+            palate?.secondaryFlavours,
+            palate?.tertiaryFlavours,
+          ]) {
+            if (!Array.isArray(source)) continue
+            for (const a of source) {
+              const label = typeof a === 'string' ? a.trim() : ''
+              if (!label) continue
+              perReviewLabels.add(label.toLocaleLowerCase('sv'))
+            }
+          }
+          for (const key of perReviewLabels) {
+            acc.aromas.set(key, (acc.aromas.get(key) ?? 0) + 1)
+          }
+        }
+
+        const byPourOrder: Record<number, SwarmEntry> = {}
+        for (const [pourStr, acc] of Object.entries(accs)) {
+          const pour = Number(pourStr)
+          const avg =
+            acc.ratings.length > 0
+              ? acc.ratings.reduce((s, r) => s + r, 0) / acc.ratings.length
+              : 0
+          const allAromas = Array.from(acc.aromas.entries())
+            .map(([key, count]) => ({ label: key, count }))
+            .sort((a, b) => b.count - a.count)
+          const top = allAromas.slice(0, 10)
+          const rest = allAromas.slice(10).reduce((s, e) => s + e.count, 0)
+          const aromaCounts = top
+          if (rest > 0) aromaCounts.push({ label: 'Annat', count: rest })
+          byPourOrder[pour] = {
+            avgRating: Number(avg.toFixed(2)),
+            ratingCount: acc.ratings.length,
+            aromaCounts,
+          }
+        }
+        return { byPourOrder }
+      }
+
+      /** Pure compute: derive submission status from already-fetched rows. */
+      const computeSubmissionsFromRows = (
+        guesses: any[],
+        reviews: any[],
+        pourMaps: ReturnType<typeof buildPourMaps>,
+      ): SubmissionsPayload => {
+        const byPourOrder = classifySubmissions(guesses, reviews, pourMaps)
+        return { byPourOrder }
+      }
+
+      /**
+       * Fetch the shared data (session depth 2 + reviews + guesses) once and
+       * compute both swarm and submissions. Returns null when the session cannot
+       * be loaded so the caller can skip the tick cleanly.
+       */
+      const fetchSharedTickData = async (): Promise<{
+        swarm: SwarmPayload
+        submissions: SubmissionsPayload
+      }> => {
+        const [sess, reviewsRes, guessesRes] = await Promise.all([
+          payload.findByID({
             collection: 'course-sessions',
             id: sessionId,
             depth: 2,
             overrideAccess: true,
-          })
-          if (!sess?.tastingPlan || typeof sess.tastingPlan !== 'object') {
-            return { byPourOrder: {} }
+          }),
+          payload.find({
+            collection: 'reviews',
+            where: { session: { equals: sessionId } },
+            limit: 1000,
+            depth: 0,
+            overrideAccess: true,
+          }),
+          payload.find({
+            collection: 'session-guesses',
+            where: { session: { equals: sessionId } },
+            limit: 1000,
+            depth: 0,
+            overrideAccess: true,
+          }),
+        ])
+
+        if (!sess?.tastingPlan || typeof sess.tastingPlan !== 'object') {
+          return {
+            swarm: { byPourOrder: {} },
+            submissions: { byPourOrder: {} },
           }
+        }
 
-          const wines = ((sess.tastingPlan as any).wines ?? []) as any[]
-          const pourMaps = buildPourMaps(wines)
+        const wines = ((sess.tastingPlan as any).wines ?? []) as any[]
+        const pourMaps = buildPourMaps(wines)
+        const reviews = reviewsRes.docs as any[]
+        const guesses = guessesRes.docs as any[]
 
-          const [guessesRes, reviewsRes] = await Promise.all([
-            payload.find({
-              collection: 'session-guesses',
-              where: { session: { equals: sessionId } },
-              limit: 1000,
-              depth: 0,
-              overrideAccess: true,
-            }),
-            payload.find({
-              collection: 'reviews',
-              where: { session: { equals: sessionId } },
-              limit: 1000,
-              depth: 0,
-              overrideAccess: true,
-            }),
-          ])
-
-          const byPourOrder = classifySubmissions(
-            guessesRes.docs as any[],
-            reviewsRes.docs as any[],
-            pourMaps,
-          )
-          return { byPourOrder }
-        } catch (err) {
-          log.error({ err, sessionId }, 'sse_build_submissions_failed')
-          return { byPourOrder: {} }
+        return {
+          swarm: computeSwarm(reviews, pourMaps),
+          submissions: computeSubmissionsFromRows(guesses, reviews, pourMaps),
         }
       }
 
+      let lastSwarmJson = JSON.stringify({ byPourOrder: {} })
       let lastSubmissionsJson = JSON.stringify({ byPourOrder: {} })
-      const initialSubmissions = await buildSubmissions()
-      lastSubmissionsJson = JSON.stringify(initialSubmissions)
-      send('submissions', initialSubmissions)
 
-      const submissionsPoll = setInterval(async () => {
+      try {
+        const initial = await fetchSharedTickData()
+        lastSwarmJson = JSON.stringify(initial.swarm)
+        lastSubmissionsJson = JSON.stringify(initial.submissions)
+        send('swarm', initial.swarm)
+        send('submissions', initial.submissions)
+      } catch (err) {
+        log.error({ err, sessionId }, 'sse_initial_shared_tick_failed')
+        send('swarm', { byPourOrder: {} })
+        send('submissions', { byPourOrder: {} })
+      }
+
+      const sharedPoll = setInterval(async () => {
         if (closed) return
-        const next = await buildSubmissions()
-        const nextJson = JSON.stringify(next)
-        if (nextJson !== lastSubmissionsJson) {
-          lastSubmissionsJson = nextJson
-          send('submissions', next)
+        try {
+          const next = await fetchSharedTickData()
+
+          const nextSwarmJson = JSON.stringify(next.swarm)
+          if (nextSwarmJson !== lastSwarmJson) {
+            lastSwarmJson = nextSwarmJson
+            send('swarm', next.swarm)
+          }
+
+          const nextSubmissionsJson = JSON.stringify(next.submissions)
+          if (nextSubmissionsJson !== lastSubmissionsJson) {
+            lastSubmissionsJson = nextSubmissionsJson
+            send('submissions', next.submissions)
+          }
+        } catch (err) {
+          log.error({ err, sessionId }, 'sse_shared_tick_failed')
+          // Failed tick — skip, don't emit, don't kill stream.
         }
       }, LESSON_POLL_INTERVAL_MS)
 
@@ -494,8 +496,7 @@ export async function GET(
         closed = true
         clearInterval(lessonPoll)
         clearInterval(rosterPoll)
-        clearInterval(swarmPoll)
-        clearInterval(submissionsPoll)
+        clearInterval(sharedPoll)
         clearInterval(heartbeat)
         try {
           controller.close()
