@@ -32,6 +32,7 @@ import * as migration_20260519_110601 from './20260519_110601';
 import * as migration_20260519_201730 from './20260519_201730';
 import * as migration_20260530_083639_add_submitted_at from './20260530_083639_add_submitted_at';
 import * as migration_20260530_100050_rename_price_bucket_enum_6_buckets from './20260530_100050_rename_price_bucket_enum_6_buckets';
+import * as migration_20260601_090735_grape_case_dedup_and_unique_index from './20260601_090735_grape_case_dedup_and_unique_index';
 
 export const migrations = [
   {
@@ -202,6 +203,11 @@ export const migrations = [
   {
     up: migration_20260530_100050_rename_price_bucket_enum_6_buckets.up,
     down: migration_20260530_100050_rename_price_bucket_enum_6_buckets.down,
-    name: '20260530_100050_rename_price_bucket_enum_6_buckets'
+    name: '20260530_100050_rename_price_bucket_enum_6_buckets',
+  },
+  {
+    up: migration_20260601_090735_grape_case_dedup_and_unique_index.up,
+    down: migration_20260601_090735_grape_case_dedup_and_unique_index.down,
+    name: '20260601_090735_grape_case_dedup_and_unique_index'
   },
 ];

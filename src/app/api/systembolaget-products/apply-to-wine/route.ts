@@ -67,15 +67,20 @@ async function upsertByName(
   })
   if (exact.totalDocs > 0) return { id: exact.docs[0].id as number, created: false }
 
-  // Case-insensitive fallback
+  // Case-insensitive fallback: Payload maps `like` → ILIKE with per-word `%`
+  // wildcards (e.g. "Cabernet Franc" → ILIKE '%Cabernet%' AND ILIKE '%Franc%'),
+  // which can return superset rows.  Use a generous limit so we don't miss the
+  // real match when many rows share the same words, then pin it down with an
+  // exact normalised comparison in JS.
+  const normalised = trimmed.toLowerCase()
   const like = await payload.find({
     collection,
     where: { name: { like: trimmed } },
-    limit: 5,
+    limit: 100,
     overrideAccess: true,
   })
   const ci = like.docs.find(
-    (d: { name?: string }) => (d.name ?? '').toLowerCase() === trimmed.toLowerCase(),
+    (d: { name?: string }) => (d.name ?? '').trim().toLowerCase() === normalised,
   )
   if (ci) return { id: ci.id as number, created: false }
 
