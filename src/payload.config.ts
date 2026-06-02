@@ -87,6 +87,27 @@ const s3StoragePlugin = s3Enabled
           accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
           secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
         },
+        // Bound every R2 request so a stalled read fails fast instead of
+        // hanging forever. Without a timeout, a stale keep-alive socket to
+        // Cloudflare R2 leaves the static handler's getObject() waiting with
+        // nothing to abort it; the request never releases, hung media requests
+        // pile up, and the whole `/api/media/file/*` proxy locks up site-wide
+        // (DB/SSR stay healthy because they use the separate Postgres pool).
+        //
+        // `requestHandler` fully replaces storage-s3's default handler, so we
+        // re-declare the keep-alive agents it sets. Passed as plain options
+        // (the shape the SDK and the library itself use) to avoid taking a
+        // direct dependency on @smithy/node-http-handler.
+        requestHandler: {
+          connectionTimeout: 5_000,
+          requestTimeout: 15_000,
+          httpAgent: { keepAlive: true, maxSockets: 100 },
+          httpsAgent: { keepAlive: true, maxSockets: 100 },
+        },
+        // Retry timed-out/transient reads on a fresh connection (the SDK treats
+        // TimeoutError as retryable) — transparently self-heals a stale socket
+        // instead of surfacing a one-off 500.
+        maxAttempts: 3,
       },
     })
   : // When S3 is disabled, still include plugin for import map, but with minimal config
