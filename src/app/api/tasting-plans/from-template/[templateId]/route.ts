@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
+import { getPayload, ValidationError } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { loggerFor } from '@/lib/logger'
@@ -51,14 +51,38 @@ export async function POST(
     return NextResponse.json({ error: 'Template not found' }, { status: 404 })
   }
 
-  const wines = (template.wines ?? []).map((w, idx) => ({
-    libraryWine:
+  // Clone each wine faithfully. Templates are almost always built from
+  // Systembolaget snapshots (customWine, no libraryWine), so dropping customWine
+  // here left every cloned wine with neither a library wine nor a custom wine —
+  // which the plan's `wines` validator rejects, failing the whole create and
+  // making "Använd mallen" 500 for every published template. Carry both through;
+  // the template's own validator guarantees exactly one of them is set per wine.
+  const wines = (template.wines ?? []).map((w, idx) => {
+    const libraryWine =
       typeof w.libraryWine === 'object' && w.libraryWine
         ? w.libraryWine.id
-        : (w.libraryWine as number | null),
-    pourOrder: w.pourOrder ?? idx + 1,
-    hostNotes: w.hostNotes ?? '',
-  }))
+        : (w.libraryWine as number | null)
+    const cw = w.customWine
+    const customWine =
+      cw && cw.name && cw.name.trim() !== ''
+        ? {
+            name: cw.name,
+            producer: cw.producer ?? undefined,
+            vintage: cw.vintage ?? undefined,
+            type: cw.type ?? undefined,
+            systembolagetUrl: cw.systembolagetUrl ?? undefined,
+            priceSek: cw.priceSek ?? undefined,
+            systembolagetProductNumber: cw.systembolagetProductNumber ?? undefined,
+            imageUrl: cw.imageUrl ?? undefined,
+          }
+        : undefined
+    return {
+      libraryWine: libraryWine ?? null,
+      ...(customWine ? { customWine } : {}),
+      pourOrder: w.pourOrder ?? idx + 1,
+      hostNotes: w.hostNotes ?? '',
+    }
+  })
 
   try {
     const created = await payload.create({
@@ -80,7 +104,11 @@ export async function POST(
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     log.error('Failed to clone template', { userId: user.id, templateId: tplId, message })
-    const isValidation = err instanceof Error && err.name === 'ValidationError'
+    // Detect validation failures by prototype, not by name. Minification mangles
+    // `err.name` in the production build, so the old `err.name === 'ValidationError'`
+    // check fell through to a misleading generic 500 instead of surfacing the
+    // real field error with a 400.
+    const isValidation = err instanceof ValidationError
     return NextResponse.json(
       { error: isValidation ? message : 'Kunde inte skapa plan från mallen.' },
       { status: isValidation ? 400 : 500 },
