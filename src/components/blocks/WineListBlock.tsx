@@ -68,7 +68,7 @@ interface WineListBlockProps {
 }
 
 export function WineListBlock({
-  title = 'Viner du behöver för denna vinprovning',
+  title = 'Viner du behöver för denna vinkurs',
   wines,
   displayStyle,
   showPrices = true,
@@ -428,7 +428,7 @@ export function WineListBlock({
                   Total kostnad för alla viner
                 </span>
                 <p className="text-sm text-muted-foreground">
-                  Ungefärlig totalkostnad för att köpa alla viner som behövs för denna vinprovning.
+                  Ungefärlig totalkostnad för att köpa alla viner som behövs för denna vinkurs.
                 </p>
               </div>
               <div className="flex items-center gap-3 px-5 py-3 bg-brand-300/15 rounded-xl border border-brand-300/30">

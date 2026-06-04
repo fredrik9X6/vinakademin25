@@ -42,7 +42,7 @@ export function CheckoutDialog({ course, isOpen, onClose }: CheckoutDialogProps)
   const getDialogTitle = () => {
     switch (currentStep) {
       case 'checkout':
-        return user ? 'Köp vinprovning' : 'Köp vinprovning utan konto'
+        return user ? 'Köp vinkurs' : 'Köp vinkurs utan konto'
       case 'processing':
         return 'Behandlar betalning...'
       case 'success':

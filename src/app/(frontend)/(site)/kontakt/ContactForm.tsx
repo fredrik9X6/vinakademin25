@@ -38,7 +38,7 @@ const contactFormSchema = z.object({
 type ContactFormValues = z.infer<typeof contactFormSchema>
 
 const subjects = [
-  { value: 'course', label: 'Vinprovningsfrågor' },
+  { value: 'course', label: 'Vinkursfrågor' },
   { value: 'tasting', label: 'Vinprovningar' },
   { value: 'corporate', label: 'Företag & Grupper' },
   { value: 'technical', label: 'Teknisk support' },

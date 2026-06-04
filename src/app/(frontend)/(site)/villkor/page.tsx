@@ -45,13 +45,13 @@ export default function VillkorPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-base leading-7">
-                Vinakademin är en digital plattform för vinutbildning och vinprovningar. Vi erbjuder
-                vinprovningar, artiklar, videoinnehåll och interaktiva verktyg för att hjälpa dig lära dig
+                Vinakademin är en digital plattform för vinutbildning och vinkurser. Vi erbjuder
+                vinkurser, artiklar, videoinnehåll och interaktiva verktyg för att hjälpa dig lära dig
                 mer om vin.
               </p>
               <p className="text-base leading-7">
                 Dessa villkor gäller för alla användare av plattformen, oavsett om du har ett
-                gratiskonto eller har köpt våra betalda vinprovningar.
+                gratiskonto eller har köpt våra betalda vinkurser.
               </p>
             </CardContent>
           </Card>
@@ -111,13 +111,13 @@ export default function VillkorPage() {
               <h3 className="text-lg font-medium">Pengarna-tillbaka-garanti</h3>
               <p className="text-base leading-7">
                 Vi erbjuder 30 dagars pengarna-tillbaka-garanti på alla köp, utan krångliga frågor.
-                Om du av någon anledning inte är nöjd med din vinprovning inom 30 dagar från
+                Om du av någon anledning inte är nöjd med din vinkurs inom 30 dagar från
                 köpdatum, kontakta oss på{' '}
                 <a href="mailto:support@vinakademin.se" className="text-primary hover:underline">
                   support@vinakademin.se
                 </a>{' '}
                 så återbetalar vi hela beloppet. Vår "Happy Customer Guarantee" gäller oavsett hur
-                mycket av vinprovningen du har genomfört.
+                mycket av vinkursen du har genomfört.
               </p>
             </CardContent>
           </Card>
@@ -130,7 +130,7 @@ export default function VillkorPage() {
             <CardContent className="space-y-4">
               <h3 className="text-lg font-medium">Vad du får göra</h3>
               <p className="text-base leading-7">
-                När du köper en vinprovning får du en personlig, icke-överförbar, icke-exklusiv
+                När du köper en vinkurs får du en personlig, icke-överförbar, icke-exklusiv
                 licens att:
               </p>
               <ul className="list-disc pl-5 space-y-2 text-base leading-7">
@@ -161,8 +161,8 @@ export default function VillkorPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-base leading-7">
-                Om du har köpt en vinprovning kan du starta gruppsessioner och bjuda in gäster.
-                Gäster får tillfällig åtkomst till vinprovningen under sessionens längd.
+                Om du har köpt en vinkurs kan du starta gruppsessioner och bjuda in gäster.
+                Gäster får tillfällig åtkomst till vinkursen under sessionens längd.
               </p>
               <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                 <li>Du är ansvarig för de gäster du bjuder in</li>

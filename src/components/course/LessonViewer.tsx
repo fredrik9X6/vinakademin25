@@ -304,7 +304,7 @@ export default function LessonViewer({
                   <Lock className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">Detta innehåll är betalinnehåll</h3>
                   <p className="text-muted-foreground mb-4">
-                    Du behöver köpa vinprovningen för att få tillgång till detta moment
+                    Du behöver köpa vinkursen för att få tillgång till detta moment
                   </p>
                   <Button
                     variant="secondary"
@@ -316,7 +316,7 @@ export default function LessonViewer({
                       )
                     }
                   >
-                    Köp vinprovning
+                    Köp vinkurs
                   </Button>
                 </CardContent>
               </Card>
@@ -357,7 +357,7 @@ export default function LessonViewer({
                 <button type="button" onClick={goToNextLesson} className="btn-brand">
                   {isLastLessonItem ? (
                     <>
-                      Betygsätt vinprovningen <ChevronRight className="w-4 h-4 ml-1" />
+                      Betygsätt vinkursen <ChevronRight className="w-4 h-4 ml-1" />
                     </>
                   ) : (
                     <>

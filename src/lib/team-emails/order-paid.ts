@@ -24,7 +24,7 @@ export function buildOrderPaidEmail(input: OrderPaidNotificationInput): {
   const adminUrl = `${getSiteURL()}/admin/collections/orders/${input.orderId}`
 
   const facts: Array<{ label: string; value: string }> = [
-    { label: 'Vinprovning', value: input.courseTitle },
+    { label: 'Vinkurs', value: input.courseTitle },
     {
       label: 'Belopp',
       value:

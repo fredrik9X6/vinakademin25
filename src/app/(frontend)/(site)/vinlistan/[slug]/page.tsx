@@ -1006,7 +1006,7 @@ export default async function WineDetailPage({ params }: PageProps) {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/30 mb-4">
               <Sparkles className="h-4 w-4 text-brand-400" />
-              <span className="text-sm font-medium text-brand-400">Vinprovningar med detta vin</span>
+              <span className="text-sm font-medium text-brand-400">Vinkurser med detta vin</span>
             </div>
           </div>
           <div className="space-y-4">

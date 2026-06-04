@@ -68,13 +68,13 @@ function DashboardContent() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <BookOpenIcon className="mr-2 h-5 w-5 text-secondary" />
-              Mina vinprovningar
+              Mina vinkurser
             </CardTitle>
-            <CardDescription>Se vilka vinprovningar du är anmäld till</CardDescription>
+            <CardDescription>Se vilka vinkurser du är anmäld till</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/mina-provningar">
-              <Button className="w-full">Visa mina vinprovningar</Button>
+              <Button className="w-full">Visa mina vinkurser</Button>
             </Link>
           </CardContent>
         </Card>

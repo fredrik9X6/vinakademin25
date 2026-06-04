@@ -97,7 +97,7 @@ export default function CookiesPage() {
                     <strong>Tema:</strong> Kommer ihåg om du föredrar ljust eller mörkt läge
                   </li>
                   <li>
-                    <strong>Framsteg:</strong> Håller reda på var du är i en vinprovning
+                    <strong>Framsteg:</strong> Håller reda på var du är i en vinkurs
                   </li>
                 </ul>
               </div>

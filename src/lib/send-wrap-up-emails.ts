@@ -234,7 +234,7 @@ async function resolveSessionContext(
       }
     }
     return {
-      title: course.title ?? 'din vinprovning',
+      title: course.title ?? 'din vinkurs',
       wines: contentItemRefs.map((r) => ({
         pourOrder: r.pourOrder,
         wineId: r.wine.id,

@@ -131,7 +131,7 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Grattis! Du har förtjänat ett certifikat för att ha slutfört denna vinprovning.
+                Grattis! Du har förtjänat ett certifikat för att ha slutfört denna vinkurs.
               </p>
               <Button variant="secondary" className="w-full md:w-auto">
                 <Award className="mr-2 h-4 w-4" />
@@ -180,9 +180,9 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
                   <div className="w-2 h-2 rounded-full bg-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">Utforska fler vinprovningar</p>
+                  <p className="font-medium">Utforska fler vinkurser</p>
                   <p className="text-sm text-muted-foreground">
-                    Fortsätt din vinresa med våra andra provningar
+                    Fortsätt din vinresa med våra andra kurser
                   </p>
                 </div>
               </div>
@@ -198,7 +198,7 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
 
           <Button size="lg" asChild>
             <Link href="/vinprovningar">
-              Utforska fler vinprovningar
+              Utforska fler vinkurser
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

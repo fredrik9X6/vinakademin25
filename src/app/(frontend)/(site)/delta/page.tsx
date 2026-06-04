@@ -132,7 +132,7 @@ function StateCard({
       </div>
       {courseTitle && (
         <p className="text-sm text-muted-foreground">
-          Vinprovning: <span className="text-foreground">{courseTitle}</span>
+          Vinkurs: <span className="text-foreground">{courseTitle}</span>
         </p>
       )}
       {children}
@@ -177,7 +177,7 @@ function EndedState({
     <StateCard icon={icon} heading={heading} courseTitle={courseTitle}>
       <p className="text-sm text-muted-foreground">{body}</p>
       <Button asChild className="btn-brand">
-        <Link href="/vinprovningar">Bläddra vinprovningar →</Link>
+        <Link href="/vinprovningar">Bläddra vinkurser →</Link>
       </Button>
     </StateCard>
   )
@@ -196,7 +196,7 @@ function FullState({ lookup }: { lookup: LookupSessionResult }) {
         {count} av {max} deltagare har redan anslutit.
       </p>
       <Button asChild className="btn-brand">
-        <Link href="/vinprovningar">Bläddra vinprovningar →</Link>
+        <Link href="/vinprovningar">Bläddra vinkurser →</Link>
       </Button>
     </StateCard>
   )

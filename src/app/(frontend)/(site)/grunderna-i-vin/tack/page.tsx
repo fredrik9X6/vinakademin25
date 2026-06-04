@@ -117,11 +117,11 @@ export default function GrunderaIVinTackPage() {
             <div>
               <h3 className={`${HEADING} text-xl`}>Nästa steg</h3>
               <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">
-                Bygg vidare med en guidad vinprovning hemma — perfekt sällskap till
+                Bygg vidare med en guidad vinkurs hemma — perfekt sällskap till
                 e-boken.
               </p>
               <span className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-400">
-                Utforska provningar
+                Utforska vinkurser
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </span>
             </div>

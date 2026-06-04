@@ -317,7 +317,7 @@ export default function StartSessionButton(props: StartSessionButtonProps) {
                 </Alert>
 
                 <Button onClick={handleStartSession} size="lg" className="w-full">
-                  Starta vinprovningen
+                  {isPlan ? 'Starta provningen' : 'Starta vinkursen'}
                 </Button>
               </div>
             </>

@@ -206,7 +206,7 @@ export default function CourseOverview({
       if (authUser) {
         // Logged in but hasn't purchased — show checkout modal
         setIsCheckoutOpen(true)
-        toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
+        toast.info('Du behöver köpa vinkursen för att se detta innehåll')
       } else {
         // Not logged in — redirect to login
         const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
@@ -274,7 +274,7 @@ export default function CourseOverview({
         if (authUser) {
           // Logged in but hasn't purchased — show checkout modal
           setIsCheckoutOpen(true)
-          toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
+          toast.info('Du behöver köpa vinkursen för att se detta innehåll')
         } else {
           // Not logged in — redirect to login
           const currentUrl = `/vinprovningar/${course.slug || course.id}?quiz=${item.id}`
@@ -546,7 +546,7 @@ export default function CourseOverview({
                 {/* Continue/Start Button - Always show for users with access or in session */}
                 <Button onClick={continueCourse} className="w-full" size="lg">
                   <Play className="w-5 h-5 mr-2" />
-                  {isSessionParticipant ? 'Starta vinprovningen' : 'Fortsätt där du slutade'}
+                  {isSessionParticipant ? 'Starta vinkursen' : 'Fortsätt där du slutade'}
                 </Button>
 
                 {/* Completion Page Button - Show when course is completed */}

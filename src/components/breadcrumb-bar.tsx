@@ -26,15 +26,15 @@ interface BreadcrumbEntry {
  */
 const PAGE_LABELS: Record<string, string> = {
   // Section roots
-  vinprovningar: 'Vinprovningar',
-  kurser: 'Vinprovningar',
+  vinprovningar: 'Vinkurser',
+  kurser: 'Vinkurser',
   provningsmallar: 'Provningsmallar',
   artiklar: 'Artiklar',
   vinlistan: 'Vinlistan',
   regioner: 'Regioner',
   lander: 'Länder',
   // Sections without a detail-title API (or that don't need slug resolution)
-  'mina-provningar': 'Mina provningar',
+  'mina-provningar': 'Mina vinkurser',
   'mina-recensioner': 'Mina recensioner',
   'mina-sidor': 'Mina sidor',
   profil: 'Profil',

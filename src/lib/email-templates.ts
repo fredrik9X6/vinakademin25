@@ -60,7 +60,7 @@ export function generateReviewRequestEmailHTML({
               <tr>
                 <td style="padding: 40px 40px 32px;">
                   <h2 style="margin: 0 0 16px; color: #18181b; font-size: 24px; font-weight: 600; line-height: 1.3;">
-                    Hur var vinprovningen?
+                    Hur var vinkursen?
                   </h2>
 
                   <p style="margin: 0 0 24px; color: #3f3f46; font-size: 16px; line-height: 1.6;">
@@ -68,7 +68,7 @@ export function generateReviewRequestEmailHTML({
                   </p>
 
                   <p style="margin: 0 0 24px; color: #3f3f46; font-size: 16px; line-height: 1.6;">
-                    Vi hoppas att du har njutit av <strong>${courseTitle}</strong>! Din upplevelse betyder mycket f&ouml;r oss och f&ouml;r andra som &ouml;verv&auml;ger att prova vinprovningen.
+                    Vi hoppas att du har njutit av <strong>${courseTitle}</strong>! Din upplevelse betyder mycket f&ouml;r oss och f&ouml;r andra som &ouml;verv&auml;ger att prova vinkursen.
                   </p>
 
                   <p style="margin: 0 0 32px; color: #3f3f46; font-size: 16px; line-height: 1.6;">
@@ -285,7 +285,7 @@ export function generateReceiptEmailHTML({
 
                   ${claimAccessUrl ? `
                     <p style="margin: 0 0 16px; color: #3f3f46; font-size: 16px; line-height: 1.6;">
-                      Vill du aktivera ditt konto och komma åt dina vinprovningar direkt?
+                      Vill du aktivera ditt konto och komma åt dina vinkurser direkt?
                     </p>
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                       <tr>
@@ -303,7 +303,7 @@ export function generateReceiptEmailHTML({
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
                       <td align="center" style="padding: 0 0 32px;">
-                        ${emailPrimaryCtaButton(courseUrl, 'Börja vinprovningen nu')}
+                        ${emailPrimaryCtaButton(courseUrl, 'Börja vinkursen nu')}
                       </td>
                     </tr>
                   </table>
@@ -314,7 +314,7 @@ export function generateReceiptEmailHTML({
                       Vad händer nu?
                     </h3>
                     <ul style="margin: 0; padding-left: 20px; color: #3f3f46; font-size: 14px; line-height: 1.8;">
-                      <li>Du har nu tillgång till hela vinprovningen</li>
+                      <li>Du har nu tillgång till hela vinkursen</li>
                       <li>Gå igenom modulerna i din egen takt</li>
                       <li>Titta på videor, läs material och gör quiz</li>
                       <li>Bli mer självsäker i din kunskap om vin</li>

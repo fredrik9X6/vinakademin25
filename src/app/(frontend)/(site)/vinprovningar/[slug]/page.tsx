@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
 
   if (!course) {
     return {
-      title: 'Vinprovning hittades inte',
+      title: 'Vinkurs hittades inte',
       robots: { index: false, follow: false },
       alternates: { canonical },
     }
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
     title: course.title,
     description:
       (course.description && course.description.trim().slice(0, 160)) ||
-      `Vinprovning online med Vinakademin — ${course.title}. Lär dig om vin i din egen takt.`,
+      `Vinkurs online med Vinakademin — ${course.title}. Lär dig om vin i din egen takt.`,
     imageUrl: featuredImageUrl,
   })
 
@@ -507,7 +507,7 @@ function CourseSchema({ course }: { course: Vinprovningar }) {
     title: course.title,
     description:
       (course.description && course.description.trim().slice(0, 5000)) ||
-      `Vinprovning online med Vinakademin — ${course.title}.`,
+      `Vinkurs online med Vinakademin — ${course.title}.`,
     imageUrl: featuredImageUrl,
   })
 
@@ -527,7 +527,7 @@ function CourseSchema({ course }: { course: Vinprovningar }) {
       <BreadcrumbJsonLd
         items={[
           { name: 'Hem', url: `${base}/` },
-          { name: 'Vinprovningar', url: `${base}/vinprovningar` },
+          { name: 'Vinkurser', url: `${base}/vinprovningar` },
           { name: course.title, url: `${base}/vinprovningar/${slug}` },
         ]}
       />

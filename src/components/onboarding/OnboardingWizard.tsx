@@ -322,7 +322,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
                   <Label htmlFor="onb-course" className="text-base">
                     Framsteg
                   </Label>
-                  <p className="text-muted-foreground text-xs">Påminnelser om dina vinprovningar och moment.</p>
+                  <p className="text-muted-foreground text-xs">Påminnelser om dina vinkurser och moment.</p>
                 </div>
                 <Switch
                   id="onb-course"
@@ -334,7 +334,7 @@ export function OnboardingWizard({ source, nextPath }: OnboardingWizardProps) {
               <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-muted/30 p-4 transition-colors hover:border-brand-300/40 hover:bg-brand-300/5">
                 <div className="space-y-0.5">
                   <Label htmlFor="onb-new" className="text-base">
-                    Nya vinprovningar
+                    Nya vinkurser
                   </Label>
                   <p className="text-muted-foreground text-xs">När vi släpper något du kan vara intresserad av.</p>
                 </div>

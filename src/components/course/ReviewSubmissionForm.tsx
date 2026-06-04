@@ -76,11 +76,11 @@ export function ReviewSubmissionForm({
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
           <h2 className="text-2xl font-medium">Tack för din recension!</h2>
           <p className="text-muted-foreground">
-            Din recension hjälper andra att upptäcka bra vinprovningar.
+            Din recension hjälper andra att upptäcka bra vinkurser.
           </p>
           <Link href={`/vinprovningar/${courseSlug}`}>
             <Button variant="outline" className="mt-4">
-              Tillbaka till vinprovningen
+              Tillbaka till vinkursen
             </Button>
           </Link>
         </CardContent>
@@ -165,7 +165,7 @@ export function ReviewSubmissionForm({
               id="review-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Berätta om din upplevelse av vinprovningen..."
+              placeholder="Berätta om din upplevelse av vinkursen..."
               rows={5}
               maxLength={2000}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"

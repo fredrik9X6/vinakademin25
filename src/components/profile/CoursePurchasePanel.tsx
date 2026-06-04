@@ -93,7 +93,7 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
     } catch (error) {
       console.error('Error accessing course:', error)
       toast.error('Åtkomstfel', {
-        description: 'Kunde inte komma åt vinprovningen.',
+        description: 'Kunde inte komma åt vinkursen.',
       })
     } finally {
       setAccessingCourse(null)
@@ -214,17 +214,17 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <BookOpen className="h-5 w-5" />
-            <span>Mina vinprovningar</span>
+            <span>Mina vinkurser</span>
           </CardTitle>
-          <CardDescription>Vinprovningar du har köpt och deras framsteg.</CardDescription>
+          <CardDescription>Vinkurser du har köpt och deras framsteg.</CardDescription>
         </CardHeader>
         <CardContent>
           {purchasedCourses.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Du har inte köpt några vinprovningar än.</p>
+              <p>Du har inte köpt några vinkurser än.</p>
               <Button className="mt-4" onClick={() => (window.location.href = '/vinprovningar')}>
-                Utforska vinprovningar
+                Utforska vinkurser
               </Button>
             </div>
           ) : (
@@ -308,8 +308,8 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
                             )}
                             <span>
                               {course.progress.completed
-                                ? 'Granska vinprovning'
-                                : 'Fortsätt vinprovning'}
+                                ? 'Granska vinkurs'
+                                : 'Fortsätt vinkurs'}
                             </span>
                           </Button>
 

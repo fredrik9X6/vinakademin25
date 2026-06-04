@@ -13,14 +13,14 @@ export function NeuralHeroWithBanner({ featuredCourse }: NeuralHeroWithBannerPro
     <NeuralNetworkHero
       title={
         <>
-          <span className="block">Vinprovningar hemma,</span>
+          <span className="block">Vinkurser hemma,</span>
           <span className="text-brand-gradient block">enkelt &amp; opretentiöst.</span>
         </>
       }
-      description="Guidade vinprovningar du kan göra hemma, med vänner, när det passar dig. Lär dig om vin genom att dofta, smaka och prata."
+      description="Guidade vinkurser du kan göra hemma, med vänner, när det passar dig. Lär dig om vin genom att dofta, smaka och prata."
       ctaButtons={[
         { text: 'Kom igång', href: `/vinprovningar/${featuredSlug}`, primary: true },
-        { text: 'Se alla vinprovningar', href: '/vinprovningar' },
+        { text: 'Se alla vinkurser', href: '/vinprovningar' },
       ]}
       microDetails={['300+ prenumeranter', 'Prova gratis', 'Livstidsåtkomst']}
     />

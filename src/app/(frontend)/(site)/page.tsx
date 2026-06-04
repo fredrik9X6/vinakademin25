@@ -30,14 +30,14 @@ import { ProvningsmallarFeature } from '@/components/home/ProvningsmallarFeature
 import type { TastingTemplate } from '@/payload-types'
 
 export const metadata: Metadata = {
-  title: 'Vinprovningar online & vinkurser på svenska',
+  title: 'Vinkurser online på svenska',
   description:
-    'Upptäck vin med Vinakademin — vinprovningar online, guidade vinkurser och vinkunskap för både nybörjare och entusiaster. Lär dig av experter och bygg din egen vinlista.',
+    'Upptäck vin med Vinakademin — guidade vinkurser online och vinkunskap för både nybörjare och entusiaster. Lär dig av experter och bygg din egen vinlista.',
   alternates: { canonical: `${getSiteURL()}/` },
   openGraph: {
-    title: 'Vinprovningar online & vinkurser | Vinakademin',
+    title: 'Vinkurser online | Vinakademin',
     description:
-      'Upptäck vin med Vinakademin — vinprovningar online, guidade vinkurser och vinkunskap för både nybörjare och entusiaster.',
+      'Upptäck vin med Vinakademin — guidade vinkurser online och vinkunskap för både nybörjare och entusiaster.',
     url: `${getSiteURL()}/`,
     type: 'website',
   },
@@ -161,9 +161,9 @@ export default async function HomePage() {
               {[
                 {
                   icon: ShoppingCart,
-                  title: 'Välj en vinprovning',
+                  title: 'Välj en vinkurs',
                   description:
-                    'Bläddra bland våra kurerade vinprovningar och välj den som passar dig bäst.',
+                    'Bläddra bland våra kurerade vinkurser och välj den som passar dig bäst.',
                   step: '01',
                 },
                 {
@@ -216,9 +216,9 @@ export default async function HomePage() {
             {[
               {
                 icon: ShoppingCart,
-                title: 'Välj en vinprovning',
+                title: 'Välj en vinkurs',
                 description:
-                  'Bläddra bland våra kurerade vinprovningar och välj den som passar dig bäst.',
+                  'Bläddra bland våra kurerade vinkurser och välj den som passar dig bäst.',
                 step: '01',
               },
               {
@@ -487,7 +487,7 @@ export default async function HomePage() {
                   href="/vinprovningar"
                   className="btn-brand btn-brand-lg w-full sm:flex-1"
                 >
-                  Upptäck vinprovningar
+                  Upptäck vinkurser
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link
@@ -525,14 +525,14 @@ export default async function HomePage() {
             {[
               {
                 quote:
-                  'Vinprovningarna är precis lagom långa och lärorika. Jag har lärt mig mer på en kväll än jag gjorde på flera års självstudier.',
+                  'Vinkurserna är precis lagom långa och lärorika. Jag har lärt mig mer på en kväll än jag gjorde på flera års självstudier.',
                 author: 'Anna S.',
                 role: 'Medlem sedan 2023',
                 rating: 5,
               },
               {
                 quote:
-                  'Fantastiskt koncept! Vi gjorde en vinprovning med vänner och det blev kvällens höjdpunkt. Alla ville veta var vi hade hittat det.',
+                  'Fantastiskt koncept! Vi gjorde en vinkurs med vänner och det blev kvällens höjdpunkt. Alla ville veta var vi hade hittat det.',
                 author: 'Erik L.',
                 role: 'Medlem sedan 2024',
                 rating: 5,
@@ -633,7 +633,7 @@ export default async function HomePage() {
                   Håll dig uppdaterad
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-                  Få tips om nya viner, vinprovningar och exklusiva erbjudanden direkt i din inbox
+                  Få tips om nya viner, vinkurser och exklusiva erbjudanden direkt i din inbox
                 </p>
 
                 {/* Trust indicators with orange accents */}
@@ -672,7 +672,7 @@ export default async function HomePage() {
                   {[
                     {
                       icon: Wine,
-                      title: 'Nya vinprovningar',
+                      title: 'Nya vinkurser',
                       description: 'Var först att få veta',
                     },
                     {
@@ -723,7 +723,7 @@ export default async function HomePage() {
 
             {/* Description */}
             <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-              Utforska våra vinprovningar och börja din vinresa idag. Det är enkelt, roligt och helt
+              Utforska våra vinkurser och börja din vinresa idag. Det är enkelt, roligt och helt
               på dina villkor.
             </p>
 
@@ -733,7 +733,7 @@ export default async function HomePage() {
                 href="/vinprovningar"
                 className="btn-brand btn-brand-lg w-full sm:w-auto"
               >
-                Utforska vinprovningar
+                Utforska vinkurser
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
@@ -750,7 +750,7 @@ export default async function HomePage() {
                 {
                   icon: CheckCircle2,
                   title: 'Prova gratis',
-                  description: 'Testa varje vinprovning innan du köper',
+                  description: 'Testa varje vinkurs innan du köper',
                 },
                 {
                   icon: Wine,

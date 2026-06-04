@@ -484,7 +484,7 @@ function TypographySection() {
             meta: 'H1 Hero · Coolvetica 72/72',
             demo: (
               <div className={`${HEADING_HERO} text-[clamp(40px,6vw,72px)]`}>
-                Vinprovningar
+                Vinkurser
                 <br />
                 hemma,{' '}
                 <span
@@ -500,7 +500,7 @@ function TypographySection() {
             meta: 'H1 · Coolvetica 56/60',
             demo: (
               <div className={`${HEADING} text-[clamp(36px,5vw,56px)]`}>
-                Så fungerar en vinprovning
+                Så fungerar en vinkurs
               </div>
             ),
           },
@@ -535,7 +535,7 @@ function TypographySection() {
             meta: 'Brödtext · Inter 16/28',
             demo: (
               <div className="max-w-[56ch] text-base leading-[1.75]">
-                Vi gör vinkunskap enkelt &amp; opretentiöst. Våra guidade provningar leder dig
+                Vi gör vinkunskap enkelt &amp; opretentiöst. Våra guidade vinkurser leder dig
                 genom smaker och berättelser, direkt hem till ditt bord. Du behöver inte kunna
                 skilja en Cabernet Sauvignon från en Cabernet Franc — vi förklarar allt du möter
                 längs vägen.
@@ -544,7 +544,7 @@ function TypographySection() {
           },
           {
             meta: 'Eyebrow · 11 versaler',
-            demo: <Eyebrow>Rekommenderad vinprovning · Steg 01 · Instruktör</Eyebrow>,
+            demo: <Eyebrow>Rekommenderad vinkurs · Steg 01 · Instruktör</Eyebrow>,
           },
           {
             meta: 'Markeringsfärg',
@@ -1121,7 +1121,7 @@ function CardsSection() {
                   Världens klassiska druvor — en rundresa i ditt eget vardagsrum
                 </h3>
                 <p className="mt-2.5 text-[15px] leading-relaxed text-muted-foreground">
-                  Sex vinprovningar, sex druvor som finns överallt. Efter den här serien vet du
+                  Sex vinkurser, sex druvor som finns överallt. Efter den här serien vet du
                   varför Riesling doftar som det gör, och varför Pinot Noir är så envist svårt.
                 </p>
               </div>
@@ -1254,9 +1254,9 @@ function CardsSection() {
             >
               Steg 01
             </div>
-            <div className="mb-1.5 text-[17px] font-semibold">Välj en vinprovning</div>
+            <div className="mb-1.5 text-[17px] font-semibold">Välj en vinkurs</div>
             <p className="text-[13px] leading-relaxed text-muted-foreground">
-              Bläddra bland våra provningar och välj det du är nyfiken på. Nybörjare eller
+              Bläddra bland våra vinkurser och välj den du är nyfiken på. Nybörjare eller
               entusiast — det finns en för dig.
             </p>
           </div>

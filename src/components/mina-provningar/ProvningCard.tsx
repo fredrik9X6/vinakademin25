@@ -24,7 +24,7 @@ export function ProvningCard({ course }: ProvningCardProps) {
   let ctaText: string
   let CtaIcon: typeof Play
   if (percentage === 0) {
-    ctaText = 'Starta provningen'
+    ctaText = 'Starta vinkursen'
     CtaIcon = Play
   } else if (progress.completed) {
     ctaText = 'Se igen'

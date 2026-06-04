@@ -39,7 +39,7 @@ export function CourseReferenceBlock({
   displayStyle,
   showDetails,
   customText,
-  callToAction = 'Visa vinprovning',
+  callToAction = 'Visa vinkurs',
   caption,
   openInNewTab,
 }: CourseReferenceBlockProps) {

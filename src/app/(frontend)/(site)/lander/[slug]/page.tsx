@@ -252,7 +252,7 @@ export default async function CountryDetailPage({ params }: PageProps) {
       {/* Related vinprovningar */}
       {vinprovningar.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-2xl font-medium mb-4">Vinprovningar</h2>
+          <h2 className="text-2xl font-medium mb-4">Vinkurser</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {vinprovningar.map((v: any) => (
               <Link
