@@ -99,14 +99,14 @@ export default async function RegionDetailPage({ params }: PageProps) {
     return json.includes(regionIdStr) && json.includes('region-reference')
   })
 
-  // Fetch vinprovningar that reference this region
+  // Fetch vinkurser that reference this region
   const vinRes = await payload.find({
     collection: 'vinkurser',
     where: { _status: { equals: 'published' } },
     depth: 2 as any,
     limit: 100,
   } as any)
-  const vinprovningar = (vinRes.docs || []).filter((v: any) => {
+  const vinkurser = (vinRes.docs || []).filter((v: any) => {
     const json = JSON.stringify(v.fullDescription || {})
     return json.includes(regionIdStr)
   })
@@ -221,12 +221,12 @@ export default async function RegionDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* Related vinprovningar */}
-      {vinprovningar.length > 0 && (
+      {/* Related vinkurser */}
+      {vinkurser.length > 0 && (
         <section className="mb-10">
           <h2 className="text-2xl font-medium mb-4">Vinkurser</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {vinprovningar.map((v: any) => (
+            {vinkurser.map((v: any) => (
               <Link
                 key={v.id}
                 href={`/vinkurser/${v.slug}`}

@@ -48,7 +48,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Build passthrough value matching existing convention
+    // Build passthrough value matching existing convention.
+    // The 'vinprovning-preview-' prefix is the legacy format from before the
+    // vinprovningar → vinkurser collection rename. Kept verbatim so existing
+    // in-flight Mux uploads still resolve to the right collection on webhook
+    // completion; mux/webhook still pattern-matches the same prefix.
     let passthrough: string
     if (collectionSlug === 'vinkurser') {
       passthrough = `vinprovning-preview-${documentId}`

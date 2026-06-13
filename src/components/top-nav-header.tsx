@@ -154,7 +154,7 @@ export function TopNavHeader() {
                   <DropdownMenuItem asChild>
                     <Link href="/mina-provningar/planer" className="cursor-pointer">
                       <ClipboardList className="mr-2 h-4 w-4" />
-                      Mina vinprovningar
+                      Mina provningar
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!user?.id) {
       log.info('Payment API: No user found, returning 401')
       return NextResponse.json(
-        { error: 'Du måste vara inloggad för att köpa vinprovningar' },
+        { error: 'Du måste vara inloggad för att köpa vinkurser' },
         { status: 401 },
       )
     }
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     if (!courseId) {
       log.info('Payment API: No courseId provided')
-      return NextResponse.json({ error: 'Vinprovnings-ID krävs' }, { status: 400 })
+      return NextResponse.json({ error: 'Vinkurs-ID krävs' }, { status: 400 })
     }
 
     // Fetch course data
@@ -43,13 +43,13 @@ export async function POST(request: NextRequest) {
 
     if (!course) {
       log.info('Payment API: Course not found')
-      return NextResponse.json({ error: 'Vinprovningen hittades inte' }, { status: 404 })
+      return NextResponse.json({ error: 'Vinkursen hittades inte' }, { status: 404 })
     }
 
     // Check if course has a price
     if (!course.price || course.price <= 0) {
       log.info('Payment API: Course has no price')
-      return NextResponse.json({ error: 'Vinprovningen har inget pris' }, { status: 400 })
+      return NextResponse.json({ error: 'Vinkursen har inget pris' }, { status: 400 })
     }
 
     // Check if user already owns this course
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     if (existingEnrollment.docs.length > 0) {
       log.info('Payment API: User already owns course')
-      return NextResponse.json({ error: 'Du äger redan denna vinprovning' }, { status: 400 })
+      return NextResponse.json({ error: 'Du äger redan denna vinkurs' }, { status: 400 })
     }
 
     // Get or create Stripe customer
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     if (!checkoutData) {
       log.info('Payment API: Course not configured for payment')
       return NextResponse.json(
-        { error: 'Vinprovningen är inte konfigurerad för betalning' },
+        { error: 'Vinkursen är inte konfigurerad för betalning' },
         { status: 400 },
       )
     }

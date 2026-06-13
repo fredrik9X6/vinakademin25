@@ -184,7 +184,7 @@ export function MobileBottomNav() {
                 <DrawerLink
                   href="/mina-provningar/planer"
                   icon={ClipboardList}
-                  label="Mina vinprovningar"
+                  label="Mina provningar"
                   onClose={() => setOpen(false)}
                 />
                 <DrawerLink

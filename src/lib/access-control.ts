@@ -319,8 +319,8 @@ export const canAccessLesson = async (
       return false
     }
 
-    // Find the vinprovning that contains this module
-    const vinprovningar = await req.payload.find({
+    // Find the vinkurs that contains this module
+    const courses = await req.payload.find({
       collection: 'vinkurser',
       where: {
         'modules.module': { equals: module.id },
@@ -328,11 +328,11 @@ export const canAccessLesson = async (
       limit: 1,
     })
 
-    if (!vinprovningar.docs.length) {
+    if (!courses.docs.length) {
       return false
     }
 
-    const courseId = vinprovningar.docs[0].id
+    const courseId = courses.docs[0].id
 
     // Check if lesson allows free preview
     if ((lesson as any)?.isFree) {
@@ -386,8 +386,8 @@ export const canTakeQuiz = async (
 
     const module = modules.docs[0]
 
-    // Find the vinprovning that contains this module
-    const vinprovningar = await req.payload.find({
+    // Find the vinkurs that contains this module
+    const courses = await req.payload.find({
       collection: 'vinkurser',
       where: {
         'modules.module': { equals: module.id },
@@ -395,11 +395,11 @@ export const canTakeQuiz = async (
       limit: 1,
     })
 
-    if (!vinprovningar.docs.length) {
+    if (!courses.docs.length) {
       return false
     }
 
-    const courseId = vinprovningar.docs[0].id
+    const courseId = courses.docs[0].id
 
     // Check if user is enrolled and has quiz permissions
     const isEnrolled = await isEnrollmentValid(req, userId, String(courseId))

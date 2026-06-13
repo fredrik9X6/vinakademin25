@@ -6,17 +6,17 @@ interface Props {
   href: string
   title: string
   archetypeKey: string
-  vinprovningSlug: string
+  vinkursSlug: string
 }
 
-export function VinprovningCard({ href, title, archetypeKey, vinprovningSlug }: Props) {
+export function VinkursCard({ href, title, archetypeKey, vinkursSlug }: Props) {
   return (
     <a
       href={href}
       onClick={() =>
-        posthog?.capture?.('vinkompass_vinprovning_clicked', {
+        posthog?.capture?.('vinkompass_vinkurs_clicked', {
           archetype: archetypeKey,
-          vinprovningSlug,
+          vinkursSlug,
         })
       }
       className="mt-10 flex flex-col gap-2 rounded-2xl border border-border bg-card p-7 shadow-sm transition hover:border-brand-400"

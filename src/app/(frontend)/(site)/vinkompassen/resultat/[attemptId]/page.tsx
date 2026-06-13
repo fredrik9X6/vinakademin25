@@ -15,7 +15,7 @@ import { QuadrantMini } from '../../_components/QuadrantMini'
 import { WineGrid } from '../../_components/WineGrid'
 import { EmailGate } from './EmailGate'
 import { ResultActions } from './ResultActions'
-import { VinprovningCard } from './VinprovningCard'
+import { VinkursCard } from './VinkursCard'
 
 interface PageProps {
   params: Promise<{ attemptId: string }>
@@ -56,7 +56,10 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
   const recommendedWines: Wine[] = Array.isArray(archetype.recommendedWines)
     ? (archetype.recommendedWines as Wine[]).filter((w): w is Wine => typeof w === 'object')
     : []
-  const recommendedVinprovning =
+  // Field name on VinkompassArchetypes is still `recommendedVinprovning` —
+  // we kept the legacy field name to avoid a DB column rename (spec D2).
+  // The relationTo target is the renamed `vinkurser` collection.
+  const recommendedVinkurs =
     archetype.recommendedVinprovning && typeof archetype.recommendedVinprovning === 'object'
       ? (archetype.recommendedVinprovning as Vinkurser)
       : null
@@ -98,12 +101,12 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
             </h2>
             <WineGrid wines={recommendedWines.slice(0, 8)} archetypeKey={archetype.key} />
 
-            {recommendedVinprovning ? (
-              <VinprovningCard
-                href={`/vinkurser/${recommendedVinprovning.slug}`}
-                title={recommendedVinprovning.title}
+            {recommendedVinkurs ? (
+              <VinkursCard
+                href={`/vinkurser/${recommendedVinkurs.slug}`}
+                title={recommendedVinkurs.title}
                 archetypeKey={archetype.key}
-                vinprovningSlug={recommendedVinprovning.slug}
+                vinkursSlug={recommendedVinkurs.slug}
               />
             ) : null}
           </>

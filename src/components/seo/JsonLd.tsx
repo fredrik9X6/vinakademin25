@@ -70,7 +70,7 @@ export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
   return <JsonLd data={data} />
 }
 
-/* ---------- Course (vinprovning detail) ---------- */
+/* ---------- Course (vinkurs detail) ---------- */
 
 type CourseJsonLdInput = {
   siteURL: string

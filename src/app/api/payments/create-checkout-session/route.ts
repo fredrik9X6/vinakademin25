@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     if (!courseId) {
       log.info('Checkout Session API: No courseId provided')
-      return NextResponse.json({ error: 'Vinprovnings-ID krävs' }, { status: 400 })
+      return NextResponse.json({ error: 'Vinkurs-ID krävs' }, { status: 400 })
     }
 
     // Fetch course data using PayloadCMS 3 API
@@ -40,13 +40,13 @@ export async function POST(request: NextRequest) {
 
     if (!course) {
       log.info('Checkout Session API: Course not found')
-      return NextResponse.json({ error: 'Vinprovningen hittades inte' }, { status: 404 })
+      return NextResponse.json({ error: 'Vinkursen hittades inte' }, { status: 404 })
     }
 
     // Check if course has a price
     if (!course.price || course.price <= 0) {
       log.info('Checkout Session API: Course has no price')
-      return NextResponse.json({ error: 'Vinprovningen har inget pris' }, { status: 400 })
+      return NextResponse.json({ error: 'Vinkursen har inget pris' }, { status: 400 })
     }
 
     let checkoutEmail = user?.email || ''
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       })
 
       if (existingEnrollment.docs.length > 0) {
-        return NextResponse.json({ error: 'Du äger redan denna vinprovning' }, { status: 400 })
+        return NextResponse.json({ error: 'Du äger redan denna vinkurs' }, { status: 400 })
       }
     }
 
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
             currency: 'sek',
             product_data: {
               name: course.title,
-              description: course.description || `Vinprovning: ${course.title}`,
+              description: course.description || `Vinkurs: ${course.title}`,
               images:
                 course.featuredImage &&
                 typeof course.featuredImage === 'object' &&
