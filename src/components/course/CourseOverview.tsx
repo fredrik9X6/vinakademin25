@@ -36,6 +36,7 @@ import { useActiveSession } from '@/context/SessionContext'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 import { useAuth } from '@/context/AuthContext'
 import { CourseReviewsSection } from './CourseReviewsSection'
+import { VisitorModuleList } from './VisitorModuleList'
 
 interface CourseOverviewProps {
   course: {
@@ -343,12 +344,13 @@ export default function CourseOverview({
               {/* Right: Content */}
               <div className="flex flex-col">
                 <div className="space-y-6">
-                  {/* Badge */}
-                  {freeLessons > 0 && (
-                    <Badge variant="brand" className="w-fit text-xs">
-                      {freeLessons} gratis moment
-                    </Badge>
-                  )}
+                  {/* Course meta badge */}
+                  <Badge variant="brand" className="w-fit text-xs">
+                    {course.level === 'beginner' && 'Nybörjare'}
+                    {course.level === 'intermediate' && 'Medel'}
+                    {course.level === 'advanced' && 'Avancerad'}
+                    {!course.level && 'Nybörjare'}
+                  </Badge>
 
                   {/* Title */}
                   <h1 className="text-3xl lg:text-5xl leading-tight">{course.title}</h1>
@@ -365,16 +367,9 @@ export default function CourseOverview({
                     {formatPrice(course.price || 0)}
                   </div>
 
-                  {/* CTA Buttons */}
+                  {/* CTA — single purchase CTA. The visitor doesn't get a "Prova gratis"
+                       door any more; intro video above is the entire preview surface (spec D4). */}
                   <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={continueCourse}
-                      className="btn-brand btn-brand-lg w-full"
-                    >
-                      Prova gratis
-                    </button>
-
                     <PurchaseButton
                       course={{
                         id: course.id,
@@ -392,7 +387,6 @@ export default function CourseOverview({
                         createdAt: new Date().toISOString(),
                         _status: 'published',
                       } as any}
-                      variant="outline"
                       size="lg"
                       fullWidth
                       showIcon={false}
@@ -510,7 +504,8 @@ export default function CourseOverview({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Course Description */}
+            {/* Course Description — WineList blocks inside redact wine
+                 identities for non-purchasers/non-participants (spec D5). */}
             {course.fullDescription && (
               <Card>
                 <CardHeader>
@@ -520,19 +515,33 @@ export default function CourseOverview({
                   <RichTextRenderer
                     content={course.fullDescription}
                     className="prose-headings:font-semibold prose-headings:text-foreground"
+                    userHasAccess={userHasAccess || isSessionParticipant}
                   />
                 </CardContent>
               </Card>
             )}
 
-            {/* Table of Contents */}
-            <CourseTableOfContents
-              modules={course.modules}
-              courseProgress={courseProgress || undefined}
-              userHasAccess={userHasAccess || isSessionParticipant}
-              onItemClick={handleItemClick}
-              loading={progressLoading}
-            />
+            {/* Course outline — purchasers/participants see the full clickable TOC.
+                 Visitors see the module list with titles + per-module item counts
+                 only (no lesson titles, no click affordance — spec D4). */}
+            {userHasAccess || isSessionParticipant ? (
+              <CourseTableOfContents
+                modules={course.modules}
+                courseProgress={courseProgress || undefined}
+                userHasAccess={userHasAccess || isSessionParticipant}
+                onItemClick={handleItemClick}
+                loading={progressLoading}
+              />
+            ) : (
+              <VisitorModuleList
+                modules={course.modules.map((m) => {
+                  const contentsCount = Array.isArray((m as any).contents)
+                    ? (m as any).contents.length
+                    : (m.lessons?.length || 0) + ((m as any).quizzes?.length || 0)
+                  return { id: m.id, title: m.title, itemCount: contentsCount }
+                })}
+              />
+            )}
 
             {/* Reviews Section */}
             <CourseReviewsSection courseId={course.id} />
