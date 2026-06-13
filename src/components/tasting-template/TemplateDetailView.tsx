@@ -80,7 +80,7 @@ export function TemplateDetailView({ template, isAdmin = false }: TemplateDetail
         <header>
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-3xl font-heading">{template.title}</h1>
-            {(template as { accessLevel?: string }).accessLevel === 'members_only' ? (
+            {(template as { accessLevel?: string }).accessLevel === 'paid' ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-brand-400/15 text-brand-400 px-2.5 py-0.5 text-xs font-medium">
                 <Lock className="h-3 w-3" />
                 Medlem

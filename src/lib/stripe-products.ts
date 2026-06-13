@@ -409,6 +409,152 @@ export async function validateStripePrice(priceId: string): Promise<boolean> {
 }
 
 /**
+ * Sync a TastingTemplate with Stripe — mirrors syncCourseWithStripe.
+ * Each paid template gets its own Stripe Product + Price.
+ * Stripe Prices are immutable, so price changes archive the old Price and
+ * create a new one. Metadata productKind='template' lets the webhook branch.
+ *
+ * Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D.2)
+ */
+export async function syncTemplateWithStripe(
+  templateId: string,
+  templateData?: {
+    title?: string
+    description?: string | null
+    priceSek?: number
+    stripeProductId?: string | null
+    stripePriceId?: string | null
+    featuredImage?: { url?: string | null } | number | string | null
+  },
+): Promise<{ productId: string; priceId: string }> {
+  const payload = await getPayload({ config })
+
+  let template: any
+  if (templateData?.title && typeof templateData?.priceSek === 'number') {
+    template = templateData
+  } else {
+    template = await payload.findByID({
+      collection: 'tasting-templates',
+      id: templateId,
+      overrideAccess: true,
+    })
+    if (!template) {
+      throw new Error(`Tasting template ${templateId} not found`)
+    }
+  }
+
+  const title: string = (template.title || '').toString().trim()
+  if (!title) {
+    throw new Error(
+      `Cannot sync template ${templateId} with Stripe: title is required but was empty.`,
+    )
+  }
+
+  const description: string =
+    (template.description && String(template.description).trim()) ||
+    `Provningsmall: ${title}`
+
+  const productData: any = {
+    name: title,
+    description,
+    metadata: {
+      templateId: String(templateId),
+      productKind: 'template',
+    },
+  }
+
+  if (
+    template.featuredImage &&
+    typeof template.featuredImage === 'object' &&
+    (template.featuredImage as { url?: string | null }).url
+  ) {
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const imageUrl = (template.featuredImage as { url: string }).url
+    productData.images = [imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`]
+  }
+
+  const stripe = getStripeServer()
+
+  let product
+  if (template.stripeProductId) {
+    try {
+      product = await stripe.products.update(template.stripeProductId, productData)
+    } catch (err) {
+      log.error(`Failed to update Stripe template product ${template.stripeProductId}:`, err)
+      product = await stripe.products.create(productData)
+    }
+  } else {
+    product = await stripe.products.create(productData)
+  }
+
+  if (template.stripePriceId) {
+    try {
+      await stripe.prices.update(template.stripePriceId, { active: false })
+    } catch (err) {
+      log.error(`Failed to archive old template price ${template.stripePriceId}:`, err)
+    }
+  }
+
+  const price = await stripe.prices.create({
+    product: product.id,
+    unit_amount: formatAmountForStripe(Number(template.priceSek || 0)),
+    currency: STRIPE_CONFIG.currency,
+    metadata: {
+      templateId: String(templateId),
+      productKind: 'template',
+    },
+  })
+
+  try {
+    await payload.update({
+      collection: 'tasting-templates',
+      id: templateId,
+      data: {
+        stripeProductId: product.id,
+        stripePriceId: price.id,
+      },
+      overrideAccess: true,
+    })
+  } catch (err: any) {
+    log.error(`Failed to save Stripe IDs to template ${templateId}: ${err?.message || err}`)
+    log.info(`Stripe Product ID: ${product.id}; Stripe Price ID: ${price.id}`)
+  }
+
+  return { productId: product.id, priceId: price.id }
+}
+
+/**
+ * Sync every published paid tasting template with Stripe. Called from
+ * scripts/sync-templates-with-stripe.ts.
+ */
+export async function syncAllTemplatesWithStripe(): Promise<void> {
+  const payload = await getPayload({ config })
+
+  const templates = await payload.find({
+    collection: 'tasting-templates',
+    where: {
+      publishedStatus: { equals: 'published' },
+      accessLevel: { equals: 'paid' },
+    },
+    limit: 1000,
+    overrideAccess: true,
+  })
+
+  log.info(`Syncing ${templates.docs.length} paid templates with Stripe...`)
+
+  const syncPromises = templates.docs.map((t) =>
+    syncTemplateWithStripe(t.id.toString()).catch((err) => {
+      log.error(`Failed to sync template ${t.id}:`, err)
+      return null
+    }),
+  )
+
+  const results = await Promise.allSettled(syncPromises)
+  const successful = results.filter((r) => r.status === 'fulfilled').length
+  log.info(`Synced ${successful}/${templates.docs.length} templates with Stripe`)
+}
+
+/**
  * Get course purchase data for Stripe checkout
  */
 export async function getCourseCheckoutData(courseId: string): Promise<{

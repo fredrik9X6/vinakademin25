@@ -20,7 +20,7 @@ export function TemplateCard({ template, href }: TemplateCardProps) {
       ? image.sizes?.thumbnail?.url ?? image.url ?? null
       : null
   const isMembersOnly =
-    (template as { accessLevel?: string }).accessLevel === 'members_only'
+    (template as { accessLevel?: string }).accessLevel === 'paid'
 
   return (
     <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group">

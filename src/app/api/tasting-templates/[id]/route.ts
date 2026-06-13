@@ -24,7 +24,7 @@ type WineEntry = {
   hostNotes?: string
 }
 
-type AccessLevel = 'free' | 'members_only'
+type AccessLevel = 'free' | 'paid'
 type PublishedStatus = 'draft' | 'published'
 
 type PatchBody = {

@@ -38,6 +38,7 @@ import { SessionParticipants } from './collections/SessionParticipants'
 import { SessionGuesses } from './collections/SessionGuesses'
 import { TastingPlans } from './collections/TastingPlans'
 import { TastingTemplates } from './collections/TastingTemplates'
+import { TemplateEntitlements } from './collections/TemplateEntitlements'
 import { Subscribers } from './collections/Subscribers'
 import { Events } from './collections/Events'
 import { VinkompassQuestions } from './collections/VinkompassQuestions'
@@ -249,6 +250,7 @@ export default buildConfig({
     SessionGuesses,
     TastingPlans,
     TastingTemplates,
+    TemplateEntitlements,
     Subscribers,
     Events,
     VinkompassQuestions,

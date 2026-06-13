@@ -116,6 +116,10 @@ export async function POST(request: NextRequest) {
         log.info({ chargeId: event.data.object.id }, 'Charge succeeded')
         break
 
+      case 'charge.refunded':
+        await handleChargeRefunded(event.data.object, payload, stripe)
+        break
+
       case 'payment_intent.created':
         log.info({ paymentIntentId: event.data.object.id }, 'Payment intent created')
         break
@@ -137,6 +141,13 @@ export async function POST(request: NextRequest) {
 
 async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: any) {
   log.info({ paymentIntentId: paymentIntent.id }, 'Payment succeeded')
+
+  // Template purchase branch (spec D.4) — productKind === 'template' was
+  // pushed to PI metadata via payment_intent_data in /api/payments/template-checkout.
+  if (paymentIntent?.metadata?.productKind === 'template') {
+    await handleTemplatePurchase(paymentIntent, payload)
+    return
+  }
 
   const { courseId, userId } = paymentIntent.metadata
 
@@ -896,5 +907,184 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
     if (error && typeof error === 'object' && 'data' in error) {
       log.error({ errorData: (error as any).data }, 'PayloadCMS error data')
     }
+  }
+}
+
+/**
+ * Handle a template purchase payment_intent.succeeded. Creates a row in
+ * TemplateEntitlements (idempotent on the (user, template) unique index).
+ *
+ * Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D.4)
+ */
+async function handleTemplatePurchase(paymentIntent: any, payload: any) {
+  const { templateId, userId } = paymentIntent.metadata || {}
+  if (!templateId || !userId) {
+    log.error(
+      { paymentIntentId: paymentIntent.id },
+      'Template payment_intent missing templateId or userId metadata',
+    )
+    return
+  }
+
+  const userIdInt = parseInt(String(userId), 10)
+  const templateIdInt = parseInt(String(templateId), 10)
+  if (isNaN(userIdInt) || isNaN(templateIdInt)) {
+    log.error(
+      { userId, templateId, paymentIntentId: paymentIntent.id },
+      'Template payment_intent has non-numeric IDs',
+    )
+    return
+  }
+
+  try {
+    // Idempotency: bail if entitlement already exists
+    const existing = await payload.find({
+      collection: 'template-entitlements',
+      where: {
+        and: [
+          { user: { equals: userIdInt } },
+          { template: { equals: templateIdInt } },
+        ],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    if (existing.totalDocs > 0) {
+      // If it was refunded earlier and this is a fresh purchase, reactivate
+      const doc = existing.docs[0]
+      if (doc.status === 'refunded') {
+        await payload.update({
+          collection: 'template-entitlements',
+          id: doc.id,
+          data: {
+            status: 'active',
+            acquiredVia: 'purchase',
+            payment: {
+              amount: (paymentIntent.amount || 0) / 100,
+              currency: paymentIntent.currency || 'sek',
+              transactionId: paymentIntent.id,
+              paidAt: new Date().toISOString(),
+            },
+          },
+          overrideAccess: true,
+        })
+        log.info(
+          { entitlementId: doc.id, userId, templateId },
+          'Reactivated previously-refunded template entitlement',
+        )
+      } else {
+        log.info(
+          { entitlementId: doc.id, userId, templateId },
+          'Template entitlement already exists, skipping create',
+        )
+      }
+      return
+    }
+
+    const created = await payload.create({
+      collection: 'template-entitlements',
+      data: {
+        user: userIdInt,
+        template: templateIdInt,
+        status: 'active',
+        acquiredVia: 'purchase',
+        acquiredAt: new Date().toISOString(),
+        payment: {
+          amount: (paymentIntent.amount || 0) / 100,
+          currency: paymentIntent.currency || 'sek',
+          transactionId: paymentIntent.id,
+          paidAt: new Date().toISOString(),
+        },
+      },
+      overrideAccess: true,
+    })
+    log.info({ entitlementId: created.id, userId, templateId }, 'Template entitlement created')
+  } catch (err) {
+    log.error({ err, userId, templateId }, 'Failed to create template entitlement')
+  }
+}
+
+/**
+ * Flip entitlements/enrollments to refunded when Stripe refunds a charge.
+ * Looks up the original PaymentIntent's metadata to know whether to update a
+ * TemplateEntitlements row or an Enrollment row.
+ */
+async function handleChargeRefunded(charge: any, payload: any, stripe: any) {
+  const paymentIntentId = charge?.payment_intent
+  if (!paymentIntentId) {
+    log.info({ chargeId: charge?.id }, 'charge.refunded with no payment_intent — ignoring')
+    return
+  }
+
+  try {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
+    const md = pi?.metadata || {}
+
+    if (md.productKind === 'template') {
+      const userIdInt = parseInt(String(md.userId || ''), 10)
+      const templateIdInt = parseInt(String(md.templateId || ''), 10)
+      if (isNaN(userIdInt) || isNaN(templateIdInt)) {
+        log.error({ md }, 'charge.refunded for template — invalid IDs in metadata')
+        return
+      }
+      const ents = await payload.find({
+        collection: 'template-entitlements',
+        where: {
+          and: [
+            { user: { equals: userIdInt } },
+            { template: { equals: templateIdInt } },
+          ],
+        },
+        limit: 1,
+        overrideAccess: true,
+      })
+      if (ents.totalDocs > 0) {
+        await payload.update({
+          collection: 'template-entitlements',
+          id: ents.docs[0].id,
+          data: { status: 'refunded' },
+          overrideAccess: true,
+        })
+        log.info(
+          { entitlementId: ents.docs[0].id, paymentIntentId },
+          'Template entitlement refunded',
+        )
+      } else {
+        log.info({ paymentIntentId, md }, 'No template entitlement found for refunded charge')
+      }
+      return
+    }
+
+    // Course refund path — flip the matching Enrollment if we can find it.
+    const courseIdInt = parseInt(String(md.courseId || ''), 10)
+    const userIdInt = parseInt(String(md.userId || ''), 10)
+    if (!isNaN(courseIdInt) && !isNaN(userIdInt)) {
+      const enrolls = await payload.find({
+        collection: 'enrollments',
+        where: {
+          and: [
+            { user: { equals: userIdInt } },
+            { course: { equals: courseIdInt } },
+          ],
+        },
+        limit: 1,
+        overrideAccess: true,
+      })
+      if (enrolls.totalDocs > 0) {
+        await payload.update({
+          collection: 'enrollments',
+          id: enrolls.docs[0].id,
+          data: { status: 'cancelled' },
+          overrideAccess: true,
+        })
+        log.info(
+          { enrollmentId: enrolls.docs[0].id, paymentIntentId },
+          'Course enrollment cancelled via refund',
+        )
+      }
+    }
+  } catch (err) {
+    log.error({ err, chargeId: charge?.id, paymentIntentId }, 'Failed to process charge.refunded')
   }
 }

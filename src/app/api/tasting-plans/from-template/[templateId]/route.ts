@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload, ValidationError } from 'payload'
+import { headers as nextHeaders } from 'next/headers'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
+import { canUseTemplate } from '@/lib/access-control'
 import { loggerFor } from '@/lib/logger'
 import type { TastingTemplate } from '@/payload-types'
 
@@ -49,6 +51,68 @@ export async function POST(
   }
   if (template.publishedStatus !== 'published' && user.role !== 'admin') {
     return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+  }
+
+  // Defense in depth — the UI gates this button on canUseTemplate, but enforce
+  // server-side too so a direct POST to this endpoint can't bypass payment.
+  // Admins bypass (they can preview/test any template).
+  if (user.role !== 'admin') {
+    const req = {
+      payload,
+      headers: await nextHeaders(),
+      user,
+    } as unknown as Parameters<typeof canUseTemplate>[0]
+
+    const allowed = await canUseTemplate(req, user, {
+      id: template.id,
+      accessLevel: (template as { accessLevel?: string }).accessLevel as 'free' | 'paid' | undefined,
+      isFreeTrial: (template as { isFreeTrial?: boolean }).isFreeTrial,
+    })
+    if (!allowed) {
+      log.warn(
+        { userId: user.id, templateId: tplId },
+        'from-template rejected — user lacks entitlement',
+      )
+      return NextResponse.json(
+        { error: 'Du måste köpa denna mall innan du kan använda den.' },
+        { status: 403 },
+      )
+    }
+
+    // For the free-trial path, ensure the entitlement is recorded the first
+    // time the user clones (so later admin lookups can see the trial unlock).
+    if ((template as { isFreeTrial?: boolean }).isFreeTrial) {
+      try {
+        const existing = await payload.find({
+          collection: 'template-entitlements',
+          where: {
+            and: [
+              { user: { equals: user.id } },
+              { template: { equals: template.id } },
+            ],
+          },
+          limit: 1,
+          overrideAccess: true,
+        })
+        if (existing.totalDocs === 0) {
+          await payload.create({
+            collection: 'template-entitlements',
+            data: {
+              user: user.id,
+              template: template.id,
+              status: 'active',
+              acquiredVia: 'free_trial',
+              acquiredAt: new Date().toISOString(),
+            },
+            overrideAccess: true,
+          })
+        }
+      } catch (err) {
+        // Don't block the clone if entitlement bookkeeping fails — the user
+        // genuinely has access via isFreeTrial; the row is for the audit trail.
+        log.warn({ err, userId: user.id, templateId: tplId }, 'Free-trial entitlement create failed')
+      }
+    }
   }
 
   // Clone each wine faithfully. Templates are almost always built from

@@ -96,6 +96,7 @@ export interface Config {
     'session-guesses': SessionGuess;
     'tasting-plans': TastingPlan;
     'tasting-templates': TastingTemplate;
+    'template-entitlements': TemplateEntitlement;
     subscribers: Subscriber;
     events: Event;
     'vinkompass-questions': VinkompassQuestion;
@@ -139,6 +140,7 @@ export interface Config {
     'session-guesses': SessionGuessesSelect<false> | SessionGuessesSelect<true>;
     'tasting-plans': TastingPlansSelect<false> | TastingPlansSelect<true>;
     'tasting-templates': TastingTemplatesSelect<false> | TastingTemplatesSelect<true>;
+    'template-entitlements': TemplateEntitlementsSelect<false> | TemplateEntitlementsSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'vinkompass-questions': VinkompassQuestionsSelect<false> | VinkompassQuestionsSelect<true>;
@@ -1568,9 +1570,25 @@ export interface TastingTemplate {
    */
   tags?: string[] | null;
   /**
-   * Free templates render wine details to everyone. Members-only templates redact wines for non-members; only count + total price are visible.
+   * Free templates render wine details to everyone. Paid templates redact wines for non-purchasers; subscribers and per-template buyers unlock the full view.
    */
-  accessLevel: 'free' | 'members_only';
+  accessLevel: 'free' | 'paid';
+  /**
+   * Pris per mall i SEK (engångsbetalning). 0 = gratis.
+   */
+  priceSek: number;
+  /**
+   * Markera EN mall som gratis för alla inloggade användare — låter dem prova "Provningsmallar" innan första köp.
+   */
+  isFreeTrial?: boolean | null;
+  /**
+   * Auto-generated via syncTemplateWithStripe when the template is published with a price.
+   */
+  stripeProductId?: string | null;
+  /**
+   * Auto-generated. Stripe Prices are immutable — old prices get archived when priceSek changes.
+   */
+  stripePriceId?: string | null;
   publishedStatus: 'draft' | 'published';
   /**
    * Stamped automatically the first time the template is published.
@@ -3039,6 +3057,31 @@ export interface SessionGuess {
   createdAt: string;
 }
 /**
+ * Per-user, per-template unlock records for paid tasting templates.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "template-entitlements".
+ */
+export interface TemplateEntitlement {
+  id: number;
+  user: number | User;
+  template: number | TastingTemplate;
+  status: 'active' | 'refunded';
+  acquiredVia: 'purchase' | 'subscription' | 'free_trial' | 'free' | 'admin_grant';
+  acquiredAt: string;
+  /**
+   * Set for purchase acquisitions only — null for free/trial/admin paths.
+   */
+  payment?: {
+    amount?: number | null;
+    currency?: string | null;
+    transactionId?: string | null;
+    paidAt?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Newsletter / marketing contacts mirrored from Beehiiv
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3467,6 +3510,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tasting-templates';
         value: number | TastingTemplate;
+      } | null)
+    | ({
+        relationTo: 'template-entitlements';
+        value: number | TemplateEntitlement;
       } | null)
     | ({
         relationTo: 'subscribers';
@@ -4615,8 +4662,33 @@ export interface TastingTemplatesSelect<T extends boolean = true> {
   seoDescription?: T;
   tags?: T;
   accessLevel?: T;
+  priceSek?: T;
+  isFreeTrial?: T;
+  stripeProductId?: T;
+  stripePriceId?: T;
   publishedStatus?: T;
   publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "template-entitlements_select".
+ */
+export interface TemplateEntitlementsSelect<T extends boolean = true> {
+  user?: T;
+  template?: T;
+  status?: T;
+  acquiredVia?: T;
+  acquiredAt?: T;
+  payment?:
+    | T
+    | {
+        amount?: T;
+        currency?: T;
+        transactionId?: T;
+        paidAt?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

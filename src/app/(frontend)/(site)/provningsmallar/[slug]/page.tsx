@@ -2,11 +2,12 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { headers } from 'next/headers'
 import { TemplateDetailView } from '@/components/tasting-template/TemplateDetailView'
 import { LockedTemplateDetailView } from '@/components/tasting-template/LockedTemplateDetailView'
 import { getUser } from '@/lib/get-user'
-import { viewerIsMember } from '@/lib/membership'
 import { getLockedTemplatePreview } from '@/lib/template-locked-preview'
+import { canUseTemplate } from '@/lib/access-control'
 import type { TastingTemplate } from '@/payload-types'
 
 interface RouteParams {
@@ -51,11 +52,24 @@ export default async function ProvningsmallDetailPage({ params }: RouteParams) {
 
   const user = await getUser()
   const isAdmin = user?.role === 'admin'
-  const isLocked =
-    (template as { accessLevel?: string }).accessLevel === 'members_only' &&
-    !viewerIsMember(user)
 
-  if (isLocked) {
+  // Build a PayloadRequest-shaped object for canUseTemplate. getPayload here
+  // is the same instance used by helpers, so subscription/entitlement lookups
+  // share the same connection pool.
+  const payload = await getPayload({ config })
+  const req = {
+    payload,
+    headers: await headers(),
+    user: user || null,
+  } as unknown as Parameters<typeof canUseTemplate>[0]
+
+  const hasAccess = await canUseTemplate(req, user, {
+    id: template.id,
+    accessLevel: (template as { accessLevel?: string }).accessLevel as 'free' | 'paid' | undefined,
+    isFreeTrial: (template as { isFreeTrial?: boolean }).isFreeTrial,
+  })
+
+  if (!hasAccess) {
     const preview = getLockedTemplatePreview(template)
     // IMPORTANT: build a redacted template payload so the wines array (with
     // names, producers, hostNotes, etc.) is NEVER serialized into the page
@@ -65,7 +79,18 @@ export default async function ProvningsmallDetailPage({ params }: RouteParams) {
       wines: [],
       hostScript: null,
     } as TastingTemplate
-    return <LockedTemplateDetailView template={redactedTemplate} preview={preview} />
+    const priceSek =
+      typeof (template as { priceSek?: number }).priceSek === 'number'
+        ? (template as { priceSek: number }).priceSek
+        : 99
+    return (
+      <LockedTemplateDetailView
+        template={redactedTemplate}
+        preview={preview}
+        priceSek={priceSek}
+        isAuthenticated={!!user}
+      />
+    )
   }
 
   return <TemplateDetailView template={template} isAdmin={isAdmin} />

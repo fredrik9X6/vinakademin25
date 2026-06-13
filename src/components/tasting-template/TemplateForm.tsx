@@ -139,9 +139,9 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
   const [publishedStatus, setPublishedStatus] = React.useState<'draft' | 'published'>(
     (initialTemplate?.publishedStatus as 'draft' | 'published' | undefined) ?? 'draft',
   )
-  const [accessLevel, setAccessLevel] = React.useState<'free' | 'members_only'>(
-    ((initialTemplate as { accessLevel?: 'free' | 'members_only' } | undefined)?.accessLevel ??
-      'free') as 'free' | 'members_only',
+  const [accessLevel, setAccessLevel] = React.useState<'free' | 'paid'>(
+    ((initialTemplate as { accessLevel?: 'free' | 'paid' } | undefined)?.accessLevel ??
+      'free') as 'free' | 'paid',
   )
   const [tags, setTags] = React.useState<string[]>(
     Array.isArray(initialTemplate?.tags) ? (initialTemplate!.tags as string[]) : [],
@@ -624,11 +624,11 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
               <input
                 type="radio"
                 name="access"
-                value="members_only"
-                checked={accessLevel === 'members_only'}
-                onChange={() => setAccessLevel('members_only')}
+                value="paid"
+                checked={accessLevel === 'paid'}
+                onChange={() => setAccessLevel('paid')}
               />
-              Endast medlemmar
+              Betald (kräver köp eller prenumeration)
             </label>
           </div>
         </div>
