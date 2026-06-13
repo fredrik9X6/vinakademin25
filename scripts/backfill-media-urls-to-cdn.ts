@@ -25,8 +25,13 @@ import { getPayload } from 'payload'
 import config from '../src/payload.config'
 
 const PUBLIC_URL = process.env.S3_PUBLIC_URL?.replace(/\/$/, '')
+const BUCKET = process.env.S3_BUCKET
 const PREFIX =
   process.env.S3_PREFIX || (process.env.NODE_ENV === 'development' ? 'dev' : 'production')
+// FORCE=1 re-writes URLs even when the current doc.url already matches the
+// target — useful when Payload's on-read URL rewrite hides DB inconsistency
+// from the equality check.
+const FORCE = process.env.FORCE === '1' || process.env.FORCE === 'true'
 
 if (!PUBLIC_URL) {
   console.error(
@@ -36,13 +41,17 @@ if (!PUBLIC_URL) {
   process.exit(1)
 }
 
-function cdnUrl(filename: string): string {
-  return `${PUBLIC_URL}/${PREFIX}/${filename}`
+if (!BUCKET) {
+  console.error(
+    'ERROR: S3_BUCKET is not set. The bucket name must be spliced into the URL because\n' +
+      '       S3_ENDPOINT already includes /<bucket> AND forcePathStyle is true,\n' +
+      '       so every object key in R2 is `<bucket>/<prefix>/<filename>`.',
+  )
+  process.exit(1)
 }
 
-/** Already a CDN URL? Then we have nothing to do. */
-function isCdnUrl(value: unknown): boolean {
-  return typeof value === 'string' && value.startsWith(`${PUBLIC_URL}/`)
+function cdnUrl(filename: string): string {
+  return `${PUBLIC_URL}/${BUCKET}/${PREFIX}/${filename}`
 }
 
 async function main() {
@@ -91,12 +100,22 @@ async function main() {
         }
       }
 
-      const needsTopLevelUpdate = currentUrl !== targetUrl
-      const needsSizeUpdate = Object.keys(sizeUpdates).length > 0
+      const needsTopLevelUpdate = FORCE || currentUrl !== targetUrl
+      const needsSizeUpdate = FORCE || Object.keys(sizeUpdates).length > 0
 
       if (!needsTopLevelUpdate && !needsSizeUpdate) {
         skipped += 1
         continue
+      }
+
+      if (FORCE) {
+        // Ensure every size variant gets re-written too, not just the diff.
+        if (sizes) {
+          for (const [sizeName, variant] of Object.entries(sizes)) {
+            if (!variant?.filename) continue
+            sizeUpdates[sizeName] = { url: cdnUrl(variant.filename) }
+          }
+        }
       }
 
       const data: Record<string, unknown> = {}
