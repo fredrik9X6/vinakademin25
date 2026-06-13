@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 
 const NAV_LINKS = [
-  { label: 'Vinkurser', href: '/vinprovningar' },
+  { label: 'Vinkurser', href: '/vinkurser' },
   { label: 'Provningsmallar', href: '/provningsmallar' },
   { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },

@@ -6,10 +6,10 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
- * GET /api/vinprovningar/title?slug=...&preview=true
+ * GET /api/vinkurser/title?slug=...&preview=true
  *
  * Public-safe endpoint used by the client-side breadcrumbs to resolve the real
- * vinprovning title for /vinprovningar/[slug].
+ * course title for /vinkurser/[slug].
  */
 export async function GET(request: NextRequest) {
   try {

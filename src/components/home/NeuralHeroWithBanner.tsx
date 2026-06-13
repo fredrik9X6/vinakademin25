@@ -19,8 +19,8 @@ export function NeuralHeroWithBanner({ featuredCourse }: NeuralHeroWithBannerPro
       }
       description="Guidade vinkurser du kan göra hemma, med vänner, när det passar dig. Lär dig om vin genom att dofta, smaka och prata."
       ctaButtons={[
-        { text: 'Kom igång', href: `/vinprovningar/${featuredSlug}`, primary: true },
-        { text: 'Se alla vinkurser', href: '/vinprovningar' },
+        { text: 'Kom igång', href: `/vinkurser/${featuredSlug}`, primary: true },
+        { text: 'Se alla vinkurser', href: '/vinkurser' },
       ]}
       microDetails={['300+ prenumeranter', 'Prova gratis', 'Livstidsåtkomst']}
     />

@@ -100,7 +100,7 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
 
             {recommendedVinprovning ? (
               <VinprovningCard
-                href={`/vinprovningar/${recommendedVinprovning.slug}`}
+                href={`/vinkurser/${recommendedVinprovning.slug}`}
                 title={recommendedVinprovning.title}
                 archetypeKey={archetype.key}
                 vinprovningSlug={recommendedVinprovning.slug}

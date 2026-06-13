@@ -84,7 +84,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
          * Pattern: clean 2px gradient border via padding + soft drop shadow.
          * Matches the styleguide; cleaner than the older blur-halo approach. */}
         <Link
-          href={`/vinprovningar/${course.slug || course.id}`}
+          href={`/vinkurser/${course.slug || course.id}`}
           className="group block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <div className="bg-brand-gradient-tri rounded-2xl p-0.5 shadow-brand-glow transition-shadow duration-500 group-hover:shadow-brand-glow-lg">

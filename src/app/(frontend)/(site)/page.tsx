@@ -484,7 +484,7 @@ export default async function HomePage() {
               {/* CTA */}
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                 <Link
-                  href="/vinprovningar"
+                  href="/vinkurser"
                   className="btn-brand btn-brand-lg w-full sm:flex-1"
                 >
                   Upptäck vinkurser
@@ -730,7 +730,7 @@ export default async function HomePage() {
             {/* CTA Buttons */}
             <div className="mx-auto mb-12 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:gap-4">
               <Link
-                href="/vinprovningar"
+                href="/vinkurser"
                 className="btn-brand btn-brand-lg w-full sm:w-auto"
               >
                 Utforska vinkurser

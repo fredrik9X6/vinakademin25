@@ -25,7 +25,7 @@ export function generateReviewRequestEmailHTML({
   courseSlug,
   reviewToken,
 }: ReviewRequestEmailData): string {
-  const reviewUrl = `${SITE_URL}/vinprovningar/${courseSlug}/recension?token=${reviewToken}`
+  const reviewUrl = `${SITE_URL}/vinkurser/${courseSlug}/recension?token=${reviewToken}`
 
   return `
     <!DOCTYPE html>
@@ -164,7 +164,7 @@ export function generateReceiptEmailHTML({
     day: 'numeric',
   })
 
-  const courseUrl = `${SITE_URL}/vinprovningar/${courseSlug}`
+  const courseUrl = `${SITE_URL}/vinkurser/${courseSlug}`
 
   return `
     <!DOCTYPE html>

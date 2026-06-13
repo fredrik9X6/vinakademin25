@@ -18,12 +18,12 @@ export function PaymentStatus({ status, course, error, onClose, onRetry }: Payme
 
   const handleGoToCourse = () => {
     onClose()
-    router.push(`/vinprovningar/${course.slug}`)
+    router.push(`/vinkurser/${course.slug}`)
   }
 
   const handleGoToCourses = () => {
     onClose()
-    router.push('/vinprovningar')
+    router.push('/vinkurser')
   }
 
   if (status === 'processing') {

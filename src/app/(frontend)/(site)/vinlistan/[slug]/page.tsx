@@ -1062,7 +1062,7 @@ export default async function WineDetailPage({ params }: PageProps) {
                             {formatPrice(Number(v.price))}
                           </span>
                         ) : null}
-                        <Link href={`/vinprovningar/${v.slug}`} className="btn-brand">
+                        <Link href={`/vinkurser/${v.slug}`} className="btn-brand">
                           Läs mer
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>

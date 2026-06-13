@@ -13,18 +13,18 @@ import { getTotalCourseItems, countFreeItems } from '@/lib/course-utils'
 import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
 import { loggerFor } from '@/lib/logger'
 
-const log = loggerFor('(frontend)-(site)-vinprovningar-page')
+const log = loggerFor('(frontend)-(site)-vinkurser-page')
 
 export const metadata: Metadata = {
   title: 'Vinkurser online — guidade vinkurser på svenska',
   description:
     'Bläddra bland Vinakademins vinkurser och onlinekurser. Lär dig om vindistrikt, druvor och provningsteknik i din egen takt — från nybörjare till entusiast.',
-  alternates: { canonical: `${getSiteURL()}/vinprovningar` },
+  alternates: { canonical: `${getSiteURL()}/vinkurser` },
   openGraph: {
     title: 'Vinkurser online — guidade vinkurser | Vinakademin',
     description:
       'Bläddra bland Vinakademins vinkurser och onlinekurser. Lär dig om vindistrikt, druvor och provningsteknik i din egen takt.',
-    url: `${getSiteURL()}/vinprovningar`,
+    url: `${getSiteURL()}/vinkurser`,
     type: 'website',
   },
 }
@@ -245,7 +245,7 @@ export default async function KurserPage() {
                         )}
 
                         {/* CTA Button */}
-                        <Link href={`/vinprovningar/${course.slug}`} className="block">
+                        <Link href={`/vinkurser/${course.slug}`} className="block">
                           <Button className="w-full group">
                             Läs mer
                             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

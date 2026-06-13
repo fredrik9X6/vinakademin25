@@ -313,7 +313,7 @@ export default function AboutPage() {
                 </div>
                 <Separator className="my-6" />
                 <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                  <Link href="/vinprovningar" className="btn-brand btn-brand-lg">
+                  <Link href="/vinkurser" className="btn-brand btn-brand-lg">
                     <BookOpen className="mr-1 h-4 w-4" />
                     Utforska våra vinkurser
                   </Link>

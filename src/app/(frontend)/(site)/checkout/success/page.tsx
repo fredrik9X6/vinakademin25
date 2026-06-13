@@ -25,7 +25,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
   const sessionId = resolvedSearchParams.session_id
 
   if (!sessionId) {
-    redirect('/vinprovningar')
+    redirect('/vinkurser')
   }
 
   const user = await getUser()
@@ -226,7 +226,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             {/* Action Buttons */}
             {user && enrollment ? (
               <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-border">
-                <Link href={`/vinprovningar/${course?.slug}`} className="btn-brand-lg flex-1">
+                <Link href={`/vinkurser/${course?.slug}`} className="btn-brand-lg flex-1">
                   <BookOpen className="w-5 h-5 mr-2" />
                   Börja vinkursen nu
                 </Link>

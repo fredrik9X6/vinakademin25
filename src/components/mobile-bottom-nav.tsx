@@ -36,7 +36,7 @@ interface PrimaryTab {
 
 const PRIMARY_TABS: PrimaryTab[] = [
   { label: 'Hem', href: '/', icon: Home, matchExact: true },
-  { label: 'Vinkurser', href: '/vinprovningar', icon: Wine },
+  { label: 'Vinkurser', href: '/vinkurser', icon: Wine },
   { label: 'Vinlistan', href: '/vinlistan', icon: List },
   { label: 'Artiklar', href: '/artiklar', icon: Newspaper },
 ]

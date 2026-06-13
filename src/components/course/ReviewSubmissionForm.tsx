@@ -78,7 +78,7 @@ export function ReviewSubmissionForm({
           <p className="text-muted-foreground">
             Din recension hjälper andra att upptäcka bra vinkurser.
           </p>
-          <Link href={`/vinprovningar/${courseSlug}`}>
+          <Link href={`/vinkurser/${courseSlug}`}>
             <Button variant="outline" className="mt-4">
               Tillbaka till vinkursen
             </Button>
@@ -97,7 +97,7 @@ export function ReviewSubmissionForm({
           <p className="text-muted-foreground">
             Du behöver vara inloggad för att skriva en recension.
           </p>
-          <Link href={`/logga-in?from=${encodeURIComponent(`/vinprovningar/${courseSlug}/recension${token ? `?token=${token}` : ''}`)}`}>
+          <Link href={`/logga-in?from=${encodeURIComponent(`/vinkurser/${courseSlug}/recension${token ? `?token=${token}` : ''}`)}`}>
             <Button className="mt-4">Logga in</Button>
           </Link>
         </CardContent>

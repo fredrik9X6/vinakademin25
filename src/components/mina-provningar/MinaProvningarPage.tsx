@@ -105,7 +105,7 @@ export function MinaProvningarPage() {
           <p className="text-muted-foreground mb-6 max-w-md">
             Du har inte köpt några vinkurser ännu. Utforska våra vinkurser och börja din vinresa!
           </p>
-          <Link href="/vinprovningar" className="btn-brand">
+          <Link href="/vinkurser" className="btn-brand">
             Utforska vinkurser
           </Link>
         </div>

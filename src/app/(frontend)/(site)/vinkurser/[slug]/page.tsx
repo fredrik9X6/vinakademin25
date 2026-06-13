@@ -15,7 +15,7 @@ import { BreadcrumbJsonLd, CourseJsonLd } from '@/components/seo/JsonLd'
 import { loggerFor } from '@/lib/logger'
 import { PARTICIPANT_COOKIE, getActiveParticipantSession } from '@/lib/sessions'
 
-const log = loggerFor('(frontend)-(site)-vinprovningar-[slug]-page')
+const log = loggerFor('(frontend)-(site)-vinkurser-[slug]-page')
 
 interface CoursePageProps {
   params: Promise<{
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
 
   const course = result.docs[0] as Vinkurser | undefined
   const base = getSiteURL()
-  const canonical = `${base}/vinprovningar/${slug}`
+  const canonical = `${base}/vinkurser/${slug}`
 
   if (!course) {
     return {
@@ -364,7 +364,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     // Only redirect if we're sure the user is not authenticated
     // Check getUser() result (more reliable than cookie check)
     if (!currentUser) {
-      const currentUrl = `/vinprovningar/${course.slug || course.id}${selectedLessonId ? `?lesson=${selectedLessonId}` : selectedQuizId ? `?quiz=${selectedQuizId}` : ''}`
+      const currentUrl = `/vinkurser/${course.slug || course.id}${selectedLessonId ? `?lesson=${selectedLessonId}` : selectedQuizId ? `?quiz=${selectedQuizId}` : ''}`
       redirect(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
     }
   }
@@ -527,8 +527,8 @@ function CourseSchema({ course }: { course: Vinkurser }) {
       <BreadcrumbJsonLd
         items={[
           { name: 'Hem', url: `${base}/` },
-          { name: 'Vinkurser', url: `${base}/vinprovningar` },
-          { name: course.title, url: `${base}/vinprovningar/${slug}` },
+          { name: 'Vinkurser', url: `${base}/vinkurser` },
+          { name: course.title, url: `${base}/vinkurser/${slug}` },
         ]}
       />
     </>

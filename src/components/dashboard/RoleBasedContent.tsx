@@ -34,7 +34,7 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
             <p className="text-purple-600 mt-2">Du har inga pågående vinkurser.</p>
             <div className="mt-4">
               <Link
-                href="/vinprovningar"
+                href="/vinkurser"
                 className="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
               >
                 Utforska vinkurser
@@ -67,7 +67,7 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
           <p className="text-green-600 mt-2">Hantera dina vinkurser och deltagare här.</p>
           <div className="mt-4">
             <Link
-              href="/admin/vinprovningar"
+              href="/admin/vinkurser"
               className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
             >
               Hantera vinkurser

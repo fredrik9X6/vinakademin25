@@ -20,13 +20,14 @@ interface BreadcrumbEntry {
 
 /**
  * Display label for every first-level path segment. Covers both single-page
- * routes (e.g. `/skapa-provning`) and section roots (e.g. `/vinprovningar`).
+ * routes (e.g. `/skapa-provning`) and section roots (e.g. `/vinkurser`).
  * Anything not here falls through to `formatSlug()` which does a hyphen-to-
  * space replacement so we never render "Skapa-provning" again.
  */
 const PAGE_LABELS: Record<string, string> = {
   // Section roots
-  vinprovningar: 'Vinkurser',
+  vinkurser: 'Vinkurser',
+  vinprovningar: 'Vinkurser', // legacy URL — middleware 301s but cover the segment for any in-flight requests
   kurser: 'Vinkurser',
   provningsmallar: 'Provningsmallar',
   artiklar: 'Artiklar',
@@ -99,8 +100,9 @@ const SUB_LABELS: Record<string, Record<string, string>> = {
 
 /** Which sections resolve a slug → title via API for the detail breadcrumb. */
 const TITLE_APIS: Record<string, string> = {
-  vinprovningar: '/api/vinprovningar/title',
-  kurser: '/api/vinprovningar/title',
+  vinkurser: '/api/vinkurser/title',
+  vinprovningar: '/api/vinkurser/title', // legacy
+  kurser: '/api/vinkurser/title',
   artiklar: '/api/blog-posts/title',
   vinlistan: '/api/wines/title',
   regioner: '/api/regions/title',
@@ -260,7 +262,7 @@ export function BreadcrumbBar() {
     if (
       itemKind &&
       itemId &&
-      (pathSegments[0] === 'kurser' || pathSegments[0] === 'vinprovningar') &&
+      (pathSegments[0] === 'kurser' || pathSegments[0] === 'vinkurser' || pathSegments[0] === 'vinprovningar') &&
       pathSegments[1]
     ) {
       const fallback = itemKind === 'quiz' ? `Quiz ${itemId}` : `Moment ${itemId}`

@@ -223,7 +223,7 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
             <div className="text-center py-8 text-muted-foreground">
               <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Du har inte köpt några vinkurser än.</p>
-              <Button className="mt-4" onClick={() => (window.location.href = '/vinprovningar')}>
+              <Button className="mt-4" onClick={() => (window.location.href = '/vinkurser')}>
                 Utforska vinkurser
               </Button>
             </div>

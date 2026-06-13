@@ -215,7 +215,7 @@ export function HelpPageClient() {
               <Badge variant="outline">Konto</Badge>
             </Link>
             <Link
-              href="/vinprovningar"
+              href="/vinkurser"
               className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
             >
               <span className="text-sm font-medium">Alla Vinkurser</span>

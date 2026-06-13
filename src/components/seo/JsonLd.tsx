@@ -98,7 +98,7 @@ export function CourseJsonLd(input: CourseJsonLdInput) {
     durationHours,
     instructorName,
   } = input
-  const url = `${siteURL}/vinprovningar/${slug}`
+  const url = `${siteURL}/vinkurser/${slug}`
 
   // Schema.org `EducationalLevel` text values; Google accepts free-form.
   const levelText =

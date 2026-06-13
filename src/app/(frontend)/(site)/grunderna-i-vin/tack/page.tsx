@@ -105,7 +105,7 @@ export default function GrunderaIVinTackPage() {
         {/* What's next */}
         <div className="mt-16 grid gap-4 text-left md:grid-cols-2">
           <Link
-            href="/vinprovningar"
+            href="/vinkurser"
             className="group flex items-start gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
           >
             <div
