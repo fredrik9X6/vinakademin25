@@ -56,6 +56,15 @@ const nextConfig = {
         hostname: '*.amazonaws.com',
         pathname: '/**',
       },
+      // Cloudflare R2 custom domain — serves media direct from the bucket so
+      // the Railway app server is no longer in the hot path for every image
+      // (previously caused recurring site-wide image outages when the R2
+      // proxy at /api/media/file/* hung on stale keep-alive sockets).
+      {
+        protocol: 'https',
+        hostname: 'media.vinakademin.se',
+        pathname: '/**',
+      },
       // Systembolaget bottle-image CDN — used by customWine snapshots when a
       // wine is picked from the Systembolaget catalog (productNumber-derived
       // CDN URLs flow through to Reviews, TastingPlans, and UserWines).
