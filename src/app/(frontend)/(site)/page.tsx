@@ -5,28 +5,22 @@ import { getSiteURL } from '@/lib/site-url'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  Clock,
   BookOpen,
-  User,
   ArrowRight,
   Star,
   Play,
   Users,
   Wine,
-  ShoppingCart,
-  VideoIcon,
-  BarChart3,
   Sparkles,
   CheckCircle2,
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import MuxPlayer from '@mux/mux-player-react'
-import { transformCourseWithModules } from '@/lib/course-utils-server'
 import { NewsletterSignupBlock } from '@/components/blocks/NewsletterSignupBlock'
 import { NeuralHeroWithBanner } from '@/components/home/NeuralHeroWithBanner'
-import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
 import { ProvningsmallarFeature } from '@/components/home/ProvningsmallarFeature'
+import { OfferingsComparison } from '@/components/home/OfferingsComparison'
+import { VinkurserFeature } from '@/components/home/VinkurserFeature'
 import type { TastingTemplate } from '@/payload-types'
 
 export const metadata: Metadata = {
@@ -46,29 +40,24 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const payload = await getPayload({ config })
 
-  // Fetch featured course, recent courses, recent blog posts, and the
-  // tasting-template library showcase (3 most recent published + total count).
+  // Fetch top-3 vinkurser + recent blog posts + 3 published templates + counts.
   const [
-    featuredCourseResult,
-    recentCoursesResult,
+    featuredCoursesResult,
+    coursesTotalResult,
     recentBlogPostsResult,
     featuredTemplatesResult,
     templatesTotalResult,
   ] = await Promise.all([
     payload.find({
       collection: 'vinkurser',
-      where: {
-        and: [{ isFeatured: { equals: true } }, { _status: { equals: 'published' } }],
-      },
-      depth: 1,
-      limit: 1,
-    }),
-    payload.find({
-      collection: 'vinkurser',
       where: { _status: { equals: 'published' } },
       depth: 1,
       limit: 3,
-      sort: '-createdAt',
+      sort: '-isFeatured,-createdAt',
+    }),
+    payload.count({
+      collection: 'vinkurser',
+      where: { _status: { equals: 'published' } },
     }),
     payload.find({
       collection: 'blog-posts',
@@ -90,202 +79,26 @@ export default async function HomePage() {
     }),
   ])
 
-  const featuredCourse = featuredCourseResult.docs[0]
-  const recentCourses = recentCoursesResult.docs
+  const featuredCourses = featuredCoursesResult.docs
+  const coursesTotal = coursesTotalResult.totalDocs
   const recentBlogPosts = recentBlogPostsResult.docs
   const featuredTemplates = featuredTemplatesResult.docs as TastingTemplate[]
   const templatesTotal = templatesTotalResult.totalDocs
 
-  // Transform course with modules - using helper function
-  const transformCourse = async (course: any) => {
-    return await transformCourseWithModules(course)
-  }
-
-  // Transform featured course if it exists
-  const transformedFeaturedCourse = featuredCourse ? await transformCourse(featuredCourse) : null
-
-  const coursesWithModules = await Promise.all(recentCourses.map(transformCourse))
-
-  const formatPrice = (price: number) => {
-    if (price === 0) return 'Gratis'
-    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(price)
-  }
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-      case 'intermediate':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-      case 'advanced':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-    }
-  }
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Neural Network Hero with Join Session Banner */}
-      <NeuralHeroWithBanner featuredCourse={transformedFeaturedCourse} />
+      {/* Hero — dual CTA: see courses + browse templates */}
+      <NeuralHeroWithBanner />
 
-      {/* Provningsmallar bibliotek — feature surfacing the templates library */}
+      {/* Vinkurs vs Provningsmall — side-by-side explainer (spec C) */}
+      <OfferingsComparison />
+
+      {/* Featured Vinkurser showcase */}
+      <VinkurserFeature courses={featuredCourses} totalCount={coursesTotal} />
+
+      {/* Featured Provningsmallar showcase */}
       <ProvningsmallarFeature templates={featuredTemplates} totalCount={templatesTotal} />
 
-      {/* How It Works Section — hidden for now, kept for easy restore */}
-      {false && (
-      <section className="py-16 lg:py-24 relative overflow-hidden">
-        {/* Background decorative elements */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-brand-300/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-brand-400/5 rounded-full blur-3xl" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/20 mb-6">
-              <span className="text-sm font-medium text-brand-400">Enkelt & intuitivt</span>
-            </div>
-            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl mb-4">Så fungerar det</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Fyra enkla steg till en minnesvärd vinupplevelse
-            </p>
-          </div>
-
-          {/* Desktop: Steps with connecting line */}
-          <div className="hidden lg:block relative">
-            {/* Connecting line */}
-            <div className="absolute top-12 left-0 right-0 h-0.5 bg-brand-gradient-tri opacity-20" />
-
-            <div className="grid grid-cols-4 gap-8">
-              {[
-                {
-                  icon: ShoppingCart,
-                  title: 'Välj en vinkurs',
-                  description:
-                    'Bläddra bland våra kurerade vinkurser och välj den som passar dig bäst.',
-                  step: '01',
-                },
-                {
-                  icon: Wine,
-                  title: 'Köp vinen',
-                  description:
-                    'Få en lista med viner från Systembolaget. Enkla länkar så du hittar rätt.',
-                  step: '02',
-                },
-                {
-                  icon: VideoIcon,
-                  title: 'Följ guiden',
-                  description:
-                    'Bjud in vänner eller gör det själv. Se videor, läs noter och utforska vinerna.',
-                  step: '03',
-                },
-                {
-                  icon: BarChart3,
-                  title: 'Jämför resultat',
-                  description:
-                    'Se guidens smaknoter och jämför med dina egna (och gästernas) intryck.',
-                  step: '04',
-                },
-              ].map((step, index) => (
-                <div key={index} className="relative">
-                  {/* Step number circle */}
-                  <div className="relative z-10 mx-auto w-24 h-24 rounded-full bg-brand-gradient-diagonal p-0.5 mb-6 group hover:scale-110 transition-transform duration-300">
-                    <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                      <step.icon className="h-10 w-10 text-brand-400" />
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="text-center space-y-3">
-                    <div className="inline-block px-3 py-1 rounded-full bg-brand-300/10 border border-brand-300/20">
-                      <span className="text-xs font-semibold text-brand-400">STEG {step.step}</span>
-                    </div>
-                    <h3 className="text-xl font-medium">{step.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Mobile/Tablet: Cards with vertical flow */}
-          <div className="lg:hidden space-y-6">
-            {[
-              {
-                icon: ShoppingCart,
-                title: 'Välj en vinkurs',
-                description:
-                  'Bläddra bland våra kurerade vinkurser och välj den som passar dig bäst.',
-                step: '01',
-              },
-              {
-                icon: Wine,
-                title: 'Köp vinen',
-                description:
-                  'Få en lista med viner från Systembolaget. Enkla länkar så du hittar rätt.',
-                step: '02',
-              },
-              {
-                icon: VideoIcon,
-                title: 'Följ guiden',
-                description:
-                  'Bjud in vänner eller gör det själv. Se videor, läs noter och utforska vinerna.',
-                step: '03',
-              },
-              {
-                icon: BarChart3,
-                title: 'Jämför resultat',
-                description:
-                  'Se guidens smaknoter och jämför med dina egna (och gästernas) intryck.',
-                step: '04',
-              },
-            ].map((step, index) => (
-              <Card
-                key={index}
-                className="relative overflow-hidden border-l-4 border-l-brand-400 hover:shadow-xl transition-all duration-300 group"
-              >
-                <CardHeader>
-                  <div className="flex items-start gap-4">
-                    {/* Icon circle */}
-                    <div className="flex-shrink-0 w-16 h-16 rounded-full bg-brand-gradient-diagonal p-0.5 group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                        <step.icon className="h-7 w-7 text-brand-400" />
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 space-y-2">
-                      <div className="inline-block px-3 py-1 rounded-full bg-brand-300/10 border border-brand-300/20">
-                        <span className="text-xs font-semibold text-brand-400">
-                          STEG {step.step}
-                        </span>
-                      </div>
-                      <CardTitle className="text-xl">{step.title}</CardTitle>
-                      <CardDescription className="text-base leading-relaxed">
-                        {step.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-
-                  {/* Decorative step number */}
-                  <div className="absolute top-4 right-4 text-7xl font-bold text-brand-300/5 select-none">
-                    {step.step}
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-      )}
-
-      {/* Featured Course Section — hidden for now, kept for easy restore */}
-      {false && transformedFeaturedCourse && (
-        <FeaturedCourseCard course={transformedFeaturedCourse} />
-      )}
 
       {/* Articles Section */}
       {recentBlogPosts.length > 0 && (
