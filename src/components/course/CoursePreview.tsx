@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Clock,
   Users,
-  Star,
   BookOpen,
   Award,
   Play,
@@ -23,6 +22,7 @@ import {
   MessageSquare,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { StarsDisplay } from '@/components/ui/stars-display'
 
 interface CoursePreviewProps {
   course: {
@@ -121,14 +121,9 @@ export default function CoursePreview({
     module.lessons.filter((lesson) => lesson.isPreview),
   )
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-      />
-    ))
-  }
+  // renderStars retained for callsites that still pass an integer; new code
+  // should use <StarsDisplay/> directly since it handles fractional ratings.
+  const renderStars = (rating: number) => <StarsDisplay value={rating} size="sm" />
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('sv-SE', {
@@ -181,9 +176,7 @@ export default function CoursePreview({
 
               <div className="flex items-center gap-6 mb-6">
                 <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {renderStars(Math.floor(course.analytics.averageRating))}
-                  </div>
+                  <StarsDisplay value={course.analytics.averageRating} size="sm" />
                   <span className="text-sm">
                     {course.analytics.averageRating.toFixed(1)} ({course.analytics.totalRatings}{' '}
                     reviews)

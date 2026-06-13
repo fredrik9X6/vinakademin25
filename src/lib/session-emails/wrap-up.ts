@@ -69,10 +69,21 @@ export interface WrapUpEmailInput {
   } | null
 }
 
+/**
+ * Render a rating as Unicode stars for email — half-step support via ½.
+ * Half-star Unicode (⯨, etc.) is not consistently rendered across email
+ * clients, so we use a plain "½" character after the last full star as a
+ * universal fallback that reads cleanly even in plain-text emails.
+ * Range: 0–5 (clamped).
+ */
 function renderStars(rating: number | null): string {
   if (rating == null) return '—'
-  const full = Math.max(0, Math.min(5, Math.round(rating)))
-  return '★'.repeat(full) + '☆'.repeat(5 - full)
+  const clamped = Math.max(0, Math.min(5, rating))
+  const quantized = Math.round(clamped * 2) / 2
+  const full = Math.floor(quantized)
+  const hasHalf = quantized - full >= 0.5
+  const empty = 5 - full - (hasHalf ? 1 : 0)
+  return '★'.repeat(full) + (hasHalf ? '½' : '') + '☆'.repeat(empty)
 }
 
 function buyAgainChip(value: WrapUpUserReview['buyAgain']): string {

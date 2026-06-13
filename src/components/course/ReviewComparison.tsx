@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
+import { StarsDisplay } from '@/components/ui/stars-display'
 
 export interface WineReview {
   id: number | string
@@ -290,7 +291,12 @@ export default function ReviewComparison({
             <CardTitle className="text-lg">{review.participantName}</CardTitle>
           </div>
           <div className="flex flex-col gap-1">
-            {review.rating && <CardDescription>Betyg: {review.rating}/5 ⭐</CardDescription>}
+            {review.rating && (
+              <CardDescription className="flex items-center gap-1.5">
+                <StarsDisplay value={review.rating} size="sm" />
+                <span>{review.rating}/5</span>
+              </CardDescription>
+            )}
             {review.buyAgain !== undefined && (
               <CardDescription className="flex items-center gap-1.5">
                 {review.buyAgain ? (

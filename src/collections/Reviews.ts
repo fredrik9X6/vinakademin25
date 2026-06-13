@@ -401,10 +401,17 @@ export const Reviews: CollectionConfig = {
       name: 'rating',
       type: 'number',
       label: 'Betyg',
-      min: 1,
+      min: 0.5,
       max: 5,
       required: true,
-      admin: { description: 'User rating from 1-5' },
+      admin: { description: 'User rating from 0.5 to 5, half-step increments (0.5, 1, 1.5, …, 5)' },
+      // numeric column already; only the multiple-of-0.5 invariant lives here.
+      validate: (val: number | null | undefined) => {
+        if (val == null) return 'Betyg krävs'
+        if (val < 0.5 || val > 5) return 'Betyg måste vara mellan 0,5 och 5'
+        if (Math.round(val * 2) !== val * 2) return 'Betyg måste vara i halvstjärnor (t.ex. 4,5)'
+        return true
+      },
     },
     {
       name: 'reviewText',

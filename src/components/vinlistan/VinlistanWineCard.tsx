@@ -1,10 +1,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Star } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
-import { cn } from '@/lib/utils'
+import { StarsDisplay } from '@/components/ui/stars-display'
 
 const TYPE_LABEL: Record<string, string> = {
   red: 'Rött',
@@ -16,25 +15,13 @@ const TYPE_LABEL: Record<string, string> = {
   dessert: 'Dessert',
 }
 
+/**
+ * Backwards-compatible wrapper around the shared StarsDisplay so existing
+ * StarsRow callsites keep working. New code should import StarsDisplay
+ * directly from '@/components/ui/stars-display'.
+ */
 export function StarsRow({ value, max = 5 }: { value: number; max?: number }) {
-  return (
-    <div className="flex items-center gap-0.5" aria-label={`${value} av ${max} stjärnor`}>
-      {Array.from({ length: max }, (_, i) => {
-        const filled = i < value
-        return (
-          <Star
-            key={i}
-            className={cn(
-              'h-3.5 w-3.5',
-              filled ? 'fill-brand-400 text-brand-400' : 'fill-transparent text-muted-foreground/30',
-            )}
-            strokeWidth={filled ? 0 : 1.5}
-            aria-hidden
-          />
-        )
-      })}
-    </div>
-  )
+  return <StarsDisplay value={value} max={max} size="sm" />
 }
 
 const formatPrice = (price: number) =>

@@ -1,14 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Trophy, Sparkles, Wine as WineIcon } from 'lucide-react'
+import { StarsDisplay } from '@/components/ui/stars-display'
 import type { RecapHeadline } from '@/lib/session-recap'
 
 export interface SessionRecapHeaderProps {
   headline: RecapHeadline
-}
-
-function renderStars(rating: number): string {
-  const full = Math.max(0, Math.min(5, Math.round(rating)))
-  return '★'.repeat(full) + '☆'.repeat(5 - full)
 }
 
 export function SessionRecapHeader({ headline }: SessionRecapHeaderProps) {
@@ -39,10 +35,8 @@ export function SessionRecapHeader({ headline }: SessionRecapHeaderProps) {
           {topWine ? (
             <>
               <p className="text-base font-medium truncate">{topWine.title}</p>
-              <p className="text-sm">
-                <span className="text-brand-400 tracking-wider">
-                  {renderStars(topWine.avgRating)}
-                </span>{' '}
+              <p className="flex items-center gap-2 text-sm">
+                <StarsDisplay value={topWine.avgRating} size="sm" />
                 <span className="text-muted-foreground">
                   {topWine.avgRating.toFixed(1)} · {topWine.ratingCount} betyg
                 </span>

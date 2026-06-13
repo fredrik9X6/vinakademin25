@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
+import { StarsDisplay } from '@/components/ui/stars-display'
 import type { Review, Wine, Media } from '@/payload-types'
 
 type WineType = 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
@@ -116,11 +117,7 @@ export function WineReviewListItem({ review, href, showPublishedBadge = true }: 
           </div>
           {subtitle && <p className="text-sm text-muted-foreground truncate">{subtitle}</p>}
           <div className="flex items-center gap-3 mt-1">
-            {typeof rating === 'number' && (
-              <span className="text-brand-400 text-sm tracking-wider">
-                {'★'.repeat(Math.round(rating))}{'☆'.repeat(5 - Math.round(rating))}
-              </span>
-            )}
+            {typeof rating === 'number' && <StarsDisplay value={rating} size="sm" />}
             {date && <span className="text-xs text-muted-foreground">{date}</span>}
           </div>
         </div>
