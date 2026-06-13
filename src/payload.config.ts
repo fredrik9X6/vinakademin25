@@ -74,8 +74,19 @@ const s3StoragePlugin = s3Enabled
           prefix: s3Prefix, // Use dev/production prefix to separate environments
           ...(process.env.S3_PUBLIC_URL
             ? {
+                // When S3_PUBLIC_URL is set (Cloudflare R2 custom domain bound
+                // to the bucket — e.g. https://media.vinakademin.se), Payload
+                // persists `Media.url` and every `Media.sizes.*.url` as a
+                // direct CDN URL at upload time, so requests go browser → R2
+                // CDN and skip the `/api/media/file/*` proxy entirely.
+                //
+                // The `${prefix}/` segment is mandatory: objects live at
+                // `<prefix>/<filename>` in R2 (e.g. `production/foo.jpg`),
+                // and Payload's `generateFileURL({filename})` callback only
+                // receives the bare filename, so we have to splice the prefix
+                // in ourselves. Without it, every uploaded URL is a 404.
                 generateFileURL: ({ filename }: { filename: string }) =>
-                  `${process.env.S3_PUBLIC_URL!.replace(/\/$/, '')}/${filename}`,
+                  `${process.env.S3_PUBLIC_URL!.replace(/\/$/, '')}/${s3Prefix}/${filename}`,
               }
             : {}),
         },
