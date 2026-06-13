@@ -11,7 +11,7 @@ export const CourseReference: Block = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'vinprovningar',
+      relationTo: 'vinkurser',
       required: true,
       admin: {
         description: 'Select a course to reference in this content',

@@ -69,7 +69,7 @@ export interface Config {
   collections: {
     media: Media;
     users: User;
-    vinprovningar: Vinprovningar;
+    vinkurser: Vinkurser;
     modules: Module;
     'content-items': ContentItem;
     'user-progress': UserProgress;
@@ -112,7 +112,7 @@ export interface Config {
   collectionsSelect: {
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
-    vinprovningar: VinprovningarSelect<false> | VinprovningarSelect<true>;
+    vinkurser: VinkurserSelect<false> | VinkurserSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
     'content-items': ContentItemsSelect<false> | ContentItemsSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
@@ -566,15 +566,15 @@ export interface Country {
   createdAt: string;
 }
 /**
- * Wine education courses offered on the platform
+ * Wine education video courses offered on the platform
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "vinprovningar".
+ * via the `definition` "vinkurser".
  */
-export interface Vinprovningar {
+export interface Vinkurser {
   id: number;
   /**
-   * Wine tasting title displayed to students
+   * Wine course title displayed to students
    */
   title: string;
   /**
@@ -582,11 +582,11 @@ export interface Vinprovningar {
    */
   slug: string;
   /**
-   * Brief description of the wine tasting content and goals
+   * Brief description of the wine course content and goals
    */
   description: string;
   /**
-   * Detailed wine tasting description with rich formatting, wine lists, and custom blocks
+   * Detailed wine course description with rich formatting, wine lists, and custom blocks
    */
   fullDescription: {
     root: {
@@ -604,7 +604,7 @@ export interface Vinprovningar {
     [k: string]: unknown;
   };
   /**
-   * Main wine tasting image for thumbnails and hero sections
+   * Main wine course image for thumbnails and hero sections
    */
   featuredImage: number | Media;
   /**
@@ -632,24 +632,24 @@ export interface Vinprovningar {
   };
   previewSourceVideo?: (number | null) | Media;
   /**
-   * Wine tasting price in SEK
+   * Wine course price in SEK
    */
   price: number;
   level: 'beginner' | 'intermediate' | 'advanced';
   /**
-   * Estimated wine tasting duration in hours
+   * Estimated wine course duration in hours
    */
   duration?: number | null;
   /**
-   * Display this wine tasting prominently on homepage and listing
+   * Display this wine course prominently on homepage and listing
    */
   isFeatured?: boolean | null;
   /**
-   * Wine tasting instructor
+   * Wine course instructor
    */
   instructor: number | User;
   /**
-   * Ordered modules for this wine tasting. Drag and drop to reorder. Click "Add Module" then select an existing module or create a new one.
+   * Ordered modules for this wine course. Drag and drop to reorder. Click "Add Module" then select an existing module or create a new one.
    */
   modules?:
     | {
@@ -661,7 +661,7 @@ export interface Vinprovningar {
       }[]
     | null;
   /**
-   * Wine tasting tags for search and filtering
+   * Wine course tags for search and filtering
    */
   tags?:
     | {
@@ -670,11 +670,11 @@ export interface Vinprovningar {
       }[]
     | null;
   /**
-   * Stripe Product ID - Auto-generated when wine tasting is published with a price
+   * Stripe Product ID - Auto-generated when wine course is published with a price
    */
   stripeProductId?: string | null;
   /**
-   * Stripe Price ID - Auto-generated when wine tasting is published with a price
+   * Stripe Price ID - Auto-generated when wine course is published with a price
    */
   stripePriceId?: string | null;
   /**
@@ -1345,9 +1345,9 @@ export interface SessionParticipant {
 export interface CourseSession {
   id: number;
   /**
-   * A course (Vinprovningar) OR a tastingPlan must be set — XOR enforced by beforeValidate.
+   * A course (Vinkurser) OR a tastingPlan must be set — XOR enforced by beforeValidate.
    */
-  course?: (number | null) | Vinprovningar;
+  course?: (number | null) | Vinkurser;
   /**
    * Set when this session is driven by a member-authored plan. XOR with course.
    */
@@ -1683,7 +1683,7 @@ export interface UserProgress {
   /**
    * Course being tracked
    */
-  course: number | Vinprovningar;
+  course: number | Vinkurser;
   /**
    * Course title for easy reference
    */
@@ -2052,7 +2052,7 @@ export interface Enrollment {
   /**
    * Course the student is enrolled in
    */
-  course: number | Vinprovningar;
+  course: number | Vinkurser;
   status: 'active' | 'completed' | 'suspended' | 'cancelled' | 'expired' | 'pending';
   enrollmentType: 'paid' | 'free' | 'trial' | 'scholarship' | 'staff' | 'beta';
   /**
@@ -2555,7 +2555,7 @@ export interface Transaction {
   /**
    * Related course for course purchases
    */
-  relatedCourse?: (number | null) | Vinprovningar;
+  relatedCourse?: (number | null) | Vinkurser;
   /**
    * Information from the payment processor
    */
@@ -2697,7 +2697,7 @@ export interface Subscription {
   /**
    * Courses included with this subscription
    */
-  coursesIncluded?: (number | Vinprovningar)[] | null;
+  coursesIncluded?: (number | Vinkurser)[] | null;
   /**
    * Discount percentage for course purchases
    */
@@ -2748,7 +2748,7 @@ export interface Order {
     /**
      * Course being purchased
      */
-    course: number | Vinprovningar;
+    course: number | Vinkurser;
     /**
      * Price paid for this course (in SEK)
      */
@@ -2856,7 +2856,7 @@ export interface CourseReview {
    * Auto-generated from course name and rating
    */
   title?: string | null;
-  course: number | Vinprovningar;
+  course: number | Vinkurser;
   author?: (number | null) | User;
   /**
    * Captured at write-time from the linked user. Survives user deletion so the review keeps its attribution.
@@ -3211,7 +3211,7 @@ export interface VinkompassArchetype {
   /**
    * Soft pitch on the result page
    */
-  recommendedVinprovning?: (number | null) | Vinprovningar;
+  recommendedVinprovning?: (number | null) | Vinkurser;
   /**
    * Tag sent to Beehiiv at subscribe (e.g. "vk-light-classic")
    */
@@ -3361,8 +3361,8 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
-        relationTo: 'vinprovningar';
-        value: number | Vinprovningar;
+        relationTo: 'vinkurser';
+        value: number | Vinkurser;
       } | null)
     | ({
         relationTo: 'modules';
@@ -3707,9 +3707,9 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "vinprovningar_select".
+ * via the `definition` "vinkurser_select".
  */
-export interface VinprovningarSelect<T extends boolean = true> {
+export interface VinkurserSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   description?: T;
@@ -4966,7 +4966,7 @@ export interface CourseReferenceBlock {
   /**
    * Select a course to reference in this content
    */
-  course: number | Vinprovningar;
+  course: number | Vinkurser;
   /**
    * How this course reference should be displayed
    */

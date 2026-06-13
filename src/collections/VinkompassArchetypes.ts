@@ -68,10 +68,15 @@ export const VinkompassArchetypes: CollectionConfig = {
       },
     },
     {
+      // Field name kept as 'recommendedVinprovning' to avoid a DB column rename
+      // (Payload would otherwise migrate recommended_vinprovning_id → recommended_vinkurs_id).
+      // The relationTo target is 'vinkurser' (the new collection slug); only the
+      // legacy field name persists. See spec D2.
       name: 'recommendedVinprovning',
       type: 'relationship',
-      relationTo: 'vinprovningar',
+      relationTo: 'vinkurser',
       hasMany: false,
+      label: 'Recommended wine course',
       admin: {
         description: 'Soft pitch on the result page',
       },

@@ -6,7 +6,7 @@ import type {
   VinkompassArchetype,
   VinkompassAttempt,
   Wine,
-  Vinprovningar,
+  Vinkurser,
 } from '@/payload-types'
 import { getSiteURL } from '@/lib/site-url'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
@@ -58,7 +58,7 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
     : []
   const recommendedVinprovning =
     archetype.recommendedVinprovning && typeof archetype.recommendedVinprovning === 'object'
-      ? (archetype.recommendedVinprovning as Vinprovningar)
+      ? (archetype.recommendedVinprovning as Vinkurser)
       : null
 
   const isGated = !attempt.email

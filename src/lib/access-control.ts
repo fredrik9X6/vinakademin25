@@ -321,7 +321,7 @@ export const canAccessLesson = async (
 
     // Find the vinprovning that contains this module
     const vinprovningar = await req.payload.find({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       where: {
         'modules.module': { equals: module.id },
       },
@@ -388,7 +388,7 @@ export const canTakeQuiz = async (
 
     // Find the vinprovning that contains this module
     const vinprovningar = await req.payload.find({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       where: {
         'modules.module': { equals: module.id },
       },

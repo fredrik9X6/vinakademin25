@@ -11,7 +11,7 @@ import { loggerFor } from './lib/logger'
 import { migrations } from './migrations'
 import { Media } from './collections/Media'
 import { Users } from './collections/Users'
-import { Vinprovningar } from './collections/Vinprovningar'
+import { Vinkurser } from './collections/Vinkurser'
 import { Modules } from './collections/Modules'
 import { ContentItems } from './collections/ContentItems'
 import { UserProgress } from './collections/UserProgress'
@@ -222,7 +222,7 @@ export default buildConfig({
   collections: [
     Media,
     Users,
-    Vinprovningar,
+    Vinkurser,
     Modules,
     ContentItems,
     UserProgress,

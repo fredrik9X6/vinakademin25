@@ -57,10 +57,10 @@ export const CourseSessions: CollectionConfig = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'vinprovningar',
+      relationTo: 'vinkurser',
       required: false,
       admin: {
-        description: 'A course (Vinprovningar) OR a tastingPlan must be set — XOR enforced by beforeValidate.',
+        description: 'A course (Vinkurser) OR a tastingPlan must be set — XOR enforced by beforeValidate.',
       },
     },
     {

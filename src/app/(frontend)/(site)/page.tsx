@@ -56,7 +56,7 @@ export default async function HomePage() {
     templatesTotalResult,
   ] = await Promise.all([
     payload.find({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       where: {
         and: [{ isFeatured: { equals: true } }, { _status: { equals: 'published' } }],
       },
@@ -64,7 +64,7 @@ export default async function HomePage() {
       limit: 1,
     }),
     payload.find({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       where: { _status: { equals: 'published' } },
       depth: 1,
       limit: 3,

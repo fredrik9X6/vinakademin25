@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     let plan: any = null
     if (courseId) {
       const course = await payload.findByID({
-        collection: 'vinprovningar',
+        collection: 'vinkurser',
         id: courseId,
       })
       if (!course) {

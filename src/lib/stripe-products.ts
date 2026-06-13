@@ -1,7 +1,7 @@
 import { getStripeServer, STRIPE_CONFIG, formatAmountForStripe } from './stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import type { Vinprovningar } from '@/payload-types'
+import type { Vinkurser } from '@/payload-types'
 import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('lib-stripe-products')
@@ -128,28 +128,28 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
  */
 export async function syncCourseWithStripe(
   courseId: string,
-  courseData?: Partial<Vinprovningar>
+  courseData?: Partial<Vinkurser>
 ): Promise<{
   productId: string
   priceId: string
 }> {
   const payload = await getPayload({ config })
 
-  let course: Vinprovningar
+  let course: Vinkurser
 
   if (courseData?.title && courseData?.price !== undefined) {
     // Use provided course data directly (avoids race conditions with DB)
-    course = courseData as Vinprovningar
+    course = courseData as Vinkurser
     log.info(`Using provided course data for Stripe sync: title="${course.title}"`)
   } else {
     // Fetch course from PayloadCMS with overrideAccess to bypass access control
     // Use draft: false to ensure we get the published version with all fields
     course = (await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
       overrideAccess: true, // Bypass access control
       draft: false, // Get the published version, not draft
-    })) as Vinprovningar
+    })) as Vinkurser
 
     if (!course) {
       throw new Error(`Course with ID ${courseId} not found`)
@@ -238,7 +238,7 @@ export async function syncCourseWithStripe(
   try {
     // First, fetch the complete document to ensure we have all required fields
     const existingDoc = await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
       overrideAccess: true,
       depth: 0, // Don't populate relationships to avoid serialization issues
@@ -251,7 +251,7 @@ export async function syncCourseWithStripe(
 
     // Update with the Stripe IDs
     await payload.update({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
       data: {
         stripeProductId: product.id,
@@ -331,7 +331,7 @@ export async function syncAllCoursesWithStripe(): Promise<void> {
   const payload = await getPayload({ config })
 
   const courses = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       _status: { equals: 'published' },
     },
@@ -361,9 +361,9 @@ export async function getStripePriceByCourseId(courseId: string): Promise<string
 
   try {
     const course = (await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
-    })) as Vinprovningar
+    })) as Vinkurser
 
     return course.stripePriceId || null
   } catch (error) {
@@ -412,7 +412,7 @@ export async function validateStripePrice(priceId: string): Promise<boolean> {
  * Get course purchase data for Stripe checkout
  */
 export async function getCourseCheckoutData(courseId: string): Promise<{
-  course: Vinprovningar
+  course: Vinkurser
   priceId: string
   amount: number
 } | null> {
@@ -420,9 +420,9 @@ export async function getCourseCheckoutData(courseId: string): Promise<{
 
   try {
     const course = (await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
-    })) as Vinprovningar
+    })) as Vinkurser
 
     if (!course || !course.stripePriceId) {
       return null

@@ -58,7 +58,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             : order.items[0].course
 
         course = await payload.findByID({
-          collection: 'vinprovningar',
+          collection: 'vinkurser',
           id: courseId,
           depth: 1, // Populate featuredImage and instructor
         })

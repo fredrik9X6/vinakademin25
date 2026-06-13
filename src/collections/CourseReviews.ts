@@ -35,9 +35,9 @@ export const CourseReviews: CollectionConfig = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'vinprovningar',
+      relationTo: 'vinkurser',
       required: true,
-      label: 'Vinprovning',
+      label: 'Wine course',
       index: true,
     },
     {
@@ -146,7 +146,7 @@ export const CourseReviews: CollectionConfig = {
             const courseId = typeof data.course === 'object' ? data.course.id : data.course
             if (courseId && req.payload) {
               const course = await req.payload.findByID({
-                collection: 'vinprovningar',
+                collection: 'vinkurser',
                 id: courseId,
                 depth: 0,
               })

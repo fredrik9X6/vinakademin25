@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
         : session.tastingPlan
 
     const course = courseId
-      ? await payload.findByID({ collection: 'vinprovningar', id: courseId })
+      ? await payload.findByID({ collection: 'vinkurser', id: courseId })
       : null
     const plan = planId
       ? await payload.findByID({

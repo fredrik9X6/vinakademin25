@@ -32,7 +32,7 @@ const STATIC_ROUTES: Array<{ path: string; changeFrequency: SitemapEntry['change
 
 async function fetchSlugs(
   payload: Awaited<ReturnType<typeof getPayload>>,
-  collection: 'vinprovningar' | 'blog-posts' | 'wines' | 'regions' | 'countries' | 'grapes',
+  collection: 'vinkurser' | 'blog-posts' | 'wines' | 'regions' | 'countries' | 'grapes',
   opts: { requirePublished?: boolean } = {},
 ) {
   try {
@@ -59,7 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
   const [courses, posts, wines, regions, countries, grapes] = await Promise.all([
-    fetchSlugs(payload, 'vinprovningar', { requirePublished: true }),
+    fetchSlugs(payload, 'vinkurser', { requirePublished: true }),
     fetchSlugs(payload, 'blog-posts', { requirePublished: true }),
     fetchSlugs(payload, 'wines'),
     fetchSlugs(payload, 'regions'),

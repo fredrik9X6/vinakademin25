@@ -35,7 +35,7 @@ export const UserProgress: CollectionConfig = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'vinprovningar',
+      relationTo: 'vinkurser',
       required: true,
       hasMany: false,
       admin: {
@@ -361,7 +361,7 @@ export const UserProgress: CollectionConfig = {
         if (data.course && req.payload) {
           try {
             const course = await req.payload.findByID({
-              collection: 'vinprovningar',
+              collection: 'vinkurser',
               id: data.course,
             })
             if (course) {

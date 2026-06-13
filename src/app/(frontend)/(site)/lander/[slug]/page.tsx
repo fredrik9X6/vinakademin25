@@ -109,7 +109,7 @@ export default async function CountryDetailPage({ params }: PageProps) {
 
   // Fetch vinprovningar that reference this country
   const vinRes = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: { _status: { equals: 'published' } },
     depth: 2 as any,
     limit: 100,

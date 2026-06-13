@@ -187,7 +187,7 @@ async function updateVinprovningMuxData(
   try {
     // Idempotency: check current state before updating
     const current = await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: String(vinprovningId),
       overrideAccess: true,
     })
@@ -207,7 +207,7 @@ async function updateVinprovningMuxData(
     // Update published version
     try {
       await payload.update({
-        collection: 'vinprovningar',
+        collection: 'vinkurser',
         id: String(vinprovningId),
         data: updatePayload,
         overrideAccess: true,
@@ -221,7 +221,7 @@ async function updateVinprovningMuxData(
     // Also update draft version if it exists
     try {
       await payload.update({
-        collection: 'vinprovningar',
+        collection: 'vinkurser',
         id: String(vinprovningId),
         data: updatePayload,
         overrideAccess: true,

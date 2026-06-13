@@ -1,6 +1,6 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import type { Vinprovningar, Module, ContentItem, User } from '@/payload-types'
+import type { Vinkurser, Module, ContentItem, User } from '@/payload-types'
 import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('lib-content-versioning')
@@ -38,7 +38,7 @@ export class ContentVersionManager {
    * Create a new version of course content
    */
   async createVersion(
-    collection: 'vinprovningar' | 'modules' | 'content-items',
+    collection: 'vinkurser' | 'modules' | 'content-items',
     id: string,
     changes: string[],
     author: string,
@@ -95,7 +95,7 @@ export class ContentVersionManager {
    * Publish a draft version
    */
   async publishVersion(
-    collection: 'vinprovningar' | 'modules' | 'content-items',
+    collection: 'vinkurser' | 'modules' | 'content-items',
     id: string,
     notifyUsers: boolean = true,
   ): Promise<any> {
@@ -140,7 +140,7 @@ export class ContentVersionManager {
    * Get version history for content
    */
   async getVersionHistory(
-    collection: 'vinprovningar' | 'modules' | 'content-items',
+    collection: 'vinkurser' | 'modules' | 'content-items',
     id: string,
   ): Promise<VersionInfo[]> {
     if (!this.payload) await this.initializePayload()
@@ -163,7 +163,7 @@ export class ContentVersionManager {
    * Rollback to a previous version
    */
   async rollbackToVersion(
-    collection: 'vinprovningar' | 'modules' | 'content-items',
+    collection: 'vinkurser' | 'modules' | 'content-items',
     id: string,
     targetVersion: string,
   ): Promise<any> {
@@ -209,7 +209,7 @@ export class ContentVersionManager {
    * Schedule content for future release
    */
   async scheduleRelease(
-    collection: 'vinprovningar' | 'modules' | 'content-items',
+    collection: 'vinkurser' | 'modules' | 'content-items',
     id: string,
     releaseDate: Date,
   ): Promise<void> {
@@ -239,7 +239,7 @@ export class ContentVersionManager {
    * Retire old course content
    */
   async retireContent(
-    collection: 'vinprovningar' | 'modules' | 'content-items',
+    collection: 'vinkurser' | 'modules' | 'content-items',
     id: string,
     migrationPath?: string,
   ): Promise<void> {
@@ -258,7 +258,7 @@ export class ContentVersionManager {
       })
 
       // Notify enrolled users about retirement
-      if (collection === 'vinprovningar') {
+      if (collection === 'vinkurser') {
         await this.notifyUsersOfRetirement(id, migrationPath)
       }
     } catch (error) {
@@ -327,14 +327,14 @@ export class ContentVersionManager {
    * Notify users of content updates
    */
   private async notifyUsersOfUpdate(
-    collection: 'vinprovningar' | 'modules' | 'content-items',
+    collection: 'vinkurser' | 'modules' | 'content-items',
     id: string,
     content: any,
   ): Promise<void> {
     if (!this.payload) await this.initializePayload()
 
     try {
-      if (collection === 'vinprovningar') {
+      if (collection === 'vinkurser') {
         // Find all enrolled users
         const enrollments = await this.payload.find({
           collection: 'enrollments',

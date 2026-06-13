@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch course data
     const course = await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
     })
     log.info(

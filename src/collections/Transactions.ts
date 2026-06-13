@@ -147,7 +147,7 @@ export const Transactions: CollectionConfig = {
     {
       name: 'relatedCourse',
       type: 'relationship',
-      relationTo: 'vinprovningar',
+      relationTo: 'vinkurser',
       hasMany: false,
       admin: {
         description: 'Related course for course purchases',

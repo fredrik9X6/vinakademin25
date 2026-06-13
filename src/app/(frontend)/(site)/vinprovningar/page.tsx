@@ -47,7 +47,7 @@ export default async function KurserPage() {
 
   // Fetch all published courses
   const courses = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: { _status: { equals: 'published' } },
     depth: 1, // Populate featuredImage and instructor
     limit: 1000,

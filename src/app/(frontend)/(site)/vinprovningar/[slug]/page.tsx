@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { Vinprovningar, Module, ContentItem, CourseSession } from '@/payload-types'
+import { Vinkurser, Module, ContentItem, CourseSession } from '@/payload-types'
 import { notFound, redirect } from 'next/navigation'
 import CourseOverview from '@/components/course/CourseOverview'
 import LessonViewer from '@/components/course/LessonViewer'
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
   const payload = await getPayload({ config })
 
   const result = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
     },
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
     limit: 1,
   })
 
-  const course = result.docs[0] as Vinprovningar | undefined
+  const course = result.docs[0] as Vinkurser | undefined
   const base = getSiteURL()
   const canonical = `${base}/vinprovningar/${slug}`
 
@@ -99,7 +99,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
   // Fetch the course by slug
   const courseResult = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       and: [{ slug: { equals: resolvedParams.slug } }, { _status: { equals: 'published' } }],
     },
@@ -486,7 +486,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   )
 }
 
-function CourseSchema({ course }: { course: Vinprovningar }) {
+function CourseSchema({ course }: { course: Vinkurser }) {
   // Respect the CMS noindex toggle: a page we tell Google not to index
   // shouldn't still emit rich-result claims.
   if (course.noindex) return null
@@ -558,7 +558,7 @@ export async function generateStaticParams() {
     const payload = await getPayload({ config })
 
     const courses = await payload.find({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       where: { _status: { equals: 'published' } },
       limit: 1000,
     })

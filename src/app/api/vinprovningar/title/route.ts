@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const draft = Boolean(isAdmin && wantsPreview)
 
     const res = await payload.find({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       where: { slug: { equals: slug } },
       limit: 1,
       depth: 0 as any,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       } as any,
     } as any)
 
-    const title = res?.docs?.[0]?.title
+    const title = (res?.docs?.[0] as { title?: string } | undefined)?.title
 
     return NextResponse.json(
       { title: typeof title === 'string' && title.trim() ? title : null },

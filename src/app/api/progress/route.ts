@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     // Get course data to calculate total lessons
     const course = await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseIdInt,
       depth: 1, // Populate modules array
     })
@@ -408,7 +408,7 @@ export async function POST(request: NextRequest) {
 
     // Get total lessons AND quizzes count to calculate progress (matching GET logic)
     const courseForUpdate = await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseIdInt,
       depth: 1,
     })

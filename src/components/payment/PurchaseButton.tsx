@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/stripe'
 import { CheckoutDialog } from './CheckoutDialog'
 import { ShoppingCart, Lock } from 'lucide-react'
-import type { Vinprovningar } from '@/payload-types'
+import type { Vinkurser } from '@/payload-types'
 
 interface PurchaseButtonProps {
-  course: Vinprovningar
+  course: Vinkurser
   variant?: 'default' | 'outline' | 'secondary' | 'ghost'
   size?: 'default' | 'sm' | 'lg'
   className?: string
@@ -62,7 +62,7 @@ export function PurchaseButton({
 
 // Specialized variants for different contexts
 interface CoursePurchasePanelProps {
-  course: Vinprovningar
+  course: Vinkurser
   className?: string
 }
 
@@ -90,7 +90,7 @@ export function CoursePurchasePanel({ course, className = '' }: CoursePurchasePa
 
 // Compact purchase button for course cards
 interface QuickPurchaseButtonProps {
-  course: Vinprovningar
+  course: Vinkurser
   className?: string
 }
 

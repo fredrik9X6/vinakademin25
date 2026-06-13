@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch course data using PayloadCMS 3 API
     const course = await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
     })
     log.info(

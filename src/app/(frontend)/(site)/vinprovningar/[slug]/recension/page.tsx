@@ -15,7 +15,7 @@ export default async function ReviewPage({ params, searchParams }: ReviewPagePro
 
   // Fetch the course by slug
   const courseResult = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
     },

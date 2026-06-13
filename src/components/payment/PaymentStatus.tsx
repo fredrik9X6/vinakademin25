@@ -3,11 +3,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { formatPrice } from '@/lib/stripe'
 import { CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import type { Vinprovningar } from '@/payload-types'
+import type { Vinkurser } from '@/payload-types'
 
 interface PaymentStatusProps {
   status: 'processing' | 'success' | 'error'
-  course: Vinprovningar
+  course: Vinkurser
   error?: string | null
   onClose: () => void
   onRetry?: () => void

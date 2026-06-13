@@ -32,7 +32,7 @@ async function findCourseAndModuleForContentItem(contentItemId: number | string)
   
   // Find which course contains this module
   const courses = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       'modules.module': { equals: module.id },
     },

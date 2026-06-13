@@ -66,7 +66,7 @@ export const Enrollments: CollectionConfig = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'vinprovningar',
+      relationTo: 'vinkurser',
       required: true,
       admin: {
         description: 'Course the student is enrolled in',

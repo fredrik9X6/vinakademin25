@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // Build passthrough value matching existing convention
     let passthrough: string
-    if (collectionSlug === 'vinprovningar') {
+    if (collectionSlug === 'vinkurser') {
       passthrough = `vinprovning-preview-${documentId}`
     } else {
       passthrough = String(documentId)

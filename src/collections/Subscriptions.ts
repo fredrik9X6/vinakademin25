@@ -227,7 +227,7 @@ export const Subscriptions: CollectionConfig = {
     {
       name: 'coursesIncluded',
       type: 'relationship',
-      relationTo: 'vinprovningar',
+      relationTo: 'vinkurser',
       hasMany: true,
       admin: {
         description: 'Courses included with this subscription',

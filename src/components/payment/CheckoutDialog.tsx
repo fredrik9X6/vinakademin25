@@ -7,10 +7,10 @@ import { OrderSummary } from './OrderSummary'
 import { PaymentStatus } from './PaymentStatus'
 
 import { useAuth } from '@/context/AuthContext'
-import type { Vinprovningar } from '@/payload-types'
+import type { Vinkurser } from '@/payload-types'
 
 interface CheckoutDialogProps {
-  course: Vinprovningar
+  course: Vinkurser
   isOpen: boolean
   onClose: () => void
 }

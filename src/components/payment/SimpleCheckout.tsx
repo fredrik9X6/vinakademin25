@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input'
 import { useAuth } from '@/context/AuthContext'
 import { Loader2, CreditCard, ShieldCheck, Lock } from 'lucide-react'
 import { formatPrice } from '@/lib/stripe'
-import type { Vinprovningar } from '@/payload-types'
+import type { Vinkurser } from '@/payload-types'
 
 interface SimpleCheckoutProps {
-  course: Vinprovningar
+  course: Vinkurser
   discountAmount?: number
   onError?: (error: string) => void
 }

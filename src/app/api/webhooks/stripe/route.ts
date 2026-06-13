@@ -625,7 +625,7 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
     }
 
     const course = await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseIdInt,
     })
 
