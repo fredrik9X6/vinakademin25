@@ -11,11 +11,7 @@
  * Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D.6)
  */
 
-import { config as loadDotenv } from 'dotenv'
-
-// Load env before importing payload config (which evaluates process.env).
-loadDotenv({ path: '.env.local' })
-loadDotenv({ path: '.env' })
+// Env loading is via `tsx --env-file=.env` in package.json (see sync-templates).
 
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
