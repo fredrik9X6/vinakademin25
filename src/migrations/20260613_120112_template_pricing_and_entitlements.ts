@@ -2,8 +2,28 @@ import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
-   CREATE TYPE "public"."enum_template_entitlements_status" AS ENUM('active', 'refunded');
-  CREATE TYPE "public"."enum_template_entitlements_acquired_via" AS ENUM('purchase', 'subscription', 'free_trial', 'free', 'admin_grant');
+   -- Step 0: rebuild the tasting_templates.access_level enum first.
+   -- The auto-generated migration tried to set DEFAULT 'paid' before recreating
+   -- the enum (which still only contained 'free' and 'members_only'), causing
+   -- a 22P02 enum_in error at deploy time. Moving the data-preserving UPDATE
+   -- and enum recreation up here unblocks every later step that references 'paid'.
+   -- Spec D.1 (data migration of existing members_only rows).
+   ALTER TABLE "public"."tasting_templates" ALTER COLUMN "access_level" DROP DEFAULT;
+   ALTER TABLE "public"."tasting_templates" ALTER COLUMN "access_level" SET DATA TYPE text;
+   UPDATE "public"."tasting_templates" SET "access_level" = 'paid' WHERE "access_level" = 'members_only';
+   DROP TYPE "public"."enum_tasting_templates_access_level";
+   CREATE TYPE "public"."enum_tasting_templates_access_level" AS ENUM('free', 'paid');
+   ALTER TABLE "public"."tasting_templates" ALTER COLUMN "access_level" SET DATA TYPE "public"."enum_tasting_templates_access_level" USING "access_level"::"public"."enum_tasting_templates_access_level";
+
+   -- Wrapped in DO blocks so a partial failure of the previous failed-run can't
+   -- block a re-run with "type already exists". Postgres typically wraps a
+   -- multi-statement query in an implicit transaction, but be defensive.
+   DO $$ BEGIN
+    CREATE TYPE "public"."enum_template_entitlements_status" AS ENUM('active', 'refunded');
+   EXCEPTION WHEN duplicate_object THEN null; END $$;
+   DO $$ BEGIN
+    CREATE TYPE "public"."enum_template_entitlements_acquired_via" AS ENUM('purchase', 'subscription', 'free_trial', 'free', 'admin_grant');
+   EXCEPTION WHEN duplicate_object THEN null; END $$;
   CREATE TABLE IF NOT EXISTS "template_entitlements" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"user_id" integer NOT NULL,
@@ -18,7 +38,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
-  
+
   ALTER TABLE "tasting_templates" ALTER COLUMN "access_level" SET DEFAULT 'paid';
   ALTER TABLE "tasting_templates" ADD COLUMN "price_sek" numeric DEFAULT 99 NOT NULL;
   ALTER TABLE "tasting_templates" ADD COLUMN "is_free_trial" boolean DEFAULT false;
@@ -50,16 +70,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   END $$;
   
   CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_template_entitlements_id_idx" ON "payload_locked_documents_rels" USING btree ("template_entitlements_id");
-  ALTER TABLE "public"."tasting_templates" ALTER COLUMN "access_level" SET DATA TYPE text;
-  DROP TYPE "public"."enum_tasting_templates_access_level";
-  CREATE TYPE "public"."enum_tasting_templates_access_level" AS ENUM('free', 'paid');
-  -- Data-preserving backfill: every legacy 'members_only' template is now
-  -- 'paid' (priceSek defaulted to 99 by the new column above). Without this
-  -- the column cast below fails on any existing row whose access_level is
-  -- 'members_only', because that value no longer exists in the new enum.
-  -- Spec D.1 (data migration of existing members_only rows).
-  UPDATE "public"."tasting_templates" SET "access_level" = 'paid' WHERE "access_level" = 'members_only';
-  ALTER TABLE "public"."tasting_templates" ALTER COLUMN "access_level" SET DATA TYPE "public"."enum_tasting_templates_access_level" USING "access_level"::"public"."enum_tasting_templates_access_level";`)
+  -- (enum rebuild + members_only → paid data migration was hoisted to the
+  --  top of this migration so SET DEFAULT 'paid' above doesn't reject.)
+   `)
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
