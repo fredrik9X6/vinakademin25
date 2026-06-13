@@ -36,6 +36,7 @@ import { useActiveSession } from '@/context/SessionContext'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 import { useAuth } from '@/context/AuthContext'
 import { CourseReviewsSection } from './CourseReviewsSection'
+import { VisitorModuleList } from './VisitorModuleList'
 
 interface CourseOverviewProps {
   course: {
@@ -193,7 +194,7 @@ export default function CourseOverview({
     // unauthenticated guests joined via a join code) get full course access —
     // don't bounce them to login.
     if (isLessonFree && !authUser && !isSessionParticipant) {
-      const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
+      const currentUrl = `/vinkurser/${course.slug || course.id}?lesson=${lessonId}`
       router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
       toast.info('Du behöver logga in för att prova gratis-moment')
       return
@@ -206,10 +207,10 @@ export default function CourseOverview({
       if (authUser) {
         // Logged in but hasn't purchased — show checkout modal
         setIsCheckoutOpen(true)
-        toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
+        toast.info('Du behöver köpa vinkursen för att se detta innehåll')
       } else {
         // Not logged in — redirect to login
-        const currentUrl = `/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`
+        const currentUrl = `/vinkurser/${course.slug || course.id}?lesson=${lessonId}`
         router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
         toast.info('Du behöver logga in för att se detta innehåll')
       }
@@ -217,7 +218,7 @@ export default function CourseOverview({
     }
 
     // Navigate to the lesson
-    router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`))
+    router.push(buildUrl(`/vinkurser/${course.slug || course.id}?lesson=${lessonId}`))
   }
 
   const continueCourse = () => {
@@ -229,7 +230,7 @@ export default function CourseOverview({
         const containing = course.modules.find((m) => m.lessons.some((l) => l.id === next.id))
         if (containing) return handleLessonClick(containing.id, next.id)
       } else if (next.type === 'quiz') {
-        router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?quiz=${next.id}`))
+        router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${next.id}`))
         return
       }
     }
@@ -244,7 +245,7 @@ export default function CourseOverview({
           handleLessonClick(containing.id, firstItem.id)
         }
       } else if (firstItem.type === 'quiz') {
-        router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?quiz=${firstItem.id}`))
+        router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${firstItem.id}`))
       }
     }
   }
@@ -261,7 +262,7 @@ export default function CourseOverview({
       // Free quizzes normally require an account, but session participants
       // (incl. unauthenticated guests) get full course access — don't bounce.
       if (isQuizFree && !authUser && !isSessionParticipant) {
-        const currentUrl = `/vinprovningar/${course.slug || course.id}?quiz=${item.id}`
+        const currentUrl = `/vinkurser/${course.slug || course.id}?quiz=${item.id}`
         router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
         toast.info('Du behöver logga in för att prova gratis-quiz')
         return
@@ -274,17 +275,17 @@ export default function CourseOverview({
         if (authUser) {
           // Logged in but hasn't purchased — show checkout modal
           setIsCheckoutOpen(true)
-          toast.info('Du behöver köpa vinprovningen för att se detta innehåll')
+          toast.info('Du behöver köpa vinkursen för att se detta innehåll')
         } else {
           // Not logged in — redirect to login
-          const currentUrl = `/vinprovningar/${course.slug || course.id}?quiz=${item.id}`
+          const currentUrl = `/vinkurser/${course.slug || course.id}?quiz=${item.id}`
           router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
           toast.info('Du behöver logga in för att se detta innehåll')
         }
         return
       }
 
-      router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?quiz=${item.id}`))
+      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${item.id}`))
     }
   }
 
@@ -343,12 +344,13 @@ export default function CourseOverview({
               {/* Right: Content */}
               <div className="flex flex-col">
                 <div className="space-y-6">
-                  {/* Badge */}
-                  {freeLessons > 0 && (
-                    <Badge variant="brand" className="w-fit text-xs">
-                      {freeLessons} gratis moment
-                    </Badge>
-                  )}
+                  {/* Course meta badge */}
+                  <Badge variant="brand" className="w-fit text-xs">
+                    {course.level === 'beginner' && 'Nybörjare'}
+                    {course.level === 'intermediate' && 'Medel'}
+                    {course.level === 'advanced' && 'Avancerad'}
+                    {!course.level && 'Nybörjare'}
+                  </Badge>
 
                   {/* Title */}
                   <h1 className="text-3xl lg:text-5xl leading-tight">{course.title}</h1>
@@ -365,16 +367,9 @@ export default function CourseOverview({
                     {formatPrice(course.price || 0)}
                   </div>
 
-                  {/* CTA Buttons */}
+                  {/* CTA — single purchase CTA. The visitor doesn't get a "Prova gratis"
+                       door any more; intro video above is the entire preview surface (spec D4). */}
                   <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={continueCourse}
-                      className="btn-brand btn-brand-lg w-full"
-                    >
-                      Prova gratis
-                    </button>
-
                     <PurchaseButton
                       course={{
                         id: course.id,
@@ -392,7 +387,6 @@ export default function CourseOverview({
                         createdAt: new Date().toISOString(),
                         _status: 'published',
                       } as any}
-                      variant="outline"
                       size="lg"
                       fullWidth
                       showIcon={false}
@@ -510,7 +504,8 @@ export default function CourseOverview({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Course Description */}
+            {/* Course Description — WineList blocks inside redact wine
+                 identities for non-purchasers/non-participants (spec D5). */}
             {course.fullDescription && (
               <Card>
                 <CardHeader>
@@ -520,19 +515,33 @@ export default function CourseOverview({
                   <RichTextRenderer
                     content={course.fullDescription}
                     className="prose-headings:font-semibold prose-headings:text-foreground"
+                    userHasAccess={userHasAccess || isSessionParticipant}
                   />
                 </CardContent>
               </Card>
             )}
 
-            {/* Table of Contents */}
-            <CourseTableOfContents
-              modules={course.modules}
-              courseProgress={courseProgress || undefined}
-              userHasAccess={userHasAccess || isSessionParticipant}
-              onItemClick={handleItemClick}
-              loading={progressLoading}
-            />
+            {/* Course outline — purchasers/participants see the full clickable TOC.
+                 Visitors see the module list with titles + per-module item counts
+                 only (no lesson titles, no click affordance — spec D4). */}
+            {userHasAccess || isSessionParticipant ? (
+              <CourseTableOfContents
+                modules={course.modules}
+                courseProgress={courseProgress || undefined}
+                userHasAccess={userHasAccess || isSessionParticipant}
+                onItemClick={handleItemClick}
+                loading={progressLoading}
+              />
+            ) : (
+              <VisitorModuleList
+                modules={course.modules.map((m) => {
+                  const contentsCount = Array.isArray((m as any).contents)
+                    ? (m as any).contents.length
+                    : (m.lessons?.length || 0) + ((m as any).quizzes?.length || 0)
+                  return { id: m.id, title: m.title, itemCount: contentsCount }
+                })}
+              />
+            )}
 
             {/* Reviews Section */}
             <CourseReviewsSection courseId={course.id} />
@@ -546,7 +555,7 @@ export default function CourseOverview({
                 {/* Continue/Start Button - Always show for users with access or in session */}
                 <Button onClick={continueCourse} className="w-full" size="lg">
                   <Play className="w-5 h-5 mr-2" />
-                  {isSessionParticipant ? 'Starta vinprovningen' : 'Fortsätt där du slutade'}
+                  {isSessionParticipant ? 'Starta vinkursen' : 'Fortsätt där du slutade'}
                 </Button>
 
                 {/* Completion Page Button - Show when course is completed */}
@@ -556,7 +565,7 @@ export default function CourseOverview({
                     <Button
                       onClick={() =>
                         router.push(
-                          buildUrl(`/vinprovningar/${course.slug || course.id}?completed=true`),
+                          buildUrl(`/vinkurser/${course.slug || course.id}?completed=true`),
                         )
                       }
                       variant="secondary"

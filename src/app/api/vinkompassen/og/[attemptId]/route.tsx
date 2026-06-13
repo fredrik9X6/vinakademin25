@@ -3,7 +3,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import type { VinkompassArchetype } from '@/payload-types'
 // Note: the generated Payload type for slug `vinprovningar` is the plural
-// `Vinprovningar` interface — do NOT assume singular here. Same pattern
+// `Vinkurser` interface — do NOT assume singular here. Same pattern
 // applies in the result page.
 
 export const runtime = 'nodejs'

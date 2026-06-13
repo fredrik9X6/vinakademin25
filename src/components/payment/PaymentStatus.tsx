@@ -3,11 +3,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { formatPrice } from '@/lib/stripe'
 import { CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import type { Vinprovningar } from '@/payload-types'
+import type { Vinkurser } from '@/payload-types'
 
 interface PaymentStatusProps {
   status: 'processing' | 'success' | 'error'
-  course: Vinprovningar
+  course: Vinkurser
   error?: string | null
   onClose: () => void
   onRetry?: () => void
@@ -18,12 +18,12 @@ export function PaymentStatus({ status, course, error, onClose, onRetry }: Payme
 
   const handleGoToCourse = () => {
     onClose()
-    router.push(`/vinprovningar/${course.slug}`)
+    router.push(`/vinkurser/${course.slug}`)
   }
 
   const handleGoToCourses = () => {
     onClose()
-    router.push('/vinprovningar')
+    router.push('/vinkurser')
   }
 
   if (status === 'processing') {
@@ -76,7 +76,7 @@ export function PaymentStatus({ status, course, error, onClose, onRetry }: Payme
         <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-4 w-full">
           <h4 className="font-medium mb-2 text-green-800 dark:text-green-200">Vad händer nu?</h4>
           <ul className="space-y-1 text-sm text-green-700 dark:text-green-300">
-            <li>✓ Du har nu tillgång till vinprovningen</li>
+            <li>✓ Du har nu tillgång till vinkursen</li>
             <li>✓ Ett kvitto har skickats till din e-post</li>
             <li>✓ Du kan börja studera direkt</li>
           </ul>
@@ -87,7 +87,7 @@ export function PaymentStatus({ status, course, error, onClose, onRetry }: Payme
             Börja studera
           </Button>
           <Button onClick={handleGoToCourses} variant="outline" className="flex-1">
-            Alla vinprovningar
+            Alla vinkurser
           </Button>
         </div>
       </div>

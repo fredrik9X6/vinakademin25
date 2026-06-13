@@ -76,7 +76,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-300/10 to-brand-400/10 border border-brand-300/20 mb-6">
             <Sparkles className="h-4 w-4 text-brand-400" />
-            <span className="text-sm font-medium text-brand-400">Rekommenderad vinprovning</span>
+            <span className="text-sm font-medium text-brand-400">Rekommenderad vinkurs</span>
           </div>
         </div>
 
@@ -84,7 +84,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
          * Pattern: clean 2px gradient border via padding + soft drop shadow.
          * Matches the styleguide; cleaner than the older blur-halo approach. */}
         <Link
-          href={`/vinprovningar/${course.slug || course.id}`}
+          href={`/vinkurser/${course.slug || course.id}`}
           className="group block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <div className="bg-brand-gradient-tri rounded-2xl p-0.5 shadow-brand-glow transition-shadow duration-500 group-hover:shadow-brand-glow-lg">

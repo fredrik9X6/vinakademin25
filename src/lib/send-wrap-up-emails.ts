@@ -9,7 +9,7 @@ import {
 } from './session-emails/wrap-up'
 import { recommendByGrape } from './wines/recommend-by-grape'
 import { computeBattleResult } from './blindkamp/compute-battle-result'
-import type { Wine, Review, TastingPlan, Vinprovningar, CourseSession } from '@/payload-types'
+import type { Wine, Review, TastingPlan, Vinkurser, CourseSession } from '@/payload-types'
 
 const log = loggerFor('lib-send-wrap-up-emails')
 
@@ -214,7 +214,7 @@ async function resolveSessionContext(
   session: CourseSession,
 ): Promise<SessionContext | null> {
   if (session.course && typeof session.course === 'object') {
-    const course = session.course as Vinprovningar
+    const course = session.course as Vinkurser
     // For courses, the "wines" are the lesson's assigned wine (wineReview lessons).
     const contentItemRefs: Array<{ pourOrder: number; wine: Wine }> = []
     let pourOrder = 0
@@ -234,7 +234,7 @@ async function resolveSessionContext(
       }
     }
     return {
-      title: course.title ?? 'din vinprovning',
+      title: course.title ?? 'din vinkurs',
       wines: contentItemRefs.map((r) => ({
         pourOrder: r.pourOrder,
         wineId: r.wine.id,

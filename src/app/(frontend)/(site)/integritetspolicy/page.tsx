@@ -126,7 +126,7 @@ export default function IntegritetspolicyPage() {
                 <h3 className="text-lg font-medium mb-2">För att tillhandahålla tjänsten</h3>
                 <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                   <li>Skapa och hantera ditt konto</li>
-                  <li>Ge dig åtkomst till köpta vinprovningar</li>
+                  <li>Ge dig åtkomst till köpta vinkurser</li>
                   <li>Spara ditt framsteg och dina preferenser</li>
                   <li>Tillhandahålla kundsupport</li>
                 </ul>
@@ -162,7 +162,7 @@ export default function IntegritetspolicyPage() {
                 <h3 className="text-lg font-medium mb-2">För marknadsföring</h3>
                 <ul className="list-disc pl-5 space-y-2 text-base leading-7">
                   <li>Skicka nyhetsbrev (om du har godkänt det)</li>
-                  <li>Informera om nya vinprovningar och funktioner</li>
+                  <li>Informera om nya vinkurser och funktioner</li>
                   <li>Skicka relevanta erbjudanden</li>
                 </ul>
               </div>

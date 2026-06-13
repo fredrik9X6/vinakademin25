@@ -146,7 +146,7 @@ export default function LessonViewer({
       if (hasNavigatedToReviewRef.current) return
       if (!manual && isSessionParticipant) return
       hasNavigatedToReviewRef.current = true
-      router.push(`/vinprovningar/${course.slug || course.id}/recension`)
+      router.push(`/vinkurser/${course.slug || course.id}/recension`)
     },
     [isSessionParticipant, router, course.slug, course.id],
   )
@@ -199,9 +199,9 @@ export default function LessonViewer({
 
   const navigateToItem = (item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
-      router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?lesson=${item.id}`))
+      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?lesson=${item.id}`))
     } else {
-      router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?quiz=${item.id}`))
+      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${item.id}`))
     }
   }
 
@@ -230,14 +230,14 @@ export default function LessonViewer({
   }
 
   const navigateToLesson = (lessonId: number) => {
-    router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?lesson=${lessonId}`))
+    router.push(buildUrl(`/vinkurser/${course.slug || course.id}?lesson=${lessonId}`))
   }
 
   const handleItemClick = (moduleId: number, item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
       navigateToLesson(item.id)
     } else {
-      router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?quiz=${item.id}`))
+      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${item.id}`))
     }
   }
 
@@ -304,19 +304,19 @@ export default function LessonViewer({
                   <Lock className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">Detta innehåll är betalinnehåll</h3>
                   <p className="text-muted-foreground mb-4">
-                    Du behöver köpa vinprovningen för att få tillgång till detta moment
+                    Du behöver köpa vinkursen för att få tillgång till detta moment
                   </p>
                   <Button
                     variant="secondary"
                     onClick={() =>
                       router.push(
                         effectiveSessionId
-                          ? `/vinprovningar/${course.slug || course.id}?session=${effectiveSessionId}`
-                          : `/vinprovningar/${course.slug || course.id}`,
+                          ? `/vinkurser/${course.slug || course.id}?session=${effectiveSessionId}`
+                          : `/vinkurser/${course.slug || course.id}`,
                       )
                     }
                   >
-                    Köp vinprovning
+                    Köp vinkurs
                   </Button>
                 </CardContent>
               </Card>
@@ -357,7 +357,7 @@ export default function LessonViewer({
                 <button type="button" onClick={goToNextLesson} className="btn-brand">
                   {isLastLessonItem ? (
                     <>
-                      Betygsätt vinprovningen <ChevronRight className="w-4 h-4 ml-1" />
+                      Betygsätt vinkursen <ChevronRight className="w-4 h-4 ml-1" />
                     </>
                   ) : (
                     <>

@@ -447,12 +447,12 @@ export default async function WineDetailPage({ params }: PageProps) {
 
   // Fetch vinprovningar that reference this wine via wine-reference or wine-list blocks
   const vinRes = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: { _status: { equals: 'published' } },
     depth: 2 as any,
     limit: 100,
   } as any)
-  const relatedVinprovningar = (vinRes.docs || []).filter((v: any) =>
+  const relatedVinkurser = (vinRes.docs || []).filter((v: any) =>
     contentReferencesWine(v.fullDescription, wine.id, wine.slug),
   )
 
@@ -1000,17 +1000,17 @@ export default async function WineDetailPage({ params }: PageProps) {
         )}
       </div>
 
-      {/* Vinprovningar referencing this wine */}
-      {relatedVinprovningar.length > 0 ? (
+      {/* Vinkurser referencing this wine */}
+      {relatedVinkurser.length > 0 ? (
         <div className="mt-10">
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-300/10 border border-brand-300/30 mb-4">
               <Sparkles className="h-4 w-4 text-brand-400" />
-              <span className="text-sm font-medium text-brand-400">Vinprovningar med detta vin</span>
+              <span className="text-sm font-medium text-brand-400">Vinkurser med detta vin</span>
             </div>
           </div>
           <div className="space-y-4">
-            {relatedVinprovningar.map((v: any) => (
+            {relatedVinkurser.map((v: any) => (
               <div
                 key={v.id}
                 className="bg-brand-gradient-tri group rounded-2xl p-0.5 shadow-brand-glow transition-shadow duration-500 hover:shadow-brand-glow-lg"
@@ -1062,7 +1062,7 @@ export default async function WineDetailPage({ params }: PageProps) {
                             {formatPrice(Number(v.price))}
                           </span>
                         ) : null}
-                        <Link href={`/vinprovningar/${v.slug}`} className="btn-brand">
+                        <Link href={`/vinkurser/${v.slug}`} className="btn-brand">
                           Läs mer
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>

@@ -15,7 +15,7 @@ export default async function ReviewPage({ params, searchParams }: ReviewPagePro
 
   // Fetch the course by slug
   const courseResult = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
     },
@@ -65,7 +65,7 @@ export default async function ReviewPage({ params, searchParams }: ReviewPagePro
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl md:text-3xl font-medium mb-2">
-            Betygsätt vinprovningen
+            Betygsätt vinkursen
           </h1>
           <p className="text-muted-foreground">
             Berätta vad du tyckte om <span className="font-medium text-foreground">{course.title}</span>

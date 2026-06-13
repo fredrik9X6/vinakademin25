@@ -11,6 +11,13 @@ import { CountryReferenceBlock } from '../blocks/CountryReferenceBlock'
 interface RichTextProps {
   content: any // Using any for now since PayloadCMS 3 Lexical format varies
   className?: string
+  /**
+   * Threaded into block components that branch on access (currently:
+   * WineListBlock, which redacts wine identity when false). Defaults to true
+   * so callers that don't yet thread this don't accidentally redact.
+   * Spec D5.
+   */
+  userHasAccess?: boolean
 }
 
 interface SerializedTextNode {
@@ -50,7 +57,11 @@ interface SerializedBlockNode {
   fields?: Record<string, any>
 }
 
-export function RichTextRenderer({ content, className = '' }: RichTextProps) {
+export function RichTextRenderer({
+  content,
+  className = '',
+  userHasAccess = true,
+}: RichTextProps) {
   if (!content) {
     return null
   }
@@ -134,6 +145,7 @@ export function RichTextRenderer({ content, className = '' }: RichTextProps) {
               showTotalPrice={fields.showTotalPrice}
               description={fields.description}
               shoppingListUrl={fields.shoppingListUrl}
+              userHasAccess={userHasAccess}
             />
           </div>
         )

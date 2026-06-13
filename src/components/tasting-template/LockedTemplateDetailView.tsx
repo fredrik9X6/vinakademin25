@@ -9,18 +9,27 @@ import type { LockedTemplatePreview } from '@/lib/template-locked-preview'
 export interface LockedTemplateDetailViewProps {
   template: TastingTemplate
   preview: LockedTemplatePreview
+  /** Price in SEK for the buy CTA. */
+  priceSek: number
+  /** Whether the viewer is logged in. Controls whether buy CTA goes
+   *  straight to /kop or routes through /logga-in?next=/kop. */
+  isAuthenticated: boolean
 }
 
 /**
- * What a non-member sees on a members-only template detail page. Hero image
+ * What a non-purchaser sees on a paid template detail page. Hero image
  * + description + headline aggregates (wine count, total price, target
- * participants), then a "Bli medlem" banner, then a grid of placeholder
+ * participants), then a "Köp för X kr" banner, then a grid of placeholder
  * cards — wine count visible, identity redacted. The wines array is NOT
  * passed in; only the aggregations from getLockedTemplatePreview().
+ *
+ * Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D.5)
  */
 export function LockedTemplateDetailView({
   template,
   preview,
+  priceSek,
+  isAuthenticated,
 }: LockedTemplateDetailViewProps) {
   const featured =
     typeof template.featuredImage === 'object' && template.featuredImage
@@ -31,6 +40,15 @@ export function LockedTemplateDetailView({
     preview.totalPriceSek != null
       ? `~${new Intl.NumberFormat('sv-SE').format(preview.totalPriceSek)} kr`
       : null
+  const formattedTemplatePrice = `${new Intl.NumberFormat('sv-SE').format(priceSek)} kr`
+  // Logged-in users go straight to checkout; anonymous bounces through login
+  // so the post-login destination is the buy page (not the locked detail).
+  const detailPath = `/provningsmallar/${template.slug}`
+  const buyPath = `${detailPath}/kop`
+  const buyHref = isAuthenticated
+    ? buyPath
+    : `/logga-in?next=${encodeURIComponent(buyPath)}`
+  const loginHref = `/logga-in?next=${encodeURIComponent(detailPath)}`
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 pb-32 grid gap-8 md:grid-cols-[1fr_280px]">
@@ -61,7 +79,7 @@ export function LockedTemplateDetailView({
             <h1 className="text-3xl font-heading">{template.title}</h1>
             <span className="inline-flex items-center gap-1 rounded-full bg-brand-400/15 text-brand-400 px-2.5 py-0.5 text-xs font-medium">
               <Lock className="h-3 w-3" />
-              Medlem
+              Köp för {formattedTemplatePrice}
             </span>
           </div>
           {template.description && (
@@ -94,17 +112,23 @@ export function LockedTemplateDetailView({
                 <Lock className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium">Bli medlem för att se vinerna</p>
+                <p className="text-sm font-medium">
+                  Köp mallen för {formattedTemplatePrice} och guida en egen provning
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Medlemskap låser upp alla provningar i biblioteket samt skapande av egna
-                  provningar.
+                  Engångsbetalning — eller bli medlem så ingår alla mallar i biblioteket.
                 </p>
               </div>
             </div>
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
               <Button asChild size="sm">
-                <Link href="/bli-medlem">Bli medlem</Link>
+                <Link href={buyHref}>Köp för {formattedTemplatePrice}</Link>
               </Button>
+              {!isAuthenticated && (
+                <Button asChild size="sm" variant="outline">
+                  <Link href={loginHref}>Logga in</Link>
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -134,7 +158,7 @@ export function LockedTemplateDetailView({
                       Dolt vin
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Bli medlem för att se vad du provar.
+                      Köp mallen för att se vad du provar.
                     </p>
                   </div>
                 </li>
@@ -146,10 +170,15 @@ export function LockedTemplateDetailView({
 
       <aside className="md:sticky md:top-20 md:self-start space-y-2">
         <Button asChild className="w-full">
-          <Link href="/bli-medlem">Bli medlem</Link>
+          <Link href={buyHref}>Köp för {formattedTemplatePrice}</Link>
         </Button>
+        {!isAuthenticated && (
+          <Button asChild className="w-full" variant="outline">
+            <Link href={loginHref}>Logga in</Link>
+          </Button>
+        )}
         <p className="text-xs text-muted-foreground text-center">
-          Bli medlem för att låsa upp mallen och använda den som grund för en egen provning.
+          Engångsbetalning. Eller bli medlem för att låsa upp alla mallar i biblioteket.
         </p>
       </aside>
     </div>

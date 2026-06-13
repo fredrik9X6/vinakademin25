@@ -16,7 +16,7 @@ const toAbsolute = (base: string, path: string) => `${base}${path.startsWith('/'
 
 const STATIC_ROUTES: Array<{ path: string; changeFrequency: SitemapEntry['changeFrequency']; priority: number }> = [
   { path: '/', changeFrequency: 'daily', priority: 1.0 },
-  { path: '/vinprovningar', changeFrequency: 'daily', priority: 0.9 },
+  { path: '/vinkurser', changeFrequency: 'daily', priority: 0.9 },
   { path: '/vinlistan', changeFrequency: 'daily', priority: 0.9 },
   { path: '/artiklar', changeFrequency: 'daily', priority: 0.8 },
   { path: '/vinkompassen', changeFrequency: 'weekly', priority: 0.7 },
@@ -32,7 +32,7 @@ const STATIC_ROUTES: Array<{ path: string; changeFrequency: SitemapEntry['change
 
 async function fetchSlugs(
   payload: Awaited<ReturnType<typeof getPayload>>,
-  collection: 'vinprovningar' | 'blog-posts' | 'wines' | 'regions' | 'countries' | 'grapes',
+  collection: 'vinkurser' | 'blog-posts' | 'wines' | 'regions' | 'countries' | 'grapes',
   opts: { requirePublished?: boolean } = {},
 ) {
   try {
@@ -59,7 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
   const [courses, posts, wines, regions, countries, grapes] = await Promise.all([
-    fetchSlugs(payload, 'vinprovningar', { requirePublished: true }),
+    fetchSlugs(payload, 'vinkurser', { requirePublished: true }),
     fetchSlugs(payload, 'blog-posts', { requirePublished: true }),
     fetchSlugs(payload, 'wines'),
     fetchSlugs(payload, 'regions'),
@@ -90,7 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
   const dynamicEntries: SitemapEntry[] = [
-    ...courses.map(toDocEntry('/vinprovningar', 0.9, 'weekly')),
+    ...courses.map(toDocEntry('/vinkurser', 0.9, 'weekly')),
     ...posts.map(toDocEntry('/artiklar', 0.7, 'weekly')),
     ...wines.map(toDocEntry('/vinlistan', 0.6, 'monthly')),
     ...regions.map(toDocEntry('/regioner', 0.5, 'monthly')),

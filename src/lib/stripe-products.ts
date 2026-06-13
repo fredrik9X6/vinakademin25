@@ -1,7 +1,7 @@
 import { getStripeServer, STRIPE_CONFIG, formatAmountForStripe } from './stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import type { Vinprovningar } from '@/payload-types'
+import type { Vinkurser } from '@/payload-types'
 import { loggerFor } from '@/lib/logger'
 
 const log = loggerFor('lib-stripe-products')
@@ -128,28 +128,28 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
  */
 export async function syncCourseWithStripe(
   courseId: string,
-  courseData?: Partial<Vinprovningar>
+  courseData?: Partial<Vinkurser>
 ): Promise<{
   productId: string
   priceId: string
 }> {
   const payload = await getPayload({ config })
 
-  let course: Vinprovningar
+  let course: Vinkurser
 
   if (courseData?.title && courseData?.price !== undefined) {
     // Use provided course data directly (avoids race conditions with DB)
-    course = courseData as Vinprovningar
+    course = courseData as Vinkurser
     log.info(`Using provided course data for Stripe sync: title="${course.title}"`)
   } else {
     // Fetch course from PayloadCMS with overrideAccess to bypass access control
     // Use draft: false to ensure we get the published version with all fields
     course = (await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
       overrideAccess: true, // Bypass access control
       draft: false, // Get the published version, not draft
-    })) as Vinprovningar
+    })) as Vinkurser
 
     if (!course) {
       throw new Error(`Course with ID ${courseId} not found`)
@@ -238,7 +238,7 @@ export async function syncCourseWithStripe(
   try {
     // First, fetch the complete document to ensure we have all required fields
     const existingDoc = await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
       overrideAccess: true,
       depth: 0, // Don't populate relationships to avoid serialization issues
@@ -251,7 +251,7 @@ export async function syncCourseWithStripe(
 
     // Update with the Stripe IDs
     await payload.update({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
       data: {
         stripeProductId: product.id,
@@ -331,7 +331,7 @@ export async function syncAllCoursesWithStripe(): Promise<void> {
   const payload = await getPayload({ config })
 
   const courses = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       _status: { equals: 'published' },
     },
@@ -361,9 +361,9 @@ export async function getStripePriceByCourseId(courseId: string): Promise<string
 
   try {
     const course = (await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
-    })) as Vinprovningar
+    })) as Vinkurser
 
     return course.stripePriceId || null
   } catch (error) {
@@ -409,10 +409,156 @@ export async function validateStripePrice(priceId: string): Promise<boolean> {
 }
 
 /**
+ * Sync a TastingTemplate with Stripe — mirrors syncCourseWithStripe.
+ * Each paid template gets its own Stripe Product + Price.
+ * Stripe Prices are immutable, so price changes archive the old Price and
+ * create a new one. Metadata productKind='template' lets the webhook branch.
+ *
+ * Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D.2)
+ */
+export async function syncTemplateWithStripe(
+  templateId: string,
+  templateData?: {
+    title?: string
+    description?: string | null
+    priceSek?: number
+    stripeProductId?: string | null
+    stripePriceId?: string | null
+    featuredImage?: { url?: string | null } | number | string | null
+  },
+): Promise<{ productId: string; priceId: string }> {
+  const payload = await getPayload({ config })
+
+  let template: any
+  if (templateData?.title && typeof templateData?.priceSek === 'number') {
+    template = templateData
+  } else {
+    template = await payload.findByID({
+      collection: 'tasting-templates',
+      id: templateId,
+      overrideAccess: true,
+    })
+    if (!template) {
+      throw new Error(`Tasting template ${templateId} not found`)
+    }
+  }
+
+  const title: string = (template.title || '').toString().trim()
+  if (!title) {
+    throw new Error(
+      `Cannot sync template ${templateId} with Stripe: title is required but was empty.`,
+    )
+  }
+
+  const description: string =
+    (template.description && String(template.description).trim()) ||
+    `Provningsmall: ${title}`
+
+  const productData: any = {
+    name: title,
+    description,
+    metadata: {
+      templateId: String(templateId),
+      productKind: 'template',
+    },
+  }
+
+  if (
+    template.featuredImage &&
+    typeof template.featuredImage === 'object' &&
+    (template.featuredImage as { url?: string | null }).url
+  ) {
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+    const imageUrl = (template.featuredImage as { url: string }).url
+    productData.images = [imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`]
+  }
+
+  const stripe = getStripeServer()
+
+  let product
+  if (template.stripeProductId) {
+    try {
+      product = await stripe.products.update(template.stripeProductId, productData)
+    } catch (err) {
+      log.error(`Failed to update Stripe template product ${template.stripeProductId}:`, err)
+      product = await stripe.products.create(productData)
+    }
+  } else {
+    product = await stripe.products.create(productData)
+  }
+
+  if (template.stripePriceId) {
+    try {
+      await stripe.prices.update(template.stripePriceId, { active: false })
+    } catch (err) {
+      log.error(`Failed to archive old template price ${template.stripePriceId}:`, err)
+    }
+  }
+
+  const price = await stripe.prices.create({
+    product: product.id,
+    unit_amount: formatAmountForStripe(Number(template.priceSek || 0)),
+    currency: STRIPE_CONFIG.currency,
+    metadata: {
+      templateId: String(templateId),
+      productKind: 'template',
+    },
+  })
+
+  try {
+    await payload.update({
+      collection: 'tasting-templates',
+      id: templateId,
+      data: {
+        stripeProductId: product.id,
+        stripePriceId: price.id,
+      },
+      overrideAccess: true,
+    })
+  } catch (err: any) {
+    log.error(`Failed to save Stripe IDs to template ${templateId}: ${err?.message || err}`)
+    log.info(`Stripe Product ID: ${product.id}; Stripe Price ID: ${price.id}`)
+  }
+
+  return { productId: product.id, priceId: price.id }
+}
+
+/**
+ * Sync every published paid tasting template with Stripe. Called from
+ * scripts/sync-templates-with-stripe.ts.
+ */
+export async function syncAllTemplatesWithStripe(): Promise<void> {
+  const payload = await getPayload({ config })
+
+  const templates = await payload.find({
+    collection: 'tasting-templates',
+    where: {
+      publishedStatus: { equals: 'published' },
+      accessLevel: { equals: 'paid' },
+    },
+    limit: 1000,
+    overrideAccess: true,
+  })
+
+  log.info(`Syncing ${templates.docs.length} paid templates with Stripe...`)
+
+  const syncPromises = templates.docs.map((t) =>
+    syncTemplateWithStripe(t.id.toString()).catch((err) => {
+      log.error(`Failed to sync template ${t.id}:`, err)
+      return null
+    }),
+  )
+
+  const results = await Promise.allSettled(syncPromises)
+  const successful = results.filter((r) => r.status === 'fulfilled').length
+  log.info(`Synced ${successful}/${templates.docs.length} templates with Stripe`)
+}
+
+/**
  * Get course purchase data for Stripe checkout
  */
 export async function getCourseCheckoutData(courseId: string): Promise<{
-  course: Vinprovningar
+  course: Vinkurser
   priceId: string
   amount: number
 } | null> {
@@ -420,9 +566,9 @@ export async function getCourseCheckoutData(courseId: string): Promise<{
 
   try {
     const course = (await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
-    })) as Vinprovningar
+    })) as Vinkurser
 
     if (!course || !course.stripePriceId) {
       return null

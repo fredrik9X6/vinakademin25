@@ -11,7 +11,7 @@ export const CourseReference: Block = {
     {
       name: 'course',
       type: 'relationship',
-      relationTo: 'vinprovningar',
+      relationTo: 'vinkurser',
       required: true,
       admin: {
         description: 'Select a course to reference in this content',
@@ -85,7 +85,7 @@ export const CourseReference: Block = {
       name: 'callToAction',
       type: 'text',
       label: 'Call to Action',
-      defaultValue: 'Visa vinprovning',
+      defaultValue: 'Visa vinkurs',
       admin: {
         description: 'Text for the action button/link',
         condition: (data, siblingData) => siblingData.displayStyle !== 'link',

@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, Award, Clock, Calendar, ArrowRight, Sparkles } from 'lucide-react'
 import { Confetti } from '@/components/magicui/confetti'
-import type { Vinprovningar } from '@/payload-types'
+import type { Vinkurser } from '@/payload-types'
 import Link from 'next/link'
 
 interface CourseCompletionPageProps {
-  course: Vinprovningar & {
+  course: Vinkurser & {
     modules?: any[]
   }
   progressData?: {
@@ -131,7 +131,7 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Grattis! Du har förtjänat ett certifikat för att ha slutfört denna vinprovning.
+                Grattis! Du har förtjänat ett certifikat för att ha slutfört denna vinkurs.
               </p>
               <Button variant="secondary" className="w-full md:w-auto">
                 <Award className="mr-2 h-4 w-4" />
@@ -180,9 +180,9 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
                   <div className="w-2 h-2 rounded-full bg-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">Utforska fler vinprovningar</p>
+                  <p className="font-medium">Utforska fler vinkurser</p>
                   <p className="text-sm text-muted-foreground">
-                    Fortsätt din vinresa med våra andra provningar
+                    Fortsätt din vinresa med våra andra kurser
                   </p>
                 </div>
               </div>
@@ -193,12 +193,12 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button variant="secondary" size="lg" asChild>
-            <Link href={`/vinprovningar/${course.slug || course.id}`}>Tillbaka till översikt</Link>
+            <Link href={`/vinkurser/${course.slug || course.id}`}>Tillbaka till översikt</Link>
           </Button>
 
           <Button size="lg" asChild>
-            <Link href="/vinprovningar">
-              Utforska fler vinprovningar
+            <Link href="/vinkurser">
+              Utforska fler vinkurser
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

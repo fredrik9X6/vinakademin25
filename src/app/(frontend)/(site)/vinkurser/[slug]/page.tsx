@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { Vinprovningar, Module, ContentItem, CourseSession } from '@/payload-types'
+import { Vinkurser, Module, ContentItem, CourseSession } from '@/payload-types'
 import { notFound, redirect } from 'next/navigation'
 import CourseOverview from '@/components/course/CourseOverview'
 import LessonViewer from '@/components/course/LessonViewer'
@@ -15,7 +15,7 @@ import { BreadcrumbJsonLd, CourseJsonLd } from '@/components/seo/JsonLd'
 import { loggerFor } from '@/lib/logger'
 import { PARTICIPANT_COOKIE, getActiveParticipantSession } from '@/lib/sessions'
 
-const log = loggerFor('(frontend)-(site)-vinprovningar-[slug]-page')
+const log = loggerFor('(frontend)-(site)-vinkurser-[slug]-page')
 
 interface CoursePageProps {
   params: Promise<{
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
   const payload = await getPayload({ config })
 
   const result = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
     },
@@ -42,13 +42,13 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
     limit: 1,
   })
 
-  const course = result.docs[0] as Vinprovningar | undefined
+  const course = result.docs[0] as Vinkurser | undefined
   const base = getSiteURL()
-  const canonical = `${base}/vinprovningar/${slug}`
+  const canonical = `${base}/vinkurser/${slug}`
 
   if (!course) {
     return {
-      title: 'Vinprovning hittades inte',
+      title: 'Vinkurs hittades inte',
       robots: { index: false, follow: false },
       alternates: { canonical },
     }
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
     title: course.title,
     description:
       (course.description && course.description.trim().slice(0, 160)) ||
-      `Vinprovning online med Vinakademin — ${course.title}. Lär dig om vin i din egen takt.`,
+      `Vinkurs online med Vinakademin — ${course.title}. Lär dig om vin i din egen takt.`,
     imageUrl: featuredImageUrl,
   })
 
@@ -99,7 +99,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
   // Fetch the course by slug
   const courseResult = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       and: [{ slug: { equals: resolvedParams.slug } }, { _status: { equals: 'published' } }],
     },
@@ -364,7 +364,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     // Only redirect if we're sure the user is not authenticated
     // Check getUser() result (more reliable than cookie check)
     if (!currentUser) {
-      const currentUrl = `/vinprovningar/${course.slug || course.id}${selectedLessonId ? `?lesson=${selectedLessonId}` : selectedQuizId ? `?quiz=${selectedQuizId}` : ''}`
+      const currentUrl = `/vinkurser/${course.slug || course.id}${selectedLessonId ? `?lesson=${selectedLessonId}` : selectedQuizId ? `?quiz=${selectedQuizId}` : ''}`
       redirect(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
     }
   }
@@ -486,7 +486,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   )
 }
 
-function CourseSchema({ course }: { course: Vinprovningar }) {
+function CourseSchema({ course }: { course: Vinkurser }) {
   // Respect the CMS noindex toggle: a page we tell Google not to index
   // shouldn't still emit rich-result claims.
   if (course.noindex) return null
@@ -507,7 +507,7 @@ function CourseSchema({ course }: { course: Vinprovningar }) {
     title: course.title,
     description:
       (course.description && course.description.trim().slice(0, 5000)) ||
-      `Vinprovning online med Vinakademin — ${course.title}.`,
+      `Vinkurs online med Vinakademin — ${course.title}.`,
     imageUrl: featuredImageUrl,
   })
 
@@ -527,8 +527,8 @@ function CourseSchema({ course }: { course: Vinprovningar }) {
       <BreadcrumbJsonLd
         items={[
           { name: 'Hem', url: `${base}/` },
-          { name: 'Vinprovningar', url: `${base}/vinprovningar` },
-          { name: course.title, url: `${base}/vinprovningar/${slug}` },
+          { name: 'Vinkurser', url: `${base}/vinkurser` },
+          { name: course.title, url: `${base}/vinkurser/${slug}` },
         ]}
       />
     </>
@@ -558,7 +558,7 @@ export async function generateStaticParams() {
     const payload = await getPayload({ config })
 
     const courses = await payload.find({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       where: { _status: { equals: 'published' } },
       limit: 1000,
     })

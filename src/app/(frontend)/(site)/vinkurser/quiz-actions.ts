@@ -5,7 +5,7 @@ import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { loggerFor } from '@/lib/logger'
 
-const log = loggerFor('(frontend)-(site)-vinprovningar-quiz-actions')
+const log = loggerFor('(frontend)-(site)-vinkurser-quiz-actions')
 
 /**
  * Helper function to find course and module for a content item (quiz or lesson)
@@ -32,7 +32,7 @@ async function findCourseAndModuleForContentItem(contentItemId: number | string)
   
   // Find which course contains this module
   const courses = await payload.find({
-    collection: 'vinprovningar',
+    collection: 'vinkurser',
     where: {
       'modules.module': { equals: module.id },
     },

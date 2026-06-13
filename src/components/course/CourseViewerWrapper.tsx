@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import CourseViewer from './CourseViewer'
-import type { Vinprovningar, Module, ContentItem } from '@/payload-types'
+import type { Vinkurser, Module, ContentItem } from '@/payload-types'
 
 interface CourseViewerWrapperProps {
-  course: Vinprovningar
+  course: Vinkurser
   initialModule?: Module
   initialLesson?: ContentItem
   userHasAccess?: boolean

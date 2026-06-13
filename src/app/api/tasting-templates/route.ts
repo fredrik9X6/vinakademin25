@@ -24,7 +24,7 @@ type WineEntry = {
   hostNotes?: string
 }
 
-type AccessLevel = 'free' | 'members_only'
+type AccessLevel = 'free' | 'paid'
 type PublishedStatus = 'draft' | 'published'
 
 type CreateBody = {
@@ -40,6 +40,8 @@ type CreateBody = {
   accessLevel?: AccessLevel
   hostScript?: string
   wines?: WineEntry[]
+  priceSek?: number
+  isFreeTrial?: boolean
 }
 
 function validateBody(body: CreateBody): string | null {
@@ -119,7 +121,9 @@ export async function POST(request: NextRequest) {
         seoTitle: body.seoTitle?.trim() || undefined,
         seoDescription: body.seoDescription?.trim() || undefined,
         publishedStatus: body.publishedStatus ?? 'draft',
-        accessLevel: body.accessLevel ?? 'free',
+        accessLevel: body.accessLevel ?? 'paid',
+        priceSek: typeof body.priceSek === 'number' ? body.priceSek : 99,
+        isFreeTrial: body.isFreeTrial ?? false,
         hostScript: body.hostScript?.trim() || undefined,
         wines: (body.wines || []).map((w, idx) => ({
           libraryWine: typeof w.libraryWine === 'number' ? w.libraryWine : null,

@@ -76,9 +76,9 @@ export function MinaProvningarPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-heading">Mina Provningar</h1>
+        <h1 className="text-3xl md:text-4xl font-heading">Mina Vinkurser</h1>
         <p className="mt-2 text-muted-foreground">
-          Här hittar du dina köpta vinprovningar och kan följa dina framsteg.
+          Här hittar du dina köpta vinkurser och kan följa dina framsteg.
         </p>
       </div>
 
@@ -101,12 +101,12 @@ export function MinaProvningarPage() {
           <div className="rounded-full bg-muted p-6 mb-6">
             <Wine className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-medium mb-2">Inga provningar ännu</h2>
+          <h2 className="text-xl font-medium mb-2">Inga vinkurser ännu</h2>
           <p className="text-muted-foreground mb-6 max-w-md">
-            Du har inte köpt några vinprovningar ännu. Utforska våra provningar och börja din vinresa!
+            Du har inte köpt några vinkurser ännu. Utforska våra vinkurser och börja din vinresa!
           </p>
-          <Link href="/vinprovningar" className="btn-brand">
-            Utforska vinprovningar
+          <Link href="/vinkurser" className="btn-brand">
+            Utforska vinkurser
           </Link>
         </div>
       ) : (
@@ -135,7 +135,7 @@ export function MinaProvningarPage() {
           <TabsContent value="paborjade">
             {startedCourses.length === 0 ? (
               <p className="text-center py-12 text-muted-foreground">
-                Inga påbörjade provningar ännu.
+                Inga påbörjade vinkurser ännu.
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -149,7 +149,7 @@ export function MinaProvningarPage() {
           <TabsContent value="slutforda">
             {completedCourses.length === 0 ? (
               <p className="text-center py-12 text-muted-foreground">
-                Inga slutförda provningar ännu.
+                Inga slutförda vinkurser ännu.
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -2,27 +2,21 @@
 
 import NeuralNetworkHero from '@/components/ui/neural-network-hero'
 
-interface NeuralHeroWithBannerProps {
-  featuredCourse?: any
-}
-
-export function NeuralHeroWithBanner({ featuredCourse }: NeuralHeroWithBannerProps) {
-  const featuredSlug = featuredCourse?.slug || ''
-
+export function NeuralHeroWithBanner() {
   return (
     <NeuralNetworkHero
       title={
         <>
-          <span className="block">Vinprovningar hemma,</span>
+          <span className="block">Lär dig om vin,</span>
           <span className="text-brand-gradient block">enkelt &amp; opretentiöst.</span>
         </>
       }
-      description="Guidade vinprovningar du kan göra hemma, med vänner, när det passar dig. Lär dig om vin genom att dofta, smaka och prata."
+      description="Färdiga vinkurser och provningsmallar att göra hemma — med vänner eller på egen hand."
       ctaButtons={[
-        { text: 'Kom igång', href: `/vinprovningar/${featuredSlug}`, primary: true },
-        { text: 'Se alla vinprovningar', href: '/vinprovningar' },
+        { text: 'Se vinkurser', href: '/vinkurser', primary: true },
+        { text: 'Bläddra i provningsmallar', href: '/provningsmallar' },
       ]}
-      microDetails={['300+ prenumeranter', 'Prova gratis', 'Livstidsåtkomst']}
+      microDetails={['300+ prenumeranter', 'Engångsbetalning', 'Livstidsåtkomst']}
     />
   )
 }

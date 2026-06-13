@@ -46,24 +46,24 @@ const faqSections = [
     ],
   },
   {
-    category: 'Vinprovningar',
+    category: 'Vinkurser',
     icon: BookOpen,
     questions: [
       {
-        q: 'Vad är skillnaden mellan gratis och betalda vinprovningar?',
-        a: 'Alla vinprovningar har gratis moment som du kan prova direkt. Fullständig tillgång till alla moment och quiz kräver ett engångsköp. Du kan kolla på vinprovningen hur många gånger du vill',
+        q: 'Vad är skillnaden mellan gratis och betalda vinkurser?',
+        a: 'Alla vinkurser har gratis moment som du kan prova direkt. Fullständig tillgång till alla moment och quiz kräver ett engångsköp. Du kan kolla på vinkursen hur många gånger du vill',
       },
       {
         q: 'Hur fungerar gruppsessioner?',
-        a: 'Om du köpt en vinprovning kan du starta en gruppsession och bjuda in gäster med en kod. Gästerna får tillfällig tillgång till hela vinprovningen under sessionens längd. Perfekt för provningar tillsammans med vänner!',
+        a: 'Om du köpt en vinkurs kan du starta en gruppsession och bjuda in gäster med en kod. Gästerna får tillfällig tillgång till hela vinkursen under sessionens längd. Perfekt för provningar tillsammans med vänner!',
       },
       {
-        q: 'Kan jag gå vinprovningen i min egen takt?',
-        a: 'Absolut! När du köpt en vinprovning kan du kolla på vinprovningen hur många gånger du vill. Du kan pausa och återuppta när det passar dig.',
+        q: 'Kan jag gå vinkursen i min egen takt?',
+        a: 'Absolut! När du köpt en vinkurs kan du kolla på vinkursen hur många gånger du vill. Du kan pausa och återuppta när det passar dig.',
       },
       {
-        q: 'Hur lång är en typisk vinprovning?',
-        a: 'Det beror på hur mycket tid du lägger på att smaka, prova och hur trevligt ni har! En vinprovning innehåller ofta 3-4 video à 10 min med efterföljande quiz och tid för reflektion och egen provning. Du ser exakt längd på varje vinprovnings översiktssida.',
+        q: 'Hur lång är en typisk vinkurs?',
+        a: 'Det beror på hur mycket tid du lägger på att smaka, prova och hur trevligt ni har! En vinkurs innehåller ofta 3-4 video à 10 min med efterföljande quiz och tid för reflektion och egen provning. Du ser exakt längd på varje vinkurs översiktssida.',
       },
     ],
   },
@@ -81,7 +81,7 @@ const faqSections = [
       },
       {
         q: 'Har ni återbetalning?',
-        a: 'Ja, vi erbjuder 30 dagars nöjd-kund-garanti. Om du inte är nöjd med en vinprovning kan du kontakta oss för full återbetalning, utan krångel.',
+        a: 'Ja, vi erbjuder 30 dagars nöjd-kund-garanti. Om du inte är nöjd med en vinkurs kan du kontakta oss för full återbetalning, utan krångel.',
       },
       {
         q: 'Kan jag köpa som företag?',
@@ -215,11 +215,11 @@ export function HelpPageClient() {
               <Badge variant="outline">Konto</Badge>
             </Link>
             <Link
-              href="/vinprovningar"
+              href="/vinkurser"
               className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-colors"
             >
-              <span className="text-sm font-medium">Alla Vinprovningar</span>
-              <Badge variant="outline">Vinprovningar</Badge>
+              <span className="text-sm font-medium">Alla Vinkurser</span>
+              <Badge variant="outline">Vinkurser</Badge>
             </Link>
             <Link
               href="/artiklar"

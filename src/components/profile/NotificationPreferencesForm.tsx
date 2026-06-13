@@ -229,7 +229,7 @@ export function NotificationPreferencesForm({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Framsteg</FormLabel>
-                    <FormDescription>Få meddelanden om dina framsteg i vinprovningar.</FormDescription>
+                    <FormDescription>Få meddelanden om dina framsteg i vinkurser.</FormDescription>
                   </div>
                   <FormControl>
                     <Switch
@@ -249,9 +249,9 @@ export function NotificationPreferencesForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Nya vinprovningar</FormLabel>
+                    <FormLabel className="text-base">Nya vinkurser</FormLabel>
                     <FormDescription>
-                      Få meddelanden om nya vinprovningar som blir tillgängliga.
+                      Få meddelanden om nya vinkurser som blir tillgängliga.
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -348,7 +348,7 @@ export function NotificationPreferencesForm({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Påminnelser</FormLabel>
-                    <FormDescription>Påminnelser om att fortsätta med vinprovningar.</FormDescription>
+                    <FormDescription>Påminnelser om att fortsätta med vinkurser.</FormDescription>
                   </div>
                   <FormControl>
                     <Switch

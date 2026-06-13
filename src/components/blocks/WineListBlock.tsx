@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Wine as WineIcon, ShoppingCart, ExternalLink, Sparkles } from 'lucide-react'
 import { Button } from '../ui/button'
 import { WineImagePlaceholder } from '../wine/WineImagePlaceholder'
+import { WineAggregatePlaceholder } from '../course/WineAggregatePlaceholder'
 import type { Wine, Media } from '../../payload-types'
 
 /** Resolve image URLs for a list of wines, fetching media records when needed */
@@ -65,10 +66,18 @@ interface WineListBlockProps {
   showTotalPrice?: boolean
   description?: string
   shoppingListUrl?: string
+  /**
+   * When false, wine identities are redacted: only count + summed price render
+   * (via WineAggregatePlaceholder). Set false for non-purchaser/non-session
+   * visitors on the course detail page. Defaults to true so RichTextRenderer
+   * callers that don't yet thread this through don't accidentally redact.
+   * Spec D5.
+   */
+  userHasAccess?: boolean
 }
 
 export function WineListBlock({
-  title = 'Viner du behöver för denna vinprovning',
+  title = 'Viner du behöver för denna vinkurs',
   wines,
   displayStyle,
   showPrices = true,
@@ -76,6 +85,7 @@ export function WineListBlock({
   showTotalPrice = true,
   description,
   shoppingListUrl,
+  userHasAccess = true,
 }: WineListBlockProps) {
   // Format price with Swedish currency
   const formatPrice = (price: number) => {
@@ -92,6 +102,11 @@ export function WineListBlock({
 
   // Calculate total price
   const totalPrice = wines.reduce((sum, wine) => sum + (wine.price || 0), 0)
+
+  // Non-purchaser view: hide wine identities, show aggregate only.
+  if (!userHasAccess) {
+    return <WineAggregatePlaceholder count={wines.length} totalSek={totalPrice} />
+  }
 
   // Wines in rich text should link to internal wine pages
   const getWineLink = (wine: Wine) => `/vinlistan/${wine.slug || wine.id}`
@@ -428,7 +443,7 @@ export function WineListBlock({
                   Total kostnad för alla viner
                 </span>
                 <p className="text-sm text-muted-foreground">
-                  Ungefärlig totalkostnad för att köpa alla viner som behövs för denna vinprovning.
+                  Ungefärlig totalkostnad för att köpa alla viner som behövs för denna vinkurs.
                 </p>
               </div>
               <div className="flex items-center gap-3 px-5 py-3 bg-brand-300/15 rounded-xl border border-brand-300/30">

@@ -107,16 +107,16 @@ export default function CourseQuizViewer({
       if (hasNavigatedToReviewRef.current) return
       if (!manual && isSessionParticipant) return
       hasNavigatedToReviewRef.current = true
-      router.push(`/vinprovningar/${course.slug || course.id}/recension`)
+      router.push(`/vinkurser/${course.slug || course.id}/recension`)
     },
     [isSessionParticipant, router, course.slug, course.id],
   )
 
   const navigateToItem = (item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
-      router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?lesson=${item.id}`))
+      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?lesson=${item.id}`))
     } else {
-      router.push(buildUrl(`/vinprovningar/${course.slug || course.id}?quiz=${item.id}`))
+      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${item.id}`))
     }
   }
 
@@ -193,7 +193,7 @@ export default function CourseQuizViewer({
                   >
                     {isLastQuizItem ? (
                       <>
-                        Betygsätt vinprovningen <ChevronRight className="w-4 h-4 ml-1" />
+                        Betygsätt vinkursen <ChevronRight className="w-4 h-4 ml-1" />
                       </>
                     ) : (
                       <>
@@ -236,13 +236,13 @@ export default function CourseQuizViewer({
                   <Lock className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">Detta innehåll är betalinnehåll</h3>
                   <p className="text-muted-foreground mb-4">
-                    Du behöver köpa vinprovningen för att få tillgång till detta quiz
+                    Du behöver köpa vinkursen för att få tillgång till detta quiz
                   </p>
                   <Button
                     variant="secondary"
-                    onClick={() => router.push(`/vinprovningar/${course.slug || course.id}`)}
+                    onClick={() => router.push(`/vinkurser/${course.slug || course.id}`)}
                   >
-                    Köp vinprovning
+                    Köp vinkurs
                   </Button>
                 </CardContent>
               </Card>

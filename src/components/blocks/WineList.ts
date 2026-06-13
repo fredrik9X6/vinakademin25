@@ -12,7 +12,7 @@ export const WineList: Block = {
       name: 'title',
       type: 'text',
       label: 'List Title',
-      defaultValue: 'Viner du behöver för denna vinprovning',
+      defaultValue: 'Viner du behöver för denna vinkurs',
       admin: {
         description: 'Title displayed above the wine list',
       },

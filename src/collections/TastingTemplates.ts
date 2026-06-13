@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { syncTemplateWithStripe } from '../lib/stripe-products'
 
 const slugifyTitle = (input: string): string =>
   String(input)
@@ -132,15 +133,54 @@ export const TastingTemplates: CollectionConfig = {
       name: 'accessLevel',
       type: 'select',
       required: true,
-      defaultValue: 'free',
+      defaultValue: 'paid',
       options: [
-        { label: 'Fri – alla kan se', value: 'free' },
-        { label: 'Endast medlemmar', value: 'members_only' },
+        { label: 'Fri – alla kan se utan köp', value: 'free' },
+        { label: 'Betald – kräver köp eller prenumeration', value: 'paid' },
       ],
       admin: {
         position: 'sidebar',
         description:
-          'Free templates render wine details to everyone. Members-only templates redact wines for non-members; only count + total price are visible.',
+          'Free templates render wine details to everyone. Paid templates redact wines for non-purchasers; subscribers and per-template buyers unlock the full view.',
+      },
+    },
+    {
+      name: 'priceSek',
+      type: 'number',
+      required: true,
+      defaultValue: 99,
+      min: 0,
+      admin: {
+        position: 'sidebar',
+        description: 'Pris per mall i SEK (engångsbetalning). 0 = gratis.',
+      },
+    },
+    {
+      name: 'isFreeTrial',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Markera EN mall som gratis för alla inloggade användare — låter dem prova "Provningsmallar" innan första köp.',
+      },
+    },
+    {
+      name: 'stripeProductId',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Auto-generated via syncTemplateWithStripe when the template is published with a price.',
+      },
+    },
+    {
+      name: 'stripePriceId',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Auto-generated. Stripe Prices are immutable — old prices get archived when priceSek changes.',
       },
     },
     {
@@ -177,6 +217,52 @@ export const TastingTemplates: CollectionConfig = {
           return { ...data, publishedAt: new Date().toISOString() }
         }
         return data
+      },
+    ],
+    afterChange: [
+      async ({ doc, req, operation, previousDoc }) => {
+        if (!doc) return doc
+
+        // Sync paid published templates with Stripe. Mirrors Vinkurser's pattern:
+        // setImmediate so the DB transaction completes before we hit Stripe (avoids
+        // idle-in-transaction timeouts on Neon).
+        if (
+          doc.accessLevel === 'paid' &&
+          doc.publishedStatus === 'published' &&
+          typeof doc.priceSek === 'number' &&
+          doc.priceSek > 0
+        ) {
+          const shouldSync =
+            operation === 'create' ||
+            !doc.stripeProductId ||
+            !doc.stripePriceId ||
+            (operation === 'update' &&
+              previousDoc &&
+              (doc.priceSek !== previousDoc.priceSek ||
+                doc.title !== previousDoc.title ||
+                doc.accessLevel !== previousDoc.accessLevel))
+
+          if (shouldSync) {
+            const docId = String(doc.id)
+            const docData = { ...doc }
+            setImmediate(async () => {
+              try {
+                const { productId, priceId } = await syncTemplateWithStripe(docId, docData)
+                req.payload.logger.info(
+                  { templateId: docId, productId, priceId },
+                  'Template synced with Stripe',
+                )
+              } catch (err) {
+                req.payload.logger.error(
+                  { err, templateId: docId },
+                  'Failed to sync template with Stripe',
+                )
+              }
+            })
+          }
+        }
+
+        return doc
       },
     ],
   },

@@ -33,7 +33,7 @@ export function FeedbackButton({ position = 'bottom-right' }: FeedbackButtonProp
   // On course content pages (lesson/quiz), the lesson nav bar sits above the
   // global bottom nav so the feedback button must clear both bars.
   const isCourseContentPage =
-    pathname.startsWith('/vinprovningar/') &&
+    pathname.startsWith('/vinkurser/') &&
     (searchParams.has('lesson') || searchParams.has('quiz'))
 
   // The tasting-plan create/edit form mounts a sticky action bar above the

@@ -6,10 +6,10 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
- * GET /api/vinprovningar/title?slug=...&preview=true
+ * GET /api/vinkurser/title?slug=...&preview=true
  *
  * Public-safe endpoint used by the client-side breadcrumbs to resolve the real
- * vinprovning title for /vinprovningar/[slug].
+ * course title for /vinkurser/[slug].
  */
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const draft = Boolean(isAdmin && wantsPreview)
 
     const res = await payload.find({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       where: { slug: { equals: slug } },
       limit: 1,
       depth: 0 as any,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       } as any,
     } as any)
 
-    const title = res?.docs?.[0]?.title
+    const title = (res?.docs?.[0] as { title?: string } | undefined)?.title
 
     return NextResponse.json(
       { title: typeof title === 'string' && title.trim() ? title : null },

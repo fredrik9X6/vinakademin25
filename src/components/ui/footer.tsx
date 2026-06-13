@@ -11,7 +11,7 @@ const socialLinks = [
 ]
 
 const exploreLinks = [
-  { label: 'Vinprovningar', href: '/vinprovningar' },
+  { label: 'Vinkurser', href: '/vinkurser' },
   { label: 'Vinkompassen', href: '/vinkompassen' },
   { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },
@@ -170,7 +170,7 @@ export function Footer() {
               Vinakademin
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Vi gör vinkunskap enkelt &amp; opretentiöst. Guidade provningar hemma, med vänner,
+              Vi gör vinkunskap enkelt &amp; opretentiöst. Guidade vinkurser hemma, med vänner,
               när det passar dig.
             </p>
 

@@ -87,6 +87,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301)
   }
 
+  // Permanent 301 from legacy /vinprovningar/* to /vinkurser/*.
+  // The collection was renamed to Vinkurser (video courses); the templates
+  // product owns /provningsmallar separately. Preserves query strings so
+  // session links, lesson params, and Stripe cancel URLs all survive.
+  // Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D3)
+  if (pathname === '/vinprovningar' || pathname.startsWith('/vinprovningar/')) {
+    const target = pathname.replace(/^\/vinprovningar/, '/vinkurser')
+    url.pathname = target
+    return NextResponse.redirect(url, 301)
+  }
+
   // Skip middleware for API routes, static files, and public routes
   // Ensure public paths match renamed routes
   if (
@@ -102,8 +113,8 @@ export async function middleware(request: NextRequest) {
     pathname === '/aterstall-losenord' ||
     pathname === '/verifiera-epost' ||
     pathname === '/verifiera-epost-meddelande' || // Added the verification message page
-    pathname === '/vinprovningar' || // Allow public access to courses listing page
-    (pathname.startsWith('/vinprovningar/') && !url.searchParams.has('lesson')) // Allow public access to course landing pages, but not lessons
+    pathname === '/vinkurser' || // Allow public access to courses listing page
+    (pathname.startsWith('/vinkurser/') && !url.searchParams.has('lesson')) // Allow public access to course landing pages, but not lessons
   ) {
     return NextResponse.next()
   }

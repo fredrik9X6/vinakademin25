@@ -7,20 +7,26 @@ import { BlocksFeature } from '@payloadcms/richtext-lexical'
 import { WineReference, WineList, NewsletterSignup, CourseReference, RegionReference, CountryReference } from '../components/blocks'
 import { seoFields } from '../fields/seo'
 
-export const Vinprovningar: CollectionConfig = {
-  slug: 'vinprovningar',
+// Collection slug is `vinkurser` but the Postgres table stays `vinprovningar`
+// via the `dbName` override below. The mismatch is intentional — renaming the
+// table would cascade across 13 FKs / 8 enum types / 36 indexes / version
+// tables for zero functional benefit. The table name is invisible to users.
+// See docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D1).
+export const Vinkurser: CollectionConfig = {
+  slug: 'vinkurser',
+  dbName: 'vinprovningar',
   labels: {
-    singular: 'Wine tasting',
-    plural: 'Wine tastings',
+    singular: 'Wine course',
+    plural: 'Wine courses',
   },
   admin: {
-    group: 'Wine Tastings',
+    group: 'Wine Courses',
     useAsTitle: 'title',
     defaultColumns: ['title', 'level', 'price', '_status'],
-    description: 'Wine education courses offered on the platform',
+    description: 'Wine education video courses offered on the platform',
     livePreview: {
       url: ({ data }) => {
-        return `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}/vinprovningar/${data.slug}`
+        return `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}/vinkurser/${data.slug}`
       },
     },
   },
@@ -82,12 +88,12 @@ export const Vinprovningar: CollectionConfig = {
         
         // Log publish operations for debugging
         if (operation === 'update' && data._status === 'published') {
-          req.payload.logger.info(`📝 Publishing wine tasting: ${data.id || 'new'}`)
+          req.payload.logger.info(`📝 Publishing wine course: ${data.id || 'new'}`)
         }
         
         // If user exists, validate role
         if (req.user.role !== 'admin' && req.user.role !== 'instructor') {
-          throw new Error('Only admins and instructors can save wine tastings')
+          throw new Error('Only admins and instructors can save wine courses')
         }
         
         return data
@@ -104,10 +110,10 @@ export const Vinprovningar: CollectionConfig = {
         // Mux preview video upload is now handled via Mux Direct Uploads (client-side)
         // The webhook at /api/mux/webhook handles updating previewMuxData when processing completes
 
-        // Sync with Stripe when wine tasting is created or updated with a price
+        // Sync with Stripe when wine course is created or updated with a price
         // Sync happens when:
-        // 1. Creating a new wine tasting with price > 0, OR
-        // 2. Wine tasting doesn't have Stripe IDs yet but has a price, OR
+        // 1. Creating a new wine course with price > 0, OR
+        // 2. Wine course doesn't have Stripe IDs yet but has a price, OR
         // 3. Price/title/description changed (to update Stripe product)
         // Only sync when document is published (not draft) to avoid validation issues during editing
         if (doc.price && doc.price > 0 && doc._status === 'published') {
@@ -123,8 +129,8 @@ export const Vinprovningar: CollectionConfig = {
                 doc.description !== previousDoc.description))
 
           if (shouldSync) {
-            payload.logger.info(`Syncing wine tasting ${doc.id} with Stripe...`)
-            payload.logger.info(`Wine tasting data: title="${doc.title}", price=${doc.price}`)
+            payload.logger.info(`Syncing wine course ${doc.id} with Stripe...`)
+            payload.logger.info(`Wine course data: title="${doc.title}", price=${doc.price}`)
             
             // IMPORTANT: Run Stripe sync asynchronously to avoid blocking the database transaction
             // This prevents idle-in-transaction timeout errors with Neon/Postgres
@@ -135,12 +141,12 @@ export const Vinprovningar: CollectionConfig = {
             setImmediate(async () => {
               try {
                 const { productId, priceId } = await syncCourseWithStripe(docId, docData)
-                payload.logger.info(`Wine tasting ${docId} synced with Stripe:`, {
+                payload.logger.info(`Wine course ${docId} synced with Stripe:`, {
                   productId,
                   priceId,
                 })
               } catch (error: any) {
-                payload.logger.error(`Error syncing wine tasting ${docId} with Stripe:`, error)
+                payload.logger.error(`Error syncing wine course ${docId} with Stripe:`, error)
                 if (error instanceof Error) {
                   payload.logger.error(`Error message: ${error.message}`)
                   payload.logger.error(`Error stack: ${error.stack}`)
@@ -158,11 +164,11 @@ export const Vinprovningar: CollectionConfig = {
       async ({ doc, req }) => {
         const { payload } = req
 
-        // Delete from Mux when wine tasting is deleted
+        // Delete from Mux when wine course is deleted
         if (doc.previewVideoProvider === 'mux' && doc.previewMuxData?.assetId) {
           try {
             payload.logger.info(
-              `Deleting Mux preview asset ${doc.previewMuxData.assetId} for wine tasting ${doc.id}`,
+              `Deleting Mux preview asset ${doc.previewMuxData.assetId} for wine course ${doc.id}`,
             )
             await deleteAssetFromMux(doc.previewMuxData.assetId)
             payload.logger.info(`Mux preview asset deleted successfully`)
@@ -180,7 +186,7 @@ export const Vinprovningar: CollectionConfig = {
       required: true,
       maxLength: 100,
       admin: {
-        description: 'Wine tasting title displayed to students',
+        description: 'Wine course title displayed to students',
       },
     },
     {
@@ -198,7 +204,7 @@ export const Vinprovningar: CollectionConfig = {
       required: true,
       maxLength: 500,
       admin: {
-        description: 'Brief description of the wine tasting content and goals',
+        description: 'Brief description of the wine course content and goals',
       },
     },
     {
@@ -215,7 +221,7 @@ export const Vinprovningar: CollectionConfig = {
       }),
       admin: {
         description:
-          'Detailed wine tasting description with rich formatting, wine lists, and custom blocks',
+          'Detailed wine course description with rich formatting, wine lists, and custom blocks',
       },
     },
     {
@@ -224,7 +230,7 @@ export const Vinprovningar: CollectionConfig = {
       relationTo: 'media',
       required: true,
       admin: {
-        description: 'Main wine tasting image for thumbnails and hero sections',
+        description: 'Main wine course image for thumbnails and hero sections',
       },
     },
     // Preview Video Fields (Mux)
@@ -319,7 +325,7 @@ export const Vinprovningar: CollectionConfig = {
       required: true,
       min: 0,
       admin: {
-        description: 'Wine tasting price in SEK',
+        description: 'Wine course price in SEK',
       },
     },
     {
@@ -336,7 +342,7 @@ export const Vinprovningar: CollectionConfig = {
       name: 'duration',
       type: 'number',
       admin: {
-        description: 'Estimated wine tasting duration in hours',
+        description: 'Estimated wine course duration in hours',
       },
     },
     {
@@ -344,7 +350,7 @@ export const Vinprovningar: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Display this wine tasting prominently on homepage and listing',
+        description: 'Display this wine course prominently on homepage and listing',
       },
     },
     {
@@ -353,14 +359,14 @@ export const Vinprovningar: CollectionConfig = {
       relationTo: 'users',
       required: true,
       admin: {
-        description: 'Wine tasting instructor',
+        description: 'Wine course instructor',
       },
     },
     {
       name: 'modules',
       type: 'array',
       admin: {
-        description: 'Ordered modules for this wine tasting. Drag and drop to reorder. Click "Add Module" then select an existing module or create a new one.',
+        description: 'Ordered modules for this wine course. Drag and drop to reorder. Click "Add Module" then select an existing module or create a new one.',
       },
       fields: [
         {
@@ -385,7 +391,7 @@ export const Vinprovningar: CollectionConfig = {
         },
       ],
       admin: {
-        description: 'Wine tasting tags for search and filtering',
+        description: 'Wine course tags for search and filtering',
       },
     },
     // Stripe Integration Fields
@@ -393,7 +399,7 @@ export const Vinprovningar: CollectionConfig = {
       name: 'stripeProductId',
       type: 'text',
       admin: {
-        description: 'Stripe Product ID - Auto-generated when wine tasting is published with a price',
+        description: 'Stripe Product ID - Auto-generated when wine course is published with a price',
         readOnly: true,
         placeholder: 'Will be created automatically when published',
       },
@@ -402,7 +408,7 @@ export const Vinprovningar: CollectionConfig = {
       name: 'stripePriceId',
       type: 'text',
       admin: {
-        description: 'Stripe Price ID - Auto-generated when wine tasting is published with a price',
+        description: 'Stripe Price ID - Auto-generated when wine course is published with a price',
         readOnly: true,
         placeholder: 'Will be created automatically when published',
       },

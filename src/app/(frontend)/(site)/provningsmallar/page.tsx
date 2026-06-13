@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
-type AccessFilter = 'free' | 'members_only' | null
+type AccessFilter = 'free' | 'paid' | null
 
 export default async function ProvningsmallarListing({
   searchParams,
@@ -28,7 +28,7 @@ export default async function ProvningsmallarListing({
   const sp = await searchParams
   const activeTag = (sp.tag || '').trim() || null
   const accessFilter: AccessFilter =
-    sp.access === 'free' || sp.access === 'members_only' ? sp.access : null
+    sp.access === 'free' || sp.access === 'paid' ? sp.access : null
 
   const user = await getUser()
   const isAdmin = user?.role === 'admin'
@@ -122,10 +122,10 @@ export default async function ProvningsmallarListing({
       active: accessFilter === 'free',
     },
     {
-      key: 'members_only',
-      label: 'Medlem',
-      href: pillHref('members_only'),
-      active: accessFilter === 'members_only',
+      key: 'paid',
+      label: 'Betald',
+      href: pillHref('paid'),
+      active: accessFilter === 'paid',
     },
   ]
 

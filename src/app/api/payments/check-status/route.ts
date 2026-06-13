@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const courseId =
       typeof order.items[0].course === 'object' ? order.items[0].course.id : order.items[0].course
     const course = await payload.findByID({
-      collection: 'vinprovningar',
+      collection: 'vinkurser',
       id: courseId,
     })
 

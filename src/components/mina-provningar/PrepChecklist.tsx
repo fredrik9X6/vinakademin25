@@ -20,9 +20,9 @@ export function PrepChecklist({ onDismiss }: PrepChecklistProps) {
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="font-medium text-base">Forbredelser for din provning</h3>
+            <h3 className="font-medium text-base">Forbredelser for din vinkurs</h3>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Se till att du har allt infor din vinprovning.
+              Se till att du har allt infor din vinkurs.
             </p>
           </div>
           <button

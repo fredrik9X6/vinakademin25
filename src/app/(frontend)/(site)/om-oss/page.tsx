@@ -41,7 +41,7 @@ const values = [
   {
     icon: Target,
     title: 'Kvalitet först',
-    description: 'Våra vinprovningar är noggrant utformade för att skapa en unik upplevelse.',
+    description: 'Våra vinkurser är noggrant utformade för att skapa en unik upplevelse.',
   },
 ]
 
@@ -75,7 +75,7 @@ const milestones = [
     year: '2025',
     title: 'Vinakademin bildas',
     description:
-      'Vi tecknade Vinakademin som eget företag och lanserar vår första produkt: digitala vinprovningar online. Äntligen kan fler uppleva vad vi älskar.',
+      'Vi tecknade Vinakademin som eget företag och lanserar vår första produkt: digitala vinkurser online. Äntligen kan fler uppleva vad vi älskar.',
   },
 ]
 
@@ -134,7 +134,7 @@ export default function AboutPage() {
               <h2 className="text-3xl font-medium md:text-4xl">Vår resa</h2>
               <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
                 Från första Instagram-inlägget till att lansera vår egen plattform för digitala
-                vinprovningar
+                vinkurser
               </p>
             </div>
 
@@ -156,7 +156,7 @@ export default function AboutPage() {
                     De senaste tre åren har vi delat vårt vinintresse via Instagram och TikTok,
                     skapat hundratals videos, och lärt oss mer om vin varje dag. Men tanken har
                     alltid varit densamma: göra vinkunskap tillgängligt genom att smaka och
-                    uppleva. Vinprovningar blir det självklara svaret — men hur kan vi göra dem
+                    uppleva. Vinkurser blir det självklara svaret — men hur kan vi göra dem
                     bättre? Roligare, enklare, mer tillgängliga. Det är det vi löser med Vinakademin.
                   </p>
                 </div>
@@ -285,7 +285,7 @@ export default function AboutPage() {
                 </div>
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   Med ett stort intresse för vin och författande skapar Max videos, artiklar,
-                  vinprovningar och mer eller mindre allt innehåll som Vinakademin producerar.
+                  vinkurser och mer eller mindre allt innehåll som Vinakademin producerar.
                 </p>
               </CardContent>
             </Card>
@@ -306,16 +306,16 @@ export default function AboutPage() {
                   <h2 className="text-2xl font-medium md:text-3xl">Vår vision</h2>
                   <p className="text-lg leading-relaxed text-muted-foreground">
                     Vi vill göra vinkunskap enkelt och opretentiöst för alla. En plats där du lär
-                    dig genom att smaka, uppleva och utforska vinets värld. Vinprovningar ska vara
+                    dig genom att smaka, uppleva och utforska vinets värld. Vinkurser ska vara
                     roliga, tillgängliga och minnesvärda. Vinakademin ska vara den självklara
                     platsen för alla som vill upptäcka vinvärlden och lära sig mer om vin.
                   </p>
                 </div>
                 <Separator className="my-6" />
                 <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                  <Link href="/vinprovningar" className="btn-brand btn-brand-lg">
+                  <Link href="/vinkurser" className="btn-brand btn-brand-lg">
                     <BookOpen className="mr-1 h-4 w-4" />
-                    Utforska våra vinprovningar
+                    Utforska våra vinkurser
                   </Link>
                   <Link
                     href="/kontakt"

@@ -25,7 +25,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
   const sessionId = resolvedSearchParams.session_id
 
   if (!sessionId) {
-    redirect('/vinprovningar')
+    redirect('/vinkurser')
   }
 
   const user = await getUser()
@@ -58,7 +58,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             : order.items[0].course
 
         course = await payload.findByID({
-          collection: 'vinprovningar',
+          collection: 'vinkurser',
           id: courseId,
           depth: 1, // Populate featuredImage and instructor
         })
@@ -116,7 +116,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             Betalning genomförd!
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Tack för ditt köp! Din beställning har bekräftats och din vinprovning är nu tillgänglig.
+            Tack för ditt köp! Din beställning har bekräftats och din vinkurs är nu tillgänglig.
           </p>
         </div>
 
@@ -207,7 +207,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                   <BookOpen className="w-5 h-5 text-muted-foreground mb-2 mx-auto sm:mx-auto" />
                   <p className="text-sm font-medium">Omedelbar tillgång</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Vinprovningen är tillgänglig direkt
+                    Vinkursen är tillgänglig direkt
                   </p>
                 </div>
                 <div className="flex flex-col items-start sm:items-center text-center sm:text-center p-4 rounded-lg bg-muted/50 border border-border">
@@ -226,23 +226,23 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             {/* Action Buttons */}
             {user && enrollment ? (
               <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-border">
-                <Link href={`/vinprovningar/${course?.slug}`} className="btn-brand-lg flex-1">
+                <Link href={`/vinkurser/${course?.slug}`} className="btn-brand-lg flex-1">
                   <BookOpen className="w-5 h-5 mr-2" />
-                  Börja vinprovningen nu
+                  Börja vinkursen nu
                 </Link>
                 <Link
                   href="/mina-provningar"
                   className="inline-flex flex-1 h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium hover:border-brand-400/50 hover:bg-brand-300/5"
                 >
                   <ArrowRight className="w-5 h-5" />
-                  Gå till mina vinprovningar
+                  Gå till mina vinkurser
                 </Link>
               </div>
             ) : !user && isGuestOrder ? (
               <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-border">
                 <Link href={activationHref} className="btn-brand-lg flex-1">
                   <ArrowRight className="w-5 h-5 mr-2" />
-                  Aktivera konto och se mina vinprovningar
+                  Aktivera konto och se mina vinkurser
                 </Link>
                 <Link
                   href={`/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-provningar&source=guest_checkout')}`}
@@ -262,8 +262,8 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                       Din beställning behandlas
                     </h4>
                     <p className="text-sm text-amber-800 dark:text-amber-200 mb-4">
-                      Du får tillgång till vinprovningen inom några minuter. Om du inte ser
-                      vinprovningen inom 10 minuter, kontakta vår support.
+                      Du får tillgång till vinkursen inom några minuter. Om du inte ser
+                      vinkursen inom 10 minuter, kontakta vår support.
                     </p>
                     <Link
                       href={
@@ -273,7 +273,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                       }
                     >
                       <Button variant="outline" size="sm" className="border-amber-300 dark:border-amber-700">
-                        {user ? 'Kontrollera mina vinprovningar' : 'Logga in för att se vinprovningar'}
+                        {user ? 'Kontrollera mina vinkurser' : 'Logga in för att se vinkurser'}
                       </Button>
                     </Link>
                   </div>
@@ -303,5 +303,5 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
 
 export const metadata = {
   title: 'Betalning genomförd - Vinakademin',
-  description: 'Din beställning har bekräftats och vinprovningen är nu tillgänglig.',
+  description: 'Din beställning har bekräftats och vinkursen är nu tillgänglig.',
 }

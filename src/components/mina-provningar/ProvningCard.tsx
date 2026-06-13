@@ -24,7 +24,7 @@ export function ProvningCard({ course }: ProvningCardProps) {
   let ctaText: string
   let CtaIcon: typeof Play
   if (percentage === 0) {
-    ctaText = 'Starta provningen'
+    ctaText = 'Starta vinkursen'
     CtaIcon = Play
   } else if (progress.completed) {
     ctaText = 'Se igen'
@@ -86,7 +86,7 @@ export function ProvningCard({ course }: ProvningCardProps) {
         </div>
 
         {/* CTA Button */}
-        <Link href={`/vinprovningar/${course.slug}`} className="btn-brand w-full">
+        <Link href={`/vinkurser/${course.slug}`} className="btn-brand w-full">
           <CtaIcon className="h-4 w-4" />
           {ctaText}
         </Link>

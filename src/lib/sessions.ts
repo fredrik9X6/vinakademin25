@@ -1,5 +1,5 @@
 import type { Payload } from 'payload'
-import type { CourseSession, SessionParticipant, Vinprovningar } from '@/payload-types'
+import type { CourseSession, SessionParticipant, Vinkurser } from '@/payload-types'
 import { loggerFor } from './logger'
 
 const log = loggerFor('lib-sessions')
@@ -59,7 +59,7 @@ export async function getActiveParticipantSession({
 
     if (forCourseId !== undefined) {
       const sessionCourseId =
-        typeof session.course === 'object' ? (session.course as Vinprovningar).id : session.course
+        typeof session.course === 'object' ? (session.course as Vinkurser).id : session.course
       if (sessionCourseId !== forCourseId) return null
     }
 

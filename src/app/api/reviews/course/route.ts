@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     if (existingReview.docs.length > 0) {
       return NextResponse.json(
-        { error: 'Du har redan skrivit en recension för denna vinprovning' },
+        { error: 'Du har redan skrivit en recension för denna vinkurs' },
         { status: 409 },
       )
     }

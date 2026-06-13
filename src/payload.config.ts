@@ -11,7 +11,7 @@ import { loggerFor } from './lib/logger'
 import { migrations } from './migrations'
 import { Media } from './collections/Media'
 import { Users } from './collections/Users'
-import { Vinprovningar } from './collections/Vinprovningar'
+import { Vinkurser } from './collections/Vinkurser'
 import { Modules } from './collections/Modules'
 import { ContentItems } from './collections/ContentItems'
 import { UserProgress } from './collections/UserProgress'
@@ -38,6 +38,7 @@ import { SessionParticipants } from './collections/SessionParticipants'
 import { SessionGuesses } from './collections/SessionGuesses'
 import { TastingPlans } from './collections/TastingPlans'
 import { TastingTemplates } from './collections/TastingTemplates'
+import { TemplateEntitlements } from './collections/TemplateEntitlements'
 import { Subscribers } from './collections/Subscribers'
 import { Events } from './collections/Events'
 import { VinkompassQuestions } from './collections/VinkompassQuestions'
@@ -222,7 +223,7 @@ export default buildConfig({
   collections: [
     Media,
     Users,
-    Vinprovningar,
+    Vinkurser,
     Modules,
     ContentItems,
     UserProgress,
@@ -249,6 +250,7 @@ export default buildConfig({
     SessionGuesses,
     TastingPlans,
     TastingTemplates,
+    TemplateEntitlements,
     Subscribers,
     Events,
     VinkompassQuestions,
