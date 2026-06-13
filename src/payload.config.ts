@@ -80,13 +80,21 @@ const s3StoragePlugin = s3Enabled
                 // direct CDN URL at upload time, so requests go browser → R2
                 // CDN and skip the `/api/media/file/*` proxy entirely.
                 //
-                // The `${prefix}/` segment is mandatory: objects live at
-                // `<prefix>/<filename>` in R2 (e.g. `production/foo.jpg`),
-                // and Payload's `generateFileURL({filename})` callback only
-                // receives the bare filename, so we have to splice the prefix
-                // in ourselves. Without it, every uploaded URL is a 404.
+                // Path shape is `${S3_BUCKET}/${s3Prefix}/${filename}` because:
+                //   1. `${prefix}/` is the per-env namespace we set on the
+                //      collection (production/dev), and
+                //   2. `${S3_BUCKET}/` is a HISTORIC quirk: our S3_ENDPOINT
+                //      already includes `/<bucket>` in its path, and with
+                //      `forcePathStyle: true` the AWS SDK appends `/<bucket>`
+                //      again — so every object's real R2 key is actually
+                //      `vinakademin/production/foo.jpg` rather than just
+                //      `production/foo.jpg`. The custom domain serves from
+                //      object root, so we have to mirror that layout in the
+                //      public URL or every link 404s. Fixing the endpoint
+                //      properly would require renaming every existing object;
+                //      easier to splice the bucket name in here.
                 generateFileURL: ({ filename }: { filename: string }) =>
-                  `${process.env.S3_PUBLIC_URL!.replace(/\/$/, '')}/${s3Prefix}/${filename}`,
+                  `${process.env.S3_PUBLIC_URL!.replace(/\/$/, '')}/${process.env.S3_BUCKET}/${s3Prefix}/${filename}`,
               }
             : {}),
         },
