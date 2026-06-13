@@ -39,8 +39,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (parsedRating < 1 || parsedRating > 5) {
-      return NextResponse.json({ error: 'Betyg måste vara 1-5' }, { status: 400 })
+    if (parsedRating < 0.5 || parsedRating > 5) {
+      return NextResponse.json({ error: 'Betyg måste vara mellan 0,5 och 5' }, { status: 400 })
+    }
+    // Half-step invariant: 0.5, 1, 1.5, … 5. Math.round(x*2) === x*2 iff x is
+    // a multiple of 0.5 (within float precision).
+    if (Math.round(parsedRating * 2) !== parsedRating * 2) {
+      return NextResponse.json(
+        { error: 'Betyg måste vara i halvstjärnor (t.ex. 4,5)' },
+        { status: 400 },
+      )
     }
 
     // Determine the author - either via auth token or review email token

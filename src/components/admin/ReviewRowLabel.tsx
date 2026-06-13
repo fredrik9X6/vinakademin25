@@ -51,10 +51,12 @@ export const ReviewRowLabel: React.FC<ReviewRowLabelProps> = ({ data, fallback }
     parts.push(wineName)
   }
   
-  // Add rating with stars if available
+  // Add rating with stars if available — half-stars supported (4.5 → ★★★★½).
   if (rating && typeof rating === 'number') {
-    const stars = '★'.repeat(rating)
-    parts.push(`${stars}`)
+    const full = Math.floor(rating)
+    const hasHalf = rating - full >= 0.5
+    const stars = '★'.repeat(full) + (hasHalf ? '½' : '')
+    parts.push(`${stars} ${rating}`)
   }
   
   // Add user if wine name not available or as additional info

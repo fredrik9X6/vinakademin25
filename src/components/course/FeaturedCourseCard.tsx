@@ -2,7 +2,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { BookOpen, Clock, ArrowRight, Sparkles, Play, Star } from 'lucide-react'
+import { BookOpen, Clock, ArrowRight, Sparkles, Play } from 'lucide-react'
+import { StarsDisplay, formatRatingText } from '@/components/ui/stars-display'
 import { getTotalCourseItems, countFreeItems } from '@/lib/course-utils'
 
 interface FeaturedCourseCardProps {
@@ -118,19 +119,10 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                       <>
                         <div className="h-1 w-1 rounded-full bg-brand-400/40" />
                         <div className="flex items-center gap-1">
-                          <div className="flex gap-0.5">
-                            {[1, 2, 3, 4, 5].map((s) => (
-                              <Star
-                                key={s}
-                                className={`h-3.5 w-3.5 ${
-                                  s <= Math.round(reviewData.averageRating)
-                                    ? 'fill-brand-400 text-brand-400'
-                                    : 'text-muted-foreground/20'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm font-medium">{reviewData.averageRating}</span>
+                          <StarsDisplay value={reviewData.averageRating} size="sm" />
+                          <span className="text-sm font-medium">
+                            {formatRatingText(reviewData.averageRating)}
+                          </span>
                           <span className="text-sm text-muted-foreground">({reviewData.totalReviews})</span>
                         </div>
                       </>

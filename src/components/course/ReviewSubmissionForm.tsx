@@ -3,7 +3,8 @@
 import React, { useState } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Star, CheckCircle, AlertCircle } from 'lucide-react'
+import { CheckCircle, AlertCircle } from 'lucide-react'
+import { StarRating } from '@/components/ui/star-rating'
 import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
@@ -29,7 +30,6 @@ export function ReviewSubmissionForm({
 }: ReviewSubmissionFormProps) {
   const { user } = useAuth()
   const [rating, setRating] = useState(0)
-  const [hoverRating, setHoverRating] = useState(0)
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -122,38 +122,10 @@ export function ReviewSubmissionForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Star Rating */}
+          {/* Star Rating — shared component supports half-stars (0.5–5) */}
           <div>
             <label className="block text-sm font-medium mb-3">Betyg</label>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  className="p-1 transition-transform hover:scale-110"
-                >
-                  <Star
-                    className={`h-8 w-8 transition-colors ${
-                      star <= (hoverRating || rating)
-                        ? 'fill-brand-400 text-brand-400'
-                        : 'text-muted-foreground/30'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-            {rating > 0 && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {rating === 1 && 'Dålig'}
-                {rating === 2 && 'Okej'}
-                {rating === 3 && 'Bra'}
-                {rating === 4 && 'Mycket bra'}
-                {rating === 5 && 'Fantastisk'}
-              </p>
-            )}
+            <StarRating value={rating} onChange={setRating} size="lg" />
           </div>
 
           {/* Review Text */}

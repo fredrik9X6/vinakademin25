@@ -64,10 +64,17 @@ export const CourseReviews: CollectionConfig = {
     {
       name: 'rating',
       type: 'number',
-      label: 'Betyg (1-5)',
+      label: 'Betyg (0,5–5)',
       required: true,
-      min: 1,
+      min: 0.5,
       max: 5,
+      admin: { description: 'Halvstjärnor tillåtna (0,5, 1, 1,5, …, 5)' },
+      validate: (val: number | null | undefined) => {
+        if (val == null) return 'Betyg krävs'
+        if (val < 0.5 || val > 5) return 'Betyg måste vara mellan 0,5 och 5'
+        if (Math.round(val * 2) !== val * 2) return 'Betyg måste vara i halvstjärnor (t.ex. 4,5)'
+        return true
+      },
     },
     {
       name: 'content',

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Star, CheckCircle, MessageSquare } from 'lucide-react'
+import { StarsDisplay, formatRatingText } from '@/components/ui/stars-display'
 
 interface Review {
   id: number
@@ -21,21 +22,8 @@ interface CourseReviewsSectionProps {
   courseId: number
 }
 
-function StarDisplay({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'lg' }) {
-  const starSize = size === 'lg' ? 'h-6 w-6' : 'h-4 w-4'
-  return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={`${starSize} ${
-            star <= rating ? 'fill-brand-400 text-brand-400' : 'text-muted-foreground/20'
-          }`}
-        />
-      ))}
-    </div>
-  )
-}
+// Local StarDisplay removed — use the shared StarsDisplay which handles
+// fractional values correctly (drop-in replacement, supports half-stars).
 
 function RatingBar({ stars, count, total }: { stars: number; count: number; total: number }) {
   const percentage = total > 0 ? (count / total) * 100 : 0
@@ -93,10 +81,12 @@ export function CourseReviewsSection({ courseId }: CourseReviewsSectionProps) {
     return null // Don't show the section if there are no reviews
   }
 
-  // Calculate rating distribution
+  // Distribution: group half-stars into the nearest whole bucket so the
+  // histogram doesn't fragment into ten rows that everyone has to read.
+  // 4.5 counts toward the "5" bucket (rounded up via Math.round).
   const ratingDistribution = [5, 4, 3, 2, 1].map((stars) => ({
     stars,
-    count: reviews.filter((r) => r.rating === stars).length,
+    count: reviews.filter((r) => Math.round(r.rating) === stars).length,
   }))
 
   return (
@@ -113,8 +103,10 @@ export function CourseReviewsSection({ courseId }: CourseReviewsSectionProps) {
           <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-8">
             {/* Average Rating */}
             <div className="flex flex-col items-center justify-center text-center md:pr-8 md:border-r border-border">
-              <div className="text-4xl font-bold text-foreground mb-1">{averageRating}</div>
-              <StarDisplay rating={Math.round(averageRating)} size="lg" />
+              <div className="text-4xl font-bold text-foreground mb-1">
+                {formatRatingText(averageRating)}
+              </div>
+              <StarsDisplay value={averageRating} size="lg" />
               <p className="text-sm text-muted-foreground mt-2">
                 {totalReviews} {totalReviews === 1 ? 'recension' : 'recensioner'}
               </p>
@@ -160,7 +152,7 @@ export function CourseReviewsSection({ courseId }: CourseReviewsSectionProps) {
                         </Badge>
                       )}
                     </div>
-                    <StarDisplay rating={review.rating} />
+                    <StarsDisplay value={review.rating} size="sm" />
                   </div>
                   <span className="text-xs text-muted-foreground">{formattedDate}</span>
                 </div>

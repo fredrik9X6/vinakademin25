@@ -12,9 +12,22 @@ interface StarRatingProps {
   showLabel?: boolean
   disabled?: boolean
   error?: string
+  /** Step for half-star input. Set to 1 if you want integer-only input back. */
+  step?: 0.5 | 1
   'aria-label'?: string
 }
 
+/**
+ * Click-on-star picker supporting half-step ratings.
+ *
+ * UX: each star is split into a left half (sets value to N-0.5) and a right
+ * half (sets value to N). Hover-preview shows the half being selected so the
+ * interaction is unambiguous before commit.
+ *
+ * The fill of fractional stars is drawn by layering a clipped orange Star on
+ * top of an empty grey Star — `clip-path: inset(0 50% 0 0)` produces a clean
+ * left-half fill that matches the click zone.
+ */
 export function StarRating({
   value,
   onChange,
@@ -23,6 +36,7 @@ export function StarRating({
   showLabel = true,
   disabled = false,
   error,
+  step = 0.5,
   'aria-label': ariaLabel,
 }: StarRatingProps) {
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null)
@@ -39,6 +53,8 @@ export function StarRating({
     lg: 'gap-2',
   }
 
+  // Label only the integer anchors — half-steps share their lower whole
+  // label so the cue doesn't flicker between every half-step hover.
   const labelText: Record<number, string> = {
     1: 'Dålig',
     2: 'Nja',
@@ -48,6 +64,7 @@ export function StarRating({
   }
 
   const displayedValue = hoveredValue ?? value
+  const formatDisplay = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1))
 
   return (
     <div className="space-y-2">
@@ -58,47 +75,91 @@ export function StarRating({
           disabled && 'opacity-50 cursor-not-allowed',
         )}
         role="radiogroup"
-        aria-label={ariaLabel || 'Betyg 1-5'}
+        aria-label={ariaLabel || `Betyg 0.5–${max}`}
       >
         {Array.from({ length: max }, (_, i) => {
-          const starValue = i + 1
-          const isFilled = starValue <= displayedValue
+          const fullValue = i + 1
+          const halfValue = i + 0.5
+
+          // Fill state for THIS star slot, given the displayedValue.
+          //   value >= fullValue  → fully filled
+          //   value >= halfValue  → half filled
+          //   otherwise           → empty
+          const fillPercent =
+            displayedValue >= fullValue ? 100 : displayedValue >= halfValue ? 50 : 0
 
           return (
-            <button
-              key={starValue}
-              type="button"
-              disabled={disabled}
-              onClick={() => !disabled && onChange(starValue)}
-              onMouseEnter={() => !disabled && setHoveredValue(starValue)}
-              onMouseLeave={() => !disabled && setHoveredValue(null)}
+            <span
+              key={fullValue}
               className={cn(
-                'transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-sm',
-                !disabled && 'cursor-pointer hover:scale-110 active:scale-95',
-                disabled && 'cursor-not-allowed',
+                'relative inline-block transition-transform',
+                !disabled && 'hover:scale-110 active:scale-95',
+                sizeClasses[size],
               )}
-              aria-label={`Betyg ${starValue} av ${max}`}
-              aria-checked={starValue === value}
-              role="radio"
             >
+              {/* Empty star — always rendered as the visual base */}
               <Star
                 className={cn(
+                  'absolute inset-0',
                   sizeClasses[size],
-                  'transition-all duration-150',
-                  isFilled
-                    ? 'fill-orange-500 text-orange-500'
-                    : 'fill-transparent text-gray-300 dark:text-gray-600',
-                  hoveredValue !== null &&
-                    starValue <= hoveredValue &&
-                    starValue > value &&
-                    'fill-orange-400 text-orange-400',
-                  !disabled && starValue <= displayedValue && displayedValue > 0 && 'hover:fill-orange-400 hover:text-orange-400',
+                  'fill-transparent text-gray-300 dark:text-gray-600',
                 )}
-                strokeWidth={isFilled ? 0 : 1.5}
+                strokeWidth={1.5}
+                aria-hidden="true"
               />
-            </button>
+              {/* Filled star — clipped to fillPercent of its width */}
+              {fillPercent > 0 && (
+                <Star
+                  className={cn(
+                    'absolute inset-0',
+                    sizeClasses[size],
+                    'fill-orange-500 text-orange-500',
+                  )}
+                  style={{ clipPath: `inset(0 ${100 - fillPercent}% 0 0)` }}
+                  strokeWidth={0}
+                  aria-hidden="true"
+                />
+              )}
+
+              {/* Click + hover zones. When step=1 we only render the
+                  full-value zone covering the whole star. */}
+              {step === 0.5 && (
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => !disabled && onChange(halfValue)}
+                  onMouseEnter={() => !disabled && setHoveredValue(halfValue)}
+                  onMouseLeave={() => !disabled && setHoveredValue(null)}
+                  className={cn(
+                    'absolute inset-y-0 left-0 w-1/2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-sm',
+                    !disabled && 'cursor-pointer',
+                    disabled && 'cursor-not-allowed',
+                  )}
+                  aria-label={`Betyg ${formatDisplay(halfValue)} av ${max}`}
+                  aria-checked={halfValue === value}
+                  role="radio"
+                />
+              )}
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => !disabled && onChange(fullValue)}
+                onMouseEnter={() => !disabled && setHoveredValue(fullValue)}
+                onMouseLeave={() => !disabled && setHoveredValue(null)}
+                className={cn(
+                  'absolute inset-y-0 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-sm',
+                  step === 0.5 ? 'right-0 w-1/2' : 'inset-x-0 w-full',
+                  !disabled && 'cursor-pointer',
+                  disabled && 'cursor-not-allowed',
+                )}
+                aria-label={`Betyg ${fullValue} av ${max}`}
+                aria-checked={fullValue === value}
+                role="radio"
+              />
+            </span>
           )
         })}
+
         {showLabel && (
           <span
             className={cn(
@@ -111,12 +172,12 @@ export function StarRating({
             {displayedValue > 0 && (
               <>
                 <span className="font-semibold text-orange-600 dark:text-orange-400">
-                  {displayedValue}
+                  {formatDisplay(displayedValue)}
                 </span>
-                <span className="text-muted-foreground">/5</span>
-                {labelText[displayedValue] && (
+                <span className="text-muted-foreground">/{max}</span>
+                {labelText[Math.ceil(displayedValue)] && (
                   <span className="ml-2 text-muted-foreground">
-                    • {labelText[displayedValue]}
+                    • {labelText[Math.ceil(displayedValue)]}
                   </span>
                 )}
               </>
@@ -132,10 +193,9 @@ export function StarRating({
       )}
       {value === 0 && !error && (
         <p className="text-xs text-muted-foreground">
-          Klicka på stjärnorna för att välja betyg
+          Klicka på stjärnorna för att välja betyg (även halva stjärnor)
         </p>
       )}
     </div>
   )
 }
-

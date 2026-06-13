@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
+import { StarsDisplay } from '@/components/ui/stars-display'
 import {
   NO_REVIEW_PLACEHOLDER,
   ratingDiffSentence,
@@ -9,12 +10,6 @@ import type { PerWineRecap } from '@/lib/session-recap'
 
 export interface WineRecapCardProps {
   wine: PerWineRecap
-}
-
-function renderStars(rating: number | null): string {
-  if (rating == null) return '—'
-  const full = Math.max(0, Math.min(5, Math.round(rating)))
-  return '★'.repeat(full) + '☆'.repeat(5 - full)
 }
 
 export function WineRecapCard({ wine }: WineRecapCardProps) {
@@ -72,11 +67,9 @@ export function WineRecapCard({ wine }: WineRecapCardProps) {
             Gruppen
           </p>
           {ratingCount > 0 && avgRating != null ? (
-            <p className="text-sm">
-              <span className="text-brand-400 tracking-wider">
-                {renderStars(avgRating)}
-              </span>{' '}
-              <span>{avgRating.toFixed(1)}</span>{' '}
+            <p className="flex items-center gap-2 text-sm">
+              <StarsDisplay value={avgRating} size="sm" />
+              <span>{avgRating.toFixed(1)}</span>
               <span className="text-muted-foreground">({ratingCount} betyg)</span>
             </p>
           ) : (
@@ -104,10 +97,8 @@ export function WineRecapCard({ wine }: WineRecapCardProps) {
           {myReview ? (
             <>
               {myReview.rating != null ? (
-                <p className="text-sm">
-                  <span className="text-brand-400 tracking-wider">
-                    {renderStars(myReview.rating)}
-                  </span>{' '}
+                <p className="flex items-center gap-2 text-sm">
+                  <StarsDisplay value={myReview.rating} size="sm" />
                   <span>{myReview.rating.toFixed(1)}</span>
                 </p>
               ) : null}

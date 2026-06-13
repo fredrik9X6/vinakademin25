@@ -171,11 +171,17 @@ export const UserWines: CollectionConfig = {
     {
       name: 'rating',
       type: 'number',
-      min: 1,
+      min: 0.5,
       max: 5,
       admin: {
-        description: 'User rating from 1-5',
+        description: 'Halvstjärnor tillåtna (0,5–5 i steg om 0,5)',
         condition: (data) => data?.status === 'tried' || data?.status === 'favorite',
+      },
+      validate: (val: number | null | undefined) => {
+        if (val == null) return true // optional field
+        if (val < 0.5 || val > 5) return 'Betyg måste vara mellan 0,5 och 5'
+        if (Math.round(val * 2) !== val * 2) return 'Betyg måste vara i halvstjärnor (t.ex. 4,5)'
+        return true
       },
     },
     // User notes

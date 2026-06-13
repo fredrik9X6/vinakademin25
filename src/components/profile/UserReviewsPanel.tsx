@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
-import { LayoutGrid, List, Star } from 'lucide-react'
+import { LayoutGrid, List } from 'lucide-react'
+import { StarsDisplay, formatRatingText } from '@/components/ui/stars-display'
 import { useAuth } from '@/context/AuthContext'
 import type { Review } from '@/payload-types'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
@@ -67,8 +68,14 @@ function WineGridCard({ review }: { review: ReviewWithWine }) {
                 {wine.country?.name ? `, ${wine.country.name}` : ''}
               </div>
               <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <Star className="h-3 w-3" />
-                <span>Betyg: {review.rating ?? '-'}/5</span>
+                {typeof review.rating === 'number' ? (
+                  <>
+                    <StarsDisplay value={review.rating} size="xs" />
+                    <span>{formatRatingText(review.rating)}/5</span>
+                  </>
+                ) : (
+                  <span>Inget betyg</span>
+                )}
               </div>
               {typeof review.buyAgain === 'boolean' && (
                 <div className="mt-1 text-xs text-muted-foreground">
@@ -110,7 +117,16 @@ function ReviewListItem({ review }: { review: ReviewWithWine }) {
           </div>
 
           <div className="flex flex-col items-end gap-1">
-            <Badge variant="secondary">Betyg: {review.rating ?? '-'}/5</Badge>
+            <Badge variant="secondary" className="flex items-center gap-1">
+              {typeof review.rating === 'number' ? (
+                <>
+                  <StarsDisplay value={review.rating} size="xs" />
+                  <span>{formatRatingText(review.rating)}/5</span>
+                </>
+              ) : (
+                <span>—/5</span>
+              )}
+            </Badge>
             {typeof review.buyAgain === 'boolean' && (
               <span className="text-xs text-muted-foreground">
                 {review.buyAgain ? 'Hade köpt igen' : 'Hade inte köpt igen'}
