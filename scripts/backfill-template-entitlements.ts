@@ -6,10 +6,16 @@
  * Per O-2 resolution: acquiredVia: 'admin_grant', no payment data.
  * Idempotent on the (user, template) unique index — safe to run multiple times.
  *
- * Run with `pnpm exec tsx scripts/backfill-template-entitlements.ts`.
+ * Run with `pnpm backfill-template-entitlements`.
  *
  * Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D.6)
  */
+
+import { config as loadDotenv } from 'dotenv'
+
+// Load env before importing payload config (which evaluates process.env).
+loadDotenv({ path: '.env.local' })
+loadDotenv({ path: '.env' })
 
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
