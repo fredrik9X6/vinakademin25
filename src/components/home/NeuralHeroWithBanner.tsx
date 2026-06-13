@@ -7,7 +7,7 @@ export function NeuralHeroWithBanner() {
     <NeuralNetworkHero
       title={
         <>
-          <span className="block">Lär dig vin,</span>
+          <span className="block">Lär dig om vin,</span>
           <span className="text-brand-gradient block">enkelt &amp; opretentiöst.</span>
         </>
       }
