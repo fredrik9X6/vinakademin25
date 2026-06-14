@@ -30,9 +30,13 @@ const formatPrice = (price: number) =>
 interface VinlistanWineCardProps {
   wine: any
   review?: any
+  /** Optional click handler — fires before navigation. Useful for surfaces
+   *  that want analytics tracking on the card click without owning the
+   *  rendering (e.g. the Vinkompass result grid logs to PostHog). */
+  onClick?: () => void
 }
 
-export function VinlistanWineCard({ wine, review = null }: VinlistanWineCardProps) {
+export function VinlistanWineCard({ wine, review = null, onClick }: VinlistanWineCardProps) {
   if (!wine) return null
   const href = `/vinlistan/${wine.slug || wine.id}`
   const typeLabel = wine.type ? TYPE_LABEL[String(wine.type)] || null : null
@@ -46,7 +50,7 @@ export function VinlistanWineCard({ wine, review = null }: VinlistanWineCardProp
     : []
 
   return (
-    <Link href={href} className="group block">
+    <Link href={href} onClick={onClick} className="group block">
       <Card className="h-full overflow-hidden border-border/60 transition-all duration-200 group-hover:border-brand-400/40 group-hover:shadow-lg">
         <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-muted/40 to-muted/10">
           {wine.image?.url ? (
