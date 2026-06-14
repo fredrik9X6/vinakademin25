@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Check, PlayCircle, Wine as WineIcon } from 'lucide-react'
+import { ArrowRight, Check, PlayCircle, Sparkles, Wine as WineIcon } from 'lucide-react'
 
 const HEADING = 'font-heading tracking-[-0.015em] leading-[1.05]'
 
@@ -15,7 +15,10 @@ export function OfferingsComparison() {
     <section className="relative overflow-hidden py-16 lg:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto mb-12 max-w-3xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {/* Brand pill — matches the eyebrow style used by every other
+              section on the home page (ProvningsmallarFeature, VinkurserFeature). */}
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand-300/30 bg-brand-300/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-400">
+            <Sparkles className="h-3 w-3" />
             Två sätt att lära dig
           </span>
           <h2 className={`${HEADING} mt-5 text-3xl md:text-4xl lg:text-5xl`}>
@@ -63,10 +66,10 @@ export function OfferingsComparison() {
                 Från <span className="text-brand-gradient text-xl font-bold">499 kr</span>{' '}
                 <span className="text-sm text-muted-foreground">· engångsbetalning</span>
               </p>
-              <Link
-                href="/vinkurser"
-                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-brand-gradient px-6 text-[14px] font-medium text-white shadow-[0_10px_20px_-5px_rgba(251,145,76,0.25)] transition-all hover:bg-brand-gradient-reverse"
-              >
+              {/* Uses .btn-brand (globals.css) so the gradient *slides* under the
+                  button on hover with the same 600ms ease as the hero CTA — keeps
+                  the primary CTA treatment consistent across the homepage. */}
+              <Link href="/vinkurser" className="btn-brand mt-4 w-full">
                 Se kurserna
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -109,9 +112,11 @@ export function OfferingsComparison() {
                   per mall · en gratis när du loggar in
                 </span>
               </p>
+              {/* Secondary outline button — same height + radius as .btn-brand for
+                  visual symmetry with the other card. */}
               <Link
                 href="/provningsmallar"
-                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-brand-400 px-6 text-[14px] font-medium text-brand-400 transition-all hover:bg-brand-400/10"
+                className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-brand-400 px-6 text-sm font-medium text-brand-400 transition-colors hover:bg-brand-400/10 focus-visible:outline-2 focus-visible:outline-brand-400 focus-visible:outline-offset-2"
               >
                 Utforska biblioteket
                 <ArrowRight className="h-4 w-4" />
