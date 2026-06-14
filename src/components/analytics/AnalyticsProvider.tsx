@@ -8,18 +8,40 @@ import { PostHogProvider as PHProvider } from 'posthog-js/react'
 // Track if PostHog has been initialized
 let posthogInitialized = false
 
-// PostHog configuration - these are public keys, safe to commit
+// PostHog configuration — these are public keys, safe to commit.
+//
+// api_host routes through our managed reverse proxy at g.vinakademin.se,
+// not posthog.com directly — keeps tracking calls on a first-party domain
+// so they aren't dropped by ad blockers / content-blocking DNS. The proxy
+// is fronted by Cloudflare and forwards to eu.i.posthog.com.
+//
+// ui_host stays on the real PostHog UI domain (eu.posthog.com) so the
+// SDK's "open in PostHog" links (session-recording deep links, surveys,
+// admin shortcuts) point at the dashboard instead of the proxy.
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || 'phc_NEwNtznBZqYk5R55Ghi41cWmUxQ1eN4laFk9J2kPRtk'
-const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com'
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://g.vinakademin.se'
+const POSTHOG_UI_HOST = process.env.NEXT_PUBLIC_POSTHOG_UI_HOST || 'https://eu.posthog.com'
 
 // Initialize PostHog
 if (typeof window !== 'undefined') {
-  console.log('[Analytics] PostHog Key present:', !!POSTHOG_KEY)
-  console.log('[Analytics] PostHog Host:', POSTHOG_HOST)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Analytics] PostHog Host:', POSTHOG_HOST, '· UI Host:', POSTHOG_UI_HOST)
+  }
 
   if (POSTHOG_KEY) {
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
+      ui_host: POSTHOG_UI_HOST,
+      // Lock in the SDK behavior snapshot so future posthog-js versions
+      // can't silently change defaults under us. PostHog's dashboard
+      // generator emits '2026-05-30', but the installed posthog-js@1.302.2
+      // only types the older snapshots — using the latest one this SDK
+      // knows about. Bump posthog-js if you want the 2026-05-30 snapshot.
+      defaults: '2025-11-30',
+      // Don't create person profiles for anonymous visitors — only after
+      // identify() is called. Keeps the project's MTU count tied to real
+      // logged-in users instead of every drive-by browser session.
+      person_profiles: 'identified_only',
       // Capture pageviews manually with Next.js router
       capture_pageview: false,
       // Capture pageleaves for better session tracking
@@ -34,12 +56,12 @@ if (typeof window !== 'undefined') {
       loaded: (posthog) => {
         if (process.env.NODE_ENV === 'development') {
           posthog.debug()
+          console.log('[Analytics] PostHog initialized successfully')
         }
-        console.log('[Analytics] PostHog initialized successfully')
         posthogInitialized = true
       },
     })
-  } else {
+  } else if (process.env.NODE_ENV === 'development') {
     console.warn('[Analytics] PostHog key not found - events will not be tracked')
   }
 }
