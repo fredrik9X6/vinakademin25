@@ -24,7 +24,7 @@ import { useRouter } from 'next/navigation'
 import CourseTableOfContents from './CourseTableOfContents'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { toast } from 'sonner'
-import { PurchaseButton, CoursePurchasePanel } from '@/components/payment'
+import { CoursePurchasePanel } from '@/components/payment'
 import { CheckoutDialog } from '@/components/payment/CheckoutDialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import StartSessionButton from './StartSessionButton'
@@ -48,6 +48,9 @@ interface CourseOverviewProps {
     shortDescription?: string
     level?: string
     price?: number
+    /** Course-level duration in hours (admin-entered). Distinct from
+     *  previewMuxData.duration which is the intro video's runtime. */
+    duration?: number
     instructor?: {
       firstName?: string
       lastName?: string
@@ -139,16 +142,23 @@ export default function CourseOverview({
   }, 0)
 
   // Count different content types
+  // Quiz count is computed directly from the modules' `quizzes` array rather
+  // than via the useCourseProgress hook (`getQuizCount`) — the hook returns
+  // a progress-derived value that's 0 for visitors with no enrolment, which
+  // hid quizzes from the Detaljer card on the non-purchaser view.
   const getContentCounts = () => {
     let videos = 0
     let texts = 0
     let wineReviews = 0
-    let quizzes = getQuizCount()
+    let quizzes = 0
 
     course.modules.forEach((module) => {
+      quizzes += ((module as any).quizzes as any[] | undefined)?.length ?? 0
       module.lessons?.forEach((lesson) => {
         if (lesson.lessonType === 'video') {
           videos++
+        } else if (lesson.lessonType === 'quiz') {
+          quizzes++
         } else if (lesson.lessonType === 'text') {
           texts++
         } else if (lesson.lessonType === 'wineReview') {
@@ -367,30 +377,17 @@ export default function CourseOverview({
                     {formatPrice(course.price || 0)}
                   </div>
 
-                  {/* CTA — single purchase CTA. The visitor doesn't get a "Prova gratis"
-                       door any more; intro video above is the entire preview surface (spec D4). */}
+                  {/* CTA — single purchase button. Uses .btn-brand for the same
+                       slide-gradient animation as the hero / OfferingsComparison.
+                       Opens the existing CheckoutDialog mounted further down. */}
                   <div className="space-y-3">
-                    <PurchaseButton
-                      course={{
-                        id: course.id,
-                        title: course.title,
-                        description: course.description || '',
-                        fullDescription: course.fullDescription || null,
-                        price: course.price || 0,
-                        slug: course.slug || course.id.toString(),
-                        featuredImage: course.featuredImage as any,
-                        level:
-                          (course.level as 'beginner' | 'intermediate' | 'advanced') || 'beginner',
-                        duration: totalMoment,
-                        instructor: course.instructor as any,
-                        updatedAt: new Date().toISOString(),
-                        createdAt: new Date().toISOString(),
-                        _status: 'published',
-                      } as any}
-                      size="lg"
-                      fullWidth
-                      showIcon={false}
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsCheckoutOpen(true)}
+                      className="btn-brand btn-brand-lg w-full"
+                    >
+                      Köp vinkurs
+                    </button>
                   </div>
                 </div>
               </div>
@@ -604,6 +601,15 @@ export default function CourseOverview({
                     <Clock className="w-4 h-4 text-muted-foreground" />
                     <span>{contentCounts.total} moment</span>
                   </div>
+                  {course.duration && course.duration > 0 && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        Ca {course.duration}{' '}
+                        {course.duration === 1 ? 'timme' : 'timmar'} totalt
+                      </span>
+                    </div>
+                  )}
 
                   <Separator className="my-2" />
 
