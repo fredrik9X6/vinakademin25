@@ -237,9 +237,6 @@ function SingleCourseHero({ course }: SingleCourseHeroProps) {
             Se kursen
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            Fler kurser är på väg — den här är klar att starta.
-          </p>
         </div>
       </div>
     </article>
