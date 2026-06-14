@@ -27,11 +27,15 @@ export function WineAggregatePlaceholder({ count, totalSek }: WineAggregatePlace
           </div>
           <div>
             <h3 className="text-lg font-medium text-foreground">
-              {count} viner ingår i kursen
+              Vi guidar dig genom {count} viner
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Total kostnad ca {formattedTotal} (köps separat).
-              Vilka viner det är låses upp när du köper kursen.
+              <strong className="text-foreground">Vinerna ingår inte i kursen</strong> —
+              du köper dem själv på Systembolaget. Vi har valt ut dem och guidar dig genom
+              dofter, smaker och tekniker. Total inköpskostnad ca {formattedTotal}.
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Vilka viner det är ser du när du köper kursen.
             </p>
           </div>
         </div>

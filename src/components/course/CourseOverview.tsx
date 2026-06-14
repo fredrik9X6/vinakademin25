@@ -480,12 +480,6 @@ export default function CourseOverview({
                   <Clock className="w-5 h-5 flex-shrink-0" />
                   <span>{totalMoment} moment</span>
                 </div>
-                {freeLessons > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>{freeLessons} gratis moment</span>
-                  </div>
-                )}
                 {course.instructor && (
                   <div className="flex items-center gap-2">
                     <User className="w-5 h-5 flex-shrink-0" />
@@ -610,12 +604,6 @@ export default function CourseOverview({
                     <Clock className="w-4 h-4 text-muted-foreground" />
                     <span>{contentCounts.total} moment</span>
                   </div>
-                  {freeLessons > 0 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Star className="w-4 h-4 text-muted-foreground" />
-                      <span>{freeLessons} gratis moment</span>
-                    </div>
-                  )}
 
                   <Separator className="my-2" />
 
