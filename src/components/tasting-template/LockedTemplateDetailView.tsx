@@ -49,6 +49,10 @@ export function LockedTemplateDetailView({
     ? buyPath
     : `/logga-in?next=${encodeURIComponent(buyPath)}`
   const loginHref = `/logga-in?next=${encodeURIComponent(detailPath)}`
+  // Active subscribers unlock every paid template (canUseTemplate handles
+  // this), so the membership CTA needs to be reachable from here. Route is
+  // /bli-medlem; anon users land on the page itself which then prompts login.
+  const memberHref = '/bli-medlem'
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 pb-32 grid gap-8 md:grid-cols-[1fr_280px]">
@@ -113,10 +117,10 @@ export function LockedTemplateDetailView({
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium">
-                  Köp mallen för {formattedTemplatePrice} och guida en egen provning
+                  Köp denna mall, eller bli medlem och lås upp hela biblioteket
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Engångsbetalning — eller bli medlem så ingår alla mallar i biblioteket.
+                  Engångsköp för {formattedTemplatePrice} — eller medlemskap som ingår alla mallar.
                 </p>
               </div>
             </div>
@@ -124,8 +128,11 @@ export function LockedTemplateDetailView({
               <Button asChild size="sm">
                 <Link href={buyHref}>Köp för {formattedTemplatePrice}</Link>
               </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href={memberHref}>Bli medlem</Link>
+              </Button>
               {!isAuthenticated && (
-                <Button asChild size="sm" variant="outline">
+                <Button asChild size="sm" variant="ghost">
                   <Link href={loginHref}>Logga in</Link>
                 </Button>
               )}
@@ -172,13 +179,16 @@ export function LockedTemplateDetailView({
         <Button asChild className="w-full">
           <Link href={buyHref}>Köp för {formattedTemplatePrice}</Link>
         </Button>
+        <Button asChild className="w-full" variant="outline">
+          <Link href={memberHref}>Bli medlem &amp; lås upp alla mallar</Link>
+        </Button>
         {!isAuthenticated && (
-          <Button asChild className="w-full" variant="outline">
+          <Button asChild className="w-full" variant="ghost">
             <Link href={loginHref}>Logga in</Link>
           </Button>
         )}
         <p className="text-xs text-muted-foreground text-center">
-          Engångsbetalning. Eller bli medlem för att låsa upp alla mallar i biblioteket.
+          Engångsbetalning för denna mall. Medlemskap låser upp hela biblioteket.
         </p>
       </aside>
     </div>

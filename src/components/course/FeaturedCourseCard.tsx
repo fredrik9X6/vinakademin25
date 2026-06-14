@@ -163,18 +163,8 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                     )}
                   </div>
 
-                  {/* Free Items Badge */}
-                  {freeItems > 0 && (
-                    <div className="pt-2">
-                      <Badge
-                        variant="outline"
-                        className="pointer-events-none border-brand-300/30 bg-brand-300/10 text-brand-400 hover:bg-brand-300/10"
-                      >
-                        <Play className="h-3 w-3 mr-1" />
-                        {freeItems} gratis moment
-                      </Badge>
-                    </div>
-                  )}
+                  {/* "gratis moment" badge removed — visitor route no longer
+                      surfaces free preview lessons (spec D4, Q6). */}
 
                   {/* Instructor */}
                   <div className="flex items-center gap-3 pt-2 pb-4 border-t border-border">
