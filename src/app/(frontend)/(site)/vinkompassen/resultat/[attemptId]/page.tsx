@@ -27,7 +27,12 @@ async function loadAttempt(attemptId: string) {
     collection: 'vinkompass-attempts',
     where: { attemptId: { equals: attemptId } },
     limit: 1,
-    depth: 2, // populate archetype + archetype.recommendedWines + recommendedVinprovning
+    // depth 3 — one level deeper than you'd expect because the chain is
+    // attempt → archetype → recommendedWines[] → wine.image (Media). At
+    // depth 2, wine.image arrives as a bare ID and VinlistanWineCard sees
+    // `typeof wine.image === 'number'`, falls back to the placeholder, and
+    // the result page shows wine-bottle silhouettes instead of real images.
+    depth: 3,
   })
   return res.docs[0] || null
 }
