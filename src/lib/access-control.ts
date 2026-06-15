@@ -482,6 +482,7 @@ export const hasTemplateEntitlement = async (
 /**
  * Composite predicate. Returns true if the user should see the full template
  * (wines, host script, "Använd mallen"):
+ *   - role === 'admin'                         (staff bypass — no purchase needed)
  *   - accessLevel === 'free'                   (always free)
  *   - isFreeTrial && user logged in            (try-it-free unlock)
  *   - active subscription                      (subscribers get everything)
@@ -489,13 +490,14 @@ export const hasTemplateEntitlement = async (
  */
 export const canUseTemplate = async (
   req: PayloadRequest,
-  user: { id: string | number } | null | undefined,
+  user: { id: string | number; role?: string | null } | null | undefined,
   template: {
     id: string | number
     accessLevel?: 'free' | 'paid' | string | null
     isFreeTrial?: boolean | null
   },
 ): Promise<boolean> => {
+  if (user?.role === 'admin') return true
   if (template.accessLevel === 'free') return true
   if (template.isFreeTrial && user) return true
   if (!user) return false
