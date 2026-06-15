@@ -337,20 +337,26 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     currentUser = await getUser()
 
     if (currentUser) {
-      // Check if user has enrolled in this course
-      const enrollment = await payload.find({
-        collection: 'enrollments',
-        where: {
-          and: [
-            { user: { equals: currentUser.id.toString() } },
-            { course: { equals: course.id.toString() } },
-            { status: { equals: 'active' } },
-          ],
-        },
-        limit: 1,
-      })
+      // Admins bypass the enrollment paywall — staff should be able to
+      // view every course (and every lesson/quiz inside) without a purchase.
+      if (currentUser.role === 'admin') {
+        userHasAccess = true
+      } else {
+        // Check if user has enrolled in this course
+        const enrollment = await payload.find({
+          collection: 'enrollments',
+          where: {
+            and: [
+              { user: { equals: currentUser.id.toString() } },
+              { course: { equals: course.id.toString() } },
+              { status: { equals: 'active' } },
+            ],
+          },
+          limit: 1,
+        })
 
-      userHasAccess = enrollment.docs.length > 0
+        userHasAccess = enrollment.docs.length > 0
+      }
     }
   } catch (error) {
     // If there's an error checking enrollment, assume no access
