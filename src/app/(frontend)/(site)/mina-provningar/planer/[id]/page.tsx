@@ -146,6 +146,12 @@ export default async function PlanDetailPage({
               libraryWine: null,
               customWine: undefined,
               hostNotes: null,
+              // Strip the richer per-wine info — guest-facing description/
+              // pairing/facts would otherwise leak the wine before reveal.
+              abv: null,
+              servingTemp: null,
+              guestDescription: null,
+              foodPairing: null,
               // Strip the blind-tasting answers too — they'd otherwise leak
               // the country/grape/price-bucket to the guest before reveal.
               blindAnswerCountry: null,
