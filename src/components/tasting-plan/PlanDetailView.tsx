@@ -13,6 +13,7 @@ import StartSessionButton from '@/components/course/StartSessionButton'
 import { PlanDetailTour } from '@/components/onboarding/PlanDetailTour'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { trackEvent } from '@/components/analytics'
+import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
 
 const STATUS_LABEL: Record<TastingPlan['status'], string> = {
   draft: 'Utkast',
@@ -160,6 +161,14 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
                           {w.hostNotes}
                         </p>
                       )}
+                      <div className="mt-2">
+                        <WineInfoReadout
+                          abv={w.abv ?? null}
+                          servingTemp={w.servingTemp ?? null}
+                          guestDescription={w.guestDescription ?? null}
+                          foodPairing={w.foodPairing ?? null}
+                        />
+                      </div>
                     </div>
                   </li>
                 )

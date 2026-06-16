@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card'
 import { ArrowLeft, Wine as WineIcon, Users, Lock } from 'lucide-react'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { UseTemplateButton } from './UseTemplateButton'
+import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
 
 function wineTitle(w: NonNullable<TastingTemplate['wines']>[number]): string {
   if (w.libraryWine && typeof w.libraryWine === 'object') {
@@ -149,6 +150,14 @@ export function TemplateDetailView({ template, isAdmin = false }: TemplateDetail
                           {w.hostNotes}
                         </p>
                       )}
+                      <div className="mt-2">
+                        <WineInfoReadout
+                          abv={w.abv ?? null}
+                          servingTemp={w.servingTemp ?? null}
+                          guestDescription={w.guestDescription ?? null}
+                          foodPairing={w.foodPairing ?? null}
+                        />
+                      </div>
                     </div>
                   </li>
                 )
