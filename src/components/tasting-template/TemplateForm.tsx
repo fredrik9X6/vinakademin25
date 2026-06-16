@@ -19,8 +19,16 @@ import {
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { X, Upload, Image as ImageIcon } from 'lucide-react'
 import { LibraryWinePicker, type LibraryWineHit } from './LibraryWinePicker'
-import { TemplateSortableWineRow } from './TemplateSortableWineRow'
 import { WinePicker, type CustomWineInput } from '@/components/tasting-plan/WinePicker'
+import { WineSummaryCard } from '@/components/tasting-shared/WineSummaryCard'
+import { WineDetailSheet } from '@/components/tasting-shared/WineDetailSheet'
+import {
+  type WineExtraFields,
+  EMPTY_EXTRA,
+  extraFromStored,
+  hasFakta,
+  hasGuestInfo,
+} from '@/components/tasting-shared/wine-extra-fields'
 
 export interface TemplateFormProps {
   /** Undefined for create; populated for edit. */
@@ -35,6 +43,7 @@ type WineEntry =
       hit: LibraryWineHit
       pourOrder: number
       hostNotes: string
+      extra: WineExtraFields
     }
   | {
       key: string
@@ -42,6 +51,7 @@ type WineEntry =
       customWine: CustomWineInput
       pourOrder: number
       hostNotes: string
+      extra: WineExtraFields
     }
 
 function nextKey(): string {
@@ -93,6 +103,7 @@ function hydrateInitialWines(template?: TastingTemplate): WineEntry[] {
         },
         pourOrder,
         hostNotes,
+        extra: extraFromStored(w),
       })
       return
     }
@@ -114,6 +125,7 @@ function hydrateInitialWines(template?: TastingTemplate): WineEntry[] {
         },
         pourOrder,
         hostNotes,
+        extra: extraFromStored(w),
       })
     }
   })
@@ -187,6 +199,7 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
           hit,
           pourOrder: prev.length + 1,
           hostNotes: '',
+          extra: { ...EMPTY_EXTRA },
         },
       ]
     })
@@ -201,6 +214,7 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
         customWine: w,
         pourOrder: prev.length + 1,
         hostNotes: '',
+        extra: { ...EMPTY_EXTRA },
       },
     ])
   }
@@ -211,8 +225,20 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
     )
   }
 
-  function updateNotes(key: string, notes: string) {
-    setWines((prev) => prev.map((w) => (w.key === key ? { ...w, hostNotes: notes } : w)))
+  const [editingKey, setEditingKey] = React.useState<string | null>(null)
+
+  function updateExtra(key: string, patch: Partial<WineExtraFields & { hostNotes: string }>) {
+    setWines((prev) =>
+      prev.map((w) => {
+        if (w.key !== key) return w
+        const { hostNotes, ...extraPatch } = patch
+        return {
+          ...w,
+          ...(hostNotes !== undefined ? { hostNotes } : {}),
+          extra: { ...w.extra, ...extraPatch },
+        }
+      }),
+    )
   }
 
   function onDragEnd(e: DragEndEvent) {
@@ -302,6 +328,10 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
           customWine: w.kind === 'custom' ? w.customWine : undefined,
           pourOrder: idx + 1,
           hostNotes: w.hostNotes,
+          abv: w.extra.abv,
+          servingTemp: w.extra.servingTemp,
+          guestDescription: w.extra.guestDescription,
+          foodPairing: w.extra.foodPairing,
         })),
       }
       const url = isEdit ? `/api/tasting-templates/${initialTemplate!.id}` : '/api/tasting-templates'
@@ -519,17 +549,19 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
                   const imageUrl =
                     w.kind === 'library' ? w.hit.thumbnailUrl : w.customWine.imageUrl ?? null
                   return (
-                    <TemplateSortableWineRow
+                    <WineSummaryCard
                       key={w.key}
-                      item={{
-                        key: w.key,
-                        pourOrder: w.pourOrder,
-                        title,
-                        subtitle,
-                        hostNotes: w.hostNotes,
-                        imageUrl,
+                      id={w.key}
+                      pourOrder={w.pourOrder}
+                      title={title}
+                      subtitle={subtitle}
+                      imageUrl={imageUrl}
+                      chips={{
+                        fakta: hasFakta(w.extra),
+                        manus: w.hostNotes.trim().length > 0,
+                        guest: hasGuestInfo(w.extra),
                       }}
-                      onNotesChange={(notes) => updateNotes(w.key, notes)}
+                      onEdit={() => setEditingKey(w.key)}
                       onRemove={() => removeAt(w.key)}
                       disabled={submitting}
                     />
@@ -540,6 +572,30 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
           </DndContext>
         )}
       </section>
+
+      {(() => {
+        const editing = wines.find((w) => w.key === editingKey)
+        if (!editing) return null
+        const title =
+          editing.kind === 'library' ? editing.hit.title : editing.customWine.name || 'Vin'
+        const subtitle =
+          editing.kind === 'library'
+            ? [editing.hit.producer, editing.hit.vintage ? String(editing.hit.vintage) : null]
+                .filter(Boolean)
+                .join(' · ')
+            : [editing.customWine.producer, editing.customWine.vintage].filter(Boolean).join(' · ')
+        return (
+          <WineDetailSheet
+            open={!!editingKey}
+            onOpenChange={(o) => !o && setEditingKey(null)}
+            title={title}
+            subtitle={subtitle}
+            values={{ ...editing.extra, hostNotes: editing.hostNotes }}
+            onChange={(patch) => updateExtra(editing.key, patch)}
+            disabled={submitting}
+          />
+        )
+      })()}
 
       <section className="space-y-2">
         <Label htmlFor="t-host-script">Manus för värden (frivilligt)</Label>
