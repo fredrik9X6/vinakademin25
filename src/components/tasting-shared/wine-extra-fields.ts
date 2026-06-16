@@ -32,21 +32,6 @@ export function extraFromStored(w: {
   }
 }
 
-/** Serialise WineExtraFields for the save payload. */
-export function extraToPayload(x: WineExtraFields): {
-  abv: number | null
-  servingTemp: string
-  guestDescription: string
-  foodPairing: string
-} {
-  return {
-    abv: x.abv,
-    servingTemp: x.servingTemp,
-    guestDescription: x.guestDescription,
-    foodPairing: x.foodPairing,
-  }
-}
-
 export function hasFakta(x: Pick<WineExtraFields, 'abv' | 'servingTemp'>): boolean {
   return x.abv != null || x.servingTemp.trim().length > 0
 }
