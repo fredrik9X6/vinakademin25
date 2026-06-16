@@ -23,7 +23,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Wine as WineIcon, Crown, LogOut, CheckCircle } from 'lucide-react'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
+import { Wine as WineIcon, LogOut, CheckCircle, Info } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
@@ -237,6 +244,7 @@ export function PlanSessionContent({
 }: PlanSessionContentProps) {
   const rows: WineRow[] = (plan.wines ?? []).map(rowFromEntry)
   const [reviewing, setReviewing] = React.useState<WineRow | null>(null)
+  const [infoWine, setInfoWine] = React.useState<WineRow | null>(null)
   const [settingFocus, setSettingFocus] = React.useState(false)
   // Optimistic local focus — fires immediately when the host taps a wine so
   // their own UI doesn't wait for the SSE round-trip. Only the host ever sets
@@ -497,6 +505,10 @@ export function PlanSessionContent({
                     subtitle: '',
                     hostNotes: null as string | null,
                     imageUrl: null as string | null,
+                    abv: null as number | null,
+                    servingTemp: null as string | null,
+                    guestDescription: null as string | null,
+                    foodPairing: null as string | null,
                   }
                 : row
               const isActive = activePour === row.pourOrder
@@ -544,12 +556,23 @@ export function PlanSessionContent({
                             {displayRow.subtitle}
                           </p>
                         )}
-                        {isHost && displayRow.hostNotes && (
-                          <p className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">
-                            <Crown className="inline h-3 w-3 mr-1" />
-                            {displayRow.hostNotes}
-                          </p>
-                        )}
+                        {isHost &&
+                          (row.hostNotes ||
+                            row.abv != null ||
+                            (row.servingTemp && row.servingTemp.trim()) ||
+                            row.guestDescription ||
+                            row.foodPairing) && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="mt-2 h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                              onClick={() => setInfoWine(row)}
+                            >
+                              <Info className="h-3 w-3 mr-1" />
+                              Manus &amp; fakta
+                            </Button>
+                          )}
                         <div className="mt-3 flex gap-2 flex-wrap items-center">
                           {isHost && (
                             <Button
@@ -623,6 +646,21 @@ export function PlanSessionContent({
                           />
                         )}
 
+                        {!isHost &&
+                          (displayRow.guestDescription ||
+                            displayRow.foodPairing ||
+                            displayRow.abv != null ||
+                            (displayRow.servingTemp && displayRow.servingTemp.trim())) && (
+                            <div className="mt-3 rounded-md border bg-muted/30 p-3">
+                              <WineInfoReadout
+                                abv={displayRow.abv}
+                                servingTemp={displayRow.servingTemp}
+                                guestDescription={displayRow.guestDescription}
+                                foodPairing={displayRow.foodPairing}
+                              />
+                            </div>
+                          )}
+
                         {isHost && isActive && (
                           <HostSubmissionTracker
                             roster={roster}
@@ -644,6 +682,28 @@ export function PlanSessionContent({
       {sidebarExtra && (
         <aside className="lg:sticky lg:top-20 lg:self-start space-y-3">{sidebarExtra}</aside>
       )}
+
+      <Sheet open={!!infoWine} onOpenChange={(o) => !o && setInfoWine(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="truncate">{infoWine?.title}</SheetTitle>
+            {infoWine?.subtitle && (
+              <p className="text-xs text-muted-foreground truncate">{infoWine.subtitle}</p>
+            )}
+          </SheetHeader>
+          <div className="mt-4">
+            {infoWine && (
+              <WineInfoReadout
+                hostNotes={infoWine.hostNotes}
+                abv={infoWine.abv}
+                servingTemp={infoWine.servingTemp}
+                guestDescription={infoWine.guestDescription}
+                foodPairing={infoWine.foodPairing}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={!!reviewing} onOpenChange={(o) => !o && setReviewing(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
