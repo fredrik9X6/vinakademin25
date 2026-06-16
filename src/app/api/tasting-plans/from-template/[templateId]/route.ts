@@ -145,6 +145,12 @@ export async function POST(
       ...(customWine ? { customWine } : {}),
       pourOrder: w.pourOrder ?? idx + 1,
       hostNotes: w.hostNotes ?? '',
+      // Carry the richer per-wine info onto the cloned plan.
+      abv: (w as { abv?: number | null }).abv ?? null,
+      servingTemp: (w as { servingTemp?: string | null }).servingTemp ?? '',
+      guestDescription:
+        (w as { guestDescription?: string | null }).guestDescription ?? '',
+      foodPairing: (w as { foodPairing?: string | null }).foodPairing ?? '',
     }
   })
 

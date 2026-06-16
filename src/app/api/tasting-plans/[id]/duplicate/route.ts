@@ -70,6 +70,12 @@ export async function POST(
       : undefined,
     pourOrder: w.pourOrder ?? idx + 1,
     hostNotes: w.hostNotes ?? '',
+    // Carry the richer per-wine info across the duplicate.
+    abv: (w as { abv?: number | null }).abv ?? null,
+    servingTemp: (w as { servingTemp?: string | null }).servingTemp ?? '',
+    guestDescription:
+      (w as { guestDescription?: string | null }).guestDescription ?? '',
+    foodPairing: (w as { foodPairing?: string | null }).foodPairing ?? '',
     // Carry blind-tasting answers across the duplicate so the host doesn't
     // have to re-enter them on the clone.
     blindAnswerCountry:
