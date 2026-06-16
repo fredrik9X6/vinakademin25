@@ -48,6 +48,10 @@ type WineRow = {
   title: string
   subtitle: string
   hostNotes: string | null
+  abv: number | null
+  servingTemp: string | null
+  guestDescription: string | null
+  foodPairing: string | null
   libraryWineId: number | null
   imageUrl: string | null
   customWineSnapshot: {
@@ -86,6 +90,12 @@ function rowFromEntry(
   idx: number,
 ): WineRow {
   const pourOrder = w.pourOrder ?? idx + 1
+  const abv = typeof (w as { abv?: number | null }).abv === 'number'
+    ? ((w as { abv?: number | null }).abv as number)
+    : null
+  const servingTemp = (w as { servingTemp?: string | null }).servingTemp ?? null
+  const guestDescription = (w as { guestDescription?: string | null }).guestDescription ?? null
+  const foodPairing = (w as { foodPairing?: string | null }).foodPairing ?? null
   const overrideCountry =
     typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry === 'string'
       ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
@@ -145,6 +155,10 @@ function rowFromEntry(
       title: lib.name || `Vin #${lib.id}`,
       subtitle: [lib.winery, lib.vintage, region].filter(Boolean).join(' · '),
       hostNotes: w.hostNotes ?? null,
+      abv,
+      servingTemp,
+      guestDescription,
+      foodPairing,
       libraryWineId: lib.id,
       imageUrl,
       customWineSnapshot: null,
@@ -165,6 +179,10 @@ function rowFromEntry(
     title: c?.name || 'Namnlöst vin',
     subtitle: [c?.producer, c?.vintage].filter(Boolean).join(' · '),
     hostNotes: w.hostNotes ?? null,
+    abv,
+    servingTemp,
+    guestDescription,
+    foodPairing,
     libraryWineId: null,
     imageUrl: c?.imageUrl || null,
     customWineSnapshot: c?.name
