@@ -47,6 +47,7 @@ import {
 import { BlindAnswerInputs } from './BlindAnswerInputs'
 import { WineSummaryCard } from '@/components/tasting-shared/WineSummaryCard'
 import { WineDetailSheet } from '@/components/tasting-shared/WineDetailSheet'
+import StartSessionButton from '@/components/course/StartSessionButton'
 import {
   type WineExtraFields,
   EMPTY_EXTRA,
@@ -624,6 +625,16 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         <p className="text-sm text-muted-foreground mt-1">
           Planera din provning. Spara som utkast — du kan ändra när som helst.
         </p>
+        {isEdit && initialPlan && (
+          <div className="mt-3">
+            <StartSessionButton
+              tastingPlanId={initialPlan.id}
+              planTitle={title || initialPlan.title}
+              defaultBlindTasting={blindTastingByDefault}
+              label="Starta provning & bjud in gäster"
+            />
+          </div>
+        )}
       </header>
 
       <section className="space-y-3">
