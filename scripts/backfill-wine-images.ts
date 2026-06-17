@@ -53,6 +53,17 @@ function extractProductNumber(url: string): string | null {
   return m ? m[1] : null
 }
 
+const CDN_PUBLIC_URL = process.env.S3_PUBLIC_URL?.replace(/\/$/, '')
+const CDN_BUCKET = process.env.S3_BUCKET
+const CDN_PREFIX =
+  process.env.S3_PREFIX || (process.env.NODE_ENV === 'development' ? 'dev' : 'production')
+
+/** Mirror payload.config's generateFileURL: ${PUBLIC}/${BUCKET}/${PREFIX}/${filename}. */
+function cdnUrlForFilename(filename: string | null | undefined): string | null {
+  if (!CDN_PUBLIC_URL || !CDN_BUCKET || !filename) return null
+  return `${CDN_PUBLIC_URL}/${CDN_BUCKET}/${CDN_PREFIX}/${filename}`
+}
+
 interface WineRow {
   id: number
   name: string
@@ -202,6 +213,25 @@ async function main(): Promise<void> {
         },
         overrideAccess: true,
       })
+
+      // Guard against the historic null-URL bug: if the storage plugin didn't
+      // persist a CDN URL (e.g. S3_PUBLIC_URL wasn't applied at upload), set
+      // `url` from the filename so the image resolves on the frontend (Payload
+      // does NOT recompute media URLs on read). Components fall back through
+      // `sizes.bottle.url ?? sizes.thumbnail.url ?? url`, so a populated `url`
+      // is enough to display the bottle; the standalone backfill-media-urls
+      // script fills the per-size URLs comprehensively. We set only `url` here
+      // to avoid a partial `sizes` update clobbering size metadata.
+      const cdnUrl = cdnUrlForFilename(media.filename)
+      // cdnUrl is non-null only when CDN_PUBLIC_URL is set, so the assertion is safe.
+      if (cdnUrl && (!media.url || !media.url.startsWith(CDN_PUBLIC_URL!))) {
+        await payload.update({
+          collection: 'media',
+          id: media.id,
+          data: { url: cdnUrl },
+          overrideAccess: true,
+        })
+      }
 
       // Link on wines
       await payload.update({
