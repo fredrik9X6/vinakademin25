@@ -404,6 +404,35 @@ export function PlanSessionContent({
   }, [revealedPourOrders, localRevealed])
 
   const isBlind = Boolean((session as any).blindTasting)
+
+  // Blind reveal hydration (guests only). The SSE reveal event carries only
+  // pour-order integers, and the initial server payload stripped every
+  // unrevealed wine's identity/image/guest-text for guests. Flipping the local
+  // `effectiveRevealed` flag therefore exposes a row that still holds the
+  // load-time redacted nulls — no image, no text, "Namnlöst vin". When a NEW
+  // pour is revealed, re-fetch the server component so the page's redaction
+  // re-runs with the updated reveal set and the now-revealed wine's real data
+  // (image, name, price/art.nr, any guest text) reaches the guest. Seeded from
+  // the server's load-time revealed set so the first SSE sync doesn't refetch.
+  const seenRevealedRef = React.useRef<Set<number>>(
+    new Set<number>(
+      Array.isArray((session as { revealedPourOrders?: number[] }).revealedPourOrders)
+        ? ((session as { revealedPourOrders?: number[] }).revealedPourOrders as number[])
+        : [],
+    ),
+  )
+  React.useEffect(() => {
+    if (isHost || !isBlind) return
+    let hasNew = false
+    for (const p of revealedPourOrders ?? []) {
+      if (!seenRevealedRef.current.has(p)) {
+        hasNew = true
+        seenRevealedRef.current.add(p)
+      }
+    }
+    if (hasNew) router.refresh()
+  }, [revealedPourOrders, isHost, isBlind, router])
+
   // Local optimistic value wins (only set on the host's own tap), then
   // realtime SSE, then the initial server-rendered prop. `null` only when
   // nothing has been set.
