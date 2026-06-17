@@ -14,6 +14,8 @@ import { PlanDetailTour } from '@/components/onboarding/PlanDetailTour'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { trackEvent } from '@/components/analytics'
 import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
+import { resolveWinePurchase } from '@/lib/wine-purchase-info'
+import { WinePurchaseMeta } from '@/components/tasting-shared/WinePurchaseMeta'
 
 const STATUS_LABEL: Record<TastingPlan['status'], string> = {
   draft: 'Utkast',
@@ -166,6 +168,7 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
                       {wineSubtitle(w) && (
                         <p className="text-xs text-muted-foreground truncate">{wineSubtitle(w)}</p>
                       )}
+                      <WinePurchaseMeta {...resolveWinePurchase(w)} />
                       {w.hostNotes && (
                         <p className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">
                           {w.hostNotes}
