@@ -44,7 +44,17 @@ import {
   type LibraryWineResult,
   type PickedWineMeta,
 } from './WinePicker'
-import { SortableWineRow } from './SortableWineRow'
+import { BlindAnswerInputs } from './BlindAnswerInputs'
+import { WineSummaryCard } from '@/components/tasting-shared/WineSummaryCard'
+import { WineDetailSheet } from '@/components/tasting-shared/WineDetailSheet'
+import StartSessionButton from '@/components/course/StartSessionButton'
+import {
+  type WineExtraFields,
+  EMPTY_EXTRA,
+  extraFromStored,
+  hasFakta,
+  hasGuestInfo,
+} from '@/components/tasting-shared/wine-extra-fields'
 import { WizardTour } from '@/components/onboarding/WizardTour'
 import { trackEvent } from '@/components/analytics'
 
@@ -67,6 +77,7 @@ type WineEntry =
       pourOrder: number
       hostNotes: string
       blindAnswers: BlindAnswersState
+      extra: WineExtraFields
     }
   | {
       kind: 'custom'
@@ -76,6 +87,7 @@ type WineEntry =
       pourOrder: number
       hostNotes: string
       blindAnswers: BlindAnswersState
+      extra: WineExtraFields
     }
 
 export interface TastingPlanFormProps {
@@ -232,6 +244,7 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
         pourOrder,
         hostNotes,
         blindAnswers,
+        extra: extraFromStored(w),
       }
     }
     return {
@@ -252,6 +265,7 @@ function hydrateInitialWines(plan?: TastingPlan): WineEntry[] {
       pourOrder,
       hostNotes,
       blindAnswers: storedBlind,
+      extra: extraFromStored(w),
     }
   })
 }
@@ -370,6 +384,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             grapes: mappedGrapes,
             priceBucket: null,
           },
+          extra: { ...EMPTY_EXTRA },
         },
       ]
       trackEvent('tasting_plan_wine_added', {
@@ -397,8 +412,20 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
     })
   }
 
-  function updateNotes(key: string, notes: string) {
-    setWines((prev) => prev.map((w) => (w.key === key ? { ...w, hostNotes: notes } : w)))
+  const [editingKey, setEditingKey] = React.useState<string | null>(null)
+
+  function updateExtra(key: string, patch: Partial<WineExtraFields & { hostNotes: string }>) {
+    setWines((prev) =>
+      prev.map((w) => {
+        if (w.key !== key) return w
+        const { hostNotes, ...extraPatch } = patch
+        return {
+          ...w,
+          ...(hostNotes !== undefined ? { hostNotes } : {}),
+          extra: { ...w.extra, ...extraPatch },
+        }
+      }),
+    )
   }
 
   function updateBlindAnswers(key: string, next: BlindAnswersState) {
@@ -444,6 +471,10 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         customWine: w.kind === 'custom' ? w.customWine : undefined,
         pourOrder: idx + 1,
         hostNotes: w.hostNotes,
+        abv: w.extra.abv,
+        servingTemp: w.extra.servingTemp,
+        guestDescription: w.extra.guestDescription,
+        foodPairing: w.extra.foodPairing,
         blindAnswerCountry: w.blindAnswers.country,
         blindAnswerGrapes: w.blindAnswers.grapes,
         blindAnswerPriceBucket: w.blindAnswers.priceBucket,
@@ -581,6 +612,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         ? w.wineSnapshot.thumbnailUrl ?? null
         : w.customWine.imageUrl ?? null,
     blindAnswers: w.blindAnswers,
+    extra: w.extra,
   }))
 
   return (
@@ -593,6 +625,16 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         <p className="text-sm text-muted-foreground mt-1">
           Planera din provning. Spara som utkast — du kan ändra när som helst.
         </p>
+        {isEdit && initialPlan && (
+          <div className="mt-3">
+            <StartSessionButton
+              tastingPlanId={initialPlan.id}
+              planTitle={title || initialPlan.title}
+              defaultBlindTasting={blindTastingByDefault}
+              label="Starta provning & bjud in gäster"
+            />
+          </div>
+        )}
       </header>
 
       <section className="space-y-3">
@@ -717,11 +759,23 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
             >
               <ul className="space-y-2">
                 {sortableItems.map((item) => (
-                  <SortableWineRow
+                  <WineSummaryCard
                     key={item.key}
-                    item={item}
-                    onNotesChange={(notes) => updateNotes(item.key, notes)}
-                    onBlindAnswersChange={(next) => updateBlindAnswers(item.key, next)}
+                    id={item.key}
+                    pourOrder={item.pourOrder}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    imageUrl={item.imageUrl}
+                    chips={{
+                      fakta: hasFakta(item.extra),
+                      manus: item.hostNotes.trim().length > 0,
+                      guest: hasGuestInfo(item.extra),
+                      blint:
+                        !!item.blindAnswers.country ||
+                        item.blindAnswers.grapes.length > 0 ||
+                        !!item.blindAnswers.priceBucket,
+                    }}
+                    onEdit={() => setEditingKey(item.key)}
                     onRemove={() => removeAt(item.key)}
                     disabled={submitting}
                   />
@@ -732,6 +786,39 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         )}
         <WinePicker onPickCustom={pickCustom} disabled={submitting} />
       </section>
+
+      {(() => {
+        const editing = wines.find((w) => w.key === editingKey)
+        if (!editing) return null
+        const title =
+          editing.kind === 'library' ? editing.wineSnapshot.title : editing.customWine.name || 'Vin'
+        const subtitle =
+          editing.kind === 'library'
+            ? [editing.wineSnapshot.producer, editing.wineSnapshot.vintage]
+                .filter(Boolean)
+                .join(' · ')
+            : [editing.customWine.producer, editing.customWine.vintage]
+                .filter(Boolean)
+                .join(' · ')
+        return (
+          <WineDetailSheet
+            open={!!editingKey}
+            onOpenChange={(o) => !o && setEditingKey(null)}
+            title={title}
+            subtitle={subtitle}
+            values={{ ...editing.extra, hostNotes: editing.hostNotes }}
+            onChange={(patch) => updateExtra(editing.key, patch)}
+            blindSlot={
+              <BlindAnswerInputs
+                value={editing.blindAnswers}
+                onChange={(next) => updateBlindAnswers(editing.key, next)}
+                disabled={submitting}
+              />
+            }
+            disabled={submitting}
+          />
+        )
+      })()}
 
       <section>
         <button

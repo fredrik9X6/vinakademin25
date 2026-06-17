@@ -144,9 +144,9 @@ export function TemplateDetailView({ template, isAdmin = false }: TemplateDetail
                       {wineSubtitle(w) && (
                         <p className="text-xs text-muted-foreground truncate">{wineSubtitle(w)}</p>
                       )}
-                      {w.hostNotes && (
-                        <p className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">
-                          {w.hostNotes}
+                      {w.guestDescription && (
+                        <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+                          {w.guestDescription}
                         </p>
                       )}
                     </div>

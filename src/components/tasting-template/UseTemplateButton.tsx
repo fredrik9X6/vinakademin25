@@ -32,8 +32,8 @@ export function UseTemplateButton({ templateId, templateSlug }: UseTemplateButto
         return
       }
       if (data.plan?.id) {
-        toast.success('Plan skapad — du kan justera den nu.')
-        router.push(`/skapa-provning/${data.plan.id}`)
+        toast.success('Provning skapad — granska, redigera eller starta direkt.')
+        router.push(`/mina-provningar/planer/${data.plan.id}`)
       }
     } catch {
       toast.error('Nätverksfel — försök igen.')

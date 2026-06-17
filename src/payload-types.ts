@@ -923,7 +923,7 @@ export interface Review {
    */
   updatedBy?: (number | null) | User;
   /**
-   * User rating from 1-5
+   * User rating from 0.5 to 5, half-step increments (0.5, 1, 1.5, …, 5)
    */
   rating: number;
   /**
@@ -1492,6 +1492,22 @@ export interface TastingPlan {
         pourOrder?: number | null;
         hostNotes?: string | null;
         /**
+         * Alkoholhalt i procent (frivilligt).
+         */
+        abv?: number | null;
+        /**
+         * Serveringstemperatur, t.ex. "8–10 °C" (frivilligt).
+         */
+        servingTemp?: string | null;
+        /**
+         * Beskrivning som visas för gästerna (vid avslöjande).
+         */
+        guestDescription?: string | null;
+        /**
+         * Föreslagen mat till vinet (visas för gästerna).
+         */
+        foodPairing?: string | null;
+        /**
          * Land som rätt svar i blind provning (frivilligt).
          */
         blindAnswerCountry?: string | null;
@@ -1558,6 +1574,22 @@ export interface TastingTemplate {
         };
         pourOrder?: number | null;
         hostNotes?: string | null;
+        /**
+         * Alkoholhalt i procent (frivilligt).
+         */
+        abv?: number | null;
+        /**
+         * Serveringstemperatur, t.ex. "8–10 °C" (frivilligt).
+         */
+        servingTemp?: string | null;
+        /**
+         * Beskrivning som visas för gästerna (vid avslöjande).
+         */
+        guestDescription?: string | null;
+        /**
+         * Föreslagen mat till vinet (visas för gästerna).
+         */
+        foodPairing?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -2333,7 +2365,7 @@ export interface UserWine {
    */
   list: number | UserWineList;
   /**
-   * User rating from 1-5
+   * Halvstjärnor tillåtna (0,5–5 i steg om 0,5)
    */
   rating?: number | null;
   /**
@@ -2880,6 +2912,9 @@ export interface CourseReview {
    * Captured at write-time from the linked user. Survives user deletion so the review keeps its attribution.
    */
   authorDisplayName?: string | null;
+  /**
+   * Halvstjärnor tillåtna (0,5, 1, 1,5, …, 5)
+   */
   rating: number;
   content: string;
   status: 'published' | 'pending';
@@ -4615,6 +4650,10 @@ export interface TastingPlansSelect<T extends boolean = true> {
             };
         pourOrder?: T;
         hostNotes?: T;
+        abv?: T;
+        servingTemp?: T;
+        guestDescription?: T;
+        foodPairing?: T;
         blindAnswerCountry?: T;
         blindAnswerGrapes?: T;
         blindAnswerPriceBucket?: T;
@@ -4654,6 +4693,10 @@ export interface TastingTemplatesSelect<T extends boolean = true> {
             };
         pourOrder?: T;
         hostNotes?: T;
+        abv?: T;
+        servingTemp?: T;
+        guestDescription?: T;
+        foodPairing?: T;
         id?: T;
       };
   hostScript?: T;

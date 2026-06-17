@@ -106,6 +106,23 @@ export function PlanPrintCheatSheet({ plan }: PlanPrintCheatSheetProps) {
                       {w.hostNotes}
                     </p>
                   )}
+                  {(w.abv != null || (w.servingTemp && w.servingTemp.trim())) && (
+                    <p className="mt-1 ml-10 text-xs text-muted-foreground">
+                      {[w.abv != null ? `${w.abv} %` : null, w.servingTemp || null]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  )}
+                  {w.foodPairing && (
+                    <p className="mt-1 ml-10 text-xs text-muted-foreground">
+                      Passar till: {w.foodPairing}
+                    </p>
+                  )}
+                  {w.guestDescription && (
+                    <p className="mt-1 ml-10 text-xs text-muted-foreground whitespace-pre-wrap">
+                      {w.guestDescription}
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>

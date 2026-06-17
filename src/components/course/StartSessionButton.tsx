@@ -18,7 +18,7 @@ import { useActiveSession } from '@/context/SessionContext'
 import { QRCodeSVG } from 'qrcode.react'
 import { trackEvent } from '@/components/analytics'
 
-type StartSessionButtonProps =
+type StartSessionTarget =
   | {
       courseId: number
       courseTitle: string
@@ -35,6 +35,14 @@ type StartSessionButtonProps =
       courseSlug?: never
       defaultBlindTasting?: boolean
     }
+
+type StartSessionButtonProps = StartSessionTarget & {
+  /** Trigger button overrides — defaults reproduce the current look. */
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
+  label?: string
+  className?: string
+}
 
 export default function StartSessionButton(props: StartSessionButtonProps) {
   const isPlan = 'tastingPlanId' in props && props.tastingPlanId != null
@@ -170,9 +178,14 @@ export default function StartSessionButton(props: StartSessionButtonProps) {
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} variant="outline" size="lg" className="w-full">
+      <Button
+        onClick={() => setIsOpen(true)}
+        variant={props.variant ?? 'outline'}
+        size={props.size ?? 'lg'}
+        className={props.className ?? 'w-full'}
+      >
         <Users className="mr-2 h-5 w-5" />
-        Bjud in gäster
+        {props.label ?? 'Bjud in gäster'}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>

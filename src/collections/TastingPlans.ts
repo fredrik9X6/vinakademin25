@@ -136,6 +136,31 @@ export const TastingPlans: CollectionConfig = {
         },
         { name: 'pourOrder', type: 'number', min: 1 },
         { name: 'hostNotes', type: 'textarea' },
+        // ── Richer per-wine info (2026-06). All optional. Top-level on the
+        // entry so they apply to both library and custom wines. Must mirror
+        // TastingTemplates.wines exactly so template→plan cloning is lossless.
+        {
+          name: 'abv',
+          type: 'number',
+          min: 0,
+          max: 25,
+          admin: { description: 'Alkoholhalt i procent (frivilligt).' },
+        },
+        {
+          name: 'servingTemp',
+          type: 'text',
+          admin: { description: 'Serveringstemperatur, t.ex. "8–10 °C" (frivilligt).' },
+        },
+        {
+          name: 'guestDescription',
+          type: 'textarea',
+          admin: { description: 'Beskrivning som visas för gästerna (vid avslöjande).' },
+        },
+        {
+          name: 'foodPairing',
+          type: 'text',
+          admin: { description: 'Föreslagen mat till vinet (visas för gästerna).' },
+        },
         // ── Blind-tasting answers (Chunk I). All optional. Empty field = that
         // scoring tier is disabled for this wine in the guess game.
         {

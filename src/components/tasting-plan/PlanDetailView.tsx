@@ -13,6 +13,7 @@ import StartSessionButton from '@/components/course/StartSessionButton'
 import { PlanDetailTour } from '@/components/onboarding/PlanDetailTour'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { trackEvent } from '@/components/analytics'
+import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
 
 const STATUS_LABEL: Record<TastingPlan['status'], string> = {
   draft: 'Utkast',
@@ -113,6 +114,16 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
           </div>
         </header>
 
+        <div data-tour="detail-start-session">
+          <StartSessionButton
+            tastingPlanId={plan.id}
+            planTitle={plan.title}
+            defaultBlindTasting={plan.blindTastingByDefault ?? false}
+            variant="default"
+            label="Starta provning & bjud in gäster"
+          />
+        </div>
+
         {plan.description && (
           <Card className="p-4">
             <p className="text-sm whitespace-pre-wrap">{plan.description}</p>
@@ -160,6 +171,14 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
                           {w.hostNotes}
                         </p>
                       )}
+                      <div className="mt-2">
+                        <WineInfoReadout
+                          abv={w.abv ?? null}
+                          servingTemp={w.servingTemp ?? null}
+                          guestDescription={w.guestDescription ?? null}
+                          foodPairing={w.foodPairing ?? null}
+                        />
+                      </div>
                     </div>
                   </li>
                 )
@@ -179,13 +198,6 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
       </div>
 
       <aside className="md:sticky md:top-20 md:self-start space-y-2">
-        <div data-tour="detail-start-session">
-          <StartSessionButton
-            tastingPlanId={plan.id}
-            planTitle={plan.title}
-            defaultBlindTasting={plan.blindTastingByDefault ?? false}
-          />
-        </div>
         <Button asChild variant="outline" className="w-full" data-tour="detail-shopping-list">
           <Link href={`/mina-provningar/planer/${plan.id}/handlingslista`}>
             <ShoppingBag className="h-4 w-4 mr-2" />
