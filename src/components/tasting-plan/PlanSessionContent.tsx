@@ -30,6 +30,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
+import { resolveWinePurchase } from '@/lib/wine-purchase-info'
+import { WinePurchaseMeta } from '@/components/tasting-shared/WinePurchaseMeta'
 import { Wine as WineIcon, LogOut, CheckCircle, Info } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
@@ -59,6 +61,9 @@ type WineRow = {
   servingTemp: string | null
   guestDescription: string | null
   foodPairing: string | null
+  priceSek: number | null
+  articleNumber: string | null
+  systembolagetUrl: string | null
   libraryWineId: number | null
   imageUrl: string | null
   customWineSnapshot: {
@@ -103,6 +108,7 @@ function rowFromEntry(
   const servingTemp = (w as { servingTemp?: string | null }).servingTemp ?? null
   const guestDescription = (w as { guestDescription?: string | null }).guestDescription ?? null
   const foodPairing = (w as { foodPairing?: string | null }).foodPairing ?? null
+  const purchase = resolveWinePurchase(w)
   const overrideCountry =
     typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry === 'string'
       ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
@@ -166,6 +172,9 @@ function rowFromEntry(
       servingTemp,
       guestDescription,
       foodPairing,
+      priceSek: purchase.priceSek,
+      articleNumber: purchase.articleNumber,
+      systembolagetUrl: purchase.systembolagetUrl,
       libraryWineId: lib.id,
       imageUrl,
       customWineSnapshot: null,
@@ -190,6 +199,9 @@ function rowFromEntry(
     servingTemp,
     guestDescription,
     foodPairing,
+    priceSek: purchase.priceSek,
+    articleNumber: purchase.articleNumber,
+    systembolagetUrl: purchase.systembolagetUrl,
     libraryWineId: null,
     imageUrl: c?.imageUrl || null,
     customWineSnapshot: c?.name
@@ -509,6 +521,9 @@ export function PlanSessionContent({
                     servingTemp: null as string | null,
                     guestDescription: null as string | null,
                     foodPairing: null as string | null,
+                    priceSek: null as number | null,
+                    articleNumber: null as string | null,
+                    systembolagetUrl: null as string | null,
                   }
                 : row
               const isActive = activePour === row.pourOrder
@@ -556,6 +571,11 @@ export function PlanSessionContent({
                             {displayRow.subtitle}
                           </p>
                         )}
+                        <WinePurchaseMeta
+                          priceSek={displayRow.priceSek}
+                          articleNumber={displayRow.articleNumber}
+                          systembolagetUrl={displayRow.systembolagetUrl}
+                        />
                         {isHost &&
                           (row.hostNotes ||
                             row.abv != null ||

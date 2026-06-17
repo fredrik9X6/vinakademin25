@@ -120,21 +120,26 @@ export function LockedTemplateDetailView({
                   Köp denna mall, eller bli medlem och lås upp hela biblioteket
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Engångsköp för {formattedTemplatePrice} — eller medlemskap som ingår alla mallar.
+                  Engångsköp för {formattedTemplatePrice} — eller lås upp alla mallar med ett medlemskap.
                 </p>
               </div>
             </div>
-            <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
-              <Button asChild size="sm">
-                <Link href={buyHref}>Köp för {formattedTemplatePrice}</Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link href={memberHref}>Bli medlem</Link>
-              </Button>
-              {!isAuthenticated && (
-                <Button asChild size="sm" variant="ghost">
-                  <Link href={loginHref}>Logga in</Link>
+            <div className="flex-shrink-0 flex flex-col gap-2 sm:items-end">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button asChild size="sm">
+                  <Link href={buyHref}>Köp för {formattedTemplatePrice}</Link>
                 </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={memberHref}>Bli medlem</Link>
+                </Button>
+              </div>
+              {!isAuthenticated && (
+                <Link
+                  href={loginHref}
+                  className="text-xs text-muted-foreground hover:text-foreground hover:underline text-center sm:text-right"
+                >
+                  Redan medlem? Logga in
+                </Link>
               )}
             </div>
           </CardContent>
@@ -183,9 +188,12 @@ export function LockedTemplateDetailView({
           <Link href={memberHref}>Bli medlem &amp; lås upp alla mallar</Link>
         </Button>
         {!isAuthenticated && (
-          <Button asChild className="w-full" variant="ghost">
-            <Link href={loginHref}>Logga in</Link>
-          </Button>
+          <Link
+            href={loginHref}
+            className="block text-center text-xs text-muted-foreground hover:text-foreground hover:underline pt-1"
+          >
+            Redan medlem? Logga in
+          </Link>
         )}
         <p className="text-xs text-muted-foreground text-center">
           Engångsbetalning för denna mall. Medlemskap låser upp hela biblioteket.
