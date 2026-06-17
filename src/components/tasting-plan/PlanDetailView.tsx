@@ -114,6 +114,16 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
           </div>
         </header>
 
+        <div data-tour="detail-start-session">
+          <StartSessionButton
+            tastingPlanId={plan.id}
+            planTitle={plan.title}
+            defaultBlindTasting={plan.blindTastingByDefault ?? false}
+            variant="default"
+            label="Starta provning & bjud in gäster"
+          />
+        </div>
+
         {plan.description && (
           <Card className="p-4">
             <p className="text-sm whitespace-pre-wrap">{plan.description}</p>
@@ -188,13 +198,6 @@ export function PlanDetailView({ plan }: PlanDetailViewProps) {
       </div>
 
       <aside className="md:sticky md:top-20 md:self-start space-y-2">
-        <div data-tour="detail-start-session">
-          <StartSessionButton
-            tastingPlanId={plan.id}
-            planTitle={plan.title}
-            defaultBlindTasting={plan.blindTastingByDefault ?? false}
-          />
-        </div>
         <Button asChild variant="outline" className="w-full" data-tour="detail-shopping-list">
           <Link href={`/mina-provningar/planer/${plan.id}/handlingslista`}>
             <ShoppingBag className="h-4 w-4 mr-2" />
