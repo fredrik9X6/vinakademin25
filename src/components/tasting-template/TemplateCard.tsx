@@ -19,8 +19,10 @@ export function TemplateCard({ template, href }: TemplateCardProps) {
     image && typeof image === 'object'
       ? image.sizes?.thumbnail?.url ?? image.url ?? null
       : null
-  const isMembersOnly =
-    (template as { accessLevel?: string }).accessLevel === 'paid'
+  const isPaid = (template as { accessLevel?: string }).accessLevel === 'paid'
+  const priceSek = (template as { priceSek?: number | null }).priceSek ?? null
+  const paidBadgeLabel =
+    priceSek != null ? `${new Intl.NumberFormat('sv-SE').format(priceSek)} kr` : 'Köp'
 
   return (
     <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group">
@@ -36,15 +38,15 @@ export function TemplateCard({ template, href }: TemplateCardProps) {
           )}
           <span
             className={
-              isMembersOnly
+              isPaid
                 ? 'absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-brand-400 text-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm'
                 : 'absolute top-2 right-2 inline-flex items-center rounded-full bg-emerald-500 text-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm'
             }
           >
-            {isMembersOnly ? (
+            {isPaid ? (
               <>
                 <Lock className="h-2.5 w-2.5" />
-                Medlem
+                {paidBadgeLabel}
               </>
             ) : (
               'Fri'
