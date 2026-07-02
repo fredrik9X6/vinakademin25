@@ -71,11 +71,14 @@ webhook handlers) stays intact so the feature can be re-enabled later without mi
 
 - **`src/app/api/subscriptions/checkout/route.ts`** — returns `410 Gone` with a structured
   JSON body and Swedish message ("Medlemskap är pausat …") instead of creating a Stripe
-  subscription checkout session. This is the only endpoint that can create a new
-  subscription.
+  subscription checkout session.
+- **`src/app/api/subscriptions/route.ts` (POST)** — also returns `410 Gone` with the same
+  structured response. This was a second subscription-creating path (direct Stripe
+  subscription + Payload record, bypassing Checkout) that was initially missed in the
+  inventory. Both this and the checkout route are now gated.
 - The remaining `/api/subscriptions/*` routes (portal, `[id]`, `user/[userId]`, cancel,
-  reactivate) stay as-is: with zero subscribers they are inert, all require auth, and they
-  are part of the paused plumbing.
+  reactivate) and `GET /api/subscriptions` stay as-is: with zero subscribers they are
+  inert, all require auth, and they are part of the paused plumbing.
 - **Stripe webhooks** (`src/app/api/webhooks/stripe/route.ts`) — `customer.subscription.*`
   handlers stay untouched; no such events will arrive while paused.
 - Template purchase flow (`/api/payments/template-checkout`, `handleTemplatePurchase`,
@@ -107,6 +110,7 @@ No test suite exists. Verification is manual plus build:
 ## Re-enable path
 
 Revert the commit(s) from this change (UI files restored from git), re-add the
-`hasActiveSubscription` branch in `canUseTemplate()`, restore the checkout route, and set
-`STRIPE_PREMIUM_MONTHLY/YEARLY_PRICE_ID` via `scripts/setup-stripe-premium.ts`. No data
+`hasActiveSubscription` branch in `canUseTemplate()`, restore the checkout route (`POST
+/api/subscriptions/checkout`), restore the collection root (`POST /api/subscriptions`), and
+set `STRIPE_PREMIUM_MONTHLY/YEARLY_PRICE_ID` via `scripts/setup-stripe-premium.ts`. No data
 work required.

@@ -684,7 +684,7 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
                 checked={accessLevel === 'paid'}
                 onChange={() => setAccessLevel('paid')}
               />
-              Betald (kräver köp eller prenumeration)
+              Betald (kräver köp)
             </label>
           </div>
         </div>
