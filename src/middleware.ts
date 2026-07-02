@@ -12,10 +12,6 @@ const protectedPaths = [
     roles: ['admin', 'instructor'],
   },
   {
-    path: '/prenumeration', // Assuming Swedish name for /subscription
-    roles: ['admin', 'instructor', 'subscriber', 'user'],
-  },
-  {
     path: '/profil', // Renamed from /profile
     roles: ['admin', 'instructor', 'subscriber', 'user'],
   },

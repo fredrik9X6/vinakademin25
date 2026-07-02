@@ -41,8 +41,6 @@ const PAGE_LABELS: Record<string, string> = {
   profil: 'Profil',
   checkout: 'Kassa',
   // Standalone single-page routes
-  'bli-medlem': 'Bli medlem',
-  prenumeration: 'Prenumeration',
   'recensera-vin': 'Recensera vin',
   'skapa-provning': 'Skapa provning',
   vinkompassen: 'Vinkompassen',
