@@ -418,15 +418,18 @@ export const canTakeQuiz = async (
 // ---------------------------------------------------------------------------
 // Template entitlements (provningsmallar)
 //
-// Per spec 2026-06-13 (PR-D): templates move from members_only to per-template
-// purchase (99 SEK each, one designated isFreeTrial). Active subscribers
-// unlock all paid templates; the rest of users pay per template and the
-// entitlement is recorded in TemplateEntitlements.
+// Per spec 2026-06-13 (PR-D): templates are sold per-template (99 SEK each,
+// one designated isFreeTrial) and the entitlement is recorded in
+// TemplateEntitlements.
+//
+// PAUSED 2026-07-02: subscriptions are on hold — hasActiveSubscription below
+// is intentionally no longer consulted by canUseTemplate. See
+// docs/superpowers/specs/2026-07-02-pause-subscriptions-single-purchase-design.md
 // ---------------------------------------------------------------------------
 
 /**
- * Whether the user has an active subscription. Used as a short-circuit unlock
- * across all paid templates (per Q-3 resolution).
+ * Whether the user has an active subscription. PAUSED: kept for re-enable but
+ * no longer consulted by canUseTemplate (subscriptions are on hold).
  */
 export const hasActiveSubscription = async (
   req: PayloadRequest,
@@ -485,8 +488,11 @@ export const hasTemplateEntitlement = async (
  *   - role === 'admin'                         (staff bypass — no purchase needed)
  *   - accessLevel === 'free'                   (always free)
  *   - isFreeTrial && user logged in            (try-it-free unlock)
- *   - active subscription                      (subscribers get everything)
  *   - active TemplateEntitlements row          (one-time purchase)
+ *
+ * NOTE: the subscription short-circuit is paused (2026-07-02). To re-enable,
+ * reinsert `if (await hasActiveSubscription(req, String(user.id))) return true`
+ * before the entitlement check.
  */
 export const canUseTemplate = async (
   req: PayloadRequest,
@@ -501,7 +507,6 @@ export const canUseTemplate = async (
   if (template.accessLevel === 'free') return true
   if (template.isFreeTrial && user) return true
   if (!user) return false
-  if (await hasActiveSubscription(req, String(user.id))) return true
   if (await hasTemplateEntitlement(req, String(user.id), String(template.id))) return true
   return false
 }

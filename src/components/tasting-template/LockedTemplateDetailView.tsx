@@ -49,10 +49,6 @@ export function LockedTemplateDetailView({
     ? buyPath
     : `/logga-in?next=${encodeURIComponent(buyPath)}`
   const loginHref = `/logga-in?next=${encodeURIComponent(detailPath)}`
-  // Active subscribers unlock every paid template (canUseTemplate handles
-  // this), so the membership CTA needs to be reachable from here. Route is
-  // /bli-medlem; anon users land on the page itself which then prompts login.
-  const memberHref = '/bli-medlem'
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 pb-32 grid gap-8 md:grid-cols-[1fr_280px]">
@@ -117,28 +113,23 @@ export function LockedTemplateDetailView({
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium">
-                  Köp denna mall, eller bli medlem och lås upp hela biblioteket
+                  Köp denna mall och lås upp hela provningen
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Engångsköp för {formattedTemplatePrice} — eller lås upp alla mallar med ett medlemskap.
+                  Engångsköp för {formattedTemplatePrice} — du får tillgång direkt.
                 </p>
               </div>
             </div>
             <div className="flex-shrink-0 flex flex-col gap-2 sm:items-end">
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button asChild size="sm">
-                  <Link href={buyHref}>Köp för {formattedTemplatePrice}</Link>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={memberHref}>Bli medlem</Link>
-                </Button>
-              </div>
+              <Button asChild size="sm">
+                <Link href={buyHref}>Köp för {formattedTemplatePrice}</Link>
+              </Button>
               {!isAuthenticated && (
                 <Link
                   href={loginHref}
                   className="text-xs text-muted-foreground hover:text-foreground hover:underline text-center sm:text-right"
                 >
-                  Redan medlem? Logga in
+                  Redan köpt? Logga in
                 </Link>
               )}
             </div>
@@ -184,19 +175,16 @@ export function LockedTemplateDetailView({
         <Button asChild className="w-full">
           <Link href={buyHref}>Köp för {formattedTemplatePrice}</Link>
         </Button>
-        <Button asChild className="w-full" variant="outline">
-          <Link href={memberHref}>Bli medlem &amp; lås upp alla mallar</Link>
-        </Button>
         {!isAuthenticated && (
           <Link
             href={loginHref}
             className="block text-center text-xs text-muted-foreground hover:text-foreground hover:underline pt-1"
           >
-            Redan medlem? Logga in
+            Redan köpt? Logga in
           </Link>
         )}
         <p className="text-xs text-muted-foreground text-center">
-          Engångsbetalning för denna mall. Medlemskap låser upp hela biblioteket.
+          Engångsbetalning för denna mall — inga abonnemang.
         </p>
       </aside>
     </div>
