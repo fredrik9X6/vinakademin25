@@ -26,44 +26,27 @@ export async function POST(request: NextRequest) {
 
     const payload = await getPayload({ config })
 
-    // Create contact submission in database
-    await payload.create({
-      collection: 'contact-submissions' as any,
-      data: {
-        name,
-        email,
-        phone: phone || undefined,
-        subject,
-        message,
-        status: 'new',
-        submittedAt: new Date().toISOString(),
-      },
-    })
-
-    // Notify the team — otherwise submissions sit unseen in the admin
-    // collection. Failure here must not fail the submission (it's saved).
+    // There is no contact-submissions collection — the notification email IS
+    // the record. If the send fails we fall through to the 500 below so the
+    // visitor knows to retry instead of their message vanishing.
     const notifyTo = process.env.CONTACT_NOTIFICATIONS_EMAIL || 'hej@vinakademin.se'
-    try {
-      const lines = [
-        `Namn: ${name}`,
-        `E-post: ${email}`,
-        ...(phone ? [`Telefon: ${phone}`] : []),
-        `Ämne: ${subject}`,
-        '',
-        message,
-      ]
-      await payload.sendEmail({
-        to: notifyTo,
-        replyTo: email,
-        subject: `Nytt meddelande via kontaktformuläret: ${subject}`,
-        text: lines.join('\n'),
-        html: `<p><strong>Namn:</strong> ${escapeHtml(name)}<br/><strong>E-post:</strong> ${escapeHtml(email)}${
-          phone ? `<br/><strong>Telefon:</strong> ${escapeHtml(phone)}` : ''
-        }<br/><strong>Ämne:</strong> ${escapeHtml(subject)}</p><p style="white-space:pre-wrap">${escapeHtml(message)}</p>`,
-      })
-    } catch (emailError) {
-      log.error('Failed to send contact notification email:', emailError)
-    }
+    const lines = [
+      `Namn: ${name}`,
+      `E-post: ${email}`,
+      ...(phone ? [`Telefon: ${phone}`] : []),
+      `Ämne: ${subject}`,
+      '',
+      message,
+    ]
+    await payload.sendEmail({
+      to: notifyTo,
+      replyTo: email,
+      subject: `Nytt meddelande via kontaktformuläret: ${subject}`,
+      text: lines.join('\n'),
+      html: `<p><strong>Namn:</strong> ${escapeHtml(name)}<br/><strong>E-post:</strong> ${escapeHtml(email)}${
+        phone ? `<br/><strong>Telefon:</strong> ${escapeHtml(phone)}` : ''
+      }<br/><strong>Ämne:</strong> ${escapeHtml(subject)}</p><p style="white-space:pre-wrap">${escapeHtml(message)}</p>`,
+    })
 
     return NextResponse.json({ success: true, message: 'Contact form submitted successfully' })
   } catch (error) {
