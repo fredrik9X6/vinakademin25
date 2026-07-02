@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import type { TastingTemplate, Wine, Media } from '@/payload-types'
 import { Button } from '@/components/ui/button'
@@ -368,7 +369,7 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
           {isEdit ? 'Redigera provningsmall' : 'Ny provningsmall'}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Mallar visas i biblioteket <a href="/provningsmallar" className="underline">/provningsmallar</a> efter publicering.
+          Mallar visas i biblioteket <Link href="/provningsmallar" className="underline">/provningsmallar</Link> efter publicering.
         </p>
       </header>
 

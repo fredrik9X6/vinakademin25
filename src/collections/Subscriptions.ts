@@ -12,10 +12,10 @@ export const Subscriptions: CollectionConfig = {
   },
   access: {
     read: adminOrSelf,
-    create: ({ req }) => {
-      // Only authenticated users can create subscriptions (through API)
-      return Boolean(req.user)
-    },
+    // Admin-only while subscriptions are paused (2026-07-02): the public
+    // creation endpoints return 410, and webhook/server flows use the local
+    // API (overrideAccess), so nothing legitimate needs authenticated create.
+    create: adminOnly,
     update: adminOnly,
     delete: adminOnly,
   },
