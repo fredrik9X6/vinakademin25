@@ -1590,6 +1590,18 @@ export interface TastingTemplate {
          * Föreslagen mat till vinet (visas för gästerna).
          */
         foodPairing?: string | null;
+        /**
+         * Land som rätt svar i blind provning (frivilligt).
+         */
+        blindAnswerCountry?: string | null;
+        /**
+         * Acceptabla druvor som rätt svar (frivilligt). Lägg till flera för blends — gäster får poäng om de gissar någon av dem.
+         */
+        blindAnswerGrapes?: string[] | null;
+        /**
+         * Prisintervall som rätt svar. Lämna tom så härleds det från vinets pris (om satt).
+         */
+        blindAnswerPriceBucket?: ('0_99' | '100_149' | '150_199' | '200_249' | '250_299' | '300_plus') | null;
         id?: string | null;
       }[]
     | null;
@@ -4697,6 +4709,9 @@ export interface TastingTemplatesSelect<T extends boolean = true> {
         servingTemp?: T;
         guestDescription?: T;
         foodPairing?: T;
+        blindAnswerCountry?: T;
+        blindAnswerGrapes?: T;
+        blindAnswerPriceBucket?: T;
         id?: T;
       };
   hostScript?: T;

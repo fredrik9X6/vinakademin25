@@ -151,6 +151,25 @@ export async function POST(
       guestDescription:
         (w as { guestDescription?: string | null }).guestDescription ?? '',
       foodPairing: (w as { foodPairing?: string | null }).foodPairing ?? '',
+      // Blind-tasting answers: without these, template-based plans (almost
+      // always customWine snapshots with no library country/grape data) can
+      // only offer the price guess in a blind session.
+      blindAnswerCountry:
+        (w as { blindAnswerCountry?: string | null }).blindAnswerCountry ?? null,
+      blindAnswerGrapes: Array.isArray(
+        (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes,
+      )
+        ? ((w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes as string[])
+        : [],
+      blindAnswerPriceBucket:
+        ((w as { blindAnswerPriceBucket?: unknown }).blindAnswerPriceBucket ?? null) as
+          | '0_99'
+          | '100_149'
+          | '150_199'
+          | '200_249'
+          | '250_299'
+          | '300_plus'
+          | null,
     }
   })
 

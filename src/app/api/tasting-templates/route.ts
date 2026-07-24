@@ -3,26 +3,11 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getUser } from '@/lib/get-user'
 import { loggerFor } from '@/lib/logger'
+import { mapTemplateWineEntry, type TemplateWineEntry } from './wine-entry'
 
 const log = loggerFor('api-tasting-templates')
 
-type CustomWine = {
-  name?: string
-  producer?: string
-  vintage?: string
-  type?: 'red' | 'white' | 'rose' | 'sparkling' | 'dessert' | 'fortified' | 'other'
-  systembolagetUrl?: string
-  priceSek?: number
-  systembolagetProductNumber?: string
-  imageUrl?: string
-}
-
-type WineEntry = {
-  libraryWine?: number
-  customWine?: CustomWine
-  pourOrder?: number
-  hostNotes?: string
-}
+type WineEntry = TemplateWineEntry
 
 type AccessLevel = 'free' | 'paid'
 type PublishedStatus = 'draft' | 'published'
@@ -125,12 +110,7 @@ export async function POST(request: NextRequest) {
         priceSek: typeof body.priceSek === 'number' ? body.priceSek : 99,
         isFreeTrial: body.isFreeTrial ?? false,
         hostScript: body.hostScript?.trim() || undefined,
-        wines: (body.wines || []).map((w, idx) => ({
-          libraryWine: typeof w.libraryWine === 'number' ? w.libraryWine : null,
-          customWine: w.customWine?.name?.trim() ? w.customWine : undefined,
-          pourOrder: w.pourOrder ?? idx + 1,
-          hostNotes: w.hostNotes ?? '',
-        })),
+        wines: (body.wines || []).map(mapTemplateWineEntry),
       },
       overrideAccess: false,
       user,
