@@ -925,7 +925,7 @@ export interface Review {
   /**
    * User rating from 0.5 to 5, half-step increments (0.5, 1, 1.5, …, 5)
    */
-  rating: number;
+  rating?: number | null;
   /**
    * User review text
    */

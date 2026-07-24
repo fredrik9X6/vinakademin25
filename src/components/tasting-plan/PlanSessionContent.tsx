@@ -155,10 +155,10 @@ function rowFromEntry(
       typeof lib.country === 'object' && lib.country
         ? (lib.country as { name?: string }).name ?? null
         : null
-    const libGrape =
-      Array.isArray(lib.grapes) && lib.grapes.length > 0 && typeof lib.grapes[0] === 'object'
-        ? ((lib.grapes[0] as { name?: string }).name ?? null)
-        : null
+    // ALL grape names — a blend accepts any of its grapes as a correct guess.
+    const libGrapes = (Array.isArray(lib.grapes) ? lib.grapes : [])
+      .map((g) => (g && typeof g === 'object' ? ((g as { name?: string }).name ?? null) : null))
+      .filter((g): g is string => typeof g === 'string' && g.trim().length > 0)
     const libPriceSek = typeof (lib as { price?: number }).price === 'number'
       ? ((lib as { price?: number }).price as number)
       : null
@@ -180,7 +180,7 @@ function rowFromEntry(
       customWineSnapshot: null,
       blindAnswer: {
         country: overrideCountry ?? libCountry,
-        grapes: overrideGrapes.length > 0 ? overrideGrapes : libGrape ? [libGrape] : [],
+        grapes: overrideGrapes.length > 0 ? overrideGrapes : libGrapes,
         priceBucket: overridePriceBucket,
         priceSek: libPriceSek,
       },
