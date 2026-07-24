@@ -20,9 +20,19 @@ import {
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { X, Upload, Image as ImageIcon } from 'lucide-react'
 import { LibraryWinePicker, type LibraryWineHit } from './LibraryWinePicker'
-import { WinePicker, type CustomWineInput } from '@/components/tasting-plan/WinePicker'
+import {
+  WinePicker,
+  type CustomWineInput,
+  type PickedWineMeta,
+} from '@/components/tasting-plan/WinePicker'
 import { WineSummaryCard } from '@/components/tasting-shared/WineSummaryCard'
 import { WineDetailSheet } from '@/components/tasting-shared/WineDetailSheet'
+import {
+  BlindAnswerInputs,
+  type BlindAnswers,
+} from '@/components/tasting-plan/BlindAnswerInputs'
+import { normalizeAnswer } from '@/lib/blind-guess-vocab'
+import { useGrapes } from '@/lib/use-grapes'
 import {
   type WineExtraFields,
   EMPTY_EXTRA,
@@ -45,6 +55,7 @@ type WineEntry =
       pourOrder: number
       hostNotes: string
       extra: WineExtraFields
+      blindAnswers: BlindAnswers
     }
   | {
       key: string
@@ -53,7 +64,28 @@ type WineEntry =
       pourOrder: number
       hostNotes: string
       extra: WineExtraFields
+      blindAnswers: BlindAnswers
     }
+
+const EMPTY_BLIND_ANSWERS: BlindAnswers = { country: null, grapes: [], priceBucket: null }
+
+function blindAnswersFromStored(w: unknown): BlindAnswers {
+  const entry = w as {
+    blindAnswerCountry?: string | null
+    blindAnswerGrapes?: string[] | null
+    blindAnswerPriceBucket?: BlindAnswers['priceBucket'] | null
+  }
+  return {
+    country:
+      typeof entry.blindAnswerCountry === 'string' && entry.blindAnswerCountry.trim()
+        ? entry.blindAnswerCountry
+        : null,
+    grapes: Array.isArray(entry.blindAnswerGrapes)
+      ? entry.blindAnswerGrapes.filter((g) => typeof g === 'string' && g.trim().length > 0)
+      : [],
+    priceBucket: entry.blindAnswerPriceBucket ?? null,
+  }
+}
 
 function nextKey(): string {
   return Math.random().toString(36).slice(2, 10)
@@ -105,6 +137,7 @@ function hydrateInitialWines(template?: TastingTemplate): WineEntry[] {
         pourOrder,
         hostNotes,
         extra: extraFromStored(w),
+        blindAnswers: blindAnswersFromStored(w),
       })
       return
     }
@@ -127,6 +160,7 @@ function hydrateInitialWines(template?: TastingTemplate): WineEntry[] {
         pourOrder,
         hostNotes,
         extra: extraFromStored(w),
+        blindAnswers: blindAnswersFromStored(w),
       })
     }
   })
@@ -183,6 +217,8 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
   }, [title, slugTouched])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+  // Curated grapes list used to match Systembolaget grape strings to canonical names.
+  const { grapes: curatedGrapes } = useGrapes()
 
   function pickLibraryWine(hit: LibraryWineHit) {
     setWines((prev) => {
@@ -201,12 +237,29 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
           pourOrder: prev.length + 1,
           hostNotes: '',
           extra: { ...EMPTY_EXTRA },
+          // Library wines auto-derive blind answers from wine data; the
+          // editor still allows an explicit override.
+          blindAnswers: { ...EMPTY_BLIND_ANSWERS },
         },
       ]
     })
   }
 
-  function pickCustomWine(w: CustomWineInput) {
+  function pickCustomWine(w: CustomWineInput, meta?: PickedWineMeta) {
+    // Pre-fill blind answers from the Systembolaget hit (same mapping as
+    // TastingPlanForm): grape strings matched to canonical curated names
+    // where possible; unmatched strings pass through as-is.
+    const canonicalByNorm = new Map<string, string>()
+    for (const canonical of curatedGrapes) {
+      canonicalByNorm.set(normalizeAnswer(canonical), canonical)
+    }
+    const mappedGrapes = Array.from(
+      new Set(
+        (meta?.grapes ?? [])
+          .map((g) => canonicalByNorm.get(normalizeAnswer(g)) ?? g)
+          .filter((g) => g.trim().length > 0),
+      ),
+    )
     setWines((prev) => [
       ...prev,
       {
@@ -216,6 +269,11 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
         pourOrder: prev.length + 1,
         hostNotes: '',
         extra: { ...EMPTY_EXTRA },
+        blindAnswers: {
+          country: meta?.country ?? null,
+          grapes: mappedGrapes,
+          priceBucket: null,
+        },
       },
     ])
   }
@@ -240,6 +298,10 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
         }
       }),
     )
+  }
+
+  function updateBlindAnswers(key: string, next: BlindAnswers) {
+    setWines((prev) => prev.map((w) => (w.key === key ? { ...w, blindAnswers: next } : w)))
   }
 
   function onDragEnd(e: DragEndEvent) {
@@ -333,6 +395,9 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
           servingTemp: w.extra.servingTemp,
           guestDescription: w.extra.guestDescription,
           foodPairing: w.extra.foodPairing,
+          blindAnswerCountry: w.blindAnswers.country,
+          blindAnswerGrapes: w.blindAnswers.grapes,
+          blindAnswerPriceBucket: w.blindAnswers.priceBucket,
         })),
       }
       const url = isEdit ? `/api/tasting-templates/${initialTemplate!.id}` : '/api/tasting-templates'
@@ -593,6 +658,13 @@ export function TemplateForm({ initialTemplate }: TemplateFormProps) {
             subtitle={subtitle}
             values={{ ...editing.extra, hostNotes: editing.hostNotes }}
             onChange={(patch) => updateExtra(editing.key, patch)}
+            blindSlot={
+              <BlindAnswerInputs
+                value={editing.blindAnswers}
+                onChange={(next) => updateBlindAnswers(editing.key, next)}
+                disabled={submitting}
+              />
+            }
             disabled={submitting}
           />
         )

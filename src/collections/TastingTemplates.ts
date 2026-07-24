@@ -124,6 +124,40 @@ export const TastingTemplates: CollectionConfig = {
           type: 'text',
           admin: { description: 'Föreslagen mat till vinet (visas för gästerna).' },
         },
+        // ── Blind-tasting answers. Mirror of TastingPlans.wines — the
+        // from-template clone copies them onto the plan so template-based
+        // tastings get country/grape guessing without per-plan data entry.
+        // All optional. Empty field = that scoring tier is disabled.
+        {
+          name: 'blindAnswerCountry',
+          type: 'text',
+          admin: { description: 'Land som rätt svar i blind provning (frivilligt).' },
+        },
+        {
+          name: 'blindAnswerGrapes',
+          type: 'text',
+          hasMany: true,
+          admin: {
+            description:
+              'Acceptabla druvor som rätt svar (frivilligt). Lägg till flera för blends — gäster får poäng om de gissar någon av dem.',
+          },
+        },
+        {
+          name: 'blindAnswerPriceBucket',
+          type: 'select',
+          options: [
+            { label: 'Under 100 kr', value: '0_99' },
+            { label: '100–149 kr', value: '100_149' },
+            { label: '150–199 kr', value: '150_199' },
+            { label: '200–249 kr', value: '200_249' },
+            { label: '250–299 kr', value: '250_299' },
+            { label: '300+ kr', value: '300_plus' },
+          ],
+          admin: {
+            description:
+              'Prisintervall som rätt svar. Lämna tom så härleds det från vinets pris (om satt).',
+          },
+        },
       ],
       validate: (value: unknown) => {
         if (!Array.isArray(value)) return true

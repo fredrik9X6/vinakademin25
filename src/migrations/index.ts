@@ -37,6 +37,7 @@ import * as migration_20260613_113624_rename_vinprovningar_to_vinkurser from './
 import * as migration_20260613_120112_template_pricing_and_entitlements from './20260613_120112_template_pricing_and_entitlements';
 import * as migration_20260616_182125_tasting_per_wine_info from './20260616_182125_tasting_per_wine_info';
 import * as migration_20260724_171748_reviews_rating_optional from './20260724_171748_reviews_rating_optional';
+import * as migration_20260724_175604_template_blind_answers from './20260724_175604_template_blind_answers';
 
 export const migrations = [
   {
@@ -232,6 +233,11 @@ export const migrations = [
   {
     up: migration_20260724_171748_reviews_rating_optional.up,
     down: migration_20260724_171748_reviews_rating_optional.down,
-    name: '20260724_171748_reviews_rating_optional'
+    name: '20260724_171748_reviews_rating_optional',
+  },
+  {
+    up: migration_20260724_175604_template_blind_answers.up,
+    down: migration_20260724_175604_template_blind_answers.down,
+    name: '20260724_175604_template_blind_answers'
   },
 ];
