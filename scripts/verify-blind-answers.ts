@@ -18,6 +18,10 @@ import { buildBlindAnswersByPour } from '../src/lib/blind-answers'
 import { scoreOne } from '../src/lib/blind-guess-scoring'
 import { pickEasyModeOptions } from '../src/lib/blind-guess-decoys'
 import { GRAPES } from '../src/lib/blind-guess-vocab'
+import {
+  canonicalizeGrapes,
+  fillBlindAnswersFromSystembolaget,
+} from '../src/lib/systembolaget-blind-answers'
 
 let passed = 0
 let failed = 0
@@ -142,6 +146,78 @@ async function main() {
   )
   const opts2 = pickEasyModeOptions({ pool, answers: ['Syrah'], count: 5, seed: '42:1:grape' })!
   assert('deterministic per seed', JSON.stringify(opts) === JSON.stringify(opts2))
+
+  console.log('canonicalizeGrapes:')
+  const curated = ['Primitivo', 'Syrah', 'Grenache']
+  assert(
+    'case-insensitive canonical match + passthrough for unknown',
+    JSON.stringify(canonicalizeGrapes(['primitivo', ' Zweigelt ', 'SYRAH'], curated)) ===
+      JSON.stringify(['Primitivo', 'Zweigelt', 'Syrah']),
+    canonicalizeGrapes(['primitivo', ' Zweigelt ', 'SYRAH'], curated),
+  )
+
+  console.log('fillBlindAnswersFromSystembolaget:')
+  const catalogDb: Record<string, { country: string | null; grapes: string[] }> = {
+    '7702': { country: 'Italien', grapes: ['primitivo'] },
+    '1234': { country: 'Frankrike', grapes: [] },
+  }
+  const makeStub = (opts?: { throwOnQuery?: boolean }) =>
+    ({
+      db: {
+        pool: {
+          query: async (_text: string, params: unknown[]) => {
+            if (opts?.throwOnQuery) throw new Error('relation does not exist')
+            const nums = params[0] as string[]
+            return {
+              rows: nums
+                .filter((n) => catalogDb[n])
+                .map((n) => ({ product_number: n, ...catalogDb[n] })),
+            }
+          },
+        },
+      },
+      find: async () => ({ docs: [{ name: 'Primitivo' }, { name: 'Syrah' }] }),
+      logger: { warn: () => {} },
+    }) as unknown as Payload
+
+  const fillWines = [
+    // SB wine, empty answers → filled (grapes canonicalized)
+    { customWine: { systembolagetProductNumber: '7702' }, blindAnswerCountry: null, blindAnswerGrapes: [] },
+    // SB wine, host already set values → untouched
+    { customWine: { systembolagetProductNumber: '7702' }, blindAnswerCountry: 'Spanien', blindAnswerGrapes: ['Tempranillo'] },
+    // SB wine with catalog country but no grapes → country only
+    { customWine: { systembolagetProductNumber: '1234' }, blindAnswerCountry: null, blindAnswerGrapes: [] },
+    // non-SB custom wine → untouched
+    { customWine: { name: 'Eget vin' }, blindAnswerCountry: null, blindAnswerGrapes: [] },
+  ]
+  const filled = await fillBlindAnswersFromSystembolaget(makeStub(), fillWines as never[])
+  assert('changed flagged', filled.changed === true)
+  const f0 = filled.wines[0] as (typeof fillWines)[0]
+  assert('empty SB wine gets country', f0.blindAnswerCountry === 'Italien', f0)
+  assert(
+    'empty SB wine gets canonicalized grapes',
+    JSON.stringify(f0.blindAnswerGrapes) === JSON.stringify(['Primitivo']),
+    f0.blindAnswerGrapes,
+  )
+  const f1 = filled.wines[1] as (typeof fillWines)[1]
+  assert(
+    'host-set values never overwritten',
+    f1.blindAnswerCountry === 'Spanien' &&
+      JSON.stringify(f1.blindAnswerGrapes) === JSON.stringify(['Tempranillo']),
+  )
+  const f2 = filled.wines[2] as (typeof fillWines)[2]
+  assert('country-only catalog hit fills country only', f2.blindAnswerCountry === 'Frankrike')
+  assert('grapes stay empty when catalog has none', (f2.blindAnswerGrapes ?? []).length === 0)
+  const f3 = filled.wines[3] as (typeof fillWines)[3]
+  assert('non-SB wine untouched', f3.blindAnswerCountry == null)
+
+  const noop = await fillBlindAnswersFromSystembolaget(makeStub(), [
+    { customWine: { systembolagetProductNumber: '7702' }, blindAnswerCountry: 'Italien', blindAnswerGrapes: ['Primitivo'] },
+  ] as never[])
+  assert('fully-answered wines → changed=false', noop.changed === false)
+
+  const failedFill = await fillBlindAnswersFromSystembolaget(makeStub({ throwOnQuery: true }), fillWines as never[])
+  assert('query failure never throws — returns unchanged', failedFill.changed === false)
 
   console.log(`\n${passed} passed, ${failed} failed`)
   if (failed > 0) process.exit(1)

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { syncTemplateWithStripe } from '../lib/stripe-products'
+import { fillBlindAnswersFromSystembolaget } from '../lib/systembolaget-blind-answers'
 
 const slugifyTitle = (input: string): string =>
   String(input)
@@ -275,6 +276,16 @@ export const TastingTemplates: CollectionConfig = {
           return { ...data, publishedAt: new Date().toISOString() }
         }
         return data
+      },
+      // Systembolaget wines auto-derive their blind-guess answers from the
+      // catalog on every save (only fills EMPTY fields — author values win).
+      async ({ data, req }) => {
+        if (!data?.wines || !Array.isArray(data.wines)) return data
+        const { changed, wines } = await fillBlindAnswersFromSystembolaget(
+          req.payload,
+          data.wines,
+        )
+        return changed ? { ...data, wines } : data
       },
     ],
     afterChange: [

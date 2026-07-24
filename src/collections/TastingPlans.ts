@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { fillBlindAnswersFromSystembolaget } from '../lib/systembolaget-blind-answers'
 
 export const TastingPlans: CollectionConfig = {
   slug: 'tasting-plans',
@@ -254,6 +255,16 @@ export const TastingPlans: CollectionConfig = {
           return { ...data, owner: req.user.id }
         }
         return data
+      },
+      // Systembolaget wines auto-derive their blind-guess answers from the
+      // catalog on every save (only fills EMPTY fields — host values win).
+      async ({ data, req }) => {
+        if (!data?.wines || !Array.isArray(data.wines)) return data
+        const { changed, wines } = await fillBlindAnswersFromSystembolaget(
+          req.payload,
+          data.wines,
+        )
+        return changed ? { ...data, wines } : data
       },
     ],
   },
