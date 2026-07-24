@@ -189,6 +189,21 @@ export function WineReviewForm({
   // Get current user from auth context
   const { user } = useAuth()
 
+  // Vocab option lists are pure functions of the wine type — memoize so the
+  // MultiSelects aren't fed freshly rebuilt arrays on every keystroke render.
+  const primaryFlavourOptions = React.useMemo(
+    () => buildFlavourOptions(PRIMARY_VOCAB, 'primary', wineType),
+    [wineType],
+  )
+  const secondaryFlavourOptions = React.useMemo(
+    () => buildFlavourOptions(SECONDARY_VOCAB, 'secondary', wineType),
+    [wineType],
+  )
+  const tertiaryFlavourOptions = React.useMemo(
+    () => buildFlavourOptions(TERTIARY_VOCAB, 'tertiary', wineType),
+    [wineType],
+  )
+
   // Continuous autosave of the in-progress review. Only active in a session
   // (lessonId=0 plan sessions included). Standalone / lesson-only reviews keep
   // the explicit-submit flow.
@@ -201,7 +216,11 @@ export function WineReviewForm({
       const sessionIdNum = sessionId ? Number(sessionId) : undefined
       return {
         ...wineIdentity,
-        rating: (draft.rating as number) || 0,
+        // Never send 0 — the collection validates non-null ratings to the
+        // 0.5–5 range, so a pre-stars draft must carry null, not a zero that
+        // fails validation on every autosave.
+        rating:
+          typeof draft.rating === 'number' && draft.rating > 0 ? (draft.rating as number) : null,
         buyAgain: Boolean(draft.buyAgain),
         reviewText: (draft.notes as string) ?? '',
         publishedToProfile: Boolean(draft.publishedToProfile),
@@ -660,7 +679,15 @@ export function WineReviewForm({
           publishedToProfile,
           wsetTasting: buildWsetSnapshot(),
         })
-        await lockIn()
+        const delivered = await lockIn()
+        if (!delivered) {
+          // Server never confirmed the save — do NOT show the success state.
+          // The draft stays in localStorage + the retry queue, and the form
+          // stays editable with the save-status label showing the failure.
+          toast.error('Kunde inte spara din smaknotering — försök igen om en stund.')
+          setIsSubmitting(false)
+          return
+        }
         // Reflect "locked in" using the local state we already hold.
         const lockedDoc = {
           rating,
@@ -704,7 +731,7 @@ export function WineReviewForm({
         credentials: 'include',
         body: JSON.stringify({
           ...wineIdentity,
-          rating,
+          rating: rating > 0 ? rating : null,
           buyAgain,
           reviewText: notes,
           publishedToProfile,
@@ -952,7 +979,7 @@ export function WineReviewForm({
               >
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={buildFlavourOptions(PRIMARY_VOCAB, 'primary', wineType)}
+                  options={primaryFlavourOptions}
                   value={primaryFlavours}
                   onValueChange={setPrimaryFlavours}
                   placeholder="Välj smaker"
@@ -1115,7 +1142,7 @@ export function WineReviewForm({
               >
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={buildFlavourOptions(PRIMARY_VOCAB, 'primary', wineType)}
+                  options={primaryFlavourOptions}
                   value={primaryAromas}
                   onValueChange={setPrimaryAromas}
                   placeholder="Välj aromer"
@@ -1125,7 +1152,7 @@ export function WineReviewForm({
               <InputRow label="Sekundära aromer" attemptSubmit={attemptSubmit}>
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={buildFlavourOptions(SECONDARY_VOCAB, 'secondary', wineType)}
+                  options={secondaryFlavourOptions}
                   value={secondaryAromas}
                   onValueChange={setSecondaryAromas}
                   placeholder="Välj aromer"
@@ -1135,7 +1162,7 @@ export function WineReviewForm({
               <InputRow label="Tertiära aromer" attemptSubmit={attemptSubmit}>
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={buildFlavourOptions(TERTIARY_VOCAB, 'tertiary', wineType)}
+                  options={tertiaryFlavourOptions}
                   value={tertiaryAromas}
                   onValueChange={setTertiaryAromas}
                   placeholder="Välj aromer"
@@ -1187,7 +1214,7 @@ export function WineReviewForm({
               >
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={buildFlavourOptions(PRIMARY_VOCAB, 'primary', wineType)}
+                  options={primaryFlavourOptions}
                   value={primaryFlavours}
                   onValueChange={setPrimaryFlavours}
                   placeholder="Välj smaker"
@@ -1197,7 +1224,7 @@ export function WineReviewForm({
               <InputRow label="Sekundära smaker" attemptSubmit={attemptSubmit}>
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={buildFlavourOptions(SECONDARY_VOCAB, 'secondary', wineType)}
+                  options={secondaryFlavourOptions}
                   value={secondaryFlavours}
                   onValueChange={setSecondaryFlavours}
                   placeholder="Välj smaker"
@@ -1207,7 +1234,7 @@ export function WineReviewForm({
               <InputRow label="Tertiära smaker" attemptSubmit={attemptSubmit}>
                 <MultiSelect
                   modalPopover={insideDialog}
-                  options={buildFlavourOptions(TERTIARY_VOCAB, 'tertiary', wineType)}
+                  options={tertiaryFlavourOptions}
                   value={tertiaryFlavours}
                   onValueChange={setTertiaryFlavours}
                   placeholder="Välj smaker"

@@ -8,8 +8,10 @@ import { COUNTRIES, GRAPES } from '@/lib/blind-guess-vocab'
 import { pickEasyModeOptions } from '@/lib/blind-guess-decoys'
 import type { TastingPlan, CourseSession } from '@/payload-types'
 
-/** Default options-per-tier in easy mode (correct + 3 decoys, or all corrects if a blend hits the cap). */
-const EASY_MODE_OPTION_COUNT = 4
+/** Options per guess tier when the dropdown is decoy-limited: the correct
+ * answer + 4 wrong answers. Grape guessing is always limited to this set;
+ * countries only in easy mode. */
+const GUESS_OPTION_COUNT = 5
 
 export default async function PlanDetailPage({
   params,
@@ -81,8 +83,10 @@ export default async function PlanDetailPage({
             const pourOrder = w.pourOrder ?? idx + 1
             if (revealed.includes(pourOrder)) return w
 
-            // Read original (unredacted) answer fields once — reused for both
-            // easy-mode decoy generation and blindTiers activation booleans.
+            // Resolve the effective (unredacted) answers with the SAME
+            // precedence the scoring paths use: explicit host override →
+            // joined library-wine data. The plan is loaded at depth 2 here, so
+            // libraryWine.country / .grapes are populated objects.
             const origCountry =
               typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry === 'string'
                 ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
@@ -90,34 +94,66 @@ export default async function PlanDetailPage({
             const origGrapes = Array.isArray(
               (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes,
             )
-              ? ((w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes as string[])
+              ? ((w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes as string[]).filter(
+                  (g) => typeof g === 'string' && g.trim().length > 0,
+                )
               : []
             const origPriceBucket =
               (w as { blindAnswerPriceBucket?: string | null }).blindAnswerPriceBucket ?? null
+            const libWine =
+              w.libraryWine && typeof w.libraryWine === 'object'
+                ? (w.libraryWine as {
+                    price?: number
+                    country?: { name?: string } | number | null
+                    grapes?: Array<{ name?: string } | number> | null
+                  })
+                : null
+            const libCountry =
+              libWine && typeof libWine.country === 'object' && libWine.country
+                ? (libWine.country.name ?? null)
+                : null
+            const libGrapes = (libWine?.grapes ?? [])
+              .map((g) => (typeof g === 'object' && g ? (g.name ?? null) : null))
+              .filter((g): g is string => typeof g === 'string' && g.trim().length > 0)
+            const effectiveCountry = origCountry ?? libCountry
+            // A blend keeps ALL its grapes as acceptable answers; the first
+            // entry is the primary grape shown in the options set.
+            const effectiveGrapes = origGrapes.length > 0 ? origGrapes : libGrapes
 
-            // Compute easy-mode decoy options from the ORIGINAL (unredacted)
-            // wine entry so the correct answer is guaranteed in the set. The
-            // resulting `easyModeOptions` field is non-persistent — it lives
-            // only on the render payload for the BlindGuessCard to consume.
-            let easyModeOptions: {
+            // Bake decoy-limited dropdown options from the ORIGINAL
+            // (unredacted) answers so the correct one is guaranteed in the
+            // set. Non-persistent — lives only on the render payload for the
+            // BlindGuessCard to consume. Grape options are ALWAYS limited to
+            // the primary grape + decoys (never the full enum); country
+            // options only in easy mode.
+            const primaryGrape = effectiveGrapes.length > 0 ? effectiveGrapes[0] : null
+            const easyModeOptions: {
               countries: string[] | null
               grapes: string[] | null
-            } | null = null
-            if (easyMode) {
-              easyModeOptions = {
-                countries: pickEasyModeOptions({
-                  pool: COUNTRIES as ReadonlyArray<string>,
-                  answers: origCountry ? [origCountry] : [],
-                  count: EASY_MODE_OPTION_COUNT,
-                  seed: `${session.id}:${pourOrder}:country`,
-                }),
-                grapes: pickEasyModeOptions({
-                  pool: GRAPES as ReadonlyArray<string>,
-                  answers: origGrapes,
-                  count: EASY_MODE_OPTION_COUNT,
-                  seed: `${session.id}:${pourOrder}:grape`,
-                }),
-              }
+            } = {
+              countries: easyMode
+                ? pickEasyModeOptions({
+                    pool: COUNTRIES as ReadonlyArray<string>,
+                    answers: effectiveCountry ? [effectiveCountry] : [],
+                    count: GUESS_OPTION_COUNT,
+                    seed: `${session.id}:${pourOrder}:country`,
+                  })
+                : null,
+              grapes: primaryGrape
+                ? pickEasyModeOptions({
+                    // Exclude every blend grape from the decoy pool so a
+                    // "wrong answer" can't accidentally be right.
+                    pool: (GRAPES as ReadonlyArray<string>).filter(
+                      (g) =>
+                        !effectiveGrapes.some(
+                          (ans) => ans.trim().toLocaleLowerCase('sv') === g.toLocaleLowerCase('sv'),
+                        ),
+                    ),
+                    answers: [primaryGrape],
+                    count: GUESS_OPTION_COUNT,
+                    seed: `${session.id}:${pourOrder}:grape`,
+                  })
+                : null,
             }
 
             // Derive per-tier activation booleans — booleans only, no answer
@@ -126,18 +162,14 @@ export default async function PlanDetailPage({
             // Raw price: an explicit bucket OR a numeric price on the source wine
             // (library wine price or customWine.priceSek) mirrors
             // resolveAnswerPriceBucket's inputs.
-            const libWine =
-              w.libraryWine && typeof w.libraryWine === 'object'
-                ? (w.libraryWine as { price?: number })
-                : null
             const custWine =
               (w as { customWine?: { priceSek?: number | null } | null }).customWine ?? null
             const rawPriceAvailable =
               (libWine != null && typeof libWine.price === 'number' && libWine.price > 0) ||
               (custWine != null && typeof custWine.priceSek === 'number' && custWine.priceSek > 0)
             const blindTiers = {
-              country: typeof origCountry === 'string' && origCountry.trim().length > 0,
-              grape: origGrapes.some((g) => typeof g === 'string' && g.trim().length > 0),
+              country: typeof effectiveCountry === 'string' && effectiveCountry.trim().length > 0,
+              grape: effectiveGrapes.length > 0,
               price: Boolean(origPriceBucket) || rawPriceAvailable,
             }
 
@@ -163,10 +195,16 @@ export default async function PlanDetailPage({
           }),
         } as typeof plan
       }
+      // CRITICAL: the client session UI reads the plan off session.tastingPlan
+      // (SessionView), NOT the shell's plan prop — so the redacted/depth-2
+      // renderPlan must be substituted onto the session object here. Passing
+      // the raw session would leak unredacted wine names + blind answers to
+      // guests AND hand the UI bare relation ids (country/grapes unpopulated),
+      // which silently disables country/grape scoring.
       return (
         <PlanSessionShell
           plan={renderPlan}
-          session={session}
+          session={{ ...session, tastingPlan: renderPlan }}
           isHost={isHost}
           sessionId={String(session.id)}
         />

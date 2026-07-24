@@ -36,6 +36,7 @@ import * as migration_20260601_090735_grape_case_dedup_and_unique_index from './
 import * as migration_20260613_113624_rename_vinprovningar_to_vinkurser from './20260613_113624_rename_vinprovningar_to_vinkurser';
 import * as migration_20260613_120112_template_pricing_and_entitlements from './20260613_120112_template_pricing_and_entitlements';
 import * as migration_20260616_182125_tasting_per_wine_info from './20260616_182125_tasting_per_wine_info';
+import * as migration_20260724_171748_reviews_rating_optional from './20260724_171748_reviews_rating_optional';
 
 export const migrations = [
   {
@@ -226,6 +227,11 @@ export const migrations = [
   {
     up: migration_20260616_182125_tasting_per_wine_info.up,
     down: migration_20260616_182125_tasting_per_wine_info.down,
-    name: '20260616_182125_tasting_per_wine_info'
+    name: '20260616_182125_tasting_per_wine_info',
+  },
+  {
+    up: migration_20260724_171748_reviews_rating_optional.up,
+    down: migration_20260724_171748_reviews_rating_optional.down,
+    name: '20260724_171748_reviews_rating_optional'
   },
 ];

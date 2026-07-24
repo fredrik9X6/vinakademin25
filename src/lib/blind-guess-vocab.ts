@@ -6,13 +6,13 @@
  * without admin work.
  */
 
+// Alphabetical (sv collation) — dropdowns render this verbatim.
 export const COUNTRIES: ReadonlyArray<string> = [
-  'Frankrike', 'Italien', 'Spanien', 'Portugal', 'Tyskland', 'Österrike',
-  'Ungern', 'Grekland', 'Bulgarien', 'Schweiz', 'Sverige',
-  'USA', 'Kanada', 'Chile', 'Argentina', 'Uruguay', 'Mexiko',
-  'Sydafrika', 'Australien', 'Nya Zeeland',
-  'Georgien', 'Israel', 'Libanon', 'Turkiet',
-  'Japan', 'Kina', 'Indien',
+  'Argentina', 'Australien', 'Bulgarien', 'Chile', 'Frankrike', 'Georgien',
+  'Grekland', 'Indien', 'Israel', 'Italien', 'Japan', 'Kanada', 'Kina',
+  'Libanon', 'Mexiko', 'Nya Zeeland', 'Portugal', 'Schweiz', 'Spanien',
+  'Sverige', 'Sydafrika', 'Turkiet', 'Tyskland', 'Ungern', 'Uruguay', 'USA',
+  'Österrike',
 ]
 
 export const GRAPES: ReadonlyArray<string> = [

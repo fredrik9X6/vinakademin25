@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
-import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
+import { scoreOne } from '@/lib/blind-guess-scoring'
+import { buildBlindAnswersByPour } from '@/lib/blind-answers'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
 
 export interface LiveScoreMaps {
@@ -8,57 +9,6 @@ export interface LiveScoreMaps {
   /** userId → cumulative points across revealed wines. Covers logged-in
    * guests + the host-as-user case. */
   byUserId: Map<number, number>
-}
-
-/**
- * Build a BlindAnswer per pour using the same precedence the recap aggregator
- * applies: explicit blind-answer override on the plan entry → joined library
- * wine data → customWine.priceSek (for price-bucket auto-derive).
- */
-function buildAnswerByPour(wines: ReadonlyArray<unknown>): Map<number, BlindAnswer> {
-  const out = new Map<number, BlindAnswer>()
-  wines.forEach((entry, idx) => {
-    const w = entry as {
-      pourOrder?: number | null
-      libraryWine?:
-        | number
-        | {
-            id: number
-            country?: { name?: string } | null
-            grapes?: Array<{ name?: string } | unknown> | null
-            price?: number | null
-          }
-        | null
-      customWine?: { priceSek?: number | null } | null
-      blindAnswerCountry?: string | null
-      blindAnswerGrapes?: string[] | null
-      blindAnswerPriceBucket?: PriceBucket | null
-    }
-    const pour = w.pourOrder ?? idx + 1
-    const lib = w.libraryWine && typeof w.libraryWine === 'object' ? w.libraryWine : null
-    const libCountry =
-      lib && typeof lib.country === 'object' && lib.country
-        ? (lib.country as { name?: string }).name ?? null
-        : null
-    const libGrape =
-      lib && Array.isArray(lib.grapes) && lib.grapes.length > 0 && typeof lib.grapes[0] === 'object'
-        ? ((lib.grapes[0] as { name?: string }).name ?? null)
-        : null
-    const libPrice = typeof lib?.price === 'number' ? lib.price : null
-    const cust = !lib && w.customWine ? w.customWine : null
-    const overrideGrapes = Array.isArray(w.blindAnswerGrapes)
-      ? (w.blindAnswerGrapes as string[]).filter(
-          (g) => typeof g === 'string' && g.trim().length > 0,
-        )
-      : []
-    out.set(pour, {
-      country: w.blindAnswerCountry ?? libCountry,
-      grapes: overrideGrapes.length > 0 ? overrideGrapes : libGrape ? [libGrape] : [],
-      priceBucket: w.blindAnswerPriceBucket ?? null,
-      priceSek: libPrice ?? cust?.priceSek ?? null,
-    })
-  })
-  return out
 }
 
 /**
@@ -80,7 +30,7 @@ export async function computeLivePoints(
   }
   if (revealedPourOrders.length === 0) return empty
   const revealedSet = new Set(revealedPourOrders)
-  const answerByPour = buildAnswerByPour(wines)
+  const answerByPour = await buildBlindAnswersByPour(payload, wines)
 
   const guessRes = await payload.find({
     collection: 'session-guesses',

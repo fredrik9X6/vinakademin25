@@ -34,8 +34,12 @@ export interface UseSessionDraft {
   status: SaveStatus
   /** Merge a partial into the draft and schedule a debounced save. */
   queueSave: (partial: DraftPayload) => void
-  /** Force an immediate save with `submittedAt` set (the "lock in" action). */
-  lockIn: () => Promise<void>
+  /** Force an immediate save with `submittedAt` set (the "lock in" action).
+   * Resolves `true` when the stamped payload was confirmed delivered to the
+   * server; `false` when delivery could not be confirmed (offline, repeated
+   * failures, unmount) — the localStorage mirror + retry queue still cover
+   * eventual delivery, but callers MUST NOT show a success state on false. */
+  lockIn: () => Promise<boolean>
   /** True when mount-time localStorage held a non-empty draft. */
   restoredFromDraft: boolean
   /** The parsed localStorage draft found at mount, or null if none existed.
@@ -223,7 +227,7 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
     [debounceMs, dispatch, flush, key],
   )
 
-  const lockIn = React.useCallback(async () => {
+  const lockIn = React.useCallback(async (): Promise<boolean> => {
     const stamped = { ...draftRef.current, submittedAt: new Date().toISOString() }
     draftRef.current = stamped
     try {
@@ -252,9 +256,10 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
     while (queueRef.current.pending != null || queueRef.current.inFlight) {
       // Bail on unmount or offline — the localStorage mirror + retry timer +
       // 'online' listener still cover eventual delivery; don't hang or hammer.
-      if (isOffline() || !mountedRef.current) return
+      // Unconfirmed: callers must not show success.
+      if (isOffline() || !mountedRef.current) return false
       if (!queueRef.current.inFlight) {
-        if (attempts >= MAX_LOCKIN_ATTEMPTS) return
+        if (attempts >= MAX_LOCKIN_ATTEMPTS) return false
         const delay = backoffMs(queueRef.current.attempt)
         if (delay > 0) await wait(delay)
         attempts++
@@ -263,6 +268,7 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
         await wait(50)
       }
     }
+    return true
   }, [dispatch, flush, key])
 
   // Flush queued writes when connectivity returns; final beacon on unload.

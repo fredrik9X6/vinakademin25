@@ -74,9 +74,17 @@ export function BlindGuessCard({
   // revealed wines, any unset case) — never regress existing behaviour.
   const show = blindTiers ?? { country: true, grape: true, price: true }
   const { grapes: dynamicGrapes } = useGrapes()
-  const countryOptions = easyModeOptions?.countries ?? (COUNTRIES as ReadonlyArray<string>)
-  const grapeOptions = easyModeOptions?.grapes ?? dynamicGrapes
-  const isEasyMode = easyModeOptions != null
+  // Options render alphabetically (sv collation) regardless of source — the
+  // vocab enum is region-grouped and the baked decoy sets arrive shuffled.
+  const countryOptions = [
+    ...(easyModeOptions?.countries ?? (COUNTRIES as ReadonlyArray<string>)),
+  ].sort((a, b) => a.localeCompare(b, 'sv'))
+  const grapeOptions = [...(easyModeOptions?.grapes ?? dynamicGrapes)].sort((a, b) =>
+    a.localeCompare(b, 'sv'),
+  )
+  // Grape options are decoy-limited for every blind session; the "Lättare
+  // läge" badge means the host ALSO limited the country options.
+  const isEasyMode = easyModeOptions?.countries != null
   // First acceptable grape for the "rätt:" hint in the post-reveal scored row.
   const firstAnswerGrape =
     Array.isArray(answer.grapes) && answer.grapes.length > 0 ? answer.grapes[0] : null
@@ -136,8 +144,36 @@ export function BlindGuessCard({
     }
   }, [restoredFromDraft, onRestored])
 
+  // Server hydration lands AFTER mount (the parent fetches /my-submissions
+  // async), so `initialGuess` is null on first render and useState never sees
+  // the late value. Seed the form from it once — unless the user has already
+  // edited, or a local draft (fresher than the server copy) was restored.
+  // Without this, a refreshed guest sees empty selects, and their next edit
+  // autosaves nulls over the previously saved fields.
+  const dirtyRef = React.useRef(false)
+  const serverSeedAppliedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (serverSeedAppliedRef.current) return
+    if (!initialGuess) return
+    serverSeedAppliedRef.current = true
+    if (dirtyRef.current || restoredDraft) return
+    const next = {
+      country: initialGuess.country ?? null,
+      grape: initialGuess.grape ?? null,
+      priceBucket: initialGuess.priceBucket ?? null,
+    }
+    if (next.country || next.grape || next.priceBucket) {
+      setEditing(next)
+    }
+    if (initialSubmittedAt) {
+      setLockedIn(true)
+      setIsEditMode(false)
+    }
+  }, [initialGuess, initialSubmittedAt, restoredDraft])
+
   // Any field change autosaves immediately (debounced inside the hook).
   function updateField(partial: Partial<FormState>) {
+    dirtyRef.current = true
     setEditing((s) => {
       const next = { ...s, ...partial }
       queueSave({
@@ -150,9 +186,14 @@ export function BlindGuessCard({
   }
 
   async function handleLockIn() {
-    await lockIn()
-    setLockedIn(true)
-    setIsEditMode(false)
+    const delivered = await lockIn()
+    // Only flip to the locked-in summary when the server actually has the
+    // guess — otherwise stay in edit mode with the error status visible so
+    // the guest knows nothing was saved.
+    if (delivered) {
+      setLockedIn(true)
+      setIsEditMode(false)
+    }
   }
 
   const hasGuess = Boolean(editing.country || editing.grape || editing.priceBucket)

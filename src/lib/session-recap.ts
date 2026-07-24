@@ -1,7 +1,8 @@
 import type { Payload } from 'payload'
 import type { CourseSession, Media, Review, TastingPlan, Wine } from '@/payload-types'
 import { buildPourMaps, resolvePourForReview } from '@/lib/session-pour-mapping'
-import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
+import { scoreOne } from '@/lib/blind-guess-scoring'
+import { buildBlindAnswersByPour } from '@/lib/blind-answers'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
 
 /**
@@ -362,46 +363,9 @@ export async function getSessionRecap(
   const isBlindSession = Boolean((session as { blindTasting?: boolean }).blindTasting)
   let blindLeaderboard: BlindLeaderboardEntry[] = []
   if (isBlindSession) {
-    // Build pour → BlindAnswer map from the plan entries
-    const answerByPour = new Map<number, BlindAnswer>()
-    wines.forEach((w, idx) => {
-      const pourOrder = w.pourOrder ?? idx + 1
-      const lib = w.libraryWine && typeof w.libraryWine === 'object' ? (w.libraryWine as Wine) : null
-      const libCountry =
-        lib && typeof lib.country === 'object' && lib.country
-          ? (lib.country as { name?: string }).name ?? null
-          : null
-      const libGrape =
-        lib && Array.isArray(lib.grapes) && lib.grapes.length > 0 && typeof lib.grapes[0] === 'object'
-          ? ((lib.grapes[0] as { name?: string }).name ?? null)
-          : null
-      const libPrice =
-        lib && typeof (lib as { price?: number }).price === 'number'
-          ? ((lib as { price?: number }).price as number)
-          : null
-      const cust = !lib && w.customWine ? w.customWine : null
-      const overrideCountry =
-        typeof (w as { blindAnswerCountry?: string | null }).blindAnswerCountry === 'string'
-          ? ((w as { blindAnswerCountry?: string | null }).blindAnswerCountry as string)
-          : null
-      const overrideGrapes = Array.isArray(
-        (w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes,
-      )
-        ? ((w as { blindAnswerGrapes?: string[] | null }).blindAnswerGrapes as string[]).filter(
-            (g) => typeof g === 'string' && g.trim().length > 0,
-          )
-        : []
-      const overridePriceBucket =
-        ((w as { blindAnswerPriceBucket?: PriceBucket | null }).blindAnswerPriceBucket ?? null) as
-          | PriceBucket
-          | null
-      answerByPour.set(pourOrder, {
-        country: overrideCountry ?? libCountry,
-        grapes: overrideGrapes.length > 0 ? overrideGrapes : libGrape ? [libGrape] : [],
-        priceBucket: overridePriceBucket,
-        priceSek: libPrice ?? cust?.priceSek ?? null,
-      })
-    })
+    // Pour → BlindAnswer map with override → library-wine precedence; resolves
+    // bare relation ids so scoring works regardless of the session load depth.
+    const answerByPour = await buildBlindAnswersByPour(payload, wines)
 
     // Load all guesses for this session
     const guessRes = await payload.find({
