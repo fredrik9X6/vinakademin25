@@ -4,6 +4,7 @@ import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
 import { PARTICIPANT_COOKIE } from '@/lib/sessions'
+import { resolveWineIdentityForPour } from '@/lib/session-pour-mapping'
 
 const log = loggerFor('reviews-api')
 
@@ -304,12 +305,76 @@ export async function POST(request: NextRequest) {
       'Request body',
     )
 
-    // Validate: either a library wine OR a customWine snapshot must be present.
-    // Empty bodies are Payload admin UI's relationship-options probe — return
-    // an empty list shape so the admin doesn't break.
-    const hasCustomWine =
+    // Wine identity. Three cases:
+    //  1. Body carries a library wine or a named customWine → use it.
+    //  2. Body carries session + pourOrder but no identity → resolve it from
+    //     the session's plan SERVER-SIDE. This is the blind-tasting path: the
+    //     guest's client was deliberately never sent the wine's identity, so it
+    //     cannot include one. We must never send it down; we only write it.
+    //  3. Neither → Payload admin's relationship-options probe. Return an empty
+    //     list shape so the admin UI doesn't break.
+    let hasCustomWine =
       !!body.customWine?.name && String(body.customWine.name).trim() !== ''
+    const pourOrderFromBody =
+      body.pourOrder != null && !isNaN(Number(body.pourOrder))
+        ? Number(body.pourOrder)
+        : null
+    const sessionForResolve = guestParticipant
+      ? guestParticipant.sessionId
+      : body.session != null && !isNaN(Number(body.session))
+        ? Number(body.session)
+        : null
+
+    if (!body.wine && !hasCustomWine && sessionForResolve != null && pourOrderFromBody != null) {
+      const sessionDoc = await payload.findByID({
+        collection: 'course-sessions',
+        id: sessionForResolve,
+        depth: 2,
+        overrideAccess: true,
+      })
+      const planWines =
+        sessionDoc?.tastingPlan && typeof sessionDoc.tastingPlan === 'object'
+          ? (((sessionDoc.tastingPlan as any).wines ?? []) as unknown[])
+          : []
+      const resolved = resolveWineIdentityForPour(planWines, pourOrderFromBody)
+      if (!resolved) {
+        log.warn(
+          { session: sessionForResolve, pourOrder: pourOrderFromBody },
+          'Could not resolve wine identity for pour',
+        )
+        return NextResponse.json(
+          {
+            error: 'Unknown wine',
+            details: `No wine at pour order ${pourOrderFromBody} in this session's plan`,
+          },
+          { status: 422 },
+        )
+      }
+      if (resolved.wine != null) {
+        body.wine = resolved.wine
+      } else {
+        body.customWine = { ...(body.customWine ?? {}), ...resolved.customWine }
+        hasCustomWine = true
+      }
+      log.info(
+        { session: sessionForResolve, pourOrder: pourOrderFromBody, wine: resolved.wine },
+        'Resolved wine identity server-side',
+      )
+    }
+
     if (!body.wine && !hasCustomWine) {
+      // A session write that still has no identity is a real failure, not an
+      // admin probe. Reporting 200 here is what previously turned data loss
+      // into a silent "success" the client never retried.
+      if (sessionForResolve != null) {
+        return NextResponse.json(
+          {
+            error: 'Missing wine identity',
+            details: 'A session review requires wine, customWine.name, or pourOrder',
+          },
+          { status: 422 },
+        )
+      }
       const { searchParams } = new URL(request.url)
       log.warn(
         { queryParams: searchParams.toString() },
@@ -401,6 +466,8 @@ export async function POST(request: NextRequest) {
         : undefined
     const reviewData: any = {
       ...body,
+      // Transport-only: used above to resolve identity, not a Reviews field.
+      pourOrder: undefined,
       // Library wine path uses wineId; customWine path passes wine: null so
       // Payload's beforeValidate hook sees exactly one of {wine, customWine}.
       wine: wineId ?? null,
