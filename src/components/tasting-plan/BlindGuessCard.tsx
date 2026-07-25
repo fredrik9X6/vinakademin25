@@ -415,6 +415,13 @@ function SaveStatusLabel({ status }: { status: SaveStatus }) {
   if (status === 'error') {
     return <span className="text-xs text-red-600">Kunde inte spara</span>
   }
+  if (status === 'failed') {
+    return (
+      <span className="text-xs text-red-600 flex items-center gap-1">
+        <CloudOff className="h-3 w-3" /> Sparades inte — dina svar finns kvar
+      </span>
+    )
+  }
   return null
 }
 

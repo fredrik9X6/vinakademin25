@@ -1367,5 +1367,9 @@ function ReviewSaveStatus({ status }: { status: SaveStatus }) {
   if (status === 'retrying')
     return <span className="text-xs text-amber-600">Återförsöker…</span>
   if (status === 'error') return <span className="text-xs text-red-600">Kunde inte spara</span>
+  if (status === 'failed')
+    return (
+      <span className="text-xs text-red-600">Sparades inte — dina svar finns kvar</span>
+    )
   return null
 }

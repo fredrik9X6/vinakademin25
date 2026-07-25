@@ -11,7 +11,7 @@ import {
   type QueueState,
 } from './session-draft-queue'
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'retrying' | 'error'
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'retrying' | 'error' | 'failed'
 
 export type DraftKind = 'guess' | 'review'
 
@@ -40,6 +40,9 @@ export interface UseSessionDraft {
    * failures, unmount) — the localStorage mirror + retry queue still cover
    * eventual delivery, but callers MUST NOT show a success state on false. */
   lockIn: () => Promise<boolean>
+  /** Clear a terminal failure and attempt delivery again. No-op unless the
+   *  queue has given up. */
+  retry: () => void
   /** True when mount-time localStorage held a non-empty draft. */
   restoredFromDraft: boolean
   /** The parsed localStorage draft found at mount, or null if none existed.
@@ -174,7 +177,15 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
           credentials: 'include',
           body: JSON.stringify(body),
         })
-        if (!res.ok) throw new Error(String(res.status))
+        if (!res.ok) {
+          // 4xx means this exact body will never be accepted. Retrying it is
+          // what produced 49 consecutive failures over 10 minutes. 408 and 429
+          // are the transient exceptions.
+          const permanent = res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429
+          const err = new Error(String(res.status)) as Error & { permanent?: boolean }
+          err.permanent = permanent
+          throw err
+        }
         dispatch({ type: 'success' })
         track('vk_session_save_success')
         safeSetStatus('saved')
@@ -187,13 +198,20 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
             void flush()
           }, 0)
         }
-      } catch {
-        dispatch({ type: 'failure' })
+      } catch (caught) {
+        const permanent = (caught as { permanent?: boolean })?.permanent === true
+        dispatch({ type: 'failure', permanent })
         track('vk_session_save_failure')
         const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false
         if (isOffline) {
           // Queued; the 'online' listener will flush. Surface "retrying".
           safeSetStatus('retrying')
+          return
+        }
+        if (queueRef.current.gaveUp) {
+          // Terminal. The payload is still in `pending` and in localStorage —
+          // nothing is lost — but we stop hammering and tell the user.
+          safeSetStatus('failed')
           return
         }
         safeSetStatus('retrying')
@@ -258,6 +276,9 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
       // 'online' listener still cover eventual delivery; don't hang or hammer.
       // Unconfirmed: callers must not show success.
       if (isOffline() || !mountedRef.current) return false
+      // The queue has given up (4xx or exhausted retries). Report failure so
+      // the caller does not show a success state.
+      if (queueRef.current.gaveUp) return false
       if (!queueRef.current.inFlight) {
         if (attempts >= MAX_LOCKIN_ATTEMPTS) return false
         const delay = backoffMs(queueRef.current.attempt)
@@ -298,5 +319,15 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
     }
   }, [dispatch, flush, track])
 
-  return { status, queueSave, lockIn, restoredFromDraft, restoredDraft }
+  const retry = React.useCallback(() => {
+    if (!queueRef.current.gaveUp) return
+    // Re-enqueue the retained payload; `enqueue` clears gaveUp and resets the
+    // attempt budget.
+    const payload = queueRef.current.pending
+    if (payload == null) return
+    dispatch({ type: 'enqueue', payload: { ...payload } })
+    void flush()
+  }, [dispatch, flush])
+
+  return { status, queueSave, lockIn, retry, restoredFromDraft, restoredDraft }
 }
