@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import {
   AlertDialog,
@@ -758,6 +759,13 @@ export function PlanSessionContent({
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Betygsätt: {reviewing?.title}</DialogTitle>
+            {isBlind && (
+              // Only in a blind session — a non-blind tasting has no scoring at
+              // all, so mentioning points there is noise rather than clarity.
+              <DialogDescription>
+                Din smaknotering ger inga poäng — bara blindgissningen räknas.
+              </DialogDescription>
+            )}
           </DialogHeader>
           {reviewing && (
             <WineReviewForm
