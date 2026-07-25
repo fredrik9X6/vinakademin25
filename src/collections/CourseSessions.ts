@@ -106,7 +106,7 @@ export const CourseSessions: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description:
-          'When true, blind-guess dropdowns surface only 4 options per tier (correct + 3 decoys). Stamped from plan.blindGuessEasyModeByDefault at create-time.',
+          'When true, blind-guess dropdowns surface only 5 options per tier (correct + 4 decoys). Stamped from plan.blindGuessEasyModeByDefault at create-time.',
       },
     },
     {

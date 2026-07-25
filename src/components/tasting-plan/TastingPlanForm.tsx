@@ -872,7 +872,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
                   Lättare gissningar
                 </span>{' '}
                 <span className="text-muted-foreground">
-                  — gäster väljer från 4 alternativ per fråga istället för hela listan.
+                  — gäster väljer från 5 alternativ per fråga istället för hela listan.
                 </span>
               </span>
             </label>
