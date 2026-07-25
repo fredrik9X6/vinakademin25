@@ -18,6 +18,15 @@ const log = loggerFor('reviews-api')
 export async function POST(request: NextRequest) {
   log.info('POST request received')
 
+  // Set true only when this handler resolves wine identity server-side (the
+  // blind-tasting path, inside the try block below). Declared here — before
+  // the try — rather than inside it, so the catch block can read it too:
+  // Finding 1 gates the validation-error response on this flag the same way
+  // the 201 success path already gates the doc (see depth:0 + doc-trimming
+  // near the bottom of the try block). If this were declared inside the try,
+  // it would be out of scope in the catch and the gate would silently no-op.
+  let identityResolvedServerSide = false
+
   try {
     const payload = await getPayload({ config })
     const cookieStore = await cookies()
@@ -325,13 +334,6 @@ export async function POST(request: NextRequest) {
         ? Number(body.session)
         : null
 
-    // Set true only when this handler resolved wine identity server-side
-    // (the blind-tasting path below). The 201 response must never echo that
-    // identity back — the caller never sent it and must not be able to read
-    // it out of their own response. See the depth:0 + doc-trimming at the
-    // bottom of this handler.
-    let identityResolvedServerSide = false
-
     // Resolved once, for an authenticated (non-guest) caller, to their
     // session-participants row id in sessionForResolve — or null if they have
     // none. Reused below to authorize the server-side resolution (Finding 2)
@@ -346,7 +348,27 @@ export async function POST(request: NextRequest) {
         id: sessionForResolve,
         depth: 2,
         overrideAccess: true,
+        // Without this, a bogus/deleted session id makes Payload throw
+        // NotFound (an APIError, not a ValidationError) and the request falls
+        // into the catch-all 500 branch below — a permanently-invalid body
+        // that the client would retry forever. disableErrors turns that into
+        // a plain `null` we can handle explicitly with a 422 (Finding 2).
+        disableErrors: true,
       })
+
+      if (!sessionDoc) {
+        log.warn(
+          { session: sessionForResolve },
+          'Session not found while resolving wine identity for pour',
+        )
+        return NextResponse.json(
+          {
+            error: 'Unknown session',
+            details: `No session found for id ${sessionForResolve}`,
+          },
+          { status: 422 },
+        )
+      }
 
       // Authorization for authenticated (non-guest) callers only. For them,
       // sessionForResolve comes straight from client-supplied body.session —
@@ -370,7 +392,7 @@ export async function POST(request: NextRequest) {
           authedParticipantId = Number(participantRes.docs[0].id)
         }
 
-        const hostField = sessionDoc?.host as unknown
+        const hostField = sessionDoc.host as unknown
         const hostId = hostField
           ? typeof hostField === 'object'
             ? (hostField as { id: number }).id
@@ -394,7 +416,7 @@ export async function POST(request: NextRequest) {
       }
 
       const planWines =
-        sessionDoc?.tastingPlan && typeof sessionDoc.tastingPlan === 'object'
+        sessionDoc.tastingPlan && typeof sessionDoc.tastingPlan === 'object'
           ? (((sessionDoc.tastingPlan as any).wines ?? []) as unknown[])
           : []
       const resolved = resolveWineIdentityForPour(planWines, pourOrderFromBody)
@@ -624,14 +646,34 @@ export async function POST(request: NextRequest) {
     // `instanceof`: minified builds rewrite `err.name`, and relying on the name
     // is what turned this into an opaque, infinitely-retried 500.
     if (error instanceof ValidationError) {
-      const fields = (error as { data?: { errors?: Array<{ path?: string; message?: string }> } })
-        .data?.errors
+      // `error` is narrowed to ValidationError here, so `error.data.errors` is
+      // properly typed — no cast needed (verified against payload@3.33.0's
+      // exported types: ValidationError extends APIError<{ errors: … }>, and
+      // APIError's `data` is non-optional).
+      const fields = error.data.errors
       log.warn({ err: error, fields }, 'Review rejected by validation')
+      // Finding 1: Payload's default field validators can embed the raw
+      // submitted value into a per-field message — e.g. the relationship
+      // validator JSON.stringifies an invalid id straight into `message`
+      // (reproduced: {"path":"wine","message":"...invalid selections: 42,"}),
+      // and the `number` validator interpolates raw values into
+      // greaterThanMax/lessThanMin (reachable via customWine.priceSek). Since
+      // Wines.access.read is public, a leaked wine id resolves to the full
+      // wine doc via GET /api/wines/:id. When this handler resolved wine
+      // identity server-side (the blind-tasting path), the caller never sent
+      // that identity and must not be able to read it back out of a
+      // validation error either — so `fields` is suppressed entirely in that
+      // case, even though the full detail is still logged above for
+      // operators. `error.message` only joins field paths/labels, never the
+      // raw submitted value (verified against the same repro above), so it's
+      // safe to return unconditionally. Non-resolved callers (admin writes,
+      // standalone/lesson reviews) supplied the wine themselves and still get
+      // full field detail so their forms can surface it to the user.
       return NextResponse.json(
         {
           error: 'Validation failed',
           details: error.message,
-          fields: fields ?? [],
+          fields: identityResolvedServerSide ? [] : fields,
         },
         { status: 422 },
       )
