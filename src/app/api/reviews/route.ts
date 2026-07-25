@@ -820,7 +820,18 @@ export async function GET(request: NextRequest) {
         const sessionId = sessionIdOf(r)
         if (sessionId == null) continue
         const info = sessionInfoById.get(sessionId)
-        if (!info || !info.isBlind) continue
+
+        // If the session is not in our lookup, we cannot verify it's safe to
+        // disclose — fail closed by redacting. (Session may have been deleted
+        // or otherwise be unreachable.)
+        if (!info) {
+          r.wine = null
+          r.customWine = null
+          continue
+        }
+
+        // Non-blind sessions are transparent regardless of reveal state
+        if (!info.isBlind) continue
 
         const isHost = Boolean(user && info.hostId != null && Number(info.hostId) === Number(user.id))
         if (isHost) continue
