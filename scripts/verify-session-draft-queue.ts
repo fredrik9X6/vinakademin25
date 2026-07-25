@@ -8,6 +8,7 @@ import {
   backoffMs,
   draftHasContent,
   initialQueueState,
+  MAX_AUTOSAVE_ATTEMPTS,
   queueReducer,
   type QueueState,
 } from '../src/lib/session-draft-queue'
@@ -186,6 +187,72 @@ run('draftHasContent: non-zero number → true', () => {
 
 run('draftHasContent: ignoreKeys param excludes custom key', () => {
   assert.equal(draftHasContent({ _internal: 'x', notes: '' }, ['_internal', 'submittedAt']), false)
+})
+
+// ── Retry ceiling / permanent failure ────────────────────────────────────────
+
+run('gaveUp is false on a fresh state', () => {
+  assert.equal(initialQueueState.gaveUp, false)
+})
+
+run('gaveUp flips after MAX_AUTOSAVE_ATTEMPTS consecutive failures', () => {
+  let s: QueueState = initialQueueState
+  s = queueReducer(s, { type: 'enqueue', payload: { a: 1 } })
+  for (let i = 0; i < MAX_AUTOSAVE_ATTEMPTS; i++) {
+    s = queueReducer(s, { type: 'start' })
+    s = queueReducer(s, { type: 'failure' })
+  }
+  assert.equal(s.attempt, MAX_AUTOSAVE_ATTEMPTS)
+  assert.equal(s.gaveUp, true)
+  // The payload is NOT dropped — the user's data must survive.
+  assert.deepEqual(s.pending, { a: 1 })
+})
+
+run('a permanent failure gives up immediately, on the first attempt', () => {
+  let s: QueueState = initialQueueState
+  s = queueReducer(s, { type: 'enqueue', payload: { a: 1 } })
+  s = queueReducer(s, { type: 'start' })
+  s = queueReducer(s, { type: 'failure', permanent: true })
+  assert.equal(s.attempt, 1)
+  assert.equal(s.gaveUp, true)
+  assert.deepEqual(s.pending, { a: 1 })
+})
+
+run('success clears gaveUp', () => {
+  let s: QueueState = initialQueueState
+  s = queueReducer(s, { type: 'enqueue', payload: { a: 1 } })
+  s = queueReducer(s, { type: 'start' })
+  s = queueReducer(s, { type: 'failure', permanent: true })
+  s = queueReducer(s, { type: 'start' })
+  s = queueReducer(s, { type: 'success' })
+  assert.equal(s.gaveUp, false)
+  assert.equal(s.attempt, 0)
+})
+
+run('fresh input after give-up restarts the retry budget', () => {
+  let s: QueueState = initialQueueState
+  s = queueReducer(s, { type: 'enqueue', payload: { a: 1 } })
+  s = queueReducer(s, { type: 'start' })
+  s = queueReducer(s, { type: 'failure', permanent: true })
+  assert.equal(s.gaveUp, true)
+  s = queueReducer(s, { type: 'enqueue', payload: { a: 2 } })
+  assert.equal(s.gaveUp, false)
+  assert.equal(s.attempt, 0)
+  assert.deepEqual(s.pending, { a: 2 })
+})
+
+run('input during an ongoing backoff does NOT reset the attempt counter', () => {
+  // A fast typist must not be able to defeat exponential backoff.
+  let s: QueueState = initialQueueState
+  s = queueReducer(s, { type: 'enqueue', payload: { a: 1 } })
+  s = queueReducer(s, { type: 'start' })
+  s = queueReducer(s, { type: 'failure' })
+  s = queueReducer(s, { type: 'start' })
+  s = queueReducer(s, { type: 'failure' })
+  assert.equal(s.attempt, 2)
+  s = queueReducer(s, { type: 'enqueue', payload: { a: 2 } })
+  assert.equal(s.attempt, 2)
+  assert.equal(s.gaveUp, false)
 })
 
 console.log('OK')
