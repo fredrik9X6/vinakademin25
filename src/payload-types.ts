@@ -927,6 +927,10 @@ export interface Review {
    */
   rating?: number | null;
   /**
+   * Participant answered "Jag hade köpt detta vin igen". Feeds the session recap.
+   */
+  buyAgain?: boolean | null;
+  /**
    * User review text
    */
   reviewText?: {
@@ -4455,6 +4459,7 @@ export interface ReviewsSelect<T extends boolean = true> {
   createdBy?: T;
   updatedBy?: T;
   rating?: T;
+  buyAgain?: T;
   reviewText?: T;
   isTrusted?: T;
   publishedToProfile?: T;
