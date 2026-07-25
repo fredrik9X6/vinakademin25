@@ -4,7 +4,7 @@ import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
 import { PARTICIPANT_COOKIE } from '@/lib/sessions'
-import { resolveWineIdentityForPour } from '@/lib/session-pour-mapping'
+import { resolveWineIdentityForPour, buildPourMaps, resolvePourForReview } from '@/lib/session-pour-mapping'
 
 const log = loggerFor('reviews-api')
 
@@ -764,6 +764,75 @@ export async function GET(request: NextRequest) {
         payload,
       } as any,
     })
+
+    // Finding 2: Reviews.access.read grants a user their own rows
+    // unconditionally, regardless of blind-session status — so a review
+    // written mid-blind-tasting (e.g. via the server-resolved pourOrder path
+    // in POST /api/reviews) would otherwise come back here with the wine
+    // fully populated (depth defaults to 2), even though the host hasn't
+    // revealed it yet. Redact wine/customWine on any review that belongs to
+    // a blind session whose pour isn't revealed, unless the caller is that
+    // session's host. Reviews with no session (isTrusted / publishedToProfile
+    // / standalone profile reviews) are untouched.
+    const docs = reviews.docs as any[]
+    const sessionIdOf = (r: any): number | null => {
+      if (!r.session) return null
+      const id = typeof r.session === 'object' ? r.session.id : r.session
+      return typeof id === 'number' ? id : Number(id) || null
+    }
+    const sessionIds = Array.from(
+      new Set(docs.map(sessionIdOf).filter((id): id is number => id != null)),
+    )
+
+    if (sessionIds.length > 0) {
+      const sessionsRes = await payload.find({
+        collection: 'course-sessions',
+        where: { id: { in: sessionIds } },
+        depth: 2,
+        limit: sessionIds.length,
+        overrideAccess: true,
+      })
+
+      const sessionInfoById = new Map<
+        number,
+        {
+          isBlind: boolean
+          revealed: Set<number>
+          hostId: number | null
+          pourMaps: ReturnType<typeof buildPourMaps>
+        }
+      >()
+
+      for (const s of sessionsRes.docs as any[]) {
+        const hostField = s.host
+        const hostId = hostField ? (typeof hostField === 'object' ? hostField.id : hostField) : null
+        const wines =
+          s.tastingPlan && typeof s.tastingPlan === 'object' ? (s.tastingPlan.wines ?? []) : []
+        sessionInfoById.set(Number(s.id), {
+          isBlind: Boolean(s.blindTasting),
+          revealed: new Set(Array.isArray(s.revealedPourOrders) ? s.revealedPourOrders : []),
+          hostId: hostId != null ? Number(hostId) : null,
+          pourMaps: buildPourMaps(wines),
+        })
+      }
+
+      for (const r of docs) {
+        const sessionId = sessionIdOf(r)
+        if (sessionId == null) continue
+        const info = sessionInfoById.get(sessionId)
+        if (!info || !info.isBlind) continue
+
+        const isHost = Boolean(user && info.hostId != null && Number(info.hostId) === Number(user.id))
+        if (isHost) continue
+
+        const pourOrder = resolvePourForReview(r, info.pourMaps)
+        const isRevealed = pourOrder != null && info.revealed.has(pourOrder)
+        if (!isRevealed) {
+          r.wine = null
+          r.customWine = null
+        }
+      }
+    }
 
     return NextResponse.json(reviews, { status: 200 })
   } catch (error) {
