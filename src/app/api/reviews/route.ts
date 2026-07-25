@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
+import { getPayload, ValidationError } from 'payload'
 import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
@@ -619,6 +619,23 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     )
   } catch (error) {
+    // A validation failure is the caller's problem and will never succeed on
+    // retry — it MUST be 4xx so the client's queue stops. Detect it with
+    // `instanceof`: minified builds rewrite `err.name`, and relying on the name
+    // is what turned this into an opaque, infinitely-retried 500.
+    if (error instanceof ValidationError) {
+      const fields = (error as { data?: { errors?: Array<{ path?: string; message?: string }> } })
+        .data?.errors
+      log.warn({ err: error, fields }, 'Review rejected by validation')
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: error.message,
+          fields: fields ?? [],
+        },
+        { status: 422 },
+      )
+    }
     log.error({ err: error }, 'Error creating review')
     return NextResponse.json(
       {
