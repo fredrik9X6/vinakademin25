@@ -295,13 +295,20 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
   // Flush queued writes when connectivity returns; final beacon on unload.
   React.useEffect(() => {
     const onOnline = () => {
-      if (queueRef.current.pending != null) {
+      // After a terminal give-up, pending is deliberately retained to preserve
+      // the user's unsaved notes. Its presence alone must not trigger a send —
+      // the payload was already permanently rejected (4xx or exhausted retries).
+      if (queueRef.current.pending != null && !queueRef.current.gaveUp) {
         track('vk_session_save_retry')
         void flush()
       }
     }
     const onBeforeUnload = () => {
-      if (queueRef.current.pending != null || queueRef.current.flightPayload != null) {
+      // After a terminal give-up, pending is deliberately retained to preserve
+      // the user's unsaved notes. Do not beacon a permanently-rejected payload
+      // on page close — the server already rejected it, and the notes survive
+      // in localStorage for recovery on next visit.
+      if (!queueRef.current.gaveUp && (queueRef.current.pending != null || queueRef.current.flightPayload != null)) {
         // Promote any pending into a final beacon flush.
         if (queueRef.current.pending == null && queueRef.current.flightPayload != null) {
           dispatch({ type: 'enqueue', payload: { ...queueRef.current.flightPayload } })
