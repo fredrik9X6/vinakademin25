@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { Check, X, Pencil, Loader2, CloudOff } from 'lucide-react'
 import {
   COUNTRIES,
@@ -17,7 +18,14 @@ import {
   type PriceBucket,
 } from '@/lib/blind-guess-vocab'
 import { useGrapes } from '@/lib/use-grapes'
-import { scoreOne, resolveAnswerPriceBucket, type BlindAnswer } from '@/lib/blind-guess-scoring'
+import {
+  scoreOne,
+  resolveAnswerPriceBucket,
+  maxPointsForTiers,
+  pointsLabel,
+  TIER_POINTS,
+  type BlindAnswer,
+} from '@/lib/blind-guess-scoring'
 import { useSessionDraft, type SaveStatus } from '@/lib/use-session-draft'
 
 export interface BlindGuessCardProps {
@@ -239,11 +247,23 @@ export function BlindGuessCard({
             />
           )}
         </div>
-        {scored.points > 0 && (
-          <p className="pt-1 text-xs text-brand-400 font-medium">
-            +{scored.points} {scored.points === 1 ? 'poäng' : 'poäng'}
-          </p>
-        )}
+        {/* Always rendered, including +0 poäng. Suppressing the zero case left a
+            0/3 wine showing three red crosses and no score at all, which reads
+            as "not counted" rather than "counted, and you got none". */}
+        <p
+          className={`pt-1 text-xs font-medium ${
+            scored.points > 0 ? 'text-brand-400' : 'text-muted-foreground'
+          }`}
+        >
+          +{scored.points} av{' '}
+          {pointsLabel(
+            maxPointsForTiers({
+              country: scored.countryScored,
+              grape: scored.grapeScored,
+              price: scored.priceScored,
+            }),
+          )}
+        </p>
       </div>
     )
   }
@@ -312,67 +332,86 @@ export function BlindGuessCard({
 
   return (
     <div className="mt-3 rounded-md border bg-card p-3 space-y-2">
-      <div className="flex items-center gap-2 flex-wrap">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Gissa innan värden avslöjar
-        </p>
-        {isEasyMode && (
-          <span className="inline-flex items-center rounded-full bg-brand-400/10 text-brand-400 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
-            Lättare läge
-          </span>
-        )}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Deliberately a <p>, not an <h2>. The wine's own name is still a
+              <p> in this phase, so promoting this subsection to a real heading
+              would invert the hierarchy. Heading semantics land in Phase 3
+              when the card is restructured. */}
+          <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
+            Blindgissning
+          </p>
+          <Badge variant="brand">{pointsLabel(maxPointsForTiers(show))}</Badge>
+          {isEasyMode && (
+            <span className="inline-flex items-center rounded-full bg-brand-400/10 text-brand-400 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
+              Lättare läge
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">Låses när värden avslöjar vinet</p>
       </div>
       <div className={`grid gap-2 ${gridCols}`}>
         {show.country && (
-          <Select
-            value={editing.country ?? ''}
-            onValueChange={(v) => updateField({ country: v || null })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Land" />
-            </SelectTrigger>
-            <SelectContent>
-              {countryOptions.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <TierPointChip label="Land" points={TIER_POINTS.country} />
+            <Select
+              value={editing.country ?? ''}
+              onValueChange={(v) => updateField({ country: v || null })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Land" />
+              </SelectTrigger>
+              <SelectContent>
+                {countryOptions.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
         {show.grape && (
-          <Select
-            value={editing.grape ?? ''}
-            onValueChange={(v) => updateField({ grape: v || null })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Druva" />
-            </SelectTrigger>
-            <SelectContent>
-              {grapeOptions.map((g) => (
-                <SelectItem key={g} value={g}>
-                  {g}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <TierPointChip label="Druva" points={TIER_POINTS.grape} />
+            <Select
+              value={editing.grape ?? ''}
+              onValueChange={(v) => updateField({ grape: v || null })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Druva" />
+              </SelectTrigger>
+              <SelectContent>
+                {grapeOptions.map((g) => (
+                  <SelectItem key={g} value={g}>
+                    {g}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
         {show.price && (
-          <Select
-            value={editing.priceBucket ?? ''}
-            onValueChange={(v) => updateField({ priceBucket: (v || null) as PriceBucket | null })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Pris" />
-            </SelectTrigger>
-            <SelectContent>
-              {PRICE_BUCKETS.map((b) => (
-                <SelectItem key={b.value} value={b.value}>
-                  {b.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <TierPointChip label="Pris" points={TIER_POINTS.price} />
+            <Select
+              value={editing.priceBucket ?? ''}
+              onValueChange={(v) =>
+                updateField({ priceBucket: (v || null) as PriceBucket | null })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pris" />
+              </SelectTrigger>
+              <SelectContent>
+                {PRICE_BUCKETS.map((b) => (
+                  <SelectItem key={b.value} value={b.value}>
+                    {b.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
       </div>
       <div className="flex items-center gap-2 flex-wrap">
@@ -386,6 +425,18 @@ export function BlindGuessCard({
         </Button>
         <SaveStatusLabel status={status} />
       </div>
+    </div>
+  )
+}
+
+/** Field label plus its point value, e.g. "Land · 1 p". */
+function TierPointChip({ label, points }: { label: string; points: number }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+      <span className="text-[11px] font-medium tabular-nums text-brand-400">{points} p</span>
     </div>
   )
 }
