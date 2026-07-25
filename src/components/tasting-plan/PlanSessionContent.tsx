@@ -759,36 +759,24 @@ export function PlanSessionContent({
           <DialogHeader>
             <DialogTitle>Betygsätt: {reviewing?.title}</DialogTitle>
           </DialogHeader>
-          {reviewing &&
-            (reviewing.libraryWineId ? (
-              <WineReviewForm
-                key={`review-${reviewing.pourOrder}`}
-                lessonId={0}
-                sessionId={String(session.id)}
-                pourOrder={reviewing.pourOrder}
-                wineIdProp={reviewing.libraryWineId}
-                insideDialog
-                onRestored={() => setRestoredBanner(true)}
-                onSubmit={() => {
-                  setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
-                  setReviewing(null)
-                }}
-              />
-            ) : reviewing.customWineSnapshot ? (
-              <WineReviewForm
-                key={`review-${reviewing.pourOrder}`}
-                lessonId={0}
-                sessionId={String(session.id)}
-                pourOrder={reviewing.pourOrder}
-                customWineSnapshot={reviewing.customWineSnapshot}
-                insideDialog
-                onRestored={() => setRestoredBanner(true)}
-                onSubmit={() => {
-                  setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
-                  setReviewing(null)
-                }}
-              />
-            ) : null)}
+          {reviewing && (
+            <WineReviewForm
+              key={`review-${reviewing.pourOrder}`}
+              lessonId={0}
+              sessionId={String(session.id)}
+              pourOrder={reviewing.pourOrder}
+              {...(reviewing.libraryWineId ? { wineIdProp: reviewing.libraryWineId } : {})}
+              {...(reviewing.customWineSnapshot
+                ? { customWineSnapshot: reviewing.customWineSnapshot }
+                : {})}
+              insideDialog
+              onRestored={() => setRestoredBanner(true)}
+              onSubmit={() => {
+                setSubmittedPourOrders((prev) => new Set([...prev, reviewing.pourOrder]))
+                setReviewing(null)
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
       </div>
