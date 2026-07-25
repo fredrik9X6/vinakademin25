@@ -225,11 +225,16 @@ export function WineReviewForm({
         reviewText: (draft.notes as string) ?? '',
         publishedToProfile: Boolean(draft.publishedToProfile),
         session: sessionIdNum,
+        // Blind sessions redact wine identity from the guest's payload, so
+        // neither `wine` nor `customWine` is available client-side. The pour
+        // order is never secret — the server uses it to resolve identity from
+        // the un-redacted plan. See /api/reviews session-scoped path.
+        ...(typeof pourOrder === 'number' ? { pourOrder } : {}),
         wsetTasting: (draft.wsetTasting as Record<string, unknown>) ?? {},
         ...(draft.submittedAt ? { submittedAt: draft.submittedAt } : {}),
       }
     },
-    [customWineSnapshot, wineId, sessionId],
+    [customWineSnapshot, wineId, sessionId, pourOrder],
   )
   const {
     status: saveStatus,
@@ -658,7 +663,10 @@ export function WineReviewForm({
     setAttemptSubmit(true)
 
     // Task 22: only the wine-linkage check is mandatory — everything else is optional.
-    if (!wineId && !customWineSnapshot) {
+    // Exception: in a session the server resolves identity from (session,
+    // pourOrder), so a blind guest legitimately has neither wineId nor snapshot.
+    const canResolveServerSide = isSessionDraft && typeof pourOrder === 'number'
+    if (!wineId && !customWineSnapshot && !canResolveServerSide) {
       setErrors({ wine: 'Inget vin kopplat till detta moment' })
       toast.error('Inget vin kopplat till detta moment')
       return
@@ -696,7 +704,11 @@ export function WineReviewForm({
           publishedToProfile,
           wsetTasting: buildWsetSnapshot(),
           submittedAt: new Date().toISOString(),
-          ...(customWineSnapshot ? { customWine: customWineSnapshot } : { wine: wineId }),
+          ...(customWineSnapshot
+            ? { customWine: customWineSnapshot }
+            : wineId
+              ? { wine: wineId }
+              : {}),
         } as unknown as ReviewDoc
         setSubmittedReview(lockedDoc)
         setHistory((prev) => [lockedDoc, ...prev])
