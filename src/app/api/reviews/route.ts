@@ -334,13 +334,31 @@ export async function POST(request: NextRequest) {
         ? Number(body.session)
         : null
 
-    // Resolved once, for an authenticated (non-guest) caller, to their
-    // session-participants row id in sessionForResolve — or null if they have
-    // none. Reused below to authorize the server-side resolution (Finding 2)
-    // and left here (rather than a throwaway boolean) because a later change
-    // persists sessionParticipant on the review from this same lookup instead
-    // of trusting client-supplied body.sessionParticipant.
+    // Resolved once, for ANY authenticated (non-guest) caller writing a
+    // session review — not just the blind-resolve path below — to their
+    // session-participants row id for sessionForResolve, or null if they
+    // have none. Two consumers share this single query: (1) the blind-resolve
+    // authorization check further down, which still gates on it exactly as
+    // before, and (2) reviewData.sessionParticipant, so an authenticated
+    // participant's ordinary (non-blind) session reviews also get
+    // sessionParticipant persisted — without this, /my-submissions (which
+    // filters strictly on sessionParticipant) can't see a logged-in
+    // participant's own reviews, breaking draft rehydration, the host's
+    // answered-tracker, and the reveal guard's missing-count.
     let authedParticipantId: number | null = null
+    if (!guestParticipant && user && sessionForResolve != null) {
+      const authedParticipantRes = await payload.find({
+        collection: 'session-participants',
+        where: {
+          and: [{ session: { equals: sessionForResolve } }, { user: { equals: user.id } }],
+        },
+        limit: 1,
+        overrideAccess: true,
+      })
+      if (authedParticipantRes.totalDocs > 0) {
+        authedParticipantId = Number(authedParticipantRes.docs[0].id)
+      }
+    }
 
     if (!body.wine && !hasCustomWine && sessionForResolve != null && pourOrderFromBody != null) {
       const sessionDoc = await payload.findByID({
@@ -380,18 +398,9 @@ export async function POST(request: NextRequest) {
       // their sessionForResolve is derived from guestParticipant.sessionId,
       // which is already tied to their own participant-cookie token.
       if (!guestParticipant && user) {
-        const participantRes = await payload.find({
-          collection: 'session-participants',
-          where: {
-            and: [{ session: { equals: sessionForResolve } }, { user: { equals: user.id } }],
-          },
-          limit: 1,
-          overrideAccess: true,
-        })
-        if (participantRes.totalDocs > 0) {
-          authedParticipantId = Number(participantRes.docs[0].id)
-        }
-
+        // authedParticipantId was already resolved above (hoisted lookup,
+        // shared with reviewData.sessionParticipant below) — reuse it here
+        // rather than re-querying session-participants a second time.
         const hostField = sessionDoc.host as unknown
         const hostId = hostField
           ? typeof hostField === 'object'
@@ -572,11 +581,13 @@ export async function POST(request: NextRequest) {
             : undefined,
       sessionParticipant: guestParticipant
         ? guestParticipant.id
-        : body.sessionParticipant
-          ? Number(body.sessionParticipant)
-          : body.sessionParticipant === null
-            ? null
-            : undefined,
+        : authedParticipantId != null
+          ? authedParticipantId
+          : body.sessionParticipant
+            ? Number(body.sessionParticipant)
+            : body.sessionParticipant === null
+              ? null
+              : undefined,
     }
 
     if (existingReviews.totalDocs > 0) {
