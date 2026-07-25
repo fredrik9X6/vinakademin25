@@ -626,7 +626,7 @@ export async function POST(request: NextRequest) {
     // `doc` there.
     let responseDoc: unknown = review
     if (identityResolvedServerSide) {
-      const { wine: _omittedWine, customWine: _omittedCustomWine, ...rest } = review as Record<
+      const { wine: _omittedWine, customWine: _omittedCustomWine, ...rest } = review as unknown as Record<
         string,
         unknown
       >
