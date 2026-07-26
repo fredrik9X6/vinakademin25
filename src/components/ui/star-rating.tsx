@@ -161,7 +161,10 @@ export function StarRating({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center">
+      {/* Label wraps below the stars on narrow screens. At hitboxSize="xl" the
+          track alone is 5×44px + gaps ≈ 236px; adding "4/5 • Genomsnitt"
+          inline overflowed an iPhone's card width. */}
+      <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-0">
         <div
           ref={trackRef}
           role="slider"
@@ -227,7 +230,7 @@ export function StarRating({
         </div>
 
         {showLabel && displayedValue > 0 && (
-          <span className="ml-3 text-sm font-medium">
+          <span className="text-sm font-medium sm:ml-3">
             <span className="font-semibold text-orange-600 dark:text-orange-400">
               {formatDisplay(displayedValue)}
             </span>

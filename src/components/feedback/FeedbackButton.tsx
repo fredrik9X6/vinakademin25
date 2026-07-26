@@ -41,11 +41,17 @@ export function FeedbackButton({ position = 'bottom-right' }: FeedbackButtonProp
   // as course content pages.
   const isTastingPlanFormPage = pathname.startsWith('/skapa-provning')
 
+  // A live tasting session mounts the sticky "Klar med vin #N" commit bar above
+  // the global bottom nav (PlanSessionContent, md:hidden). Without this the
+  // bubble sits at 4.5rem — right on top of that bar's button.
+  const isLiveTastingSession =
+    pathname.startsWith('/mina-provningar/planer/') && searchParams.has('session')
+
   // On mobile (below md): position above the bottom tab bar (h-16 + safe area)
-  // On course content pages OR plan form: also clear the secondary nav bar
-  // On desktop (md+): normal bottom-4 positioning
+  // On course content pages, plan form, OR a live session: also clear the
+  // secondary bar. On desktop (md+): normal bottom-4 positioning.
   const mobileBottom =
-    isCourseContentPage || isTastingPlanFormPage
+    isCourseContentPage || isTastingPlanFormPage || isLiveTastingSession
       ? 'bottom-[calc(9rem+env(safe-area-inset-bottom))]'
       : 'bottom-[calc(4.5rem+env(safe-area-inset-bottom))]'
 
