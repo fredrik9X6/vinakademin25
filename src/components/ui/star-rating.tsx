@@ -9,6 +9,16 @@ interface StarRatingProps {
   onChange: (value: number) => void
   max?: number
   size?: 'sm' | 'md' | 'lg'
+  /**
+   * Independent size for the click/tap zone, decoupled from the visual icon
+   * size (`size`). Defaults to `size` — i.e. the historical behaviour where
+   * the tappable area is exactly the icon's box. Pass `'xl'` (44px) to
+   * guarantee a >=44px touch target on mobile without inflating the star
+   * icon itself. Each star's two half-buttons still split that box, so the
+   * full star (both halves) reaches the 44px floor even though an
+   * individual half is ~half that width — see star-rating.tsx doc comment.
+   */
+  hitboxSize?: 'sm' | 'md' | 'lg' | 'xl'
   showLabel?: boolean
   disabled?: boolean
   error?: string
@@ -33,6 +43,7 @@ export function StarRating({
   onChange,
   max = 5,
   size = 'md',
+  hitboxSize,
   showLabel = true,
   disabled = false,
   error,
@@ -41,17 +52,31 @@ export function StarRating({
 }: StarRatingProps) {
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null)
 
+  // Icon visual size — unchanged from before hitboxSize existed.
   const sizeClasses = {
     sm: 'h-4 w-4',
     md: 'h-6 w-6',
     lg: 'h-8 w-8',
   }
 
+  // Tap-target (per-star box) size. Defaults to the icon size, preserving
+  // the old 1:1 behaviour for every existing consumer that doesn't pass
+  // `hitboxSize`. `xl` is only reachable via an explicit opt-in.
+  const boxSizeClasses = {
+    sm: 'h-4 w-4',
+    md: 'h-6 w-6',
+    lg: 'h-8 w-8',
+    xl: 'h-11 w-11',
+  }
+
   const spacingClasses = {
     sm: 'gap-1',
     md: 'gap-1.5',
     lg: 'gap-2',
+    xl: 'gap-2',
   }
+
+  const boxSize = hitboxSize ?? size
 
   // Label only the integer anchors — half-steps share their lower whole
   // label so the cue doesn't flicker between every half-step hover.
@@ -71,7 +96,7 @@ export function StarRating({
       <div
         className={cn(
           'flex items-center',
-          spacingClasses[size],
+          spacingClasses[boxSize],
           disabled && 'opacity-50 cursor-not-allowed',
         )}
         role="radiogroup"
@@ -94,13 +119,15 @@ export function StarRating({
               className={cn(
                 'relative inline-block transition-transform',
                 !disabled && 'hover:scale-110 active:scale-95',
-                sizeClasses[size],
+                boxSizeClasses[boxSize],
               )}
             >
-              {/* Empty star — always rendered as the visual base */}
+              {/* Empty star — always rendered as the visual base. `m-auto`
+                  centers it inside the box when boxSize > size (icon and
+                  tap zone decoupled); a no-op when they're equal. */}
               <Star
                 className={cn(
-                  'absolute inset-0',
+                  'absolute inset-0 m-auto',
                   sizeClasses[size],
                   'fill-transparent text-gray-300 dark:text-gray-600',
                 )}
@@ -111,7 +138,7 @@ export function StarRating({
               {fillPercent > 0 && (
                 <Star
                   className={cn(
-                    'absolute inset-0',
+                    'absolute inset-0 m-auto',
                     sizeClasses[size],
                     'fill-orange-500 text-orange-500',
                   )}

@@ -925,7 +925,7 @@ export function WineReviewForm({
                 value={selectedHistoryId ?? ''}
                 onValueChange={(val) => setSelectedHistoryId(val || null)}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full min-h-11">
                   <SelectValue placeholder="Välj inskick" />
                 </SelectTrigger>
                 <SelectContent>
@@ -959,9 +959,13 @@ export function WineReviewForm({
           className="w-full"
         >
           <div className="flex justify-center mb-6">
-            <TabsList>
-              <TabsTrigger value="simple">Enkel</TabsTrigger>
-              <TabsTrigger value="advanced">Avancerad</TabsTrigger>
+            <TabsList className="min-h-11">
+              <TabsTrigger value="simple" className="min-h-11 px-4">
+                Enkel
+              </TabsTrigger>
+              <TabsTrigger value="advanced" className="min-h-11 px-4">
+                Avancerad
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -981,7 +985,7 @@ export function WineReviewForm({
               </InputRow>
               <InputRow label="Sötma (torr → söt)" attemptSubmit={attemptSubmit}>
                 <Select value={palateSweetness} onValueChange={setPalateSweetness}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -995,7 +999,7 @@ export function WineReviewForm({
               </InputRow>
               <InputRow label="Syra (hur frisk?)" attemptSubmit={attemptSubmit}>
                 <Select value={palateAcidity} onValueChange={setPalateAcidity}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1009,7 +1013,7 @@ export function WineReviewForm({
               </InputRow>
               <InputRow label="Fyllighet (lätt → kraftig)" attemptSubmit={attemptSubmit}>
                 <Select value={palateBody} onValueChange={setPalateBody}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1028,6 +1032,7 @@ export function WineReviewForm({
                     onChange={setRating}
                     max={5}
                     size="lg"
+                    hitboxSize="xl"
                     showLabel={true}
                     error={attemptSubmit && errors['rating'] ? errors['rating'] : undefined}
                     aria-label="Välj betyg från 1 till 5"
@@ -1053,7 +1058,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={appearanceClarity} onValueChange={setAppearanceClarity}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1068,7 +1073,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={appearanceIntensity} onValueChange={setAppearanceIntensity}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1084,7 +1089,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={appearanceColor} onValueChange={setAppearanceColor}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1116,7 +1121,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={noseIntensity} onValueChange={setNoseIntensity}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1181,7 +1186,7 @@ export function WineReviewForm({
               ).map(([label, val, setter, opts]) => (
                 <InputRow key={label as string} label={label as string}>
                   <Select value={val as string} onValueChange={setter as any}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full min-h-11">
                       <SelectValue placeholder="Välj" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1228,7 +1233,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={palateFinish} onValueChange={setPalateFinish}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1245,7 +1250,7 @@ export function WineReviewForm({
             <Section title="Slutsats">
               <InputRow label="Kvalitet" error={errors['quality']} attemptSubmit={attemptSubmit}>
                 <Select value={quality} onValueChange={setQuality}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1264,6 +1269,7 @@ export function WineReviewForm({
                     onChange={setRating}
                     max={5}
                     size="lg"
+                    hitboxSize="xl"
                     showLabel={true}
                     error={attemptSubmit && errors['rating'] ? errors['rating'] : undefined}
                     aria-label="Välj betyg från 1 till 5"
@@ -1285,32 +1291,35 @@ export function WineReviewForm({
 
         <Separator />
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2 p-4 bg-muted/30 rounded-lg w-full md:w-auto">
+          {/* The whole padded row is the tap target (>=44px), not just the
+              16px box — wrapping in <label htmlFor> makes a click anywhere
+              in the row (including the padding) toggle the checkbox, since
+              Radix's Checkbox root renders a native <button>, which is a
+              labelable element. */}
+          <label
+            htmlFor="buyAgain"
+            className="flex items-center space-x-2 min-h-11 p-4 bg-muted/30 rounded-lg w-full md:w-auto cursor-pointer"
+          >
             <Checkbox
               id="buyAgain"
               checked={buyAgain}
               onCheckedChange={(checked) => setBuyAgain(checked as boolean)}
             />
-            <label
-              htmlFor="buyAgain"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-            >
+            <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Jag hade köpt detta vin igen
-            </label>
-          </div>
-          <div className="flex items-center space-x-2 p-4 bg-muted/30 rounded-lg w-full md:w-auto">
+            </span>
+          </label>
+          <label
+            htmlFor="publishedToProfile"
+            className="flex items-center space-x-2 min-h-11 p-4 bg-muted/30 rounded-lg w-full md:w-auto cursor-pointer"
+          >
             <Checkbox
               id="publishedToProfile"
               checked={publishedToProfile}
               onCheckedChange={(checked) => setPublishedToProfile(checked as boolean)}
             />
-            <label
-              htmlFor="publishedToProfile"
-              className="text-sm font-medium leading-none cursor-pointer"
-            >
-              Publicera på min profil
-            </label>
-          </div>
+            <span className="text-sm font-medium leading-none">Publicera på min profil</span>
+          </label>
           <div className="flex items-center gap-3 w-full md:w-auto">
             {isSessionDraft && <ReviewSaveStatus status={saveStatus} />}
             {/* Session mode has no submit button here — the wine card's single
