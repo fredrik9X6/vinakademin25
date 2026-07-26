@@ -51,6 +51,7 @@ export function ChipMultiSelect({
   className,
 }: ChipMultiSelectProps) {
   const [showAll, setShowAll] = React.useState(false)
+  const chipGroupId = React.useId()
 
   const shown = React.useMemo(() => {
     if (showAll || options.length <= visibleCount) return options
@@ -67,7 +68,7 @@ export function ChipMultiSelect({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <div role="group" aria-label={ariaLabel} className="flex flex-wrap gap-2">
+      <div role="group" aria-label={ariaLabel} id={chipGroupId} className="flex flex-wrap gap-2">
         {shown.map((opt) => {
           const selected = value.includes(opt.value)
           return (
@@ -95,6 +96,8 @@ export function ChipMultiSelect({
         <button
           type="button"
           onClick={() => setShowAll((s) => !s)}
+          aria-expanded={showAll}
+          aria-controls={chipGroupId}
           className="min-h-11 text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
         >
           {showAll ? 'Visa färre' : `Visa alla (${options.length})`}
