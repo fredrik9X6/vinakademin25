@@ -391,7 +391,9 @@ export async function POST(request: NextRequest) {
       // shared with reviewData.sessionParticipant in the helper) — reuse it
       // here rather than re-querying session-participants a second time.
       const identity: SessionReviewIdentity = {
-        user: guestParticipant ? null : user ? { id: user.id } : null,
+        // Full authenticated user doc (or null for a guest) — required so
+        // Reviews' beforeChange hook can read `.role`, not just `.id`.
+        user: guestParticipant ? null : user,
         participantId: guestParticipant ? guestParticipant.id : authedParticipantId,
       }
 

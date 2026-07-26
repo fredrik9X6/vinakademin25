@@ -133,7 +133,9 @@ export async function POST(
       participantId,
     }
     const reviewIdentity: SessionReviewIdentity = {
-      user: user ? { id: user.id } : null,
+      // Full authenticated user doc (or null for a guest) — required so
+      // Reviews' beforeChange hook can read `.role`, not just `.id`.
+      user,
       participantId,
     }
 

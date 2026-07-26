@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { ValidationError, type Payload } from 'payload'
-import type { CourseSession } from '@/payload-types'
+import type { CourseSession, User } from '@/payload-types'
 import { loggerFor } from '@/lib/logger'
 import { resolveWineIdentityForPour } from '@/lib/session-pour-mapping'
 
@@ -10,8 +10,12 @@ export interface SessionReviewIdentity {
   /** Full authenticated user doc (from payload.auth()), or null for a guest
    *  (participant-cookie only). Threaded through to `req.user` on the
    *  Payload write exactly as the original inline code did, so any
-   *  access-control/hook that inspects more than `.id` keeps working. */
-  user: { id: number } | null
+   *  access-control/hook that inspects more than `.id` keeps working — e.g.
+   *  Reviews' beforeChange hook reads `req.user.role` (admin/instructor
+   *  bypass) in addition to `.id` (ownership check). Callers must pass the
+   *  real user doc, not a reconstructed `{ id }` stub, or that role check is
+   *  silently dead on this path. */
+  user: User | null
   /** session-participants row id for this identity — the guest's own row, or
    *  the authenticated caller's row if they have one (null for a host with no
    *  participant row of their own). */
