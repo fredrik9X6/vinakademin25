@@ -370,7 +370,7 @@ export function BlindGuessCard({
               value={editing.country ?? ''}
               onValueChange={(v) => updateField({ country: v || null })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="min-h-11">
                 <SelectValue placeholder="Land" />
               </SelectTrigger>
               <SelectContent>
@@ -390,7 +390,7 @@ export function BlindGuessCard({
               value={editing.grape ?? ''}
               onValueChange={(v) => updateField({ grape: v || null })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="min-h-11">
                 <SelectValue placeholder="Druva" />
               </SelectTrigger>
               <SelectContent>
@@ -412,7 +412,7 @@ export function BlindGuessCard({
                 updateField({ priceBucket: (v || null) as PriceBucket | null })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="min-h-11">
                 <SelectValue placeholder="Pris" />
               </SelectTrigger>
               <SelectContent>
