@@ -345,6 +345,12 @@ export function PlanSessionContent({
   // Optimistic local reveal set so the host sees the change instantly
   // before SSE catches up.
   const [localRevealed, setLocalRevealed] = React.useState<Set<number>>(new Set())
+  // Optimistic local UN-reveal set, mirroring localRevealed. Needed because
+  // `effectiveRevealed` below is a union with the SSE-sourced
+  // `revealedPourOrders` — merely deleting a pour from `localRevealed` isn't
+  // enough to hide it instantly if the (stale, pre-poll) base set still
+  // contains it. This is subtracted last so it always wins.
+  const [localUnrevealed, setLocalUnrevealed] = React.useState<Set<number>>(new Set())
   const router = useRouter()
   const {
     hostCurrentWinePourOrder,
@@ -425,8 +431,9 @@ export function PlanSessionContent({
   const effectiveRevealed = React.useMemo(() => {
     const s = new Set<number>(revealedPourOrders ?? [])
     localRevealed.forEach((p) => s.add(p))
+    localUnrevealed.forEach((p) => s.delete(p))
     return s
-  }, [revealedPourOrders, localRevealed])
+  }, [revealedPourOrders, localRevealed, localUnrevealed])
 
   const isBlind = Boolean((session as any).blindTasting)
 
@@ -446,16 +453,27 @@ export function PlanSessionContent({
         : [],
     ),
   )
+  // NOTE: this must also catch REMOVALS (host un-reveal), not just additions.
+  // An un-reveal deletes a pour from revealedPourOrders; if this effect only
+  // watched for newly-added entries, the guest's already-rendered React state
+  // (and any cached server props) would keep showing the wine's real identity
+  // after the host hid it again — an undo that doesn't undo, on the one path
+  // where the data must actually disappear again. So: diff the full sets in
+  // both directions and refetch on any change, additions or removals alike.
   React.useEffect(() => {
     if (isHost || !isBlind) return
-    let hasNew = false
-    for (const p of revealedPourOrders ?? []) {
-      if (!seenRevealedRef.current.has(p)) {
-        hasNew = true
-        seenRevealedRef.current.add(p)
-      }
+    const current = new Set<number>(revealedPourOrders ?? [])
+    let changed = false
+    for (const p of current) {
+      if (!seenRevealedRef.current.has(p)) changed = true
     }
-    if (hasNew) router.refresh()
+    for (const p of seenRevealedRef.current) {
+      if (!current.has(p)) changed = true
+    }
+    if (changed) {
+      seenRevealedRef.current = current
+      router.refresh()
+    }
   }, [revealedPourOrders, isHost, isBlind, router])
 
   // Local optimistic value wins (only set on the host's own tap), then
@@ -513,6 +531,12 @@ export function PlanSessionContent({
 
   async function revealWine(pourOrder: number) {
     setLocalRevealed((prev) => new Set([...prev, pourOrder]))
+    setLocalUnrevealed((prev) => {
+      if (!prev.has(pourOrder)) return prev
+      const next = new Set(prev)
+      next.delete(pourOrder)
+      return next
+    })
     trackEvent('session_wine_revealed', {
       session_id: String(session.id),
       plan_id: plan.id,
@@ -524,9 +548,66 @@ export function PlanSessionContent({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ revealPourOrder: pourOrder }),
       })
-      if (!res.ok) toast.error('Kunde inte avslöja vinet.')
+      if (res.ok) {
+        // 30s is the toast's own duration — there is deliberately no
+        // server-side expiry on the undo. It's the host's own session;
+        // un-revealing within the window (or after it) is their prerogative.
+        toast.success(`Vin #${pourOrder} avslöjat`, {
+          duration: 30000,
+          action: {
+            label: 'Ångra',
+            onClick: () => void unrevealWine(pourOrder),
+          },
+        })
+      } else {
+        toast.error('Kunde inte avslöja vinet.')
+      }
     } catch {
       toast.error('Nätverksfel — försök igen.')
+    }
+  }
+
+  // Undo for a misclicked reveal. Mirrors revealWine's optimistic shape but
+  // in the opposite direction: pull the pour out of the locally-revealed set
+  // (and record it in localUnrevealed so effectiveRevealed hides it instantly
+  // even before the SSE-sourced revealedPourOrders catches up), then POST the
+  // set-difference to the server. On failure, put it back.
+  async function unrevealWine(pourOrder: number) {
+    setLocalUnrevealed((prev) => new Set([...prev, pourOrder]))
+    setLocalRevealed((prev) => {
+      if (!prev.has(pourOrder)) return prev
+      const next = new Set(prev)
+      next.delete(pourOrder)
+      return next
+    })
+    trackEvent('session_wine_unrevealed', {
+      session_id: String(session.id),
+      plan_id: plan.id,
+      pour_order: pourOrder,
+    })
+    try {
+      const res = await fetch(`/api/sessions/${session.id}/host-state`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unrevealPourOrder: pourOrder }),
+      })
+      if (!res.ok) {
+        setLocalUnrevealed((prev) => {
+          const next = new Set(prev)
+          next.delete(pourOrder)
+          return next
+        })
+        setLocalRevealed((prev) => new Set([...prev, pourOrder]))
+        toast.error('Kunde inte ångra.')
+      }
+    } catch {
+      setLocalUnrevealed((prev) => {
+        const next = new Set(prev)
+        next.delete(pourOrder)
+        return next
+      })
+      setLocalRevealed((prev) => new Set([...prev, pourOrder]))
+      toast.error('Kunde inte ångra.')
     }
   }
 
