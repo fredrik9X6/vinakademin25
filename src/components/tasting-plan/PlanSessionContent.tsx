@@ -540,6 +540,15 @@ export function PlanSessionContent({
     hostCurrentWinePourOrder ??
     (typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null)
 
+  // The wine whose form is currently open — drives the sticky mobile commit
+  // bar. Mirrors the per-row `isExpanded` derivation exactly (expandedPour of
+  // -1 means the participant deliberately collapsed everything, so no bar).
+  const expandedRow = React.useMemo(() => {
+    const target = expandedPour ?? activePour
+    if (target == null || target === -1) return null
+    return displayRows.find((r) => r.pourOrder === target) ?? null
+  }, [expandedPour, activePour, displayRows])
+
   // "Alla viner" sheet rows — built from `displayRows`, the same
   // already-redacted source the wine cards render titles from, so an
   // unrevealed blind wine reads as "Vin #N" here too. Status derives from the
@@ -854,6 +863,9 @@ export function PlanSessionContent({
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      {/* Standings first on mobile: the <aside> below stacks AFTER the whole
+          wine list on a phone, burying the leaderboard under every wine. */}
+      {sidebarExtra && <div className="lg:hidden">{sidebarExtra}</div>}
       <div className="space-y-4 min-w-0">
         {rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">Inga viner i planen.</p>
@@ -1071,6 +1083,10 @@ export function PlanSessionContent({
                           </div>
                         )}
 
+                        {/* Inline commit — desktop only. On mobile this button
+                            sits at the bottom of a form that runs to ~20
+                            controls in Avancerad, so it is rendered instead in
+                            the sticky bar below (md:hidden), always in reach. */}
                         {isHost ? (
                           // Secondary styling for the host — "Avslöja vin #N" is the
                           // host's primary action on this card (there must be exactly
@@ -1080,7 +1096,7 @@ export function PlanSessionContent({
                           <Button
                             type="button"
                             variant="outline"
-                            className="mt-3 w-full min-h-11"
+                            className="mt-3 hidden w-full min-h-11 md:flex"
                             onClick={() => void commitWine(row.pourOrder)}
                             disabled={committingPour === row.pourOrder}
                           >
@@ -1091,7 +1107,7 @@ export function PlanSessionContent({
                         ) : (
                           <button
                             type="button"
-                            className="btn-brand mt-3 w-full min-h-11"
+                            className="btn-brand mt-3 hidden w-full min-h-11 md:block"
                             onClick={() => void commitWine(row.pourOrder)}
                             disabled={committingPour === row.pourOrder}
                           >
@@ -1127,7 +1143,44 @@ export function PlanSessionContent({
       </div>
 
       {sidebarExtra && (
-        <aside className="lg:sticky lg:top-20 lg:self-start space-y-3">{sidebarExtra}</aside>
+        <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start space-y-3">{sidebarExtra}</aside>
+      )}
+
+      {/* Sticky mobile commit bar.
+          The inline button sits below the whole tasting-note form, which runs
+          to ~20 controls at 44px in Avancerad — on a phone that is a long
+          scroll away from the thing you just finished typing. This keeps the
+          one commit action permanently in reach. Offsets follow the proven
+          in-repo pattern (LessonViewer): clear MobileBottomNav's 4rem row plus
+          the safe-area inset. Desktop keeps the inline button instead. */}
+      {expandedRow && (
+        <>
+          <div className="md:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
+            <div className="mx-auto flex max-w-7xl items-center gap-3">
+              <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                {submittedPourOrders.has(expandedRow.pourOrder)
+                  ? 'Sparat ✓'
+                  : `Vin #${expandedRow.pourOrder}`}
+              </span>
+              <button
+                type="button"
+                className={
+                  isHost
+                    ? 'inline-flex min-h-11 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium'
+                    : 'btn-brand min-h-11 px-5'
+                }
+                onClick={() => void commitWine(expandedRow.pourOrder)}
+                disabled={committingPour === expandedRow.pourOrder}
+              >
+                {committingPour === expandedRow.pourOrder
+                  ? 'Sparar…'
+                  : `Klar med vin #${expandedRow.pourOrder}`}
+              </button>
+            </div>
+          </div>
+          {/* Spacer so the bar never covers the end of the form. */}
+          <div className="md:hidden h-24" aria-hidden />
+        </>
       )}
 
       <Sheet open={!!infoWine} onOpenChange={(o) => !o && setInfoWine(null)}>
