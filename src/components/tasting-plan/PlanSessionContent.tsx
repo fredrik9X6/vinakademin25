@@ -8,16 +8,7 @@ import type { TastingPlan, Wine, CourseSession } from '@/payload-types'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { SessionDialogs } from '@/components/tasting-plan/SessionDialogs'
 import {
   Sheet,
   SheetContent,
@@ -1177,83 +1168,25 @@ export function PlanSessionContent({
 
       </div>
 
-      <AlertDialog open={endDialog} onOpenChange={setEndDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avsluta sessionen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Alla deltagare kopplas bort och sessionen markeras som klar. Du kan inte återuppta
-              den.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={endingOrLeaving}>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={endingOrLeaving}
-              onClick={(e) => {
-                e.preventDefault()
-                void handleHostEnd()
-              }}
-            >
-              {endingOrLeaving ? 'Avslutar…' : 'Avsluta'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={leaveDialog} onOpenChange={setLeaveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Lämna provningen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Du kan ansluta igen med samma kod om sessionen fortfarande är aktiv.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={endingOrLeaving}>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={endingOrLeaving}
-              onClick={(e) => {
-                e.preventDefault()
-                void handleGuestLeave()
-              }}
-            >
-              {endingOrLeaving ? 'Lämnar…' : 'Lämna'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={revealGuardPour !== null}
-        onOpenChange={(o) => !o && setRevealGuardPour(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avslöja redan nu?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {(() => {
-                if (revealGuardPour === null) return null
-                const { missing, total } = missingCountForPour(revealGuardPour)
-                return `${missing} av ${total} har inte svarat än — avslöja ändå?`
-              })()}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault()
-                const pour = revealGuardPour
-                setRevealGuardPour(null)
-                if (pour !== null) void revealWine(pour)
-              }}
-            >
-              Avslöja ändå
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <SessionDialogs
+        endDialogOpen={endDialog}
+        onEndDialogOpenChange={setEndDialog}
+        leaveDialogOpen={leaveDialog}
+        onLeaveDialogOpenChange={setLeaveDialog}
+        endingOrLeaving={endingOrLeaving}
+        onConfirmEnd={() => void handleHostEnd()}
+        onConfirmLeave={() => void handleGuestLeave()}
+        revealGuardOpen={revealGuardPour !== null}
+        onRevealGuardOpenChange={(o) => !o && setRevealGuardPour(null)}
+        revealGuardInfo={
+          revealGuardPour !== null ? missingCountForPour(revealGuardPour) : null
+        }
+        onConfirmRevealAnyway={() => {
+          const pour = revealGuardPour
+          setRevealGuardPour(null)
+          if (pour !== null) void revealWine(pour)
+        }}
+      />
     </>
   )
 }
