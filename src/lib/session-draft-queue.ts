@@ -95,6 +95,40 @@ export function backoffMs(attempt: number): number {
 }
 
 /**
+ * Deep value-equality for two drafts.
+ *
+ * Exists to make an autosave write-storm structurally impossible. On
+ * 2026-07-26 an unstable React callback identity caused the review form's
+ * autosave effect to re-fire on every render — and the session polls every 2s,
+ * so an identical body was POSTed every 2s for as long as the tab was open.
+ * Comparing content before enqueueing means render churn alone can never
+ * produce a write, no matter which component forgets to memoize a prop.
+ */
+export function draftsEqual(a: DraftPayload, b: DraftPayload): boolean {
+  return deepEqual(a, b)
+}
+
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true
+  if (a == null || b == null) return a === b
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
+    return a.every((item, i) => deepEqual(item, b[i]))
+  }
+  if (typeof a === 'object' && typeof b === 'object') {
+    const ak = Object.keys(a as object)
+    const bk = Object.keys(b as object)
+    if (ak.length !== bk.length) return false
+    return ak.every(
+      (k) =>
+        Object.prototype.hasOwnProperty.call(b, k) &&
+        deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]),
+    )
+  }
+  return false
+}
+
+/**
  * Returns true when `draft` contains at least one leaf value that is
  * meaningfully non-empty. Keys listed in `ignoreKeys` (default: `submittedAt`)
  * are skipped entirely. Empty is defined as: null, undefined, empty/whitespace

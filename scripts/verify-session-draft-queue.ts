@@ -5,6 +5,7 @@
  */
 import assert from 'node:assert/strict'
 import {
+  draftsEqual,
   backoffMs,
   draftHasContent,
   initialQueueState,
@@ -256,3 +257,44 @@ run('input during an ongoing backoff does NOT reset the attempt counter', () => 
 })
 
 console.log('OK')
+
+// ── No-op guard: an unchanged draft must not enqueue ──────────────────────────
+// Regression guard for the 2026-07-26 write storm: an unstable React callback
+// identity made the autosave effect re-fire on every render (every 2s SSE tick),
+// and each fire POSTed an identical body. Combined with a dedup bug this created
+// 55 duplicate rows. Content-equality makes that structurally impossible.
+
+run('draftsEqual: identical drafts compare equal', () => {
+  assert.equal(draftsEqual({ rating: 3, notes: 'a' }, { rating: 3, notes: 'a' }), true)
+})
+
+run('draftsEqual: key order does not matter', () => {
+  assert.equal(draftsEqual({ rating: 3, notes: 'a' }, { notes: 'a', rating: 3 }), true)
+})
+
+run('draftsEqual: a changed scalar is not equal', () => {
+  assert.equal(draftsEqual({ rating: 3 }, { rating: 4 }), false)
+})
+
+run('draftsEqual: nested objects compare by value', () => {
+  assert.equal(
+    draftsEqual({ wset: { nose: 'x', flavours: ['a', 'b'] } }, { wset: { nose: 'x', flavours: ['a', 'b'] } }),
+    true,
+  )
+  assert.equal(
+    draftsEqual({ wset: { flavours: ['a', 'b'] } }, { wset: { flavours: ['b', 'a'] } }),
+    false,
+  )
+})
+
+run('draftsEqual: a missing key is not equal to an explicit undefined-free draft', () => {
+  assert.equal(draftsEqual({ rating: 3, notes: 'a' }, { rating: 3 }), false)
+})
+
+run('draftsEqual: null is distinguished from absent', () => {
+  assert.equal(draftsEqual({ rating: null }, {}), false)
+})
+
+run('draftsEqual: two empty drafts are equal', () => {
+  assert.equal(draftsEqual({}, {}), true)
+})

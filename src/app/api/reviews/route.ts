@@ -519,7 +519,13 @@ export async function POST(request: NextRequest) {
       collection: 'reviews',
       where: whereConditions,
       limit: 1,
-      overrideAccess: !!guestParticipant,
+      // Must be true for authenticated callers too — see the identical note in
+      // src/lib/session-review-commit.ts. No `req` is passed, so with
+      // overrideAccess:false the access rule sees no user and matches only
+      // trusted/published rows; an authenticated user's own draft matches
+      // neither, so dedup silently fails and every save creates a new row.
+      // The `where` is already scoped to the caller's own user/participant id.
+      overrideAccess: true,
     })
 
     let review

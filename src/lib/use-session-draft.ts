@@ -4,6 +4,7 @@ import * as React from 'react'
 import { posthog } from '@/components/analytics'
 import {
   backoffMs,
+  draftsEqual,
   draftHasContent,
   initialQueueState,
   queueReducer,
@@ -85,6 +86,8 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
   // The full merged draft (everything the user has entered). Synchronously
   // mirrored to localStorage on every change.
   const draftRef = React.useRef<DraftPayload>({})
+  // Last payload actually enqueued — guards against re-POSTing identical bodies.
+  const lastEnqueuedRef = React.useRef<DraftPayload | null>(null)
   const queueRef = React.useRef<QueueState>(initialQueueState)
   const debounceTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -236,6 +239,16 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
       }
       // Row-creation floor: don't POST an empty draft.
       if (!draftHasContent(draftRef.current)) return
+      // No-op floor: don't POST a draft identical to the last one enqueued.
+      // Without this, any caller passing an unstable callback identity makes the
+      // consuming effect re-fire on every render, and the session re-renders
+      // every 2s on the SSE poll — which on 2026-07-26 produced an identical
+      // POST every 2s for as long as the tab stayed open. Content-equality means
+      // render churn alone can never cause a write.
+      if (lastEnqueuedRef.current && draftsEqual(lastEnqueuedRef.current, draftRef.current)) {
+        return
+      }
+      lastEnqueuedRef.current = { ...draftRef.current }
       dispatch({ type: 'enqueue', payload: { ...draftRef.current } })
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
       debounceTimer.current = setTimeout(() => {

@@ -214,6 +214,16 @@ export function WineReviewForm({
   // (lessonId=0 plan sessions included). Standalone / lesson-only reviews keep
   // the explicit-submit flow.
   const isSessionDraft = Boolean(sessionId) && !standalone
+  // Latest-callback ref. `onReviewChange` is passed as an inline arrow by
+  // PlanSessionContent, so its identity changes on every render of the parent.
+  // Depending on it directly made the autosave effect below re-fire on every
+  // render — and the session re-renders every 2s on the SSE poll, which on
+  // 2026-07-26 POSTed an identical review every 2s for as long as the tab was
+  // open. Holding it in a ref decouples the effect from the prop's identity.
+  const onReviewChangeRef = React.useRef(onReviewChange)
+  React.useEffect(() => {
+    onReviewChangeRef.current = onReviewChange
+  })
   const buildReviewBody = React.useCallback(
     (draft: Record<string, unknown>) => {
       const wineIdentity = customWineSnapshot
@@ -325,7 +335,7 @@ export function WineReviewForm({
     // fires even on the very first tick (unlike the autosave POST below) so
     // the commit button has an accurate snapshot the instant hydration
     // populates the form, before any user edit.
-    onReviewChange?.({
+    onReviewChangeRef.current?.({
       rating: rating > 0 ? rating : null,
       buyAgain,
       reviewText: notes,
@@ -353,7 +363,6 @@ export function WineReviewForm({
     publishedToProfile,
     buildWsetSnapshot,
     queueSave,
-    onReviewChange,
   ])
 
   const fetchAnswerKey = React.useCallback(async () => {

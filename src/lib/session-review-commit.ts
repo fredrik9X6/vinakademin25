@@ -175,7 +175,20 @@ export async function commitSessionReview(
       collection: 'reviews',
       where: whereConditions as any,
       limit: 1,
-      overrideAccess: isGuest,
+      // overrideAccess MUST be true here, for guests AND authenticated callers.
+      //
+      // This is an internal dedup lookup whose `where` is already scoped to the
+      // caller's own identity (user.id or participantId) plus session and wine,
+      // so it can only ever match a row the caller owns — access control adds
+      // nothing and actively breaks it: no `req` is passed, so Reviews.access
+      // .read sees `req.user === undefined` and falls to its unauthenticated
+      // branch (isTrusted / publishedToProfile only). An authenticated host's
+      // own unpublished draft matches neither, the find returned 0, and every
+      // autosave CREATEd a new row instead of updating.
+      //
+      // That produced 55 duplicate rows in one session on 2026-07-26. Guests
+      // were unaffected only because they already passed true here.
+      overrideAccess: true,
     })
 
     const reqBase = isGuest

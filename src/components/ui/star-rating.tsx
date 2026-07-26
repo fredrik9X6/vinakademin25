@@ -118,7 +118,14 @@ export function StarRating({
               key={fullValue}
               className={cn(
                 'relative inline-block transition-transform',
-                !disabled && 'hover:scale-110 active:scale-95',
+                // Deliberately NO hover:scale here. A rating control must not
+                // move under the pointer: growing the star you are aiming at
+                // shifts its neighbours, which makes half-step selection a
+                // fight — and the effect got worse once the tap box grew to
+                // 44px. The hover fill (displayedValue) already previews the
+                // selection, so the transform was redundant as well as harmful.
+                // On touch devices `hover:` also sticks after a tap.
+                !disabled && 'active:scale-95',
                 boxSizeClasses[boxSize],
               )}
             >

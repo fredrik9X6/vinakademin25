@@ -97,6 +97,13 @@ export function BlindGuessCard({
   // final state immediately (no fade, no stagger, no count-up).
   const prefersReducedMotion = Boolean(useReducedMotion())
   const { grapes: dynamicGrapes } = useGrapes()
+  // Latest-callback ref — the parent passes `onGuessChange` as an inline arrow,
+  // so depending on its identity makes this effect fire on every parent render
+  // (every 2s on the SSE poll). Same trap that caused the review write storm.
+  const onGuessChangeRef = React.useRef(onGuessChange)
+  React.useEffect(() => {
+    onGuessChangeRef.current = onGuessChange
+  })
   // Options render alphabetically (sv collation) regardless of source — the
   // vocab enum is region-grouped and the baked decoy sets arrive shuffled.
   const countryOptions = [
@@ -214,12 +221,12 @@ export function BlindGuessCard({
   // every edit AND on hydration (server-seed / draft-seed effects above both
   // update `editing`, which this depends on).
   React.useEffect(() => {
-    onGuessChange?.({
+    onGuessChangeRef.current?.({
       guessedCountry: editing.country,
       guessedGrape: editing.grape,
       guessedPriceBucket: editing.priceBucket,
     })
-  }, [editing, onGuessChange])
+  }, [editing])
 
   const hasGuess = Boolean(editing.country || editing.grape || editing.priceBucket)
 
