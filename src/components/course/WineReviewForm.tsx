@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MultiSelect } from '@/components/ui/multi-select'
+import { ChipMultiSelect } from '@/components/ui/chip-multi-select'
 import { StarRating } from '@/components/ui/star-rating'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -48,12 +48,6 @@ interface WineReviewFormProps {
   onSubmit?: () => void
   wineIdProp?: number | string // Accept wine ID from parent to bypass permission issues
   customWineSnapshot?: CustomWineSnapshot
-  /**
-   * Set when this form is rendered inside a Radix Dialog. Threads modal=true
-   * through to every internal Popover/MultiSelect so the popover content
-   * traps focus correctly and isn't intercepted by the Dialog's overlay.
-   */
-  insideDialog?: boolean
   /**
    * When provided, the form mounts in "edit" mode — populates state from this
    * review on first render. Used by /mina-recensioner/[id].
@@ -93,7 +87,6 @@ export function WineReviewForm({
   onSubmit,
   wineIdProp,
   customWineSnapshot,
-  insideDialog = false,
   initialReview,
   standalone = false,
   pourOrder,
@@ -989,13 +982,11 @@ export function WineReviewForm({
                 error={errors['primaryFlavours']}
                 attemptSubmit={attemptSubmit}
               >
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={primaryFlavourOptions}
                   value={primaryFlavours}
                   onValueChange={setPrimaryFlavours}
-                  placeholder="Välj smaker"
-                  className="w-full"
+                  ariaLabel="Smaker du känner igen"
                 />
               </InputRow>
               <InputRow label="Sötma (torr → söt)" attemptSubmit={attemptSubmit}>
@@ -1152,33 +1143,27 @@ export function WineReviewForm({
                 error={errors['primaryAromas']}
                 attemptSubmit={attemptSubmit}
               >
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={primaryFlavourOptions}
                   value={primaryAromas}
                   onValueChange={setPrimaryAromas}
-                  placeholder="Välj aromer"
-                  className="w-full"
+                  ariaLabel="Primära aromer"
                 />
               </InputRow>
               <InputRow label="Sekundära aromer" attemptSubmit={attemptSubmit}>
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={secondaryFlavourOptions}
                   value={secondaryAromas}
                   onValueChange={setSecondaryAromas}
-                  placeholder="Välj aromer"
-                  className="w-full"
+                  ariaLabel="Sekundära aromer"
                 />
               </InputRow>
               <InputRow label="Tertiära aromer" attemptSubmit={attemptSubmit}>
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={tertiaryFlavourOptions}
                   value={tertiaryAromas}
                   onValueChange={setTertiaryAromas}
-                  placeholder="Välj aromer"
-                  className="w-full"
+                  ariaLabel="Tertiära aromer"
                 />
               </InputRow>
             </Section>
@@ -1224,33 +1209,27 @@ export function WineReviewForm({
                 error={errors['primaryFlavours']}
                 attemptSubmit={attemptSubmit}
               >
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={primaryFlavourOptions}
                   value={primaryFlavours}
                   onValueChange={setPrimaryFlavours}
-                  placeholder="Välj smaker"
-                  className="w-full"
+                  ariaLabel="Primära smaker"
                 />
               </InputRow>
               <InputRow label="Sekundära smaker" attemptSubmit={attemptSubmit}>
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={secondaryFlavourOptions}
                   value={secondaryFlavours}
                   onValueChange={setSecondaryFlavours}
-                  placeholder="Välj smaker"
-                  className="w-full"
+                  ariaLabel="Sekundära smaker"
                 />
               </InputRow>
               <InputRow label="Tertiära smaker" attemptSubmit={attemptSubmit}>
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={tertiaryFlavourOptions}
                   value={tertiaryFlavours}
                   onValueChange={setTertiaryFlavours}
-                  placeholder="Välj smaker"
-                  className="w-full"
+                  ariaLabel="Tertiära smaker"
                 />
               </InputRow>
               <InputRow

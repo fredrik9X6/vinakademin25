@@ -777,7 +777,6 @@ export function PlanSessionContent({
               {...(reviewing.customWineSnapshot
                 ? { customWineSnapshot: reviewing.customWineSnapshot }
                 : {})}
-              insideDialog
               onRestored={() => setRestoredBanner(true)}
               onSubmit={() => {
                 setSubmittedPourOrders((prev) => new Set([...prev, reviewing.pourOrder]))
