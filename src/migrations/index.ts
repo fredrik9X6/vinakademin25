@@ -39,6 +39,7 @@ import * as migration_20260616_182125_tasting_per_wine_info from './20260616_182
 import * as migration_20260724_171748_reviews_rating_optional from './20260724_171748_reviews_rating_optional';
 import * as migration_20260724_175604_template_blind_answers from './20260724_175604_template_blind_answers';
 import * as migration_20260724_181500_backfill_blind_answers_from_systembolaget from './20260724_181500_backfill_blind_answers_from_systembolaget';
+import * as migration_20260725_194806_reviews_buy_again from './20260725_194806_reviews_buy_again';
 
 export const migrations = [
   {
@@ -239,11 +240,16 @@ export const migrations = [
   {
     up: migration_20260724_175604_template_blind_answers.up,
     down: migration_20260724_175604_template_blind_answers.down,
-    name: '20260724_175604_template_blind_answers'
+    name: '20260724_175604_template_blind_answers',
   },
   {
     up: migration_20260724_181500_backfill_blind_answers_from_systembolaget.up,
     down: migration_20260724_181500_backfill_blind_answers_from_systembolaget.down,
     name: '20260724_181500_backfill_blind_answers_from_systembolaget',
+  },
+  {
+    up: migration_20260725_194806_reviews_buy_again.up,
+    down: migration_20260725_194806_reviews_buy_again.down,
+    name: '20260725_194806_reviews_buy_again'
   },
 ];

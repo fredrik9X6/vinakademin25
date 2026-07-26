@@ -10,6 +10,12 @@ import { cn } from '@/lib/utils'
 interface SessionRosterProps {
   /** Optional: when provided, used to show lesson titles instead of just IDs. */
   lessonTitleById?: Map<number, string>
+  /**
+   * True in a blind tasting. Switches the card into standings mode: the heading
+   * becomes "Ställning" and every participant shows a point total including 0.
+   * Non-blind sessions have no scoring at all, so points stay hidden there.
+   */
+  blind?: boolean
 }
 
 /**
@@ -32,7 +38,7 @@ interface SessionRosterProps {
  */
 const COLLAPSED_LIMIT = 5
 
-export function SessionRoster({ lessonTitleById }: SessionRosterProps) {
+export function SessionRoster({ lessonTitleById, blind = false }: SessionRosterProps) {
   const { roster } = useActiveSession()
   const { user } = useAuth()
   const [selfParticipantId, setSelfParticipantId] = React.useState<number | null>(null)
@@ -114,8 +120,16 @@ export function SessionRoster({ lessonTitleById }: SessionRosterProps) {
           <div className="truncate">{renderName(p)}</div>
           <div className="truncate text-xs text-muted-foreground">{lessonLabel}</div>
         </div>
-        {p.points > 0 && (
-          <span className="text-xs font-medium text-brand-400 flex-shrink-0 tabular-nums">
+        {/* Rendered for every participant in a blind session, zero included —
+            hiding "0 p" meant a player at the bottom saw no score at all and
+            could not tell the sidebar was a ranking. Non-blind sessions have no
+            scoring, so nothing is shown there. */}
+        {blind && (
+          <span
+            className={`text-xs font-medium flex-shrink-0 tabular-nums ${
+              p.points > 0 ? 'text-brand-400' : 'text-muted-foreground'
+            }`}
+          >
             {p.points} p
           </span>
         )}
@@ -165,7 +179,7 @@ export function SessionRoster({ lessonTitleById }: SessionRosterProps) {
 
       <div className="rounded-md border border-border bg-background">
         <div className="border-b border-border px-4 py-2 text-xs uppercase tracking-wide text-muted-foreground">
-          Deltagare ({participants.length})
+          {blind ? 'Ställning' : `Deltagare (${participants.length})`}
         </div>
         {participants.length === 0 ? (
           <p className="px-4 py-2 text-sm text-muted-foreground">Inga deltagare än.</p>

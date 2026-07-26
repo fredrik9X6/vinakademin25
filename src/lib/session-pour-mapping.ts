@@ -93,3 +93,86 @@ export function resolvePourForReview(
   }
   return null
 }
+
+/**
+ * The wine identity a review row needs, resolved from the session's plan.
+ * Exactly one of `wine` / `customWine` is non-null, mirroring the shape
+ * `POST /api/reviews` and the Reviews collection's beforeValidate hook expect.
+ */
+export interface ResolvedWineIdentity {
+  wine: number | null
+  customWine: {
+    name: string
+    producer?: string
+    vintage?: string
+    type?: string
+    systembolagetUrl?: string
+    priceSek?: number
+    systembolagetProductNumber?: string
+    imageUrl?: string
+  } | null
+}
+
+/**
+ * Inverse of `resolvePourForReview`: given a session's plan wines and a pour
+ * order, return the wine identity to persist on a review.
+ *
+ * This exists so a guest in a blind tasting can write a tasting note for a wine
+ * whose identity was deliberately withheld from their client. The server holds
+ * the un-redacted plan, so it resolves identity itself and never sends it down.
+ *
+ * Returns `null` when the pour order has no entry, or the entry carries no
+ * usable identity (no library wine and no non-blank custom-wine name).
+ */
+export function resolveWineIdentityForPour(
+  wines: ReadonlyArray<unknown>,
+  pourOrder: number,
+): ResolvedWineIdentity | null {
+  for (let idx = 0; idx < wines.length; idx++) {
+    const w = wines[idx] as {
+      pourOrder?: number | null
+      libraryWine?: number | { id: number } | null
+      customWine?: Record<string, unknown> | null
+    }
+    const entryPour = w.pourOrder ?? idx + 1
+    if (entryPour !== pourOrder) continue
+
+    // Library wine wins when both are somehow present — it is the stronger
+    // identity and matches rowFromEntry's precedence in PlanSessionContent.
+    if (w.libraryWine != null) {
+      const id =
+        typeof w.libraryWine === 'object'
+          ? (w.libraryWine as { id: number }).id
+          : (w.libraryWine as number)
+      if (typeof id === 'number' && !Number.isNaN(id)) {
+        return { wine: id, customWine: null }
+      }
+    }
+
+    const c = w.customWine
+    const name = typeof c?.name === 'string' ? c.name.trim() : ''
+    if (!name) return null
+
+    // Copy only the fields the Reviews.customWine group persists, and only
+    // when present — an explicit undefined key would overwrite a stored value.
+    const snapshot: NonNullable<ResolvedWineIdentity['customWine']> = { name }
+    const text = (key: 'producer' | 'vintage' | 'type' | 'systembolagetUrl' | 'imageUrl') => {
+      const v = c?.[key]
+      if (typeof v === 'string' && v.trim() !== '') snapshot[key] = v
+    }
+    text('producer')
+    text('vintage')
+    text('type')
+    text('systembolagetUrl')
+    text('imageUrl')
+    if (typeof c?.priceSek === 'number' && !Number.isNaN(c.priceSek)) {
+      snapshot.priceSek = c.priceSek
+    }
+    const pn = c?.systembolagetProductNumber
+    if (pn != null && String(pn).trim() !== '') {
+      snapshot.systembolagetProductNumber = String(pn)
+    }
+    return { wine: null, customWine: snapshot }
+  }
+  return null
+}

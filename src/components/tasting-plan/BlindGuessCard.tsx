@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { motion, animate, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -9,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { Check, X, Pencil, Loader2, CloudOff } from 'lucide-react'
 import {
   COUNTRIES,
@@ -17,7 +19,14 @@ import {
   type PriceBucket,
 } from '@/lib/blind-guess-vocab'
 import { useGrapes } from '@/lib/use-grapes'
-import { scoreOne, resolveAnswerPriceBucket, type BlindAnswer } from '@/lib/blind-guess-scoring'
+import {
+  scoreOne,
+  resolveAnswerPriceBucket,
+  maxPointsForTiers,
+  pointsLabel,
+  TIER_POINTS,
+  type BlindAnswer,
+} from '@/lib/blind-guess-scoring'
 import { useSessionDraft, type SaveStatus } from '@/lib/use-session-draft'
 
 export interface BlindGuessCardProps {
@@ -51,6 +60,15 @@ export interface BlindGuessCardProps {
   initialSubmittedAt?: string | null
   /** Fired once on mount when a localStorage draft was restored. */
   onRestored?: () => void
+  /** Fired whenever the current in-progress guess changes (including on
+   *  hydration). The parent wine card mirrors this into a ref so its single
+   *  "Klar med vin #N" commit button can send the freshest guess without
+   *  waiting on this component's own debounced autosave. */
+  onGuessChange?: (guess: {
+    guessedCountry: string | null
+    guessedGrape: string | null
+    guessedPriceBucket: PriceBucket | null
+  }) => void
 }
 
 interface FormState {
@@ -69,11 +87,23 @@ export function BlindGuessCard({
   blindTiers = null,
   initialSubmittedAt = null,
   onRestored,
+  onGuessChange,
 }: BlindGuessCardProps) {
   // Default to showing all tiers when blindTiers is absent (host path,
   // revealed wines, any unset case) — never regress existing behaviour.
   const show = blindTiers ?? { country: true, grape: true, price: true }
+  // Reveal is a presentation flourish, not a feature the user has to wait
+  // on — when reduced motion is preferred, every animation below renders its
+  // final state immediately (no fade, no stagger, no count-up).
+  const prefersReducedMotion = Boolean(useReducedMotion())
   const { grapes: dynamicGrapes } = useGrapes()
+  // Latest-callback ref — the parent passes `onGuessChange` as an inline arrow,
+  // so depending on its identity makes this effect fire on every parent render
+  // (every 2s on the SSE poll). Same trap that caused the review write storm.
+  const onGuessChangeRef = React.useRef(onGuessChange)
+  React.useEffect(() => {
+    onGuessChangeRef.current = onGuessChange
+  })
   // Options render alphabetically (sv collation) regardless of source — the
   // vocab enum is region-grouped and the baked decoy sets arrive shuffled.
   const countryOptions = [
@@ -83,8 +113,6 @@ export function BlindGuessCard({
     a.localeCompare(b, 'sv'),
   )
   // Grape options are decoy-limited for every blind session; the "Lättare
-  // läge" badge means the host ALSO limited the country options.
-  const isEasyMode = easyModeOptions?.countries != null
   // First acceptable grape for the "rätt:" hint in the post-reveal scored row.
   const firstAnswerGrape =
     Array.isArray(answer.grapes) && answer.grapes.length > 0 ? answer.grapes[0] : null
@@ -98,7 +126,7 @@ export function BlindGuessCard({
   const [lockedIn, setLockedIn] = React.useState<boolean>(Boolean(initialSubmittedAt))
   const [isEditMode, setIsEditMode] = React.useState<boolean>(!initialSubmittedAt)
 
-  const { status, queueSave, lockIn, restoredFromDraft, restoredDraft } = useSessionDraft({
+  const { status, queueSave, restoredFromDraft, restoredDraft } = useSessionDraft({
     kind: 'guess',
     sessionId,
     pourOrder,
@@ -185,20 +213,24 @@ export function BlindGuessCard({
     })
   }
 
-  async function handleLockIn() {
-    const delivered = await lockIn()
-    // Only flip to the locked-in summary when the server actually has the
-    // guess — otherwise stay in edit mode with the error status visible so
-    // the guest knows nothing was saved.
-    if (delivered) {
-      setLockedIn(true)
-      setIsEditMode(false)
-    }
-  }
+  // Keep the parent's ref of "what this card currently holds" in sync so its
+  // single commit button can send the freshest guess without depending on
+  // this component's own debounced autosave having landed yet. Fires on
+  // every edit AND on hydration (server-seed / draft-seed effects above both
+  // update `editing`, which this depends on).
+  React.useEffect(() => {
+    onGuessChangeRef.current?.({
+      guessedCountry: editing.country,
+      guessedGrape: editing.grape,
+      guessedPriceBucket: editing.priceBucket,
+    })
+  }, [editing])
 
   const hasGuess = Boolean(editing.country || editing.grape || editing.priceBucket)
 
-  // Reveal mode: show scored results
+  // Reveal mode: show scored results. This branch only ever mounts once per
+  // wine (isRevealed only goes false→true) — the fade/stagger/count-up below
+  // is that one moment, not a replayed loop on every re-render.
   if (isRevealed && hasGuess) {
     const scored = scoreOne(
       {
@@ -208,43 +240,92 @@ export function BlindGuessCard({
       },
       answer,
     )
+    // Only the tiers that were actually scored get a row, so the stagger
+    // delay is computed off how many rows there really are (1–3), not a
+    // fixed index — no gaps if e.g. only price was scored.
+    const revealRows: { key: string; node: React.ReactNode }[] = []
+    if (scored.countryScored) {
+      revealRows.push({
+        key: 'country',
+        node: (
+          <Row
+            correct={scored.countryCorrect}
+            label="Land"
+            guess={editing.country}
+            answer={answer.country ?? null}
+          />
+        ),
+      })
+    }
+    if (scored.grapeScored) {
+      revealRows.push({
+        key: 'grape',
+        node: (
+          <Row
+            correct={scored.grapeCorrect}
+            label="Druva"
+            guess={editing.grape}
+            answer={firstAnswerGrape}
+          />
+        ),
+      })
+    }
+    if (scored.priceScored) {
+      revealRows.push({
+        key: 'price',
+        node: (
+          <PriceRow
+            correct={scored.priceCorrect}
+            guessLabel={priceBucketLabel(editing.priceBucket)}
+            answerBucket={resolveAnswerPriceBucket(answer)}
+            answerPriceSek={answer.priceSek ?? null}
+          />
+        ),
+      })
+    }
     return (
-      <div className="mt-3 rounded-md border bg-card p-3 space-y-1">
+      <motion.div
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
+        className="mt-3 rounded-md border bg-card p-3 space-y-1"
+      >
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Din gissning
         </p>
         <div className="flex flex-col gap-1.5 text-sm">
-          {scored.countryScored && (
-            <Row
-              correct={scored.countryCorrect}
-              label="Land"
-              guess={editing.country}
-              answer={answer.country ?? null}
-            />
-          )}
-          {scored.grapeScored && (
-            <Row
-              correct={scored.grapeCorrect}
-              label="Druva"
-              guess={editing.grape}
-              answer={firstAnswerGrape}
-            />
-          )}
-          {scored.priceScored && (
-            <PriceRow
-              correct={scored.priceCorrect}
-              guessLabel={priceBucketLabel(editing.priceBucket)}
-              answerBucket={resolveAnswerPriceBucket(answer)}
-              answerPriceSek={answer.priceSek ?? null}
-            />
-          )}
+          {revealRows.map((r, i) => (
+            <motion.div
+              key={r.key}
+              initial={prefersReducedMotion ? false : { opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.2,
+                delay: prefersReducedMotion ? 0 : 0.1 + i * 0.08,
+              }}
+            >
+              {r.node}
+            </motion.div>
+          ))}
         </div>
-        {scored.points > 0 && (
-          <p className="pt-1 text-xs text-brand-400 font-medium">
-            +{scored.points} {scored.points === 1 ? 'poäng' : 'poäng'}
-          </p>
-        )}
-      </div>
+        {/* Always rendered, including +0 poäng. Suppressing the zero case left a
+            0/3 wine showing three red crosses and no score at all, which reads
+            as "not counted" rather than "counted, and you got none". */}
+        <p
+          className={`pt-1 text-xs font-medium ${
+            scored.points > 0 ? 'text-brand-400' : 'text-muted-foreground'
+          }`}
+        >
+          +<AnimatedPoints points={scored.points} prefersReducedMotion={prefersReducedMotion} /> av{' '}
+          {pointsLabel(
+            maxPointsForTiers({
+              country: scored.countryScored,
+              grape: scored.grapeScored,
+              price: scored.priceScored,
+            }),
+          )}
+        </p>
+      </motion.div>
     )
   }
 
@@ -312,80 +393,126 @@ export function BlindGuessCard({
 
   return (
     <div className="mt-3 rounded-md border bg-card p-3 space-y-2">
-      <div className="flex items-center gap-2 flex-wrap">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Gissa innan värden avslöjar
-        </p>
-        {isEasyMode && (
-          <span className="inline-flex items-center rounded-full bg-brand-400/10 text-brand-400 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
-            Lättare läge
-          </span>
-        )}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Deliberately a <p>, not an <h2>. The wine's own name is still a
+              <p> in this phase, so promoting this subsection to a real heading
+              would invert the hierarchy. Heading semantics land in Phase 3
+              when the card is restructured. */}
+          <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
+            Blindgissning
+          </p>
+          <Badge variant="brand">{pointsLabel(maxPointsForTiers(show))}</Badge>
+        </div>
+        <p className="text-xs text-muted-foreground">Låses när värden avslöjar vinet</p>
       </div>
       <div className={`grid gap-2 ${gridCols}`}>
         {show.country && (
-          <Select
-            value={editing.country ?? ''}
-            onValueChange={(v) => updateField({ country: v || null })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Land" />
-            </SelectTrigger>
-            <SelectContent>
-              {countryOptions.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <TierPointChip label="Land" points={TIER_POINTS.country} />
+            <Select
+              value={editing.country ?? ''}
+              onValueChange={(v) => updateField({ country: v || null })}
+            >
+              <SelectTrigger className="min-h-11">
+                <SelectValue placeholder="Land" />
+              </SelectTrigger>
+              <SelectContent>
+                {countryOptions.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
         {show.grape && (
-          <Select
-            value={editing.grape ?? ''}
-            onValueChange={(v) => updateField({ grape: v || null })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Druva" />
-            </SelectTrigger>
-            <SelectContent>
-              {grapeOptions.map((g) => (
-                <SelectItem key={g} value={g}>
-                  {g}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <TierPointChip label="Druva" points={TIER_POINTS.grape} />
+            <Select
+              value={editing.grape ?? ''}
+              onValueChange={(v) => updateField({ grape: v || null })}
+            >
+              <SelectTrigger className="min-h-11">
+                <SelectValue placeholder="Druva" />
+              </SelectTrigger>
+              <SelectContent>
+                {grapeOptions.map((g) => (
+                  <SelectItem key={g} value={g}>
+                    {g}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
         {show.price && (
-          <Select
-            value={editing.priceBucket ?? ''}
-            onValueChange={(v) => updateField({ priceBucket: (v || null) as PriceBucket | null })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Pris" />
-            </SelectTrigger>
-            <SelectContent>
-              {PRICE_BUCKETS.map((b) => (
-                <SelectItem key={b.value} value={b.value}>
-                  {b.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <TierPointChip label="Pris" points={TIER_POINTS.price} />
+            <Select
+              value={editing.priceBucket ?? ''}
+              onValueChange={(v) =>
+                updateField({ priceBucket: (v || null) as PriceBucket | null })
+              }
+            >
+              <SelectTrigger className="min-h-11">
+                <SelectValue placeholder="Pris" />
+              </SelectTrigger>
+              <SelectContent>
+                {PRICE_BUCKETS.map((b) => (
+                  <SelectItem key={b.value} value={b.value}>
+                    {b.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
       </div>
       <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleLockIn}
-          disabled={!editing.country && !editing.grape && !editing.priceBucket}
-        >
-          {lockedIn ? 'Uppdatera & lås in' : 'Lås in'}
-        </Button>
         <SaveStatusLabel status={status} />
       </div>
+    </div>
+  )
+}
+
+/**
+ * Counts up from 0 to `points` over ~350ms when the reveal first mounts.
+ * Purely a display flourish — the value it lands on is exactly `scored.points`
+ * from scoreOne, nothing recomputed here. Reduced motion shows the final
+ * number immediately, no counting.
+ */
+function AnimatedPoints({
+  points,
+  prefersReducedMotion,
+}: {
+  points: number
+  prefersReducedMotion: boolean
+}) {
+  const [display, setDisplay] = React.useState(prefersReducedMotion ? points : 0)
+  React.useEffect(() => {
+    if (prefersReducedMotion) {
+      setDisplay(points)
+      return
+    }
+    const controls = animate(0, points, {
+      duration: 0.35,
+      onUpdate: (latest) => setDisplay(Math.round(latest)),
+    })
+    return () => controls.stop()
+  }, [points, prefersReducedMotion])
+  return <>{display}</>
+}
+
+/** Field label plus its point value, e.g. "Land · 1 p". */
+function TierPointChip({ label, points }: { label: string; points: number }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+      <span className="text-[11px] font-medium tabular-nums text-brand-400">{points} p</span>
     </div>
   )
 }
@@ -414,6 +541,13 @@ function SaveStatusLabel({ status }: { status: SaveStatus }) {
   }
   if (status === 'error') {
     return <span className="text-xs text-red-600">Kunde inte spara</span>
+  }
+  if (status === 'failed') {
+    return (
+      <span className="text-xs text-red-600 flex items-center gap-1">
+        <CloudOff className="h-3 w-3" /> Sparades inte — dina svar finns kvar
+      </span>
+    )
   }
   return null
 }

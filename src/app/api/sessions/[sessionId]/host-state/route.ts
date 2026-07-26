@@ -10,6 +10,9 @@ const log = loggerFor('api-sessions-host-state')
  *
  * Body: { currentLessonId: number } (course mode — writes course-sessions.currentLesson)
  *   OR  { currentWinePourOrder: number } (plan mode — writes course-sessions.currentWinePourOrder)
+ *   OR  { revealPourOrder: number } (plan mode — set-union into revealedPourOrders)
+ *   OR  { unrevealPourOrder: number } (plan mode — set-difference out of revealedPourOrders;
+ *       lets the host undo a misclicked reveal. Mutually exclusive with revealPourOrder.)
  *
  * Auth: Payload session, must be the session's host (or admin). Triggers
  * downstream SSE broadcasts within the stream's 2s poll tick.
@@ -48,16 +51,36 @@ export async function POST(
     const rawLesson = (body as any)?.currentLessonId
     const rawWine = (body as any)?.currentWinePourOrder
     const rawReveal = (body as any)?.revealPourOrder
+    const rawUnreveal = (body as any)?.unrevealPourOrder
     const currentLessonId = typeof rawLesson === 'number' ? rawLesson : null
     const currentWinePourOrder = typeof rawWine === 'number' ? rawWine : null
     const revealPourOrder =
       typeof rawReveal === 'number' && Number.isInteger(rawReveal) && rawReveal >= 1
         ? rawReveal
         : null
+    const unrevealPourOrder =
+      typeof rawUnreveal === 'number' && Number.isInteger(rawUnreveal) ? rawUnreveal : null
 
-    if (currentLessonId === null && currentWinePourOrder === null && revealPourOrder === null) {
+    // Reveal and un-reveal in the same request are contradictory — reject
+    // rather than silently letting one win.
+    if (revealPourOrder !== null && unrevealPourOrder !== null) {
       return NextResponse.json(
-        { error: 'currentLessonId, currentWinePourOrder, or revealPourOrder must be provided' },
+        { error: 'revealPourOrder and unrevealPourOrder cannot both be provided' },
+        { status: 400 },
+      )
+    }
+
+    if (
+      currentLessonId === null &&
+      currentWinePourOrder === null &&
+      revealPourOrder === null &&
+      unrevealPourOrder === null
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'currentLessonId, currentWinePourOrder, revealPourOrder, or unrevealPourOrder must be provided',
+        },
         { status: 400 },
       )
     }
@@ -75,6 +98,14 @@ export async function POST(
         : []
       const merged = Array.from(new Set([...existing, revealPourOrder])).sort((a, b) => a - b)
       data.revealedPourOrders = merged
+    }
+    if (unrevealPourOrder !== null) {
+      const existing = Array.isArray((session as any).revealedPourOrders)
+        ? ((session as any).revealedPourOrders as number[])
+        : []
+      data.revealedPourOrders = existing
+        .filter((p) => p !== unrevealPourOrder)
+        .sort((a, b) => a - b)
     }
 
     await payload.update({

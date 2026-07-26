@@ -28,9 +28,14 @@ export async function GET(
 
   const payload = await getPayload({ config })
 
-  // Identify caller: cookie first, then payload-token user
+  // Identify caller: cookie first, then payload-token user. Resolved once up
+  // front (rather than only inside the fallback branch) because the
+  // authenticated user is also needed below to determine host-ness for blind
+  // redaction — a cookie-carrying participant may still be logged in.
   const cookieStore = await cookies()
   const participantToken = cookieStore.get(PARTICIPANT_COOKIE)?.value ?? null
+  const cookieString = request.headers.get('cookie') || ''
+  const { user } = await payload.auth({ headers: new Headers({ Cookie: cookieString }) })
 
   let participantId: number | null = null
   if (participantToken) {
@@ -49,23 +54,19 @@ export async function GET(
   }
 
   // Fall back to authed user → participant lookup
-  if (participantId === null) {
-    const cookieString = request.headers.get('cookie') || ''
-    const { user } = await payload.auth({ headers: new Headers({ Cookie: cookieString }) })
-    if (user) {
-      const found = await payload.find({
-        collection: 'session-participants',
-        where: {
-          and: [
-            { session: { equals: sid } },
-            { user: { equals: user.id } },
-          ],
-        },
-        limit: 1,
-        overrideAccess: true,
-      })
-      if (found.docs.length > 0) participantId = (found.docs[0] as any).id
-    }
+  if (participantId === null && user) {
+    const found = await payload.find({
+      collection: 'session-participants',
+      where: {
+        and: [
+          { session: { equals: sid } },
+          { user: { equals: user.id } },
+        ],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (found.docs.length > 0) participantId = (found.docs[0] as any).id
   }
 
   if (participantId === null) {
@@ -111,15 +112,39 @@ export async function GET(
 
   const pourMaps = buildPourMaps(wines)
 
+  // Blind-redaction inputs. Mirrors the host-determination in
+  // mina-provningar/planer/[id]/page.tsx: compare the authenticated user's id
+  // against the session's host, guarding against `host` being a bare id vs a
+  // populated object (and never doing `typeof host === 'object'` before
+  // confirming `host` is truthy — `typeof null === 'object'` in JS).
+  const isBlind = Boolean((session as any)?.blindTasting)
+  const revealedPourOrders = new Set<number>(
+    Array.isArray((session as any)?.revealedPourOrders)
+      ? ((session as any).revealedPourOrders as number[])
+      : [],
+  )
+  const hostField = (session as any)?.host
+  const hostId = hostField ? (typeof hostField === 'object' ? hostField.id : hostField) : null
+  const isHost = Boolean(user && hostId != null && Number(hostId) === Number(user.id))
+
   const submittedPourOrders = new Set<number>()
   const reviews = (reviewRes.docs as any[]).map((r) => {
+    // Resolve pour order from the un-redacted row FIRST — submittedPourOrders
+    // must reflect what was actually submitted regardless of redaction below.
     const pourOrder = resolvePourForReview(r, pourMaps)
     if (pourOrder != null) submittedPourOrders.add(pourOrder)
+
+    // Finding 1: this endpoint must never hand a guest the identity of a wine
+    // the host hasn't revealed yet. Redact wine/customWine when the session
+    // is blind, the caller isn't the host, and this pour isn't revealed
+    // (including when the pour couldn't be resolved at all — fail closed).
+    const shouldRedact = isBlind && !isHost && !(pourOrder != null && revealedPourOrders.has(pourOrder))
+
     return {
       id: r.id,
       pourOrder,
-      wine: r.wine ? (typeof r.wine === 'object' ? r.wine.id : r.wine) : null,
-      customWine: r.customWine ?? null,
+      wine: shouldRedact ? null : r.wine ? (typeof r.wine === 'object' ? r.wine.id : r.wine) : null,
+      customWine: shouldRedact ? null : (r.customWine ?? null),
       rating: r.rating ?? null,
       buyAgain: r.buyAgain ?? false,
       reviewText: r.reviewText ?? null,

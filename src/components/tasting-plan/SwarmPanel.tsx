@@ -21,14 +21,25 @@ function renderStars(rating: number | null): string {
 /**
  * Tiny per-wine swarm card. Renders below a wine row's action buttons.
  *
- * - When `entry` is null/undefined OR has zero ratings, shows an empty state.
+ * - When `entry` is null/undefined, the SSE payload simply hasn't arrived yet
+ *   — shows a neutral loading state (NOT "you were first").
+ * - When `entry.ratingCount === 0`, this really is the first rating — shows
+ *   the "you were first" copy.
  * - Otherwise shows: avg rating chip + reviewer count + aroma frequency chips.
  *
  * The parent is responsible for gating visibility (host always; guest only
  * after they've submitted their own review for this wine).
  */
 export function SwarmPanel({ entry }: SwarmPanelProps) {
-  if (!entry || entry.ratingCount === 0) {
+  if (!entry) {
+    return (
+      <div className="mt-3 rounded-md border border-dashed bg-card/50 p-3">
+        <p className="text-xs text-muted-foreground">Laddar betyg…</p>
+      </div>
+    )
+  }
+
+  if (entry.ratingCount === 0) {
     return (
       <div className="mt-3 rounded-md border border-dashed bg-card/50 p-3">
         <p className="text-xs text-muted-foreground">Inga betyg ännu — du var först.</p>
@@ -43,9 +54,7 @@ export function SwarmPanel({ entry }: SwarmPanelProps) {
           {renderStars(entry.avgRating)}
         </span>
         <span className="text-sm font-medium">{entry.avgRating.toFixed(1)}</span>
-        <span className="text-xs text-muted-foreground">
-          ({entry.ratingCount} {entry.ratingCount === 1 ? 'betyg' : 'betyg'})
-        </span>
+        <span className="text-xs text-muted-foreground">({entry.ratingCount} betyg)</span>
       </div>
       {entry.aromaCounts.length > 0 && (
         <div className="space-y-1">

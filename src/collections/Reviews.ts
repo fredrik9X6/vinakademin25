@@ -418,6 +418,16 @@ export const Reviews: CollectionConfig = {
       },
     },
     {
+      name: 'buyAgain',
+      type: 'checkbox',
+      label: 'Skulle köpa igen',
+      defaultValue: false,
+      admin: {
+        description:
+          'Participant answered "Jag hade köpt detta vin igen". Feeds the session recap.',
+      },
+    },
+    {
       name: 'reviewText',
       type: 'richText',
       label: 'Recensionstext',

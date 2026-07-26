@@ -1,28 +1,15 @@
 'use client'
 
 import * as React from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { TastingPlan, Wine, CourseSession } from '@/payload-types'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { SessionDialogs } from '@/components/tasting-plan/SessionDialogs'
+import { SessionFocusNudge } from '@/components/tasting-plan/SessionFocusNudge'
 import {
   Sheet,
   SheetContent,
@@ -32,17 +19,27 @@ import {
 import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
 import { resolveWinePurchase } from '@/lib/wine-purchase-info'
 import { WinePurchaseMeta } from '@/components/tasting-shared/WinePurchaseMeta'
-import { Wine as WineIcon, LogOut, CheckCircle, Info } from 'lucide-react'
+import { Wine as WineIcon, LogOut, CheckCircle, Info, ListChecks } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
-import type { BlindAnswer } from '@/lib/blind-guess-scoring'
+import { SessionWineList, type SessionWineListRow } from '@/components/tasting-plan/SessionWineList'
+import { RevealResultModal } from '@/components/tasting-plan/RevealResultModal'
+import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
-import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
+import { summariseCommit, type CommitPartResult } from '@/lib/session-commit'
+import { useActiveSession } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
+import {
+  HostFocusButton,
+  HostRevealButton,
+  HostNextWineButton,
+  HostSubmissionTracker,
+} from './HostWineControls'
 import { SwarmPanel } from './SwarmPanel'
 import { HostSessionTour } from '@/components/onboarding/HostSessionTour'
 import { trackEvent } from '@/components/analytics'
+import { shouldFollowHost } from '@/lib/use-follow-host'
 
 interface PlanSessionContentProps {
   session: CourseSession
@@ -239,8 +236,8 @@ function rowFromEntry(
  * Plan-driven session content.
  *
  * Renders the flat ordered wine list from a TastingPlan (no modules/lessons),
- * with host pacing controls and a per-wine "Betygsätt" dialog that opens
- * WineReviewForm in either library-wine or custom-wine snapshot mode.
+ * with host pacing controls and a per-wine inline tasting-note disclosure that
+ * renders WineReviewForm in either library-wine or custom-wine snapshot mode.
  *
 
 
@@ -255,8 +252,20 @@ export function PlanSessionContent({
   sidebarExtra,
 }: PlanSessionContentProps) {
   const rows: WineRow[] = (plan.wines ?? []).map(rowFromEntry)
-  const [reviewing, setReviewing] = React.useState<WineRow | null>(null)
+  // Gate for the reveal identity fade below — final state renders immediately
+  // with no transition when reduced motion is preferred. (Distinct from the
+  // one-off matchMedia check inside scrollPourIntoView further down, which
+  // isn't a hook and serves a different, non-animation purpose.)
+  const reduceMotion = Boolean(useReducedMotion())
   const [infoWine, setInfoWine] = React.useState<WineRow | null>(null)
+  // Bottom sheet listing every wine — opened from the "Alla viner" header control.
+  const [wineListOpen, setWineListOpen] = React.useState(false)
+  // Which pour's tasting-note disclosure is open. null = "follow the host"
+  // (the wine currently in focus is open by default); a pour number = the
+  // participant deliberately opened that one; -1 = deliberately collapsed
+  // everything (distinct from null so the collapse action doesn't just snap
+  // back to following the host).
+  const [expandedPour, setExpandedPour] = React.useState<number | null>(null)
   const [settingFocus, setSettingFocus] = React.useState(false)
   // Optimistic local focus — fires immediately when the host taps a wine so
   // their own UI doesn't wait for the SSE round-trip. Only the host ever sets
@@ -275,6 +284,31 @@ export function PlanSessionContent({
     submittedAt: string | null
   }
   const [myGuesses, setMyGuesses] = React.useState<Map<number, LocalGuess>>(new Map())
+  // Latest in-progress guess/review per pour, mirrored up from BlindGuessCard
+  // (onGuessChange) and WineReviewForm (onReviewChange) on every change,
+  // including hydration. Refs (not state) — commitWine reads the current
+  // value at click time without needing these to trigger a re-render.
+  const guessDraftsRef = React.useRef<
+    Map<
+      number,
+      { guessedCountry: string | null; guessedGrape: string | null; guessedPriceBucket: PriceBucket | null }
+    >
+  >(new Map())
+  const reviewDraftsRef = React.useRef<
+    Map<
+      number,
+      {
+        rating: number | null
+        buyAgain: boolean
+        reviewText: string
+        wsetTasting: Record<string, unknown>
+        publishedToProfile: boolean
+      }
+    >
+  >(new Map())
+  // Pour order currently being committed — disables that row's button and
+  // shows "Sparar…" while the request is in flight.
+  const [committingPour, setCommittingPour] = React.useState<number | null>(null)
   // One-time "answers restored" banner trigger.
   const [restoredBanner, setRestoredBanner] = React.useState(false)
   const dismissRestoredBanner = React.useCallback(() => setRestoredBanner(false), [])
@@ -320,6 +354,12 @@ export function PlanSessionContent({
   // Optimistic local reveal set so the host sees the change instantly
   // before SSE catches up.
   const [localRevealed, setLocalRevealed] = React.useState<Set<number>>(new Set())
+  // Optimistic local UN-reveal set, mirroring localRevealed. Needed because
+  // `effectiveRevealed` below is a union with the SSE-sourced
+  // `revealedPourOrders` — merely deleting a pour from `localRevealed` isn't
+  // enough to hide it instantly if the (stale, pre-poll) base set still
+  // contains it. This is subtracted last so it always wins.
+  const [localUnrevealed, setLocalUnrevealed] = React.useState<Set<number>>(new Set())
   const router = useRouter()
   const {
     hostCurrentWinePourOrder,
@@ -400,8 +440,9 @@ export function PlanSessionContent({
   const effectiveRevealed = React.useMemo(() => {
     const s = new Set<number>(revealedPourOrders ?? [])
     localRevealed.forEach((p) => s.add(p))
+    localUnrevealed.forEach((p) => s.delete(p))
     return s
-  }, [revealedPourOrders, localRevealed])
+  }, [revealedPourOrders, localRevealed, localUnrevealed])
 
   const isBlind = Boolean((session as any).blindTasting)
 
@@ -421,17 +462,118 @@ export function PlanSessionContent({
         : [],
     ),
   )
+  // NOTE: this must also catch REMOVALS (host un-reveal), not just additions.
+  // An un-reveal deletes a pour from revealedPourOrders; if this effect only
+  // watched for newly-added entries, the guest's already-rendered React state
+  // (and any cached server props) would keep showing the wine's real identity
+  // after the host hid it again — an undo that doesn't undo, on the one path
+  // where the data must actually disappear again. So: diff the full sets in
+  // both directions and refetch on any change, additions or removals alike.
   React.useEffect(() => {
     if (isHost || !isBlind) return
-    let hasNew = false
-    for (const p of revealedPourOrders ?? []) {
-      if (!seenRevealedRef.current.has(p)) {
-        hasNew = true
-        seenRevealedRef.current.add(p)
-      }
+    const current = new Set<number>(revealedPourOrders ?? [])
+    let changed = false
+    for (const p of current) {
+      if (!seenRevealedRef.current.has(p)) changed = true
     }
-    if (hasNew) router.refresh()
+    for (const p of seenRevealedRef.current) {
+      if (!current.has(p)) changed = true
+    }
+    if (changed) {
+      seenRevealedRef.current = current
+      router.refresh()
+    }
   }, [revealedPourOrders, isHost, isBlind, router])
+
+  // ── Reveal-result modal ────────────────────────────────────────────────
+  // Every participant (host included) gets a shared beat when a wine is
+  // revealed: what it was, how they did, and how the standings moved.
+  //
+  // Per-wine points come from diffing the roster's cumulative points against a
+  // snapshot taken BEFORE the reveal. The live scorer recomputes cumulative
+  // points from revealed pours on the same SSE tick as the reveal itself, so
+  // the delta is exactly this wine's contribution.
+  //
+  // EFFECT ORDER IS LOAD-BEARING: this detection effect is declared BEFORE the
+  // snapshot effect below. React runs effects in declaration order, so on the
+  // commit where a reveal lands, this one still sees the previous commit's
+  // points. Swapping them would overwrite the snapshot with post-reveal points
+  // and every delta would read 0.
+  const [revealModalPour, setRevealModalPour] = React.useState<number | null>(null)
+  const [pointsBefore, setPointsBefore] = React.useState<Map<string | number, number>>(new Map())
+  const pointsSnapshotRef = React.useRef<Map<string | number, number>>(new Map())
+  const announcedRevealsRef = React.useRef<Set<number>>(
+    new Set<number>(
+      Array.isArray((session as { revealedPourOrders?: number[] }).revealedPourOrders)
+        ? ((session as { revealedPourOrders?: number[] }).revealedPourOrders as number[])
+        : [],
+    ),
+  )
+
+  React.useEffect(() => {
+    if (!isBlind) return
+    const current = revealedPourOrders ?? []
+    // Only additions open the modal — an un-reveal must not.
+    const fresh = current.filter((p) => !announcedRevealsRef.current.has(p))
+    // Keep the set in sync in both directions so an un-reveal/re-reveal cycle
+    // announces again rather than being silently swallowed.
+    announcedRevealsRef.current = new Set<number>(current)
+    if (fresh.length === 0) return
+    setPointsBefore(new Map(pointsSnapshotRef.current))
+    setRevealModalPour(Math.max(...fresh))
+  }, [revealedPourOrders, isBlind, session])
+
+  React.useEffect(() => {
+    pointsSnapshotRef.current = new Map(roster.map((p) => [p.id, p.points]))
+  }, [roster])
+
+  // Blindness-redacted view of each row — the single source of truth for
+  // "what can this viewer see". Both the wine cards below and the Alla viner
+  // sheet render from this array (never from raw `rows`), so a redaction
+  // rule only has to be right once.
+  type DisplayWineRow = WineRow & {
+    isHiddenForGuest: boolean
+    /** True exactly during the window the comment above describes: this
+     * guest's `effectiveRevealed` already has the pour (SSE/optimistic
+     * state), but the row still holds the load-time redacted nulls because
+     * router.refresh() hasn't landed yet. Both libraryWineId and
+     * customWineSnapshot are null only in two cases — genuinely still
+     * hidden, or this in-between window — and isHiddenForGuest already
+     * covers the first, so anything left here is the second. */
+    revealPending: boolean
+  }
+  const displayRows: DisplayWineRow[] = React.useMemo(
+    () =>
+      rows.map((row): DisplayWineRow => {
+        const isHiddenForGuest = isBlind && !isHost && !effectiveRevealed.has(row.pourOrder)
+        const revealPending =
+          isBlind &&
+          !isHost &&
+          !isHiddenForGuest &&
+          row.libraryWineId == null &&
+          row.customWineSnapshot == null
+        if (isHiddenForGuest) {
+          return {
+            ...row,
+            title: `Vin #${row.pourOrder}`,
+            subtitle: '',
+            hostNotes: null,
+            imageUrl: null,
+            abv: null,
+            servingTemp: null,
+            guestDescription: null,
+            foodPairing: null,
+            priceSek: null,
+            articleNumber: null,
+            systembolagetUrl: null,
+            isHiddenForGuest,
+            revealPending,
+          }
+        }
+        return { ...row, isHiddenForGuest, revealPending }
+      }),
+    [rows, isBlind, isHost, effectiveRevealed],
+  )
 
   // Local optimistic value wins (only set on the host's own tap), then
   // realtime SSE, then the initial server-rendered prop. `null` only when
@@ -440,6 +582,118 @@ export function PlanSessionContent({
     localFocus ??
     hostCurrentWinePourOrder ??
     (typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null)
+
+  // The wine whose form is currently open — drives the sticky mobile commit
+  // bar. Mirrors the per-row `isExpanded` derivation exactly (expandedPour of
+  // -1 means the participant deliberately collapsed everything, so no bar).
+  const expandedRow = React.useMemo(() => {
+    const target = expandedPour ?? activePour
+    if (target == null || target === -1) return null
+    return displayRows.find((r) => r.pourOrder === target) ?? null
+  }, [expandedPour, activePour, displayRows])
+
+  // Declared after `displayRows` — referencing it earlier would hit the TDZ.
+  const revealModalRow = React.useMemo(
+    () =>
+      revealModalPour == null
+        ? null
+        : displayRows.find((r) => r.pourOrder === revealModalPour) ?? null,
+    [revealModalPour, displayRows],
+  )
+
+  // "Alla viner" sheet rows — built from `displayRows`, the same
+  // already-redacted source the wine cards render titles from, so an
+  // unrevealed blind wine reads as "Vin #N" here too. Status derives from the
+  // existing submittedPourOrders / activePour state (no second source of
+  // truth); points reuse the same scoreOne call BlindGuessCard uses once a
+  // wine is revealed and this viewer has a guess for it.
+  const wineListRows: SessionWineListRow[] = React.useMemo(
+    () =>
+      displayRows.map((row): SessionWineListRow => {
+        const status: SessionWineListRow['status'] = submittedPourOrders.has(row.pourOrder)
+          ? 'Klar'
+          : activePour === row.pourOrder
+            ? 'Pågår'
+            : 'Ej börjad'
+        let points: number | null = null
+        if (isBlind && effectiveRevealed.has(row.pourOrder)) {
+          const guess = myGuesses.get(row.pourOrder)
+          if (guess) {
+            points = scoreOne(
+              {
+                guessedCountry: guess.country,
+                guessedGrape: guess.grape,
+                guessedPriceBucket: guess.priceBucket,
+              },
+              row.blindAnswer,
+            ).points
+          }
+        }
+        return { pourOrder: row.pourOrder, title: row.title, status, points }
+      }),
+    [displayRows, submittedPourOrders, activePour, isBlind, effectiveRevealed, myGuesses],
+  )
+
+  // --- Focus-follows-host (guests only; the host is the one driving the
+  // moves, they don't need to be nudged to follow themselves) -------------
+  // Last pointer/keyboard interaction anywhere within the wine list. Used by
+  // shouldFollowHost() to decide whether an auto-advance would hijack the
+  // screen out from under someone mid-interaction.
+  const lastInteractionAtRef = React.useRef<number | null>(null)
+  const markInteraction = React.useCallback(() => {
+    lastInteractionAtRef.current = Date.now()
+  }, [])
+  // DOM nodes for each wine card, keyed by pourOrder, so the follow effect
+  // can scroll the newly-focused card into view.
+  const rowRefsMap = React.useRef<Map<number, HTMLLIElement>>(new Map())
+  const setRowRef = React.useCallback((pourOrder: number, el: HTMLLIElement | null) => {
+    if (el) rowRefsMap.current.set(pourOrder, el)
+    else rowRefsMap.current.delete(pourOrder)
+  }, [])
+  // Pour the host has moved to that this viewer hasn't followed yet — drives
+  // the dismissible nudge bar. null = no pending nudge.
+  const [pendingFollowPour, setPendingFollowPour] = React.useState<number | null>(null)
+  // Seeded with the initial activePour so the mount render doesn't count as
+  // a "the host moved" transition (no scroll-on-load).
+  const prevActivePourRef = React.useRef<number | null>(activePour)
+
+  const scrollPourIntoView = React.useCallback((pourOrder: number) => {
+    const el = rowRefsMap.current.get(pourOrder)
+    if (!el) return
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
+  }, [])
+
+  const followHostNow = React.useCallback(
+    (pourOrder: number) => {
+      // Re-following resets to "follow the host" (null) UNLESS the viewer
+      // deliberately collapsed every card (-1). That collapse is a distinct,
+      // sticky choice — the host advancing shouldn't resurrect a card the
+      // participant chose to close. The card position still follows; it just
+      // stays collapsed.
+      setExpandedPour((prev) => (prev === -1 ? -1 : null))
+      setPendingFollowPour(null)
+      scrollPourIntoView(pourOrder)
+    },
+    [scrollPourIntoView],
+  )
+
+  // Guests only: when the host's focus changes, either follow (scroll +
+  // re-sync expandedPour) or, if the viewer is mid-interaction, hold position
+  // and surface a dismissible nudge instead of moving the screen under them.
+  React.useEffect(() => {
+    if (isHost) return
+    if (activePour === null) return
+    if (prevActivePourRef.current === activePour) return
+    prevActivePourRef.current = activePour
+    if (shouldFollowHost(lastInteractionAtRef.current, Date.now())) {
+      followHostNow(activePour)
+    } else {
+      setPendingFollowPour(activePour)
+    }
+  }, [activePour, isHost, followHostNow])
 
   async function setFocus(pourOrder: number) {
     setSettingFocus(true)
@@ -488,6 +742,12 @@ export function PlanSessionContent({
 
   async function revealWine(pourOrder: number) {
     setLocalRevealed((prev) => new Set([...prev, pourOrder]))
+    setLocalUnrevealed((prev) => {
+      if (!prev.has(pourOrder)) return prev
+      const next = new Set(prev)
+      next.delete(pourOrder)
+      return next
+    })
     trackEvent('session_wine_revealed', {
       session_id: String(session.id),
       plan_id: plan.id,
@@ -499,28 +759,155 @@ export function PlanSessionContent({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ revealPourOrder: pourOrder }),
       })
-      if (!res.ok) toast.error('Kunde inte avslöja vinet.')
+      if (res.ok) {
+        // 30s is the toast's own duration — there is deliberately no
+        // server-side expiry on the undo. It's the host's own session;
+        // un-revealing within the window (or after it) is their prerogative.
+        toast.success(`Vin #${pourOrder} avslöjat`, {
+          duration: 30000,
+          action: {
+            label: 'Ångra',
+            onClick: () => void unrevealWine(pourOrder),
+          },
+        })
+      } else {
+        toast.error('Kunde inte avslöja vinet.')
+      }
     } catch {
       toast.error('Nätverksfel — försök igen.')
     }
   }
 
+  // Undo for a misclicked reveal. Mirrors revealWine's optimistic shape but
+  // in the opposite direction: pull the pour out of the locally-revealed set
+  // (and record it in localUnrevealed so effectiveRevealed hides it instantly
+  // even before the SSE-sourced revealedPourOrders catches up), then POST the
+  // set-difference to the server. On failure, put it back.
+  async function unrevealWine(pourOrder: number) {
+    setLocalUnrevealed((prev) => new Set([...prev, pourOrder]))
+    setLocalRevealed((prev) => {
+      if (!prev.has(pourOrder)) return prev
+      const next = new Set(prev)
+      next.delete(pourOrder)
+      return next
+    })
+    trackEvent('session_wine_unrevealed', {
+      session_id: String(session.id),
+      plan_id: plan.id,
+      pour_order: pourOrder,
+    })
+    try {
+      const res = await fetch(`/api/sessions/${session.id}/host-state`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unrevealPourOrder: pourOrder }),
+      })
+      if (!res.ok) {
+        setLocalUnrevealed((prev) => {
+          const next = new Set(prev)
+          next.delete(pourOrder)
+          return next
+        })
+        setLocalRevealed((prev) => new Set([...prev, pourOrder]))
+        toast.error('Kunde inte ångra.')
+      }
+    } catch {
+      setLocalUnrevealed((prev) => {
+        const next = new Set(prev)
+        next.delete(pourOrder)
+        return next
+      })
+      setLocalRevealed((prev) => new Set([...prev, pourOrder]))
+      toast.error('Kunde inte ångra.')
+    }
+  }
+
+  // The single "Klar med vin #N" commit — replaces the old two separate
+  // lock-ins (BlindGuessCard's own "Lås in" + WineReviewForm's "Klar / Lås
+  // in") with one POST carrying whatever the guess card and the note form
+  // currently hold. A part with no content is legitimately absent — the
+  // server reports it 'skipped', not 'failed' (see summariseCommit).
+  async function commitWine(pourOrder: number) {
+    setCommittingPour(pourOrder)
+    try {
+      const guess = guessDraftsRef.current.get(pourOrder) ?? null
+      const review = reviewDraftsRef.current.get(pourOrder) ?? null
+      const res = await fetch(`/api/sessions/${session.id}/wines/${pourOrder}/commit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...(guess ? { guess } : {}),
+          ...(review ? { review } : {}),
+        }),
+      })
+      const data = (await res.json().catch(() => null)) as {
+        guess?: CommitPartResult
+        review?: CommitPartResult
+      } | null
+
+      if (res.ok && data && typeof data.guess === 'string' && typeof data.review === 'string') {
+        const summary = summariseCommit({ guess: data.guess, review: data.review })
+        if (summary.ok) {
+          setSubmittedPourOrders((prev) => new Set([...prev, pourOrder]))
+          toast.success(summary.message)
+        } else {
+          // Partial (or total) failure — do NOT mark the wine done. The
+          // participant pressed one button and is owed one honest answer.
+          toast.error(summary.message)
+        }
+        return
+      }
+      toast.error('Kunde inte spara — försök igen.')
+    } catch {
+      toast.error('Nätverksfel — försök igen.')
+    } finally {
+      setCommittingPour(null)
+    }
+  }
+
   return (
     <>
-      <header className="flex items-center justify-between mb-4">
+      {/* Mobile stacks the title above the actions: side-by-side, the two
+          buttons take ~250px of a 375px screen and the tasting title was
+          truncated to a few characters. From sm up the original row returns. */}
+      <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-heading truncate">{plan.title}</h1>
+          <h1 className="truncate text-xl font-heading">{plan.title}</h1>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => (isHost ? setEndDialog(true) : setLeaveDialog(true))}
-          disabled={endingOrLeaving}
-        >
-          <LogOut className="h-4 w-4 mr-1.5" />
-          {isHost ? 'Avsluta session' : 'Lämna session'}
-        </Button>
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11"
+            onClick={() => setWineListOpen(true)}
+          >
+            <ListChecks className="h-4 w-4 mr-1.5" />
+            Alla viner
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => (isHost ? setEndDialog(true) : setLeaveDialog(true))}
+            disabled={endingOrLeaving}
+          >
+            <LogOut className="h-4 w-4 mr-1.5" />
+            {isHost ? 'Avsluta session' : 'Lämna session'}
+          </Button>
+        </div>
       </header>
+
+      <SessionWineList
+        open={wineListOpen}
+        onOpenChange={setWineListOpen}
+        rows={wineListRows}
+        isBlind={isBlind}
+        onSelect={(pourOrder) => {
+          markInteraction()
+          setWineListOpen(false)
+          scrollPourIntoView(pourOrder)
+        }}
+      />
 
       {restoredBanner && (
         <RestoredBanner onDismiss={dismissRestoredBanner} />
@@ -531,80 +918,106 @@ export function PlanSessionContent({
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      {/* Standings first on mobile: the <aside> below stacks AFTER the whole
+          wine list on a phone, burying the leaderboard under every wine. */}
+      {sidebarExtra && <div className="lg:hidden">{sidebarExtra}</div>}
       <div className="space-y-4 min-w-0">
         {rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">Inga viner i planen.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul
+            className="space-y-2"
+            onPointerDown={markInteraction}
+            onKeyDown={markInteraction}
+          >
             {rows.map((row, idx) => {
-              const isHiddenForGuest =
-                isBlind && !isHost && !effectiveRevealed.has(row.pourOrder)
-              const displayRow = isHiddenForGuest
-                ? {
-                    ...row,
-                    title: `Vin #${row.pourOrder}`,
-                    subtitle: '',
-                    hostNotes: null as string | null,
-                    imageUrl: null as string | null,
-                    abv: null as number | null,
-                    servingTemp: null as string | null,
-                    guestDescription: null as string | null,
-                    foodPairing: null as string | null,
-                    priceSek: null as number | null,
-                    articleNumber: null as string | null,
-                    systembolagetUrl: null as string | null,
-                  }
-                : row
+              const displayRow = displayRows[idx]
               const isActive = activePour === row.pourOrder
+              const isExpanded = (expandedPour ?? activePour) === row.pourOrder
               const showRevealButton = isHost && isBlind && !effectiveRevealed.has(row.pourOrder)
               const swarmEntry = swarm[row.pourOrder]
               const shouldShowSwarm = isHost || submittedPourOrders.has(row.pourOrder)
               return (
-                <li key={row.key}>
+                <li key={row.key} ref={(el) => setRowRef(row.pourOrder, el)}>
                   <Card
                     className={`p-4 transition-shadow ${
                       isActive ? 'border-brand-400 ring-2 ring-brand-400/40' : ''
                     }`}
                   >
-                    <div className="flex gap-3 sm:gap-4 items-center">
-                      <div className="relative flex-shrink-0 w-20 h-32 sm:w-24 sm:h-36">
+                    {displayRow.revealPending ? (
+                      <RevealPendingSkeleton pourOrder={row.pourOrder} />
+                    ) : (
+                    /* Mobile stacks the bottle above the inputs; from sm up it
+                       returns to a side-by-side row.
+                       Why: the image column is ~128px tall but the content
+                       column runs the full guess panel + tasting-note form —
+                       often 1000px+. With `items-center` the bottle floated in
+                       the vertical middle of a narrow 80px strip, leaving a
+                       long empty gutter down the left of every card. Stacking
+                       gives the inputs the full width, and `sm:items-start`
+                       top-aligns the bottle on desktop instead of centring it
+                       against a form it has nothing to do with. */
+                    <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-start">
+                      <div className="relative w-full h-28 flex-shrink-0 sm:w-24 sm:h-36">
                         <span
                           className="absolute inset-0 flex items-start justify-start font-heading leading-[0.85] text-muted-foreground/25 select-none pointer-events-none text-[110px] sm:text-[130px] -ml-2 -mt-1"
                           aria-hidden="true"
                         >
                           {row.pourOrder}
                         </span>
-                        {displayRow.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={displayRow.imageUrl}
-                            alt=""
-                            className="relative w-full h-full object-contain"
-                          />
-                        ) : (
-                          <WineImagePlaceholder />
-                        )}
+                        {/* Keyed on hidden/revealed so the guest's blind-reveal
+                            moment remounts this (host/non-blind rows keep a
+                            constant key, so this only ever plays once, on the
+                            wine's initial mount). */}
+                        <motion.div
+                          key={displayRow.isHiddenForGuest ? 'hidden' : 'revealed'}
+                          initial={reduceMotion ? false : { opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: reduceMotion ? 0 : 0.25 }}
+                          className="relative w-full h-full"
+                        >
+                          {displayRow.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={displayRow.imageUrl}
+                              alt=""
+                              // h-full w-auto mx-auto: on the full-width mobile
+                              // band the bottle is height-constrained and
+                              // centred rather than stretched across 375px.
+                              className="relative h-full w-auto mx-auto object-contain sm:w-full"
+                            />
+                          ) : (
+                            <WineImagePlaceholder />
+                          )}
+                        </motion.div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-medium truncate">{displayRow.title}</p>
-                          {isActive && (
-                            <Badge variant="brand">
-                              <WineIcon className="h-3 w-3 mr-1" />
-                              Värden pratar om detta
-                            </Badge>
+                        <motion.div
+                          key={displayRow.isHiddenForGuest ? 'hidden' : 'revealed'}
+                          initial={reduceMotion ? false : { opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: reduceMotion ? 0 : 0.25 }}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium truncate">{displayRow.title}</p>
+                            {isActive && (
+                              <Badge variant="brand">
+                                <WineIcon className="h-3 w-3 mr-1" />
+                                Värden pratar om detta
+                              </Badge>
+                            )}
+                          </div>
+                          {displayRow.subtitle && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {displayRow.subtitle}
+                            </p>
                           )}
-                        </div>
-                        {displayRow.subtitle && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {displayRow.subtitle}
-                          </p>
-                        )}
-                        <WinePurchaseMeta
-                          priceSek={displayRow.priceSek}
-                          articleNumber={displayRow.articleNumber}
-                          systembolagetUrl={displayRow.systembolagetUrl}
-                        />
+                          <WinePurchaseMeta
+                            priceSek={displayRow.priceSek}
+                            articleNumber={displayRow.articleNumber}
+                            systembolagetUrl={displayRow.systembolagetUrl}
+                          />
+                        </motion.div>
                         {isHost &&
                           (row.hostNotes ||
                             row.abv != null ||
@@ -615,7 +1028,7 @@ export function PlanSessionContent({
                               type="button"
                               size="sm"
                               variant="ghost"
-                              className="mt-2 h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                              className="mt-2 min-h-11 h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                               onClick={() => setInfoWine(row)}
                             >
                               <Info className="h-3 w-3 mr-1" />
@@ -624,35 +1037,20 @@ export function PlanSessionContent({
                           )}
                         <div className="mt-3 flex gap-2 flex-wrap items-center">
                           {isHost && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={isActive ? 'default' : 'outline'}
+                            <HostFocusButton
+                              pourOrder={row.pourOrder}
+                              isFirst={idx === 0}
+                              isActive={isActive}
                               disabled={settingFocus}
                               onClick={() => setFocus(row.pourOrder)}
-                              {...(idx === 0 ? { 'data-tour': 'session-set-focus' } : {})}
-                            >
-                              {isActive ? 'I fokus' : 'Sätt fokus'}
-                            </Button>
+                            />
                           )}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setReviewing(displayRow)}
-                          >
-                            Betygsätt
-                          </Button>
                           {showRevealButton && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
+                            <HostRevealButton
+                              pourOrder={row.pourOrder}
+                              isFirst={idx === 0}
                               onClick={() => attemptReveal(row.pourOrder)}
-                              {...(idx === 0 ? { 'data-tour': 'session-reveal' } : {})}
-                            >
-                              Avslöja vin #{row.pourOrder}
-                            </Button>
+                            />
                           )}
                           {isActive && plan.defaultMinutesPerWine ? (
                             <div {...(idx === 0 ? { 'data-tour': 'session-timer' } : {})}>
@@ -667,7 +1065,7 @@ export function PlanSessionContent({
                           plan.defaultMinutesPerWine &&
                           hostFocusStartedAt &&
                           row.pourOrder < rows.length ? (
-                            <NextWineButton
+                            <HostNextWineButton
                               startedAt={hostFocusStartedAt}
                               minutesPerWine={plan.defaultMinutesPerWine}
                               onNext={() => setFocus(row.pourOrder + 1)}
@@ -692,6 +1090,9 @@ export function PlanSessionContent({
                               myGuesses.get(row.pourOrder)?.submittedAt ?? null
                             }
                             onRestored={() => setRestoredBanner(true)}
+                            onGuessChange={(guess) =>
+                              guessDraftsRef.current.set(row.pourOrder, guess)
+                            }
                           />
                         )}
 
@@ -710,6 +1111,80 @@ export function PlanSessionContent({
                             </div>
                           )}
 
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedPour(isExpanded ? -1 : row.pourOrder)
+                          }
+                          aria-expanded={isExpanded}
+                          className="mt-3 flex min-h-11 w-full items-center justify-between rounded-md border border-input px-3 text-sm hover:bg-accent"
+                        >
+                          <span className="font-medium">Din smaknotering</span>
+                          <span className="text-xs text-muted-foreground">
+                            {submittedPourOrders.has(row.pourOrder) ? 'Klar' : 'Ej klar'}
+                          </span>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="mt-3 rounded-md border bg-card p-3">
+                            {isBlind && (
+                              <p className="mb-3 text-xs text-muted-foreground">
+                                Din smaknotering ger inga poäng — bara blindgissningen räknas.
+                              </p>
+                            )}
+                            <WineReviewForm
+                              key={`review-${row.pourOrder}`}
+                              lessonId={0}
+                              sessionId={String(session.id)}
+                              pourOrder={row.pourOrder}
+                              {...(displayRow.libraryWineId
+                                ? { wineIdProp: displayRow.libraryWineId }
+                                : {})}
+                              {...(displayRow.customWineSnapshot
+                                ? { customWineSnapshot: displayRow.customWineSnapshot }
+                                : {})}
+                              onRestored={() => setRestoredBanner(true)}
+                              onReviewChange={(review) =>
+                                reviewDraftsRef.current.set(row.pourOrder, review)
+                              }
+                            />
+                          </div>
+                        )}
+
+                        {/* Inline commit — desktop only. On mobile this button
+                            sits at the bottom of a form that runs to ~20
+                            controls in Avancerad, so it is rendered instead in
+                            the sticky bar below (md:hidden), always in reach. */}
+                        {isHost ? (
+                          // Secondary styling for the host — "Avslöja vin #N" is the
+                          // host's primary action on this card (there must be exactly
+                          // one primary CTA per screen per the styleguide). Hosts still
+                          // commit their own tasting note/guess so their rating feeds
+                          // the guest-facing swarm average; it's just not the primary CTA.
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-3 hidden w-full min-h-11 md:flex"
+                            onClick={() => void commitWine(row.pourOrder)}
+                            disabled={committingPour === row.pourOrder}
+                          >
+                            {committingPour === row.pourOrder
+                              ? 'Sparar…'
+                              : `Klar med vin #${row.pourOrder}`}
+                          </Button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-brand mt-3 hidden w-full min-h-11 md:block"
+                            onClick={() => void commitWine(row.pourOrder)}
+                            disabled={committingPour === row.pourOrder}
+                          >
+                            {committingPour === row.pourOrder
+                              ? 'Sparar…'
+                              : `Klar med vin #${row.pourOrder}`}
+                          </button>
+                        )}
+
                         {isHost && isActive && (
                           <HostSubmissionTracker
                             roster={roster}
@@ -720,16 +1195,86 @@ export function PlanSessionContent({
                         {shouldShowSwarm && <SwarmPanel entry={swarmEntry ?? null} />}
                       </div>
                     </div>
+                    )}
                   </Card>
                 </li>
               )
             })}
           </ul>
         )}
+
+        <SessionFocusNudge
+          pendingFollowPour={pendingFollowPour}
+          onFollow={followHostNow}
+          onDismiss={() => setPendingFollowPour(null)}
+        />
       </div>
 
       {sidebarExtra && (
-        <aside className="lg:sticky lg:top-20 lg:self-start space-y-3">{sidebarExtra}</aside>
+        <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start space-y-3">{sidebarExtra}</aside>
+      )}
+
+      {/* Sticky mobile commit bar.
+          The inline button sits below the whole tasting-note form, which runs
+          to ~20 controls at 44px in Avancerad — on a phone that is a long
+          scroll away from the thing you just finished typing. This keeps the
+          one commit action permanently in reach. Offsets follow the proven
+          in-repo pattern (LessonViewer): clear MobileBottomNav's 4rem row plus
+          the safe-area inset. Desktop keeps the inline button instead. */}
+      {expandedRow && (
+        <>
+          <div className="md:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
+            <div className="mx-auto flex max-w-7xl items-center gap-3">
+              <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                {submittedPourOrders.has(expandedRow.pourOrder)
+                  ? 'Sparat ✓'
+                  : `Vin #${expandedRow.pourOrder}`}
+              </span>
+              <button
+                type="button"
+                className={
+                  isHost
+                    ? 'inline-flex min-h-11 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium'
+                    : 'btn-brand min-h-11 px-5'
+                }
+                onClick={() => void commitWine(expandedRow.pourOrder)}
+                disabled={committingPour === expandedRow.pourOrder}
+              >
+                {committingPour === expandedRow.pourOrder
+                  ? 'Sparar…'
+                  : `Klar med vin #${expandedRow.pourOrder}`}
+              </button>
+            </div>
+          </div>
+          {/* Spacer so the bar never covers the end of the form. */}
+          <div className="md:hidden h-24" aria-hidden />
+        </>
+      )}
+
+      {revealModalRow && (
+        <RevealResultModal
+          open
+          onClose={() => setRevealModalPour(null)}
+          pourOrder={revealModalRow.pourOrder}
+          wineTitle={revealModalRow.title}
+          wineSubtitle={revealModalRow.subtitle}
+          wineImageUrl={revealModalRow.imageUrl}
+          answer={revealModalRow.blindAnswer}
+          myGuess={(() => {
+            const g = myGuesses.get(revealModalRow.pourOrder)
+            return g
+              ? {
+                  country: g.country ?? null,
+                  grape: g.grape ?? null,
+                  priceBucket: g.priceBucket ?? null,
+                }
+              : null
+          })()}
+          roster={roster}
+          pointsBefore={pointsBefore}
+          swarm={swarm[revealModalRow.pourOrder] ?? null}
+          isHost={isHost}
+        />
       )}
 
       <Sheet open={!!infoWine} onOpenChange={(o) => !o && setInfoWine(null)}>
@@ -754,123 +1299,51 @@ export function PlanSessionContent({
         </SheetContent>
       </Sheet>
 
-      <Dialog open={!!reviewing} onOpenChange={(o) => !o && setReviewing(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Betygsätt: {reviewing?.title}</DialogTitle>
-          </DialogHeader>
-          {reviewing &&
-            (reviewing.libraryWineId ? (
-              <WineReviewForm
-                key={`review-${reviewing.pourOrder}`}
-                lessonId={0}
-                sessionId={String(session.id)}
-                pourOrder={reviewing.pourOrder}
-                wineIdProp={reviewing.libraryWineId}
-                insideDialog
-                onRestored={() => setRestoredBanner(true)}
-                onSubmit={() => {
-                  setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
-                  setReviewing(null)
-                }}
-              />
-            ) : reviewing.customWineSnapshot ? (
-              <WineReviewForm
-                key={`review-${reviewing.pourOrder}`}
-                lessonId={0}
-                sessionId={String(session.id)}
-                pourOrder={reviewing.pourOrder}
-                customWineSnapshot={reviewing.customWineSnapshot}
-                insideDialog
-                onRestored={() => setRestoredBanner(true)}
-                onSubmit={() => {
-                  setSubmittedPourOrders((prev) => new Set([...prev, reviewing!.pourOrder]))
-                  setReviewing(null)
-                }}
-              />
-            ) : null)}
-        </DialogContent>
-      </Dialog>
       </div>
 
-      <AlertDialog open={endDialog} onOpenChange={setEndDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avsluta sessionen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Alla deltagare kopplas bort och sessionen markeras som klar. Du kan inte återuppta
-              den.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={endingOrLeaving}>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={endingOrLeaving}
-              onClick={(e) => {
-                e.preventDefault()
-                void handleHostEnd()
-              }}
-            >
-              {endingOrLeaving ? 'Avslutar…' : 'Avsluta'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={leaveDialog} onOpenChange={setLeaveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Lämna provningen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Du kan ansluta igen med samma kod om sessionen fortfarande är aktiv.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={endingOrLeaving}>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={endingOrLeaving}
-              onClick={(e) => {
-                e.preventDefault()
-                void handleGuestLeave()
-              }}
-            >
-              {endingOrLeaving ? 'Lämnar…' : 'Lämna'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={revealGuardPour !== null}
-        onOpenChange={(o) => !o && setRevealGuardPour(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avslöja redan nu?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {(() => {
-                if (revealGuardPour === null) return null
-                const { missing, total } = missingCountForPour(revealGuardPour)
-                return `${missing} av ${total} har inte svarat än — avslöja ändå?`
-              })()}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault()
-                const pour = revealGuardPour
-                setRevealGuardPour(null)
-                if (pour !== null) void revealWine(pour)
-              }}
-            >
-              Avslöja ändå
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <SessionDialogs
+        endDialogOpen={endDialog}
+        onEndDialogOpenChange={setEndDialog}
+        leaveDialogOpen={leaveDialog}
+        onLeaveDialogOpenChange={setLeaveDialog}
+        endingOrLeaving={endingOrLeaving}
+        onConfirmEnd={() => void handleHostEnd()}
+        onConfirmLeave={() => void handleGuestLeave()}
+        revealGuardOpen={revealGuardPour !== null}
+        onRevealGuardOpenChange={(o) => !o && setRevealGuardPour(null)}
+        revealGuardInfo={
+          revealGuardPour !== null ? missingCountForPour(revealGuardPour) : null
+        }
+        onConfirmRevealAnyway={() => {
+          const pour = revealGuardPour
+          setRevealGuardPour(null)
+          if (pour !== null) void revealWine(pour)
+        }}
+      />
     </>
+  )
+}
+
+/**
+ * Guest-only placeholder for the window between "the host revealed this
+ * wine" (effectiveRevealed already has the pour) and "the page's redaction
+ * re-ran with the real data" (router.refresh() lands). Without this, the row
+ * would briefly render the load-time redacted nulls as if they were the real
+ * wine — "Namnlöst vin" with a placeholder bottle. This replaces the whole
+ * card body for that window instead.
+ */
+function RevealPendingSkeleton({ pourOrder }: { pourOrder: number }) {
+  return (
+    <div className="flex animate-pulse items-center gap-3 sm:gap-4" aria-live="polite">
+      <div className="h-32 w-20 flex-shrink-0 rounded-md bg-muted sm:h-36 sm:w-24" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="text-sm font-medium text-muted-foreground">
+          Vin #{pourOrder} · Avslöjas…
+        </p>
+        <div className="h-3 w-2/3 rounded bg-muted" />
+        <div className="h-3 w-1/3 rounded bg-muted" />
+      </div>
+    </div>
   )
 }
 
@@ -901,82 +1374,3 @@ function RestoredBanner({ onDismiss }: { onDismiss: () => void }) {
   )
 }
 
-function NextWineButton({
-  startedAt,
-  minutesPerWine,
-  onNext,
-  disabled,
-}: {
-  startedAt: string
-  minutesPerWine: number
-  onNext: () => void
-  disabled?: boolean
-}) {
-  const [now, setNow] = React.useState(() => Date.now())
-  React.useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(id)
-  }, [])
-  const elapsedSec = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000))
-  if (elapsedSec < minutesPerWine * 60) return null
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant="default"
-      disabled={disabled}
-      onClick={onNext}
-      className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-    >
-      → Nästa vin
-    </Button>
-  )
-}
-
-/**
- * Host-only per-participant submission tracker for the focused wine.
- * Status only — never shows guess/answer content. Renders against the live
- * roster (online, non-host participants).
- */
-function HostSubmissionTracker({
-  roster,
-  entry,
-}: {
-  roster: RosterEntry[]
-  entry: { withContent: number[]; locked: number[] } | undefined
-}) {
-  const withContent = new Set(entry?.withContent ?? [])
-  const locked = new Set(entry?.locked ?? [])
-  const guests = roster.filter((r) => !r.isHost && r.online)
-  if (guests.length === 0) {
-    return (
-      <div className="mt-3 rounded-md border bg-muted/40 p-3">
-        <p className="text-xs text-muted-foreground">Inga anslutna deltagare ännu.</p>
-      </div>
-    )
-  }
-  return (
-    <div className="mt-3 rounded-md border bg-muted/40 p-3" data-tour="session-tracker">
-      <p className="mb-2 text-xs font-medium text-muted-foreground">Vem har svarat</p>
-      <ul className="space-y-1">
-        {guests.map((g) => {
-          const isLockedIn = locked.has(g.id)
-          const hasDraft = !isLockedIn && withContent.has(g.id)
-          const { symbol, label, cls } = isLockedIn
-            ? { symbol: '✓', label: 'klar', cls: 'text-green-600' }
-            : hasDraft
-              ? { symbol: '✎', label: 'utkast', cls: 'text-amber-600' }
-              : { symbol: '—', label: 'inget', cls: 'text-muted-foreground' }
-          return (
-            <li key={g.id} className="flex items-center justify-between text-xs">
-              <span className="truncate">{g.nickname}</span>
-              <span className={`ml-2 flex-shrink-0 tabular-nums ${cls}`}>
-                {symbol} {label}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
-  )
-}

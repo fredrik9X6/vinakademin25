@@ -69,7 +69,7 @@ export const TastingPlans: CollectionConfig = {
       defaultValue: false,
       admin: {
         description:
-          'Easy mode: blind-guess dropdowns show only 4 options (correct + 3 decoys) instead of the full list. Default for sessions started from this plan.',
+          'Easy mode: blind-guess dropdowns show only 5 options (correct + 4 decoys) instead of the full list. Default for sessions started from this plan.',
       },
     },
     {

@@ -191,7 +191,12 @@ export default function SessionView({
           session={session}
           plan={session.tastingPlan as TastingPlan}
           isHost={isHost}
-          sidebarExtra={<SessionRoster lessonTitleById={new Map()} />}
+          sidebarExtra={
+            <SessionRoster
+              lessonTitleById={new Map()}
+              blind={Boolean((session as { blindTasting?: boolean }).blindTasting)}
+            />
+          }
         />
       </>
     )

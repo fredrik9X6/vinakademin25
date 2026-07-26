@@ -927,6 +927,10 @@ export interface Review {
    */
   rating?: number | null;
   /**
+   * Participant answered "Jag hade köpt detta vin igen". Feeds the session recap.
+   */
+  buyAgain?: boolean | null;
+  /**
    * User review text
    */
   reviewText?: {
@@ -1367,7 +1371,7 @@ export interface CourseSession {
    */
   blindTasting?: boolean | null;
   /**
-   * When true, blind-guess dropdowns surface only 4 options per tier (correct + 3 decoys). Stamped from plan.blindGuessEasyModeByDefault at create-time.
+   * When true, blind-guess dropdowns surface only 5 options per tier (correct + 4 decoys). Stamped from plan.blindGuessEasyModeByDefault at create-time.
    */
   blindGuessEasyMode?: boolean | null;
   /**
@@ -1457,7 +1461,7 @@ export interface TastingPlan {
    */
   blindTastingByDefault?: boolean | null;
   /**
-   * Easy mode: blind-guess dropdowns show only 4 options (correct + 3 decoys) instead of the full list. Default for sessions started from this plan.
+   * Easy mode: blind-guess dropdowns show only 5 options (correct + 4 decoys) instead of the full list. Default for sessions started from this plan.
    */
   blindGuessEasyModeByDefault?: boolean | null;
   /**
@@ -4455,6 +4459,7 @@ export interface ReviewsSelect<T extends boolean = true> {
   createdBy?: T;
   updatedBy?: T;
   rating?: T;
+  buyAgain?: T;
   reviewText?: T;
   isTrusted?: T;
   publishedToProfile?: T;

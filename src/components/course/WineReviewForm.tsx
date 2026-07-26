@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MultiSelect } from '@/components/ui/multi-select'
+import { ChipMultiSelect } from '@/components/ui/chip-multi-select'
 import { StarRating } from '@/components/ui/star-rating'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -49,12 +49,6 @@ interface WineReviewFormProps {
   wineIdProp?: number | string // Accept wine ID from parent to bypass permission issues
   customWineSnapshot?: CustomWineSnapshot
   /**
-   * Set when this form is rendered inside a Radix Dialog. Threads modal=true
-   * through to every internal Popover/MultiSelect so the popover content
-   * traps focus correctly and isn't intercepted by the Dialog's overlay.
-   */
-  insideDialog?: boolean
-  /**
    * When provided, the form mounts in "edit" mode — populates state from this
    * review on first render. Used by /mina-recensioner/[id].
    */
@@ -69,6 +63,18 @@ interface WineReviewFormProps {
   pourOrder?: number
   /** Fired once when mount-time rehydration restored saved content. */
   onRestored?: () => void
+  /** Fired whenever the current in-progress review changes (including on
+   *  hydration), in session mode only. The parent wine card mirrors this into
+   *  a ref so its single "Klar med vin #N" commit button can send the
+   *  freshest review content without waiting on this component's own
+   *  debounced autosave. */
+  onReviewChange?: (review: {
+    rating: number | null
+    buyAgain: boolean
+    reviewText: string
+    wsetTasting: Record<string, unknown>
+    publishedToProfile: boolean
+  }) => void
 }
 
 type ReviewDoc = {
@@ -93,11 +99,11 @@ export function WineReviewForm({
   onSubmit,
   wineIdProp,
   customWineSnapshot,
-  insideDialog = false,
   initialReview,
   standalone = false,
   pourOrder,
   onRestored,
+  onReviewChange,
 }: WineReviewFormProps) {
   const [rating, setRating] = React.useState<number>(0)
   const [buyAgain, setBuyAgain] = React.useState<boolean>(false)
@@ -208,6 +214,16 @@ export function WineReviewForm({
   // (lessonId=0 plan sessions included). Standalone / lesson-only reviews keep
   // the explicit-submit flow.
   const isSessionDraft = Boolean(sessionId) && !standalone
+  // Latest-callback ref. `onReviewChange` is passed as an inline arrow by
+  // PlanSessionContent, so its identity changes on every render of the parent.
+  // Depending on it directly made the autosave effect below re-fire on every
+  // render — and the session re-renders every 2s on the SSE poll, which on
+  // 2026-07-26 POSTed an identical review every 2s for as long as the tab was
+  // open. Holding it in a ref decouples the effect from the prop's identity.
+  const onReviewChangeRef = React.useRef(onReviewChange)
+  React.useEffect(() => {
+    onReviewChangeRef.current = onReviewChange
+  })
   const buildReviewBody = React.useCallback(
     (draft: Record<string, unknown>) => {
       const wineIdentity = customWineSnapshot
@@ -225,16 +241,20 @@ export function WineReviewForm({
         reviewText: (draft.notes as string) ?? '',
         publishedToProfile: Boolean(draft.publishedToProfile),
         session: sessionIdNum,
+        // Blind sessions redact wine identity from the guest's payload, so
+        // neither `wine` nor `customWine` is available client-side. The pour
+        // order is never secret — the server uses it to resolve identity from
+        // the un-redacted plan. See /api/reviews session-scoped path.
+        ...(typeof pourOrder === 'number' ? { pourOrder } : {}),
         wsetTasting: (draft.wsetTasting as Record<string, unknown>) ?? {},
         ...(draft.submittedAt ? { submittedAt: draft.submittedAt } : {}),
       }
     },
-    [customWineSnapshot, wineId, sessionId],
+    [customWineSnapshot, wineId, sessionId, pourOrder],
   )
   const {
     status: saveStatus,
     queueSave,
-    lockIn,
     restoredFromDraft,
     restoredDraft,
   } = useSessionDraft({
@@ -310,6 +330,19 @@ export function WineReviewForm({
   React.useEffect(() => {
     if (!isSessionDraft) return
     if (submittedReview) return // showing locked-in summary, not editing
+
+    // Keep the parent's ref of "what this form currently holds" in sync —
+    // fires even on the very first tick (unlike the autosave POST below) so
+    // the commit button has an accurate snapshot the instant hydration
+    // populates the form, before any user edit.
+    onReviewChangeRef.current?.({
+      rating: rating > 0 ? rating : null,
+      buyAgain,
+      reviewText: notes,
+      wsetTasting: buildWsetSnapshot(),
+      publishedToProfile,
+    })
+
     if (skipFirstAutosave.current) {
       skipFirstAutosave.current = false
       return
@@ -655,6 +688,16 @@ export function WineReviewForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Session mode no longer submits through this form at all — the wine
+    // card's single "Klar med vin #N" button (in PlanSessionContent) commits
+    // both the guess and this review together via
+    // POST /api/sessions/[id]/wines/[pour]/commit. This form only autosaves
+    // (queueSave, above) and reports its live content via onReviewChange.
+    // No submit button renders in session mode, but guard here too in case a
+    // stray Enter-key submits the form.
+    if (isSessionDraft) return
+
     setAttemptSubmit(true)
 
     // Task 22: only the wine-linkage check is mandatory — everything else is optional.
@@ -667,45 +710,6 @@ export function WineReviewForm({
 
     setIsSubmitting(true)
     try {
-      // Session mode: the draft is already autosaved continuously. "Klar / Lås
-      // in" just stamps submittedAt via the hook (queueSave already mirrored
-      // every field). Reuse the same upsert route the hook uses.
-      if (isSessionDraft) {
-        // Make sure the very latest field values are queued, then lock in.
-        queueSave({
-          rating,
-          buyAgain,
-          notes,
-          publishedToProfile,
-          wsetTasting: buildWsetSnapshot(),
-        })
-        const delivered = await lockIn()
-        if (!delivered) {
-          // Server never confirmed the save — do NOT show the success state.
-          // The draft stays in localStorage + the retry queue, and the form
-          // stays editable with the save-status label showing the failure.
-          toast.error('Kunde inte spara din smaknotering — försök igen om en stund.')
-          setIsSubmitting(false)
-          return
-        }
-        // Reflect "locked in" using the local state we already hold.
-        const lockedDoc = {
-          rating,
-          buyAgain,
-          reviewText: notes,
-          publishedToProfile,
-          wsetTasting: buildWsetSnapshot(),
-          submittedAt: new Date().toISOString(),
-          ...(customWineSnapshot ? { customWine: customWineSnapshot } : { wine: wineId }),
-        } as unknown as ReviewDoc
-        setSubmittedReview(lockedDoc)
-        setHistory((prev) => [lockedDoc, ...prev])
-        toast.success('Din smaknotering är inlåst')
-        onSubmit?.()
-        setIsSubmitting(false)
-        return
-      }
-
       // Non-session (standalone / lesson-only) explicit submit.
       const sessionIdNum = sessionId ? Number(sessionId) : undefined
       const participantIdNum = participantId ? Number(participantId) : undefined
@@ -930,7 +934,7 @@ export function WineReviewForm({
                 value={selectedHistoryId ?? ''}
                 onValueChange={(val) => setSelectedHistoryId(val || null)}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full min-h-11">
                   <SelectValue placeholder="Välj inskick" />
                 </SelectTrigger>
                 <SelectContent>
@@ -964,9 +968,13 @@ export function WineReviewForm({
           className="w-full"
         >
           <div className="flex justify-center mb-6">
-            <TabsList>
-              <TabsTrigger value="simple">Enkel</TabsTrigger>
-              <TabsTrigger value="advanced">Avancerad</TabsTrigger>
+            <TabsList className="min-h-11">
+              <TabsTrigger value="simple" className="min-h-11 px-4">
+                Enkel
+              </TabsTrigger>
+              <TabsTrigger value="advanced" className="min-h-11 px-4">
+                Avancerad
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -977,18 +985,16 @@ export function WineReviewForm({
                 error={errors['primaryFlavours']}
                 attemptSubmit={attemptSubmit}
               >
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={primaryFlavourOptions}
                   value={primaryFlavours}
                   onValueChange={setPrimaryFlavours}
-                  placeholder="Välj smaker"
-                  className="w-full"
+                  ariaLabel="Smaker du känner igen"
                 />
               </InputRow>
               <InputRow label="Sötma (torr → söt)" attemptSubmit={attemptSubmit}>
                 <Select value={palateSweetness} onValueChange={setPalateSweetness}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1002,7 +1008,7 @@ export function WineReviewForm({
               </InputRow>
               <InputRow label="Syra (hur frisk?)" attemptSubmit={attemptSubmit}>
                 <Select value={palateAcidity} onValueChange={setPalateAcidity}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1016,7 +1022,7 @@ export function WineReviewForm({
               </InputRow>
               <InputRow label="Fyllighet (lätt → kraftig)" attemptSubmit={attemptSubmit}>
                 <Select value={palateBody} onValueChange={setPalateBody}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1035,6 +1041,7 @@ export function WineReviewForm({
                     onChange={setRating}
                     max={5}
                     size="lg"
+                    hitboxSize="xl"
                     showLabel={true}
                     error={attemptSubmit && errors['rating'] ? errors['rating'] : undefined}
                     aria-label="Välj betyg från 1 till 5"
@@ -1060,7 +1067,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={appearanceClarity} onValueChange={setAppearanceClarity}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1075,7 +1082,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={appearanceIntensity} onValueChange={setAppearanceIntensity}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1091,7 +1098,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={appearanceColor} onValueChange={setAppearanceColor}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1123,7 +1130,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={noseIntensity} onValueChange={setNoseIntensity}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1140,33 +1147,27 @@ export function WineReviewForm({
                 error={errors['primaryAromas']}
                 attemptSubmit={attemptSubmit}
               >
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={primaryFlavourOptions}
                   value={primaryAromas}
                   onValueChange={setPrimaryAromas}
-                  placeholder="Välj aromer"
-                  className="w-full"
+                  ariaLabel="Primära aromer"
                 />
               </InputRow>
               <InputRow label="Sekundära aromer" attemptSubmit={attemptSubmit}>
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={secondaryFlavourOptions}
                   value={secondaryAromas}
                   onValueChange={setSecondaryAromas}
-                  placeholder="Välj aromer"
-                  className="w-full"
+                  ariaLabel="Sekundära aromer"
                 />
               </InputRow>
               <InputRow label="Tertiära aromer" attemptSubmit={attemptSubmit}>
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={tertiaryFlavourOptions}
                   value={tertiaryAromas}
                   onValueChange={setTertiaryAromas}
-                  placeholder="Välj aromer"
-                  className="w-full"
+                  ariaLabel="Tertiära aromer"
                 />
               </InputRow>
             </Section>
@@ -1194,7 +1195,7 @@ export function WineReviewForm({
               ).map(([label, val, setter, opts]) => (
                 <InputRow key={label as string} label={label as string}>
                   <Select value={val as string} onValueChange={setter as any}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full min-h-11">
                       <SelectValue placeholder="Välj" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1212,33 +1213,27 @@ export function WineReviewForm({
                 error={errors['primaryFlavours']}
                 attemptSubmit={attemptSubmit}
               >
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={primaryFlavourOptions}
                   value={primaryFlavours}
                   onValueChange={setPrimaryFlavours}
-                  placeholder="Välj smaker"
-                  className="w-full"
+                  ariaLabel="Primära smaker"
                 />
               </InputRow>
               <InputRow label="Sekundära smaker" attemptSubmit={attemptSubmit}>
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={secondaryFlavourOptions}
                   value={secondaryFlavours}
                   onValueChange={setSecondaryFlavours}
-                  placeholder="Välj smaker"
-                  className="w-full"
+                  ariaLabel="Sekundära smaker"
                 />
               </InputRow>
               <InputRow label="Tertiära smaker" attemptSubmit={attemptSubmit}>
-                <MultiSelect
-                  modalPopover={insideDialog}
+                <ChipMultiSelect
                   options={tertiaryFlavourOptions}
                   value={tertiaryFlavours}
                   onValueChange={setTertiaryFlavours}
-                  placeholder="Välj smaker"
-                  className="w-full"
+                  ariaLabel="Tertiära smaker"
                 />
               </InputRow>
               <InputRow
@@ -1247,7 +1242,7 @@ export function WineReviewForm({
                 attemptSubmit={attemptSubmit}
               >
                 <Select value={palateFinish} onValueChange={setPalateFinish}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1264,7 +1259,7 @@ export function WineReviewForm({
             <Section title="Slutsats">
               <InputRow label="Kvalitet" error={errors['quality']} attemptSubmit={attemptSubmit}>
                 <Select value={quality} onValueChange={setQuality}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full min-h-11">
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1283,6 +1278,7 @@ export function WineReviewForm({
                     onChange={setRating}
                     max={5}
                     size="lg"
+                    hitboxSize="xl"
                     showLabel={true}
                     error={attemptSubmit && errors['rating'] ? errors['rating'] : undefined}
                     aria-label="Välj betyg från 1 till 5"
@@ -1304,43 +1300,51 @@ export function WineReviewForm({
 
         <Separator />
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2 p-4 bg-muted/30 rounded-lg w-full md:w-auto">
+          {/* The whole padded row is the tap target (>=44px), not just the
+              16px box — wrapping in <label htmlFor> makes a click anywhere
+              in the row (including the padding) toggle the checkbox, since
+              Radix's Checkbox root renders a native <button>, which is a
+              labelable element. */}
+          <label
+            htmlFor="buyAgain"
+            className="flex items-center space-x-2 min-h-11 p-4 bg-muted/30 rounded-lg w-full md:w-auto cursor-pointer"
+          >
             <Checkbox
               id="buyAgain"
               checked={buyAgain}
               onCheckedChange={(checked) => setBuyAgain(checked as boolean)}
             />
-            <label
-              htmlFor="buyAgain"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-            >
+            <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Jag hade köpt detta vin igen
-            </label>
-          </div>
-          <div className="flex items-center space-x-2 p-4 bg-muted/30 rounded-lg w-full md:w-auto">
-            <Checkbox
-              id="publishedToProfile"
-              checked={publishedToProfile}
-              onCheckedChange={(checked) => setPublishedToProfile(checked as boolean)}
-            />
+            </span>
+          </label>
+          {/* Guests have no profile to publish to — /api/reviews writes
+              user: null for them, so this checkbox would be inert. Only
+              render it for authenticated users. */}
+          {user && (
             <label
               htmlFor="publishedToProfile"
-              className="text-sm font-medium leading-none cursor-pointer"
+              className="flex items-center space-x-2 min-h-11 p-4 bg-muted/30 rounded-lg w-full md:w-auto cursor-pointer"
             >
-              Publicera på min profil
+              <Checkbox
+                id="publishedToProfile"
+                checked={publishedToProfile}
+                onCheckedChange={(checked) => setPublishedToProfile(checked as boolean)}
+              />
+              <span className="text-sm font-medium leading-none">Publicera på min profil</span>
             </label>
-          </div>
+          )}
           <div className="flex items-center gap-3 w-full md:w-auto">
             {isSessionDraft && <ReviewSaveStatus status={saveStatus} />}
-            <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
-              {isSubmitting
-                ? isSessionDraft
-                  ? 'Låser in…'
-                  : 'Skickar...'
-                : isSessionDraft
-                  ? 'Klar / Lås in'
-                  : 'Skicka in'}
-            </Button>
+            {/* Session mode has no submit button here — the wine card's single
+                "Klar med vin #N" button (PlanSessionContent) commits this
+                review together with the blind guess. Only non-session
+                (standalone / lesson-only) callers still submit from this form. */}
+            {!isSessionDraft && (
+              <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+                {isSubmitting ? 'Skickar...' : 'Skicka in'}
+              </Button>
+            )}
           </div>
         </div>
       </form>
@@ -1355,5 +1359,9 @@ function ReviewSaveStatus({ status }: { status: SaveStatus }) {
   if (status === 'retrying')
     return <span className="text-xs text-amber-600">Återförsöker…</span>
   if (status === 'error') return <span className="text-xs text-red-600">Kunde inte spara</span>
+  if (status === 'failed')
+    return (
+      <span className="text-xs text-red-600">Sparades inte — dina svar finns kvar</span>
+    )
   return null
 }

@@ -12,6 +12,40 @@ export const COUNTRY_POINTS = 1
 export const GRAPE_POINTS = 1
 export const PRICE_POINTS = 1
 
+/** Point value per guess tier, keyed the same way as `blindTiers`. */
+export const TIER_POINTS = {
+  country: COUNTRY_POINTS,
+  grape: GRAPE_POINTS,
+  price: PRICE_POINTS,
+} as const
+
+/**
+ * Total points obtainable for a wine, given which tiers are active.
+ *
+ * The guest client is never sent the answers, only the per-tier booleans, so
+ * this is the only safe way to state "N poäng" before reveal. Post-reveal the
+ * same helper works with `scoreOne`'s `*Scored` flags.
+ */
+export function maxPointsForTiers(tiers: {
+  country: boolean
+  grape: boolean
+  price: boolean
+}): number {
+  return (
+    (tiers.country ? TIER_POINTS.country : 0) +
+    (tiers.grape ? TIER_POINTS.grape : 0) +
+    (tiers.price ? TIER_POINTS.price : 0)
+  )
+}
+
+/**
+ * Swedish label for a point count. "poäng" is invariant — identical in
+ * singular and plural — so there is deliberately no plural branch here.
+ */
+export function pointsLabel(points: number): string {
+  return `${points} poäng`
+}
+
 export interface BlindAnswer {
   country: string | null | undefined
   /**

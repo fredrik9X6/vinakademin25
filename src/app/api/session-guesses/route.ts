@@ -5,17 +5,9 @@ import config from '@/payload.config'
 import { PARTICIPANT_COOKIE } from '@/lib/sessions'
 import { loggerFor } from '@/lib/logger'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
+import { PRICE_BUCKETS, commitSessionGuess } from '@/lib/session-guess-commit'
 
 const log = loggerFor('api-session-guesses')
-
-const PRICE_BUCKETS: ReadonlyArray<PriceBucket> = [
-  '0_99',
-  '100_149',
-  '150_199',
-  '200_249',
-  '250_299',
-  '300_plus',
-]
 
 interface ResolvedIdentity {
   userId: number | null
@@ -64,22 +56,6 @@ async function resolveIdentity(
   return { userId: null, participantId: (tokenRes.docs[0] as { id: number }).id }
 }
 
-function getRevealedPourOrders(session: unknown): number[] {
-  const raw = (session as { revealedPourOrders?: unknown }).revealedPourOrders
-  if (!Array.isArray(raw)) return []
-  return raw.filter((n): n is number => typeof n === 'number')
-}
-
-function getPourOrders(session: unknown): number[] {
-  const plan = (session as { tastingPlan?: unknown }).tastingPlan
-  if (!plan || typeof plan !== 'object') return []
-  const wines = (plan as { wines?: unknown[] }).wines ?? []
-  return wines.map((w, idx) => {
-    const p = (w as { pourOrder?: number }).pourOrder
-    return p ?? idx + 1
-  })
-}
-
 /**
  * POST /api/session-guesses
  * Body: { sessionId, pourOrder, guessedCountry?, guessedGrape?, guessedPriceBucket? }
@@ -118,13 +94,6 @@ export async function POST(request: NextRequest) {
         ? (guessedPriceBucketRaw as PriceBucket)
         : null
 
-    if (!guessedCountry && !guessedGrape && !guessedPriceBucket) {
-      return NextResponse.json(
-        { error: 'At least one of guessedCountry / guessedGrape / guessedPriceBucket required' },
-        { status: 400 },
-      )
-    }
-
     const payload = await getPayload({ config })
 
     const session = await payload
@@ -133,72 +102,24 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
-    if (session.status !== 'active') {
-      return NextResponse.json({ error: 'Session is not active' }, { status: 400 })
-    }
-
-    const validPours = new Set(getPourOrders(session))
-    if (!validPours.has(pourOrder)) {
-      return NextResponse.json({ error: 'Pour order not in session plan' }, { status: 400 })
-    }
-
-    const revealed = new Set(getRevealedPourOrders(session))
-    if (revealed.has(pourOrder)) {
-      return NextResponse.json({ error: 'Vinet är redan avslöjat' }, { status: 400 })
-    }
 
     const identity = await resolveIdentity(payload, request, sessionId)
-    if (identity.userId == null && identity.participantId == null) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
 
-    // Find existing row by identity + pour
-    const existingWhere: any = {
-      and: [
-        { session: { equals: sessionId } },
-        { pourOrder: { equals: pourOrder } },
-      ],
-    }
-    if (identity.participantId != null) {
-      existingWhere.and.push({ sessionParticipant: { equals: identity.participantId } })
-    } else if (identity.userId != null) {
-      existingWhere.and.push({ user: { equals: identity.userId } })
-    }
-    const existing = await payload.find({
-      collection: 'session-guesses',
-      where: existingWhere,
-      limit: 1,
-      overrideAccess: true,
-    })
-
-    const data = {
-      session: sessionId,
-      sessionParticipant: identity.participantId,
-      user: identity.userId,
+    const result = await commitSessionGuess(payload, {
+      sessionDoc: session,
+      sessionId,
       pourOrder,
+      identity,
       guessedCountry,
       guessedGrape,
       guessedPriceBucket,
-      ...(submittedAt ? { submittedAt: new Date().toISOString() } : {}),
-    }
-
-    if (existing.docs.length > 0) {
-      const id = (existing.docs[0] as { id: number }).id
-      const updated = await payload.update({
-        collection: 'session-guesses',
-        id,
-        data,
-        overrideAccess: true,
-      })
-      return NextResponse.json({ doc: updated })
-    }
-
-    const created = await payload.create({
-      collection: 'session-guesses',
-      data,
-      overrideAccess: true,
+      stampSubmittedAt: Boolean(submittedAt),
     })
-    return NextResponse.json({ doc: created })
+
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.httpStatus })
+    }
+    return NextResponse.json({ doc: result.doc })
   } catch (err) {
     log.error({ err }, 'session_guess_post_failed')
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

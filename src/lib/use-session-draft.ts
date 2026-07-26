@@ -4,6 +4,7 @@ import * as React from 'react'
 import { posthog } from '@/components/analytics'
 import {
   backoffMs,
+  draftsEqual,
   draftHasContent,
   initialQueueState,
   queueReducer,
@@ -11,7 +12,7 @@ import {
   type QueueState,
 } from './session-draft-queue'
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'retrying' | 'error'
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'retrying' | 'error' | 'failed'
 
 export type DraftKind = 'guess' | 'review'
 
@@ -40,6 +41,9 @@ export interface UseSessionDraft {
    * failures, unmount) — the localStorage mirror + retry queue still cover
    * eventual delivery, but callers MUST NOT show a success state on false. */
   lockIn: () => Promise<boolean>
+  /** Clear a terminal failure and attempt delivery again. No-op unless the
+   *  queue has given up. */
+  retry: () => void
   /** True when mount-time localStorage held a non-empty draft. */
   restoredFromDraft: boolean
   /** The parsed localStorage draft found at mount, or null if none existed.
@@ -82,6 +86,8 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
   // The full merged draft (everything the user has entered). Synchronously
   // mirrored to localStorage on every change.
   const draftRef = React.useRef<DraftPayload>({})
+  // Last payload actually enqueued — guards against re-POSTing identical bodies.
+  const lastEnqueuedRef = React.useRef<DraftPayload | null>(null)
   const queueRef = React.useRef<QueueState>(initialQueueState)
   const debounceTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -174,7 +180,15 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
           credentials: 'include',
           body: JSON.stringify(body),
         })
-        if (!res.ok) throw new Error(String(res.status))
+        if (!res.ok) {
+          // 4xx means this exact body will never be accepted. Retrying it is
+          // what produced 49 consecutive failures over 10 minutes. 408 and 429
+          // are the transient exceptions.
+          const permanent = res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429
+          const err = new Error(String(res.status)) as Error & { permanent?: boolean }
+          err.permanent = permanent
+          throw err
+        }
         dispatch({ type: 'success' })
         track('vk_session_save_success')
         safeSetStatus('saved')
@@ -187,13 +201,20 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
             void flush()
           }, 0)
         }
-      } catch {
-        dispatch({ type: 'failure' })
+      } catch (caught) {
+        const permanent = (caught as { permanent?: boolean })?.permanent === true
+        dispatch({ type: 'failure', permanent })
         track('vk_session_save_failure')
         const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false
         if (isOffline) {
           // Queued; the 'online' listener will flush. Surface "retrying".
           safeSetStatus('retrying')
+          return
+        }
+        if (queueRef.current.gaveUp) {
+          // Terminal. The payload is still in `pending` and in localStorage —
+          // nothing is lost — but we stop hammering and tell the user.
+          safeSetStatus('failed')
           return
         }
         safeSetStatus('retrying')
@@ -218,6 +239,16 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
       }
       // Row-creation floor: don't POST an empty draft.
       if (!draftHasContent(draftRef.current)) return
+      // No-op floor: don't POST a draft identical to the last one enqueued.
+      // Without this, any caller passing an unstable callback identity makes the
+      // consuming effect re-fire on every render, and the session re-renders
+      // every 2s on the SSE poll — which on 2026-07-26 produced an identical
+      // POST every 2s for as long as the tab stayed open. Content-equality means
+      // render churn alone can never cause a write.
+      if (lastEnqueuedRef.current && draftsEqual(lastEnqueuedRef.current, draftRef.current)) {
+        return
+      }
+      lastEnqueuedRef.current = { ...draftRef.current }
       dispatch({ type: 'enqueue', payload: { ...draftRef.current } })
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
       debounceTimer.current = setTimeout(() => {
@@ -258,6 +289,9 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
       // 'online' listener still cover eventual delivery; don't hang or hammer.
       // Unconfirmed: callers must not show success.
       if (isOffline() || !mountedRef.current) return false
+      // The queue has given up (4xx or exhausted retries). Report failure so
+      // the caller does not show a success state.
+      if (queueRef.current.gaveUp) return false
       if (!queueRef.current.inFlight) {
         if (attempts >= MAX_LOCKIN_ATTEMPTS) return false
         const delay = backoffMs(queueRef.current.attempt)
@@ -274,13 +308,20 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
   // Flush queued writes when connectivity returns; final beacon on unload.
   React.useEffect(() => {
     const onOnline = () => {
-      if (queueRef.current.pending != null) {
+      // After a terminal give-up, pending is deliberately retained to preserve
+      // the user's unsaved notes. Its presence alone must not trigger a send —
+      // the payload was already permanently rejected (4xx or exhausted retries).
+      if (queueRef.current.pending != null && !queueRef.current.gaveUp) {
         track('vk_session_save_retry')
         void flush()
       }
     }
     const onBeforeUnload = () => {
-      if (queueRef.current.pending != null || queueRef.current.flightPayload != null) {
+      // After a terminal give-up, pending is deliberately retained to preserve
+      // the user's unsaved notes. Do not beacon a permanently-rejected payload
+      // on page close — the server already rejected it, and the notes survive
+      // in localStorage for recovery on next visit.
+      if (!queueRef.current.gaveUp && (queueRef.current.pending != null || queueRef.current.flightPayload != null)) {
         // Promote any pending into a final beacon flush.
         if (queueRef.current.pending == null && queueRef.current.flightPayload != null) {
           dispatch({ type: 'enqueue', payload: { ...queueRef.current.flightPayload } })
@@ -298,5 +339,15 @@ export function useSessionDraft(options: UseSessionDraftOptions): UseSessionDraf
     }
   }, [dispatch, flush, track])
 
-  return { status, queueSave, lockIn, restoredFromDraft, restoredDraft }
+  const retry = React.useCallback(() => {
+    if (!queueRef.current.gaveUp) return
+    // Re-enqueue the retained payload; `enqueue` clears gaveUp and resets the
+    // attempt budget.
+    const payload = queueRef.current.pending
+    if (payload == null) return
+    dispatch({ type: 'enqueue', payload: { ...payload } })
+    void flush()
+  }, [dispatch, flush])
+
+  return { status, queueSave, lockIn, retry, restoredFromDraft, restoredDraft }
 }
