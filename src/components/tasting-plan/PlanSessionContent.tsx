@@ -26,7 +26,7 @@ import {
 import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
 import { resolveWinePurchase } from '@/lib/wine-purchase-info'
 import { WinePurchaseMeta } from '@/components/tasting-shared/WinePurchaseMeta'
-import { Wine as WineIcon, LogOut, CheckCircle, Info } from 'lucide-react'
+import { Wine as WineIcon, LogOut, CheckCircle, Info, X } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
@@ -38,6 +38,7 @@ import { WineFocusTimer } from './WineFocusTimer'
 import { SwarmPanel } from './SwarmPanel'
 import { HostSessionTour } from '@/components/onboarding/HostSessionTour'
 import { trackEvent } from '@/components/analytics'
+import { shouldFollowHost } from '@/lib/use-follow-host'
 
 interface PlanSessionContentProps {
   session: CourseSession
@@ -484,6 +485,67 @@ export function PlanSessionContent({
     hostCurrentWinePourOrder ??
     (typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null)
 
+  // --- Focus-follows-host (guests only; the host is the one driving the
+  // moves, they don't need to be nudged to follow themselves) -------------
+  // Last pointer/keyboard interaction anywhere within the wine list. Used by
+  // shouldFollowHost() to decide whether an auto-advance would hijack the
+  // screen out from under someone mid-interaction.
+  const lastInteractionAtRef = React.useRef<number | null>(null)
+  const markInteraction = React.useCallback(() => {
+    lastInteractionAtRef.current = Date.now()
+  }, [])
+  // DOM nodes for each wine card, keyed by pourOrder, so the follow effect
+  // can scroll the newly-focused card into view.
+  const rowRefsMap = React.useRef<Map<number, HTMLLIElement>>(new Map())
+  const setRowRef = React.useCallback((pourOrder: number, el: HTMLLIElement | null) => {
+    if (el) rowRefsMap.current.set(pourOrder, el)
+    else rowRefsMap.current.delete(pourOrder)
+  }, [])
+  // Pour the host has moved to that this viewer hasn't followed yet — drives
+  // the dismissible nudge bar. null = no pending nudge.
+  const [pendingFollowPour, setPendingFollowPour] = React.useState<number | null>(null)
+  // Seeded with the initial activePour so the mount render doesn't count as
+  // a "the host moved" transition (no scroll-on-load).
+  const prevActivePourRef = React.useRef<number | null>(activePour)
+
+  const scrollPourIntoView = React.useCallback((pourOrder: number) => {
+    const el = rowRefsMap.current.get(pourOrder)
+    if (!el) return
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
+  }, [])
+
+  const followHostNow = React.useCallback(
+    (pourOrder: number) => {
+      // Re-following resets to "follow the host" (null) UNLESS the viewer
+      // deliberately collapsed every card (-1). That collapse is a distinct,
+      // sticky choice — the host advancing shouldn't resurrect a card the
+      // participant chose to close. The card position still follows; it just
+      // stays collapsed.
+      setExpandedPour((prev) => (prev === -1 ? -1 : null))
+      setPendingFollowPour(null)
+      scrollPourIntoView(pourOrder)
+    },
+    [scrollPourIntoView],
+  )
+
+  // Guests only: when the host's focus changes, either follow (scroll +
+  // re-sync expandedPour) or, if the viewer is mid-interaction, hold position
+  // and surface a dismissible nudge instead of moving the screen under them.
+  React.useEffect(() => {
+    if (isHost) return
+    if (activePour === null) return
+    if (prevActivePourRef.current === activePour) return
+    prevActivePourRef.current = activePour
+    if (shouldFollowHost(lastInteractionAtRef.current, Date.now())) {
+      followHostNow(activePour)
+    } else {
+      setPendingFollowPour(activePour)
+    }
+  }, [activePour, isHost, followHostNow])
+
   async function setFocus(pourOrder: number) {
     setSettingFocus(true)
     setLocalFocus(pourOrder) // optimistic — host sees the change immediately
@@ -685,7 +747,11 @@ export function PlanSessionContent({
         {rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">Inga viner i planen.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul
+            className="space-y-2"
+            onPointerDown={markInteraction}
+            onKeyDown={markInteraction}
+          >
             {rows.map((row, idx) => {
               const isHiddenForGuest =
                 isBlind && !isHost && !effectiveRevealed.has(row.pourOrder)
@@ -711,7 +777,7 @@ export function PlanSessionContent({
               const swarmEntry = swarm[row.pourOrder]
               const shouldShowSwarm = isHost || submittedPourOrders.has(row.pourOrder)
               return (
-                <li key={row.key}>
+                <li key={row.key} ref={(el) => setRowRef(row.pourOrder, el)}>
                   <Card
                     className={`p-4 transition-shadow ${
                       isActive ? 'border-brand-400 ring-2 ring-brand-400/40' : ''
@@ -922,6 +988,26 @@ export function PlanSessionContent({
               )
             })}
           </ul>
+        )}
+
+        {pendingFollowPour !== null && (
+          <div className="sticky bottom-20 md:bottom-4 z-40 flex items-center gap-2 rounded-full border bg-background/95 px-4 py-2 text-sm shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <button
+              type="button"
+              className="flex-1 text-left font-medium text-brand-400"
+              onClick={() => followHostNow(pendingFollowPour)}
+            >
+              → Värden är nu på vin #{pendingFollowPour}
+            </button>
+            <button
+              type="button"
+              aria-label="Stäng"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setPendingFollowPour(null)}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         )}
       </div>
 
