@@ -26,11 +26,12 @@ import {
 import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
 import { resolveWinePurchase } from '@/lib/wine-purchase-info'
 import { WinePurchaseMeta } from '@/components/tasting-shared/WinePurchaseMeta'
-import { Wine as WineIcon, LogOut, CheckCircle, Info, X } from 'lucide-react'
+import { Wine as WineIcon, LogOut, CheckCircle, Info, X, ListChecks } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
-import type { BlindAnswer } from '@/lib/blind-guess-scoring'
+import { SessionWineList, type SessionWineListRow } from '@/components/tasting-plan/SessionWineList'
+import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
 import { summariseCommit, type CommitPartResult } from '@/lib/session-commit'
 import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
@@ -252,6 +253,8 @@ export function PlanSessionContent({
 }: PlanSessionContentProps) {
   const rows: WineRow[] = (plan.wines ?? []).map(rowFromEntry)
   const [infoWine, setInfoWine] = React.useState<WineRow | null>(null)
+  // Bottom sheet listing every wine — opened from the "Alla viner" header control.
+  const [wineListOpen, setWineListOpen] = React.useState(false)
   // Which pour's tasting-note disclosure is open. null = "follow the host"
   // (the wine currently in focus is open by default); a pour number = the
   // participant deliberately opened that one; -1 = deliberately collapsed
@@ -477,6 +480,37 @@ export function PlanSessionContent({
     }
   }, [revealedPourOrders, isHost, isBlind, router])
 
+  // Blindness-redacted view of each row — the single source of truth for
+  // "what can this viewer see". Both the wine cards below and the Alla viner
+  // sheet render from this array (never from raw `rows`), so a redaction
+  // rule only has to be right once.
+  type DisplayWineRow = WineRow & { isHiddenForGuest: boolean }
+  const displayRows: DisplayWineRow[] = React.useMemo(
+    () =>
+      rows.map((row): DisplayWineRow => {
+        const isHiddenForGuest = isBlind && !isHost && !effectiveRevealed.has(row.pourOrder)
+        if (isHiddenForGuest) {
+          return {
+            ...row,
+            title: `Vin #${row.pourOrder}`,
+            subtitle: '',
+            hostNotes: null,
+            imageUrl: null,
+            abv: null,
+            servingTemp: null,
+            guestDescription: null,
+            foodPairing: null,
+            priceSek: null,
+            articleNumber: null,
+            systembolagetUrl: null,
+            isHiddenForGuest,
+          }
+        }
+        return { ...row, isHiddenForGuest }
+      }),
+    [rows, isBlind, isHost, effectiveRevealed],
+  )
+
   // Local optimistic value wins (only set on the host's own tap), then
   // realtime SSE, then the initial server-rendered prop. `null` only when
   // nothing has been set.
@@ -484,6 +518,39 @@ export function PlanSessionContent({
     localFocus ??
     hostCurrentWinePourOrder ??
     (typeof session.currentWinePourOrder === 'number' ? session.currentWinePourOrder : null)
+
+  // "Alla viner" sheet rows — built from `displayRows`, the same
+  // already-redacted source the wine cards render titles from, so an
+  // unrevealed blind wine reads as "Vin #N" here too. Status derives from the
+  // existing submittedPourOrders / activePour state (no second source of
+  // truth); points reuse the same scoreOne call BlindGuessCard uses once a
+  // wine is revealed and this viewer has a guess for it.
+  const wineListRows: SessionWineListRow[] = React.useMemo(
+    () =>
+      displayRows.map((row): SessionWineListRow => {
+        const status: SessionWineListRow['status'] = submittedPourOrders.has(row.pourOrder)
+          ? 'Klar'
+          : activePour === row.pourOrder
+            ? 'Pågår'
+            : 'Ej börjad'
+        let points: number | null = null
+        if (isBlind && effectiveRevealed.has(row.pourOrder)) {
+          const guess = myGuesses.get(row.pourOrder)
+          if (guess) {
+            points = scoreOne(
+              {
+                guessedCountry: guess.country,
+                guessedGrape: guess.grape,
+                guessedPriceBucket: guess.priceBucket,
+              },
+              row.blindAnswer,
+            ).points
+          }
+        }
+        return { pourOrder: row.pourOrder, title: row.title, status, points }
+      }),
+    [displayRows, submittedPourOrders, activePour, isBlind, effectiveRevealed, myGuesses],
+  )
 
   // --- Focus-follows-host (guests only; the host is the one driving the
   // moves, they don't need to be nudged to follow themselves) -------------
@@ -719,20 +786,43 @@ export function PlanSessionContent({
 
   return (
     <>
-      <header className="flex items-center justify-between mb-4">
+      <header className="flex items-center justify-between gap-2 mb-4">
         <div className="min-w-0">
           <h1 className="text-xl font-heading truncate">{plan.title}</h1>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => (isHost ? setEndDialog(true) : setLeaveDialog(true))}
-          disabled={endingOrLeaving}
-        >
-          <LogOut className="h-4 w-4 mr-1.5" />
-          {isHost ? 'Avsluta session' : 'Lämna session'}
-        </Button>
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11"
+            onClick={() => setWineListOpen(true)}
+          >
+            <ListChecks className="h-4 w-4 mr-1.5" />
+            Alla viner
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => (isHost ? setEndDialog(true) : setLeaveDialog(true))}
+            disabled={endingOrLeaving}
+          >
+            <LogOut className="h-4 w-4 mr-1.5" />
+            {isHost ? 'Avsluta session' : 'Lämna session'}
+          </Button>
+        </div>
       </header>
+
+      <SessionWineList
+        open={wineListOpen}
+        onOpenChange={setWineListOpen}
+        rows={wineListRows}
+        isBlind={isBlind}
+        onSelect={(pourOrder) => {
+          markInteraction()
+          setWineListOpen(false)
+          scrollPourIntoView(pourOrder)
+        }}
+      />
 
       {restoredBanner && (
         <RestoredBanner onDismiss={dismissRestoredBanner} />
@@ -753,24 +843,7 @@ export function PlanSessionContent({
             onKeyDown={markInteraction}
           >
             {rows.map((row, idx) => {
-              const isHiddenForGuest =
-                isBlind && !isHost && !effectiveRevealed.has(row.pourOrder)
-              const displayRow = isHiddenForGuest
-                ? {
-                    ...row,
-                    title: `Vin #${row.pourOrder}`,
-                    subtitle: '',
-                    hostNotes: null as string | null,
-                    imageUrl: null as string | null,
-                    abv: null as number | null,
-                    servingTemp: null as string | null,
-                    guestDescription: null as string | null,
-                    foodPairing: null as string | null,
-                    priceSek: null as number | null,
-                    articleNumber: null as string | null,
-                    systembolagetUrl: null as string | null,
-                  }
-                : row
+              const displayRow = displayRows[idx]
               const isActive = activePour === row.pourOrder
               const isExpanded = (expandedPour ?? activePour) === row.pourOrder
               const showRevealButton = isHost && isBlind && !effectiveRevealed.has(row.pourOrder)
