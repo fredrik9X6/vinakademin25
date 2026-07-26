@@ -59,6 +59,15 @@ export interface BlindGuessCardProps {
   initialSubmittedAt?: string | null
   /** Fired once on mount when a localStorage draft was restored. */
   onRestored?: () => void
+  /** Fired whenever the current in-progress guess changes (including on
+   *  hydration). The parent wine card mirrors this into a ref so its single
+   *  "Klar med vin #N" commit button can send the freshest guess without
+   *  waiting on this component's own debounced autosave. */
+  onGuessChange?: (guess: {
+    guessedCountry: string | null
+    guessedGrape: string | null
+    guessedPriceBucket: PriceBucket | null
+  }) => void
 }
 
 interface FormState {
@@ -77,6 +86,7 @@ export function BlindGuessCard({
   blindTiers = null,
   initialSubmittedAt = null,
   onRestored,
+  onGuessChange,
 }: BlindGuessCardProps) {
   // Default to showing all tiers when blindTiers is absent (host path,
   // revealed wines, any unset case) — never regress existing behaviour.
@@ -106,7 +116,7 @@ export function BlindGuessCard({
   const [lockedIn, setLockedIn] = React.useState<boolean>(Boolean(initialSubmittedAt))
   const [isEditMode, setIsEditMode] = React.useState<boolean>(!initialSubmittedAt)
 
-  const { status, queueSave, lockIn, restoredFromDraft, restoredDraft } = useSessionDraft({
+  const { status, queueSave, restoredFromDraft, restoredDraft } = useSessionDraft({
     kind: 'guess',
     sessionId,
     pourOrder,
@@ -193,16 +203,18 @@ export function BlindGuessCard({
     })
   }
 
-  async function handleLockIn() {
-    const delivered = await lockIn()
-    // Only flip to the locked-in summary when the server actually has the
-    // guess — otherwise stay in edit mode with the error status visible so
-    // the guest knows nothing was saved.
-    if (delivered) {
-      setLockedIn(true)
-      setIsEditMode(false)
-    }
-  }
+  // Keep the parent's ref of "what this card currently holds" in sync so its
+  // single commit button can send the freshest guess without depending on
+  // this component's own debounced autosave having landed yet. Fires on
+  // every edit AND on hydration (server-seed / draft-seed effects above both
+  // update `editing`, which this depends on).
+  React.useEffect(() => {
+    onGuessChange?.({
+      guessedCountry: editing.country,
+      guessedGrape: editing.grape,
+      guessedPriceBucket: editing.priceBucket,
+    })
+  }, [editing, onGuessChange])
 
   const hasGuess = Boolean(editing.country || editing.grape || editing.priceBucket)
 
@@ -415,14 +427,6 @@ export function BlindGuessCard({
         )}
       </div>
       <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleLockIn}
-          disabled={!editing.country && !editing.grape && !editing.priceBucket}
-        >
-          {lockedIn ? 'Uppdatera & lås in' : 'Lås in'}
-        </Button>
         <SaveStatusLabel status={status} />
       </div>
     </div>

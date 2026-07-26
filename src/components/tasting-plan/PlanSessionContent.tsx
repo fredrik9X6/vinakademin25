@@ -32,6 +32,7 @@ import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
 import type { BlindAnswer } from '@/lib/blind-guess-scoring'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
+import { summariseCommit, type CommitPartResult } from '@/lib/session-commit'
 import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
 import { SwarmPanel } from './SwarmPanel'
@@ -274,6 +275,31 @@ export function PlanSessionContent({
     submittedAt: string | null
   }
   const [myGuesses, setMyGuesses] = React.useState<Map<number, LocalGuess>>(new Map())
+  // Latest in-progress guess/review per pour, mirrored up from BlindGuessCard
+  // (onGuessChange) and WineReviewForm (onReviewChange) on every change,
+  // including hydration. Refs (not state) — commitWine reads the current
+  // value at click time without needing these to trigger a re-render.
+  const guessDraftsRef = React.useRef<
+    Map<
+      number,
+      { guessedCountry: string | null; guessedGrape: string | null; guessedPriceBucket: PriceBucket | null }
+    >
+  >(new Map())
+  const reviewDraftsRef = React.useRef<
+    Map<
+      number,
+      {
+        rating: number | null
+        buyAgain: boolean
+        reviewText: string
+        wsetTasting: Record<string, unknown>
+        publishedToProfile: boolean
+      }
+    >
+  >(new Map())
+  // Pour order currently being committed — disables that row's button and
+  // shows "Sparar…" while the request is in flight.
+  const [committingPour, setCommittingPour] = React.useState<number | null>(null)
   // One-time "answers restored" banner trigger.
   const [restoredBanner, setRestoredBanner] = React.useState(false)
   const dismissRestoredBanner = React.useCallback(() => setRestoredBanner(false), [])
@@ -504,6 +530,50 @@ export function PlanSessionContent({
     }
   }
 
+  // The single "Klar med vin #N" commit — replaces the old two separate
+  // lock-ins (BlindGuessCard's own "Lås in" + WineReviewForm's "Klar / Lås
+  // in") with one POST carrying whatever the guess card and the note form
+  // currently hold. A part with no content is legitimately absent — the
+  // server reports it 'skipped', not 'failed' (see summariseCommit).
+  async function commitWine(pourOrder: number) {
+    setCommittingPour(pourOrder)
+    try {
+      const guess = guessDraftsRef.current.get(pourOrder) ?? null
+      const review = reviewDraftsRef.current.get(pourOrder) ?? null
+      const res = await fetch(`/api/sessions/${session.id}/wines/${pourOrder}/commit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...(guess ? { guess } : {}),
+          ...(review ? { review } : {}),
+        }),
+      })
+      const data = (await res.json().catch(() => null)) as {
+        guess?: CommitPartResult
+        review?: CommitPartResult
+      } | null
+
+      if (res.ok && data && typeof data.guess === 'string' && typeof data.review === 'string') {
+        const summary = summariseCommit({ guess: data.guess, review: data.review })
+        if (summary.ok) {
+          setSubmittedPourOrders((prev) => new Set([...prev, pourOrder]))
+          toast.success(summary.message)
+        } else {
+          // Partial (or total) failure — do NOT mark the wine done. The
+          // participant pressed one button and is owed one honest answer.
+          toast.error(summary.message)
+        }
+        return
+      }
+      toast.error('Kunde inte spara — försök igen.')
+    } catch {
+      toast.error('Nätverksfel — försök igen.')
+    } finally {
+      setCommittingPour(null)
+    }
+  }
+
   return (
     <>
       <header className="flex items-center justify-between mb-4">
@@ -684,6 +754,9 @@ export function PlanSessionContent({
                               myGuesses.get(row.pourOrder)?.submittedAt ?? null
                             }
                             onRestored={() => setRestoredBanner(true)}
+                            onGuessChange={(guess) =>
+                              guessDraftsRef.current.set(row.pourOrder, guess)
+                            }
                           />
                         )}
 
@@ -735,14 +808,23 @@ export function PlanSessionContent({
                                 ? { customWineSnapshot: displayRow.customWineSnapshot }
                                 : {})}
                               onRestored={() => setRestoredBanner(true)}
-                              onSubmit={() => {
-                                setSubmittedPourOrders((prev) =>
-                                  new Set([...prev, row.pourOrder]),
-                                )
-                              }}
+                              onReviewChange={(review) =>
+                                reviewDraftsRef.current.set(row.pourOrder, review)
+                              }
                             />
                           </div>
                         )}
+
+                        <button
+                          type="button"
+                          className="btn-brand mt-3 w-full min-h-11"
+                          onClick={() => void commitWine(row.pourOrder)}
+                          disabled={committingPour === row.pourOrder}
+                        >
+                          {committingPour === row.pourOrder
+                            ? 'Sparar…'
+                            : `Klar med vin #${row.pourOrder}`}
+                        </button>
 
                         {isHost && isActive && (
                           <HostSubmissionTracker

@@ -63,6 +63,18 @@ interface WineReviewFormProps {
   pourOrder?: number
   /** Fired once when mount-time rehydration restored saved content. */
   onRestored?: () => void
+  /** Fired whenever the current in-progress review changes (including on
+   *  hydration), in session mode only. The parent wine card mirrors this into
+   *  a ref so its single "Klar med vin #N" commit button can send the
+   *  freshest review content without waiting on this component's own
+   *  debounced autosave. */
+  onReviewChange?: (review: {
+    rating: number | null
+    buyAgain: boolean
+    reviewText: string
+    wsetTasting: Record<string, unknown>
+    publishedToProfile: boolean
+  }) => void
 }
 
 type ReviewDoc = {
@@ -91,6 +103,7 @@ export function WineReviewForm({
   standalone = false,
   pourOrder,
   onRestored,
+  onReviewChange,
 }: WineReviewFormProps) {
   const [rating, setRating] = React.useState<number>(0)
   const [buyAgain, setBuyAgain] = React.useState<boolean>(false)
@@ -232,7 +245,6 @@ export function WineReviewForm({
   const {
     status: saveStatus,
     queueSave,
-    lockIn,
     restoredFromDraft,
     restoredDraft,
   } = useSessionDraft({
@@ -308,6 +320,19 @@ export function WineReviewForm({
   React.useEffect(() => {
     if (!isSessionDraft) return
     if (submittedReview) return // showing locked-in summary, not editing
+
+    // Keep the parent's ref of "what this form currently holds" in sync —
+    // fires even on the very first tick (unlike the autosave POST below) so
+    // the commit button has an accurate snapshot the instant hydration
+    // populates the form, before any user edit.
+    onReviewChange?.({
+      rating: rating > 0 ? rating : null,
+      buyAgain,
+      reviewText: notes,
+      wsetTasting: buildWsetSnapshot(),
+      publishedToProfile,
+    })
+
     if (skipFirstAutosave.current) {
       skipFirstAutosave.current = false
       return
@@ -328,6 +353,7 @@ export function WineReviewForm({
     publishedToProfile,
     buildWsetSnapshot,
     queueSave,
+    onReviewChange,
   ])
 
   const fetchAnswerKey = React.useCallback(async () => {
@@ -653,13 +679,20 @@ export function WineReviewForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Session mode no longer submits through this form at all — the wine
+    // card's single "Klar med vin #N" button (in PlanSessionContent) commits
+    // both the guess and this review together via
+    // POST /api/sessions/[id]/wines/[pour]/commit. This form only autosaves
+    // (queueSave, above) and reports its live content via onReviewChange.
+    // No submit button renders in session mode, but guard here too in case a
+    // stray Enter-key submits the form.
+    if (isSessionDraft) return
+
     setAttemptSubmit(true)
 
     // Task 22: only the wine-linkage check is mandatory — everything else is optional.
-    // Exception: in a session the server resolves identity from (session,
-    // pourOrder), so a blind guest legitimately has neither wineId nor snapshot.
-    const canResolveServerSide = isSessionDraft && typeof pourOrder === 'number'
-    if (!wineId && !customWineSnapshot && !canResolveServerSide) {
+    if (!wineId && !customWineSnapshot) {
       setErrors({ wine: 'Inget vin kopplat till detta moment' })
       toast.error('Inget vin kopplat till detta moment')
       return
@@ -668,49 +701,6 @@ export function WineReviewForm({
 
     setIsSubmitting(true)
     try {
-      // Session mode: the draft is already autosaved continuously. "Klar / Lås
-      // in" just stamps submittedAt via the hook (queueSave already mirrored
-      // every field). Reuse the same upsert route the hook uses.
-      if (isSessionDraft) {
-        // Make sure the very latest field values are queued, then lock in.
-        queueSave({
-          rating,
-          buyAgain,
-          notes,
-          publishedToProfile,
-          wsetTasting: buildWsetSnapshot(),
-        })
-        const delivered = await lockIn()
-        if (!delivered) {
-          // Server never confirmed the save — do NOT show the success state.
-          // The draft stays in localStorage + the retry queue, and the form
-          // stays editable with the save-status label showing the failure.
-          toast.error('Kunde inte spara din smaknotering — försök igen om en stund.')
-          setIsSubmitting(false)
-          return
-        }
-        // Reflect "locked in" using the local state we already hold.
-        const lockedDoc = {
-          rating,
-          buyAgain,
-          reviewText: notes,
-          publishedToProfile,
-          wsetTasting: buildWsetSnapshot(),
-          submittedAt: new Date().toISOString(),
-          ...(customWineSnapshot
-            ? { customWine: customWineSnapshot }
-            : wineId
-              ? { wine: wineId }
-              : {}),
-        } as unknown as ReviewDoc
-        setSubmittedReview(lockedDoc)
-        setHistory((prev) => [lockedDoc, ...prev])
-        toast.success('Din smaknotering är inlåst')
-        onSubmit?.()
-        setIsSubmitting(false)
-        return
-      }
-
       // Non-session (standalone / lesson-only) explicit submit.
       const sessionIdNum = sessionId ? Number(sessionId) : undefined
       const participantIdNum = participantId ? Number(participantId) : undefined
@@ -1323,15 +1313,15 @@ export function WineReviewForm({
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
             {isSessionDraft && <ReviewSaveStatus status={saveStatus} />}
-            <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
-              {isSubmitting
-                ? isSessionDraft
-                  ? 'Låser in…'
-                  : 'Skickar...'
-                : isSessionDraft
-                  ? 'Klar / Lås in'
-                  : 'Skicka in'}
-            </Button>
+            {/* Session mode has no submit button here — the wine card's single
+                "Klar med vin #N" button (PlanSessionContent) commits this
+                review together with the blind guess. Only non-session
+                (standalone / lesson-only) callers still submit from this form. */}
+            {!isSessionDraft && (
+              <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+                {isSubmitting ? 'Skickar...' : 'Skicka in'}
+              </Button>
+            )}
           </div>
         </div>
       </form>

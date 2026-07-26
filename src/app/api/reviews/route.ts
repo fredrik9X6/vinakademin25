@@ -4,7 +4,8 @@ import config from '@/payload.config'
 import { cookies } from 'next/headers'
 import { loggerFor } from '@/lib/logger'
 import { PARTICIPANT_COOKIE } from '@/lib/sessions'
-import { resolveWineIdentityForPour, buildPourMaps, resolvePourForReview } from '@/lib/session-pour-mapping'
+import { buildPourMaps, resolvePourForReview } from '@/lib/session-pour-mapping'
+import { commitSessionReview, type SessionReviewIdentity } from '@/lib/session-review-commit'
 
 const log = loggerFor('reviews-api')
 
@@ -17,15 +18,6 @@ const log = loggerFor('reviews-api')
  */
 export async function POST(request: NextRequest) {
   log.info('POST request received')
-
-  // Set true only when this handler resolves wine identity server-side (the
-  // blind-tasting path, inside the try block below). Declared here — before
-  // the try — rather than inside it, so the catch block can read it too:
-  // Finding 1 gates the validation-error response on this flag the same way
-  // the 201 success path already gates the doc (see depth:0 + doc-trimming
-  // near the bottom of the try block). If this were declared inside the try,
-  // it would be out of scope in the catch and the gate would silently no-op.
-  let identityResolvedServerSide = false
 
   try {
     const payload = await getPayload({ config })
@@ -322,7 +314,7 @@ export async function POST(request: NextRequest) {
     //     cannot include one. We must never send it down; we only write it.
     //  3. Neither → Payload admin's relationship-options probe. Return an empty
     //     list shape so the admin UI doesn't break.
-    let hasCustomWine =
+    const hasCustomWine =
       !!body.customWine?.name && String(body.customWine.name).trim() !== ''
     const pourOrderFromBody =
       body.pourOrder != null && !isNaN(Number(body.pourOrder))
@@ -360,6 +352,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Blind-tasting path: session + pourOrder, no client-supplied identity.
+    // Delegate entirely to the shared helper — it resolves wine identity from
+    // the session's plan server-side, authorizes (participant-or-host gate),
+    // dedupes, upserts, and trims wine/customWine from the response. This is
+    // the exact write path POST /api/sessions/[id]/wines/[pour]/commit also
+    // calls, so both surfaces carry identical blindness hardening — do not
+    // reimplement any part of it inline here.
     if (!body.wine && !hasCustomWine && sessionForResolve != null && pourOrderFromBody != null) {
       const sessionDoc = await payload.findByID({
         collection: 'course-sessions',
@@ -388,77 +387,43 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Authorization for authenticated (non-guest) callers only. For them,
-      // sessionForResolve comes straight from client-supplied body.session —
-      // untrusted input — and overrideAccess above deliberately bypasses
-      // TastingPlans.access.read (normally owner/admin only) so we can read
-      // the plan and resolve identity. Without this check, any logged-in
-      // account could pass an arbitrary session id and read back another
-      // host's wine identities via the resolved doc. Guests are exempt:
-      // their sessionForResolve is derived from guestParticipant.sessionId,
-      // which is already tied to their own participant-cookie token.
-      if (!guestParticipant && user) {
-        // authedParticipantId was already resolved above (hoisted lookup,
-        // shared with reviewData.sessionParticipant below) — reuse it here
-        // rather than re-querying session-participants a second time.
-        const hostField = sessionDoc.host as unknown
-        const hostId = hostField
-          ? typeof hostField === 'object'
-            ? (hostField as { id: number }).id
-            : (hostField as number)
-          : null
-        const isHost = hostId != null && Number(hostId) === Number(user.id)
-
-        if (authedParticipantId == null && !isHost) {
-          log.warn(
-            { userId: user.id, session: sessionForResolve },
-            'Forbidden: caller is neither a participant nor the host of this session',
-          )
-          return NextResponse.json(
-            {
-              error: 'Forbidden',
-              details: 'You are not a participant or host of this session',
-            },
-            { status: 403 },
-          )
-        }
+      // authedParticipantId was already resolved above (hoisted lookup,
+      // shared with reviewData.sessionParticipant in the helper) — reuse it
+      // here rather than re-querying session-participants a second time.
+      const identity: SessionReviewIdentity = {
+        user: guestParticipant ? null : user ? { id: user.id } : null,
+        participantId: guestParticipant ? guestParticipant.id : authedParticipantId,
       }
 
-      const planWines =
-        sessionDoc.tastingPlan && typeof sessionDoc.tastingPlan === 'object'
-          ? (((sessionDoc.tastingPlan as any).wines ?? []) as unknown[])
-          : []
-      const resolved = resolveWineIdentityForPour(planWines, pourOrderFromBody)
-      if (!resolved) {
-        log.warn(
-          { session: sessionForResolve, pourOrder: pourOrderFromBody },
-          'Could not resolve wine identity for pour',
-        )
+      const result = await commitSessionReview(payload, request, {
+        sessionDoc,
+        sessionId: sessionForResolve,
+        pourOrder: pourOrderFromBody,
+        identity,
+        rating: body.rating,
+        buyAgain: body.buyAgain,
+        reviewText: body.reviewText,
+        wsetTasting: body.wsetTasting,
+        publishedToProfile: body.publishedToProfile,
+        // Only WineReviewForm's explicit "Klar / Lås in" stamps submittedAt in
+        // the body — a bare autosave tick omits it. Mirrors the original
+        // inline `typeof body.submittedAt === 'string' && ...` check exactly.
+        stampSubmittedAt:
+          typeof body.submittedAt === 'string' && body.submittedAt.length > 0,
+      })
+
+      if (!result.ok) {
         return NextResponse.json(
-          {
-            error: 'Unknown wine',
-            details: `No wine at pour order ${pourOrderFromBody} in this session's plan`,
-          },
-          { status: 422 },
+          { error: result.error, ...(result.details ? { details: result.details } : {}) },
+          { status: result.httpStatus },
         )
       }
-      if (resolved.wine != null) {
-        // Resolved identity is authoritative — don't merge in client-supplied
-        // customWine fields alongside a resolved library wine.
-        body.wine = resolved.wine
-        body.customWine = null
-      } else {
-        // Resolved identity is authoritative — assign outright rather than
-        // merging over client input, so blank plan fields (vintage, image,
-        // price) can't be filled in by whatever the client happened to send.
-        body.customWine = resolved.customWine
-        hasCustomWine = true
-      }
-      identityResolvedServerSide = true
+
       log.info(
-        { session: sessionForResolve, pourOrder: pourOrderFromBody, wine: resolved.wine },
-        'Resolved wine identity server-side',
+        { session: sessionForResolve, pourOrder: pourOrderFromBody },
+        'Resolved wine identity server-side via shared helper',
       )
+      return NextResponse.json({ success: true, doc: result.doc }, { status: 201 })
     }
 
     if (!body.wine && !hasCustomWine) {
@@ -626,28 +591,15 @@ export async function POST(request: NextRequest) {
       log.info({ reviewId: review.id }, 'Review created')
     }
 
-    // Finding 1: when this handler resolved wine identity server-side (blind
-    // tasting), the caller sent no identity and must receive none back —
-    // otherwise a participant could POST {session, pourOrder} for a wine the
-    // host hasn't revealed yet and read the answer out of their own response.
-    // depth:0 above already keeps `wine` a bare id instead of a populated
-    // Wines doc, but we still drop both fields entirely here. Non-resolved
-    // paths (admin writes, standalone reviews, lesson reviews) are untouched
-    // — other callers (e.g. WineReviewForm's non-session submit) do read
-    // `doc` there.
-    let responseDoc: unknown = review
-    if (identityResolvedServerSide) {
-      const { wine: _omittedWine, customWine: _omittedCustomWine, ...rest } = review as unknown as Record<
-        string,
-        unknown
-      >
-      responseDoc = rest
-    }
-
+    // The blind-tasting (session + pourOrder, server-resolved identity) path
+    // returns earlier via commitSessionReview above and never reaches here —
+    // this branch only ever serves callers who supplied wine/customWine
+    // themselves (admin writes, standalone reviews, lesson reviews), so the
+    // full doc is safe to return as-is.
     return NextResponse.json(
       {
         success: true,
-        doc: responseDoc,
+        doc: review,
       },
       { status: 201 },
     )
@@ -670,21 +622,17 @@ export async function POST(request: NextRequest) {
       // and the `number` validator interpolates raw values into
       // greaterThanMax/lessThanMin (reachable via customWine.priceSek). Since
       // Wines.access.read is public, a leaked wine id resolves to the full
-      // wine doc via GET /api/wines/:id. When this handler resolved wine
-      // identity server-side (the blind-tasting path), the caller never sent
-      // that identity and must not be able to read it back out of a
-      // validation error either — so `fields` is suppressed entirely in that
-      // case, even though the full detail is still logged above for
-      // operators. `error.message` only joins field paths/labels, never the
-      // raw submitted value (verified against the same repro above), so it's
-      // safe to return unconditionally. Non-resolved callers (admin writes,
-      // standalone/lesson reviews) supplied the wine themselves and still get
+      // wine doc via GET /api/wines/:id. The blind-tasting (server-resolved
+      // identity) path never reaches this catch block — it returns earlier
+      // via commitSessionReview, which suppresses field detail on its own
+      // ValidationError branch. Every caller that reaches here supplied the
+      // wine themselves (admin writes, standalone/lesson reviews) and gets
       // full field detail so their forms can surface it to the user.
       return NextResponse.json(
         {
           error: 'Validation failed',
           details: error.message,
-          fields: identityResolvedServerSide ? [] : fields,
+          fields,
         },
         { status: 422 },
       )
