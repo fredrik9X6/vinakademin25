@@ -26,8 +26,14 @@ import { SessionWineList, type SessionWineListRow } from '@/components/tasting-p
 import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
 import { summariseCommit, type CommitPartResult } from '@/lib/session-commit'
-import { useActiveSession, type RosterEntry } from '@/context/SessionContext'
+import { useActiveSession } from '@/context/SessionContext'
 import { WineFocusTimer } from './WineFocusTimer'
+import {
+  HostFocusButton,
+  HostRevealButton,
+  HostNextWineButton,
+  HostSubmissionTracker,
+} from './HostWineControls'
 import { SwarmPanel } from './SwarmPanel'
 import { HostSessionTour } from '@/components/onboarding/HostSessionTour'
 import { trackEvent } from '@/components/analytics'
@@ -950,27 +956,20 @@ export function PlanSessionContent({
                           )}
                         <div className="mt-3 flex gap-2 flex-wrap items-center">
                           {isHost && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={isActive ? 'default' : 'outline'}
+                            <HostFocusButton
+                              pourOrder={row.pourOrder}
+                              isFirst={idx === 0}
+                              isActive={isActive}
                               disabled={settingFocus}
                               onClick={() => setFocus(row.pourOrder)}
-                              className="min-h-11"
-                              {...(idx === 0 ? { 'data-tour': 'session-set-focus' } : {})}
-                            >
-                              {isActive ? 'I fokus' : 'Sätt fokus'}
-                            </Button>
+                            />
                           )}
                           {showRevealButton && (
-                            <button
-                              type="button"
-                              className="btn-brand min-h-11"
+                            <HostRevealButton
+                              pourOrder={row.pourOrder}
+                              isFirst={idx === 0}
                               onClick={() => attemptReveal(row.pourOrder)}
-                              {...(idx === 0 ? { 'data-tour': 'session-reveal' } : {})}
-                            >
-                              Avslöja vin #{row.pourOrder}
-                            </button>
+                            />
                           )}
                           {isActive && plan.defaultMinutesPerWine ? (
                             <div {...(idx === 0 ? { 'data-tour': 'session-timer' } : {})}>
@@ -985,7 +984,7 @@ export function PlanSessionContent({
                           plan.defaultMinutesPerWine &&
                           hostFocusStartedAt &&
                           row.pourOrder < rows.length ? (
-                            <NextWineButton
+                            <HostNextWineButton
                               startedAt={hostFocusStartedAt}
                               minutesPerWine={plan.defaultMinutesPerWine}
                               onNext={() => setFocus(row.pourOrder + 1)}
@@ -1241,81 +1240,3 @@ function RestoredBanner({ onDismiss }: { onDismiss: () => void }) {
   )
 }
 
-function NextWineButton({
-  startedAt,
-  minutesPerWine,
-  onNext,
-  disabled,
-}: {
-  startedAt: string
-  minutesPerWine: number
-  onNext: () => void
-  disabled?: boolean
-}) {
-  const [now, setNow] = React.useState(() => Date.now())
-  React.useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(id)
-  }, [])
-  const elapsedSec = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000))
-  if (elapsedSec < minutesPerWine * 60) return null
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant="default"
-      disabled={disabled}
-      onClick={onNext}
-      className="min-h-11 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-    >
-      → Nästa vin
-    </Button>
-  )
-}
-
-/**
- * Host-only per-participant submission tracker for the focused wine.
- * Status only — never shows guess/answer content. Renders against the live
- * roster (online, non-host participants).
- */
-function HostSubmissionTracker({
-  roster,
-  entry,
-}: {
-  roster: RosterEntry[]
-  entry: { withContent: number[]; locked: number[] } | undefined
-}) {
-  const withContent = new Set(entry?.withContent ?? [])
-  const locked = new Set(entry?.locked ?? [])
-  const guests = roster.filter((r) => !r.isHost && r.online)
-  return (
-    <div className="mt-3 rounded-md border bg-muted/40 p-3" data-tour="session-tracker">
-      <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
-        Vem har svarat
-      </p>
-      {guests.length === 0 ? (
-        <p className="mt-2 text-xs text-muted-foreground">Inga anslutna deltagare ännu.</p>
-      ) : (
-        <ul className="mt-2 space-y-1">
-          {guests.map((g) => {
-            const isLockedIn = locked.has(g.id)
-            const hasDraft = !isLockedIn && withContent.has(g.id)
-            const { symbol, label, cls } = isLockedIn
-              ? { symbol: '✓', label: 'klar', cls: 'text-green-600' }
-              : hasDraft
-                ? { symbol: '✎', label: 'utkast', cls: 'text-amber-600' }
-                : { symbol: '—', label: 'inget', cls: 'text-muted-foreground' }
-            return (
-              <li key={g.id} className="flex items-center justify-between text-xs">
-                <span className="truncate">{g.nickname}</span>
-                <span className={`ml-2 flex-shrink-0 tabular-nums ${cls}`}>
-                  {symbol} {label}
-                </span>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </div>
-  )
-}
