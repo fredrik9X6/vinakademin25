@@ -179,11 +179,38 @@ Production analytics: the cmdk `MultiSelect` (Popover + typed search input) is t
 - Consumes: `toggleChip` from Task 1.
 - Produces: `<ChipMultiSelect options={{label,value}[]} value={string[]} onValueChange={(v: string[]) => void} ariaLabel={string} />`.
 
-- [ ] **Step 1: Read the vocabularies first**
+> **Plan correction (2026-07-26).** An earlier draft of this task claimed the
+> vocabularies were 8 / 4 / 3 options. That was a mis-measurement. The real sizes
+> are **`PRIMARY_VOCAB` 45, `SECONDARY_VOCAB` 21, `TERTIARY_VOCAB` 15** — a
+> 45-chip wall would be *worse* on mobile than the popover it replaces. The gate
+> in Step 1 caught this before any code was written.
+>
+> What makes chips still correct is `SUGGESTIONS` in the same file: a per-wine-type,
+> per-tier pre-ranked subset of **5–12 entries**, which `buildFlavourOptions`
+> already emits *first*, grouped under "Föreslagna för {type}", with the remainder
+> following under "Alla". The file's own doc comment says this exists "to pre-rank
+> the chips".
+>
+> So the design is: **render the first N options as chips, put the rest behind a
+> "Visa alla" disclosure.** Because suggested options already sort first, that one
+> rule does the right thing in every case:
+>
+> | Case | Chips shown | Behind disclosure |
+> |---|---|---|
+> | red/white primary (12 suggested) | the 12 suggestions | 33 |
+> | rosé/sparkling primary (8 suggested) | the 8 suggestions | 37 |
+> | **tertiary — zero suggestions for every type** | first 12 alphabetically | 3 |
+> | **wineType `other`/null — no suggestions at all** | first 12 | 33 |
+>
+> The two bolded rows are why the rule must not depend on grouping being present.
+
+- [ ] **Step 1: Confirm the vocabulary and suggestion sizes**
 
 Run: `cat src/lib/wset-flavour-vocab.ts`
 
-Confirm `PRIMARY_VOCAB` (8), `SECONDARY_VOCAB` (4) and `TERTIARY_VOCAB` (3). If any vocabulary has grown beyond ~12 entries, **stop and report** — chips stop being the right control at that size and the plan needs revisiting.
+Confirm: the three vocabularies are roughly 45 / 21 / 15; `SUGGESTIONS` gives 5–12 entries per (wineType, tier) for the `primary` and `secondary` tiers; and `tertiary` has **no** suggestions for any type. Confirm `buildFlavourOptions` returns `GroupedOption[]` with suggested entries first.
+
+If any of that no longer holds, **stop and report** rather than adapting silently.
 
 - [ ] **Step 2: Build the chip component**
 
@@ -203,21 +230,34 @@ export interface ChipOption {
 }
 
 export interface ChipMultiSelectProps {
+  /** Ordered options. `buildFlavourOptions` already puts suggestions first. */
   options: ChipOption[]
   value: string[]
   onValueChange: (value: string[]) => void
   /** Accessible name for the group, e.g. "Smaker du känner igen". */
   ariaLabel: string
+  /** How many chips to show before the "Visa alla" disclosure. */
+  visibleCount?: number
   className?: string
 }
 
+const DEFAULT_VISIBLE = 12
+
 /**
- * Tap-to-toggle multi-select for small vocabularies (roughly ≤ 12 options).
+ * Tap-to-toggle multi-select.
  *
  * Replaces the cmdk Popover + typed-search MultiSelect on the tasting-note
- * form. That control was the most rage-clicked element in the product: a search
- * box over eight options, inside a popover, on a phone held in one hand at a
- * dinner table. Chips need one tap, no keyboard, and no overlay.
+ * form — the most rage-clicked control in the product, on mobile, at a dinner
+ * table. Chips need one tap, no keyboard, and no overlay.
+ *
+ * The vocabularies are large (45 / 21 / 15), so only the first `visibleCount`
+ * options render initially and the rest sit behind a disclosure. Callers pass
+ * options from `buildFlavourOptions`, which orders the wine-type suggestions
+ * first — so the visible chips are the plausible ones without this component
+ * needing to know anything about wine.
+ *
+ * Any already-selected option is always rendered, even when it falls in the
+ * hidden remainder: a selection the user cannot see is worse than a long list.
  *
  * Every chip is min-h-11 (44px) to meet the touch-target floor.
  */
@@ -226,36 +266,59 @@ export function ChipMultiSelect({
   value,
   onValueChange,
   ariaLabel,
+  visibleCount = DEFAULT_VISIBLE,
   className,
 }: ChipMultiSelectProps) {
+  const [showAll, setShowAll] = React.useState(false)
+
+  const shown = React.useMemo(() => {
+    if (showAll || options.length <= visibleCount) return options
+    const head = options.slice(0, visibleCount)
+    const headValues = new Set(head.map((o) => o.value))
+    // Keep selected-but-hidden options visible so a selection is never invisible.
+    const selectedTail = options.filter(
+      (o) => !headValues.has(o.value) && value.includes(o.value),
+    )
+    return [...head, ...selectedTail]
+  }, [options, showAll, visibleCount, value])
+
+  const hiddenCount = options.length - shown.length
+
   return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      className={cn('flex flex-wrap gap-2', className)}
-    >
-      {options.map((opt) => {
-        const selected = value.includes(opt.value)
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            role="checkbox"
-            aria-checked={selected}
-            onClick={() => onValueChange(toggleChip(value, opt.value))}
-            className={cn(
-              'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              selected
-                ? 'border-brand-400 bg-brand-400/10 text-brand-400 font-medium'
-                : 'border-input bg-background text-foreground hover:bg-accent',
-            )}
-          >
-            {selected && <Check className="h-3.5 w-3.5" aria-hidden />}
-            {opt.label}
-          </button>
-        )
-      })}
+    <div className={cn('space-y-2', className)}>
+      <div role="group" aria-label={ariaLabel} className="flex flex-wrap gap-2">
+        {shown.map((opt) => {
+          const selected = value.includes(opt.value)
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              role="checkbox"
+              aria-checked={selected}
+              onClick={() => onValueChange(toggleChip(value, opt.value))}
+              className={cn(
+                'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                selected
+                  ? 'border-brand-400 bg-brand-400/10 text-brand-400 font-medium'
+                  : 'border-input bg-background text-foreground hover:bg-accent',
+              )}
+            >
+              {selected && <Check className="h-3.5 w-3.5" aria-hidden />}
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
+      {(hiddenCount > 0 || showAll) && (
+        <button
+          type="button"
+          onClick={() => setShowAll((s) => !s)}
+          className="min-h-11 text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          {showAll ? 'Visa färre' : `Visa alla (${options.length})`}
+        </button>
+      )}
     </div>
   )
 }
