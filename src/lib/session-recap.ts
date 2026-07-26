@@ -363,6 +363,15 @@ export async function getSessionRecap(
   const isBlindSession = Boolean((session as { blindTasting?: boolean }).blindTasting)
   let blindLeaderboard: BlindLeaderboardEntry[] = []
   if (isBlindSession) {
+    // Only score guesses for wines the host actually revealed in the room —
+    // mirrors computeLivePoints (session-live-scores.ts) so the recap total
+    // never exceeds the last number a participant saw on the live leaderboard.
+    // An unrevealed wine was never scored live, so it stays unscored here too.
+    const revealedRaw = (session as { revealedPourOrders?: unknown }).revealedPourOrders
+    const revealedSet = new Set<number>(
+      Array.isArray(revealedRaw) ? revealedRaw.filter((n): n is number => typeof n === 'number') : [],
+    )
+
     // Pour → BlindAnswer map with override → library-wine precedence; resolves
     // bare relation ids so scoring works regardless of the session load depth.
     const answerByPour = await buildBlindAnswersByPour(payload, wines)
@@ -395,6 +404,7 @@ export async function getSessionRecap(
       guessedGrape?: string | null
       guessedPriceBucket?: PriceBucket | null
     }>) {
+      if (!revealedSet.has(g.pourOrder)) continue
       const answer = answerByPour.get(g.pourOrder)
       if (!answer) continue
 

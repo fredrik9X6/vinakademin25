@@ -99,8 +99,7 @@ export function SessionHistoryDetail({
         </div>
         <h1 className="text-2xl font-heading">{sessionTitle(session)}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {headline.totalReviewers}{' '}
-          {headline.totalReviewers === 1 ? 'deltagare' : 'deltagare'} ·{' '}
+          {headline.totalReviewers} deltagare ·{' '}
           {headline.totalReviews}{' '}
           {headline.totalReviews === 1 ? 'recension' : 'recensioner'}
         </p>
