@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { TastingPlan, Wine, CourseSession } from '@/payload-types'
@@ -252,6 +253,11 @@ export function PlanSessionContent({
   sidebarExtra,
 }: PlanSessionContentProps) {
   const rows: WineRow[] = (plan.wines ?? []).map(rowFromEntry)
+  // Gate for the reveal identity fade below — final state renders immediately
+  // with no transition when reduced motion is preferred. (Distinct from the
+  // one-off matchMedia check inside scrollPourIntoView further down, which
+  // isn't a hook and serves a different, non-animation purpose.)
+  const reduceMotion = Boolean(useReducedMotion())
   const [infoWine, setInfoWine] = React.useState<WineRow | null>(null)
   // Bottom sheet listing every wine — opened from the "Alla viner" header control.
   const [wineListOpen, setWineListOpen] = React.useState(false)
@@ -484,11 +490,27 @@ export function PlanSessionContent({
   // "what can this viewer see". Both the wine cards below and the Alla viner
   // sheet render from this array (never from raw `rows`), so a redaction
   // rule only has to be right once.
-  type DisplayWineRow = WineRow & { isHiddenForGuest: boolean }
+  type DisplayWineRow = WineRow & {
+    isHiddenForGuest: boolean
+    /** True exactly during the window the comment above describes: this
+     * guest's `effectiveRevealed` already has the pour (SSE/optimistic
+     * state), but the row still holds the load-time redacted nulls because
+     * router.refresh() hasn't landed yet. Both libraryWineId and
+     * customWineSnapshot are null only in two cases — genuinely still
+     * hidden, or this in-between window — and isHiddenForGuest already
+     * covers the first, so anything left here is the second. */
+    revealPending: boolean
+  }
   const displayRows: DisplayWineRow[] = React.useMemo(
     () =>
       rows.map((row): DisplayWineRow => {
         const isHiddenForGuest = isBlind && !isHost && !effectiveRevealed.has(row.pourOrder)
+        const revealPending =
+          isBlind &&
+          !isHost &&
+          !isHiddenForGuest &&
+          row.libraryWineId == null &&
+          row.customWineSnapshot == null
         if (isHiddenForGuest) {
           return {
             ...row,
@@ -504,9 +526,10 @@ export function PlanSessionContent({
             articleNumber: null,
             systembolagetUrl: null,
             isHiddenForGuest,
+            revealPending,
           }
         }
-        return { ...row, isHiddenForGuest }
+        return { ...row, isHiddenForGuest, revealPending }
       }),
     [rows, isBlind, isHost, effectiveRevealed],
   )
@@ -856,6 +879,9 @@ export function PlanSessionContent({
                       isActive ? 'border-brand-400 ring-2 ring-brand-400/40' : ''
                     }`}
                   >
+                    {displayRow.revealPending ? (
+                      <RevealPendingSkeleton pourOrder={row.pourOrder} />
+                    ) : (
                     <div className="flex gap-3 sm:gap-4 items-center">
                       <div className="relative flex-shrink-0 w-20 h-32 sm:w-24 sm:h-36">
                         <span
@@ -864,37 +890,56 @@ export function PlanSessionContent({
                         >
                           {row.pourOrder}
                         </span>
-                        {displayRow.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={displayRow.imageUrl}
-                            alt=""
-                            className="relative w-full h-full object-contain"
-                          />
-                        ) : (
-                          <WineImagePlaceholder />
-                        )}
+                        {/* Keyed on hidden/revealed so the guest's blind-reveal
+                            moment remounts this (host/non-blind rows keep a
+                            constant key, so this only ever plays once, on the
+                            wine's initial mount). */}
+                        <motion.div
+                          key={displayRow.isHiddenForGuest ? 'hidden' : 'revealed'}
+                          initial={reduceMotion ? false : { opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: reduceMotion ? 0 : 0.25 }}
+                          className="relative w-full h-full"
+                        >
+                          {displayRow.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={displayRow.imageUrl}
+                              alt=""
+                              className="relative w-full h-full object-contain"
+                            />
+                          ) : (
+                            <WineImagePlaceholder />
+                          )}
+                        </motion.div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-medium truncate">{displayRow.title}</p>
-                          {isActive && (
-                            <Badge variant="brand">
-                              <WineIcon className="h-3 w-3 mr-1" />
-                              Värden pratar om detta
-                            </Badge>
+                        <motion.div
+                          key={displayRow.isHiddenForGuest ? 'hidden' : 'revealed'}
+                          initial={reduceMotion ? false : { opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: reduceMotion ? 0 : 0.25 }}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium truncate">{displayRow.title}</p>
+                            {isActive && (
+                              <Badge variant="brand">
+                                <WineIcon className="h-3 w-3 mr-1" />
+                                Värden pratar om detta
+                              </Badge>
+                            )}
+                          </div>
+                          {displayRow.subtitle && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {displayRow.subtitle}
+                            </p>
                           )}
-                        </div>
-                        {displayRow.subtitle && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {displayRow.subtitle}
-                          </p>
-                        )}
-                        <WinePurchaseMeta
-                          priceSek={displayRow.priceSek}
-                          articleNumber={displayRow.articleNumber}
-                          systembolagetUrl={displayRow.systembolagetUrl}
-                        />
+                          <WinePurchaseMeta
+                            priceSek={displayRow.priceSek}
+                            articleNumber={displayRow.articleNumber}
+                            systembolagetUrl={displayRow.systembolagetUrl}
+                          />
+                        </motion.div>
                         {isHost &&
                           (row.hostNotes ||
                             row.abv != null ||
@@ -1075,6 +1120,7 @@ export function PlanSessionContent({
                         {shouldShowSwarm && <SwarmPanel entry={swarmEntry ?? null} />}
                       </div>
                     </div>
+                    )}
                   </Card>
                 </li>
               )
@@ -1209,6 +1255,29 @@ export function PlanSessionContent({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+/**
+ * Guest-only placeholder for the window between "the host revealed this
+ * wine" (effectiveRevealed already has the pour) and "the page's redaction
+ * re-ran with the real data" (router.refresh() lands). Without this, the row
+ * would briefly render the load-time redacted nulls as if they were the real
+ * wine — "Namnlöst vin" with a placeholder bottle. This replaces the whole
+ * card body for that window instead.
+ */
+function RevealPendingSkeleton({ pourOrder }: { pourOrder: number }) {
+  return (
+    <div className="flex animate-pulse items-center gap-3 sm:gap-4" aria-live="polite">
+      <div className="h-32 w-20 flex-shrink-0 rounded-md bg-muted sm:h-36 sm:w-24" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="text-sm font-medium text-muted-foreground">
+          Vin #{pourOrder} · Avslöjas…
+        </p>
+        <div className="h-3 w-2/3 rounded bg-muted" />
+        <div className="h-3 w-1/3 rounded bg-muted" />
+      </div>
+    </div>
   )
 }
 

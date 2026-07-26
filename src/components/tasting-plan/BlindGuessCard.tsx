@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { motion, animate, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -91,6 +92,10 @@ export function BlindGuessCard({
   // Default to showing all tiers when blindTiers is absent (host path,
   // revealed wines, any unset case) — never regress existing behaviour.
   const show = blindTiers ?? { country: true, grape: true, price: true }
+  // Reveal is a presentation flourish, not a feature the user has to wait
+  // on — when reduced motion is preferred, every animation below renders its
+  // final state immediately (no fade, no stagger, no count-up).
+  const prefersReducedMotion = Boolean(useReducedMotion())
   const { grapes: dynamicGrapes } = useGrapes()
   // Options render alphabetically (sv collation) regardless of source — the
   // vocab enum is region-grouped and the baked decoy sets arrive shuffled.
@@ -218,7 +223,9 @@ export function BlindGuessCard({
 
   const hasGuess = Boolean(editing.country || editing.grape || editing.priceBucket)
 
-  // Reveal mode: show scored results
+  // Reveal mode: show scored results. This branch only ever mounts once per
+  // wine (isRevealed only goes false→true) — the fade/stagger/count-up below
+  // is that one moment, not a replayed loop on every re-render.
   if (isRevealed && hasGuess) {
     const scored = scoreOne(
       {
@@ -228,36 +235,73 @@ export function BlindGuessCard({
       },
       answer,
     )
+    // Only the tiers that were actually scored get a row, so the stagger
+    // delay is computed off how many rows there really are (1–3), not a
+    // fixed index — no gaps if e.g. only price was scored.
+    const revealRows: { key: string; node: React.ReactNode }[] = []
+    if (scored.countryScored) {
+      revealRows.push({
+        key: 'country',
+        node: (
+          <Row
+            correct={scored.countryCorrect}
+            label="Land"
+            guess={editing.country}
+            answer={answer.country ?? null}
+          />
+        ),
+      })
+    }
+    if (scored.grapeScored) {
+      revealRows.push({
+        key: 'grape',
+        node: (
+          <Row
+            correct={scored.grapeCorrect}
+            label="Druva"
+            guess={editing.grape}
+            answer={firstAnswerGrape}
+          />
+        ),
+      })
+    }
+    if (scored.priceScored) {
+      revealRows.push({
+        key: 'price',
+        node: (
+          <PriceRow
+            correct={scored.priceCorrect}
+            guessLabel={priceBucketLabel(editing.priceBucket)}
+            answerBucket={resolveAnswerPriceBucket(answer)}
+            answerPriceSek={answer.priceSek ?? null}
+          />
+        ),
+      })
+    }
     return (
-      <div className="mt-3 rounded-md border bg-card p-3 space-y-1">
+      <motion.div
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
+        className="mt-3 rounded-md border bg-card p-3 space-y-1"
+      >
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Din gissning
         </p>
         <div className="flex flex-col gap-1.5 text-sm">
-          {scored.countryScored && (
-            <Row
-              correct={scored.countryCorrect}
-              label="Land"
-              guess={editing.country}
-              answer={answer.country ?? null}
-            />
-          )}
-          {scored.grapeScored && (
-            <Row
-              correct={scored.grapeCorrect}
-              label="Druva"
-              guess={editing.grape}
-              answer={firstAnswerGrape}
-            />
-          )}
-          {scored.priceScored && (
-            <PriceRow
-              correct={scored.priceCorrect}
-              guessLabel={priceBucketLabel(editing.priceBucket)}
-              answerBucket={resolveAnswerPriceBucket(answer)}
-              answerPriceSek={answer.priceSek ?? null}
-            />
-          )}
+          {revealRows.map((r, i) => (
+            <motion.div
+              key={r.key}
+              initial={prefersReducedMotion ? false : { opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.2,
+                delay: prefersReducedMotion ? 0 : 0.1 + i * 0.08,
+              }}
+            >
+              {r.node}
+            </motion.div>
+          ))}
         </div>
         {/* Always rendered, including +0 poäng. Suppressing the zero case left a
             0/3 wine showing three red crosses and no score at all, which reads
@@ -267,7 +311,7 @@ export function BlindGuessCard({
             scored.points > 0 ? 'text-brand-400' : 'text-muted-foreground'
           }`}
         >
-          +{scored.points} av{' '}
+          +<AnimatedPoints points={scored.points} prefersReducedMotion={prefersReducedMotion} /> av{' '}
           {pointsLabel(
             maxPointsForTiers({
               country: scored.countryScored,
@@ -276,7 +320,7 @@ export function BlindGuessCard({
             }),
           )}
         </p>
-      </div>
+      </motion.div>
     )
   }
 
@@ -431,6 +475,34 @@ export function BlindGuessCard({
       </div>
     </div>
   )
+}
+
+/**
+ * Counts up from 0 to `points` over ~350ms when the reveal first mounts.
+ * Purely a display flourish — the value it lands on is exactly `scored.points`
+ * from scoreOne, nothing recomputed here. Reduced motion shows the final
+ * number immediately, no counting.
+ */
+function AnimatedPoints({
+  points,
+  prefersReducedMotion,
+}: {
+  points: number
+  prefersReducedMotion: boolean
+}) {
+  const [display, setDisplay] = React.useState(prefersReducedMotion ? points : 0)
+  React.useEffect(() => {
+    if (prefersReducedMotion) {
+      setDisplay(points)
+      return
+    }
+    const controls = animate(0, points, {
+      duration: 0.35,
+      onUpdate: (latest) => setDisplay(Math.round(latest)),
+    })
+    return () => controls.stop()
+  }, [points, prefersReducedMotion])
+  return <>{display}</>
 }
 
 /** Field label plus its point value, e.g. "Land · 1 p". */
