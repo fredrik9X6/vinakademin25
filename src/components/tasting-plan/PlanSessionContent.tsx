@@ -892,8 +892,18 @@ export function PlanSessionContent({
                     {displayRow.revealPending ? (
                       <RevealPendingSkeleton pourOrder={row.pourOrder} />
                     ) : (
-                    <div className="flex gap-3 sm:gap-4 items-center">
-                      <div className="relative flex-shrink-0 w-20 h-32 sm:w-24 sm:h-36">
+                    /* Mobile stacks the bottle above the inputs; from sm up it
+                       returns to a side-by-side row.
+                       Why: the image column is ~128px tall but the content
+                       column runs the full guess panel + tasting-note form —
+                       often 1000px+. With `items-center` the bottle floated in
+                       the vertical middle of a narrow 80px strip, leaving a
+                       long empty gutter down the left of every card. Stacking
+                       gives the inputs the full width, and `sm:items-start`
+                       top-aligns the bottle on desktop instead of centring it
+                       against a form it has nothing to do with. */
+                    <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-start">
+                      <div className="relative w-full h-28 flex-shrink-0 sm:w-24 sm:h-36">
                         <span
                           className="absolute inset-0 flex items-start justify-start font-heading leading-[0.85] text-muted-foreground/25 select-none pointer-events-none text-[110px] sm:text-[130px] -ml-2 -mt-1"
                           aria-hidden="true"
@@ -916,7 +926,10 @@ export function PlanSessionContent({
                             <img
                               src={displayRow.imageUrl}
                               alt=""
-                              className="relative w-full h-full object-contain"
+                              // h-full w-auto mx-auto: on the full-width mobile
+                              // band the bottle is height-constrained and
+                              // centred rather than stretched across 375px.
+                              className="relative h-full w-auto mx-auto object-contain sm:w-full"
                             />
                           ) : (
                             <WineImagePlaceholder />
