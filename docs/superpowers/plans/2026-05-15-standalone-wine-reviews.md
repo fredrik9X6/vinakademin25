@@ -117,7 +117,7 @@ Expected: `Migrated: <timestamp>_add_review_published_to_profile (XXms)` and `Do
 
 Run:
 ```bash
-DATABASE_URI="postgresql://neondb_owner:npg_Eb7p4jxYzmrF@ep-purple-night-a29kjy8j-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" pnpm migrate
+DATABASE_URI="$STAGING_DATABASE_URI" pnpm migrate
 ```
 
 Expected: same migrated-OK output.

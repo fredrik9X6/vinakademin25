@@ -219,7 +219,7 @@ until curl -s --max-time 3 http://localhost:3000/api/users/me >/dev/null 2>&1; d
 
 Find a real `joinCode` from the local DB:
 ```bash
-PGPASSWORD=npg_Eb7p4jxYzmrF psql "postgresql://neondb_owner@ep-super-poetry-a2z7zldz-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" -c "SELECT join_code, status FROM course_sessions ORDER BY created_at DESC LIMIT 5;"
+psql "$STAGING_DATABASE_URI" -c "SELECT join_code, status FROM course_sessions ORDER BY created_at DESC LIMIT 5;"
 ```
 
 If a row exists with `status=active`, hit lookup:

@@ -147,8 +147,8 @@ pnpm migrate
 Expected: the new migration runs successfully. The Neon DB is shared with prod, so this also runs against prod. That's intentional — these are nullable additive columns that prod can tolerate immediately. Verify with read-only psql:
 
 ```bash
-PGPASSWORD=npg_Eb7p4jxYzmrF psql "postgresql://neondb_owner@ep-super-poetry-a2z7zldz-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" -c "\d course_sessions" | grep -E "completed_at|claim_emails_dispatched_at"
-PGPASSWORD=npg_Eb7p4jxYzmrF psql "postgresql://neondb_owner@ep-super-poetry-a2z7zldz-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" -c "\d session_participants" | grep -E "claim_email_processed_at|claim_email_status"
+psql "$STAGING_DATABASE_URI" -c "\d course_sessions" | grep -E "completed_at|claim_emails_dispatched_at"
+psql "$STAGING_DATABASE_URI" -c "\d session_participants" | grep -E "claim_email_processed_at|claim_email_status"
 ```
 
 Expected: each column appears with the right type (`timestamp(3) ...` for dates, the enum for `claim_email_status`).
@@ -240,7 +240,7 @@ In the Payload admin UI (`/admin`):
 
 Read-only verification via psql (alternative to admin UI clicks):
 ```bash
-PGPASSWORD=npg_Eb7p4jxYzmrF psql "postgresql://neondb_owner@ep-super-poetry-a2z7zldz-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" -c "SELECT join_code, status, completed_at, claim_emails_dispatched_at FROM course_sessions ORDER BY updated_at DESC LIMIT 5;"
+psql "$STAGING_DATABASE_URI" -c "SELECT join_code, status, completed_at, claim_emails_dispatched_at FROM course_sessions ORDER BY updated_at DESC LIMIT 5;"
 ```
 
 If you cannot run admin UI clicks (e.g. no active session, no admin login available), note the limitation. Skipping this step is acceptable but flag it — the hook logic is small and can also be verified during Task 7's E2E pass.
@@ -705,7 +705,7 @@ Expected: no output.
 Confirm the find query shape works against a real DB:
 
 ```bash
-PGPASSWORD=npg_Eb7p4jxYzmrF psql "postgresql://neondb_owner@ep-super-poetry-a2z7zldz-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" -c "SELECT id, join_code, status, completed_at, claim_emails_dispatched_at FROM course_sessions WHERE status='completed' AND completed_at IS NOT NULL AND completed_at < now() - interval '30 minutes' AND claim_emails_dispatched_at IS NULL LIMIT 5;"
+psql "$STAGING_DATABASE_URI" -c "SELECT id, join_code, status, completed_at, claim_emails_dispatched_at FROM course_sessions WHERE status='completed' AND completed_at IS NOT NULL AND completed_at < now() - interval '30 minutes' AND claim_emails_dispatched_at IS NULL LIMIT 5;"
 ```
 
 Expected: zero or more rows. Most likely zero on a fresh schema (no sessions completed yet under the new field). That's fine — Task 7's E2E pass will exercise the cron with a real session.
@@ -953,7 +953,7 @@ The cleanest verification path that doesn't poison the prod-shared DB:
 5. Wait 30 minutes (or, if you trust the implementation, manually back-date `completed_at` via psql to bypass the wait — but this requires DB mutation, so prefer the wait):
    ```bash
    # Optional shortcut — back-dates the test session 31 min so the cron sees it as due
-   PGPASSWORD=npg_Eb7p4jxYzmrF psql "postgresql://neondb_owner@ep-super-poetry-a2z7zldz-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" -c "UPDATE course_sessions SET completed_at = now() - interval '31 minutes' WHERE id = <TEST_SESSION_ID>;"
+   psql "$STAGING_DATABASE_URI" -c "UPDATE course_sessions SET completed_at = now() - interval '31 minutes' WHERE id = <TEST_SESSION_ID>;"
    ```
    Skip this UPDATE if you don't want to mutate the shared DB; just wait the real 30 minutes.
 6. Run the cron manually:

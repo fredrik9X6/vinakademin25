@@ -437,8 +437,8 @@ Expected: `Migrated: <timestamp>_chunk_a_tasting_plans_foundation (...ms)`. The 
 
 Verify with read-only psql:
 ```bash
-PGPASSWORD=npg_Eb7p4jxYzmrF psql "postgresql://neondb_owner@ep-super-poetry-a2z7zldz-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" -c "\d tasting_plans" 2>&1 | tail -5
-PGPASSWORD=npg_Eb7p4jxYzmrF psql "postgresql://neondb_owner@ep-super-poetry-a2z7zldz-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" -c "\d course_sessions" 2>&1 | grep tasting_plan
+psql "$STAGING_DATABASE_URI" -c "\d tasting_plans" 2>&1 | tail -5
+psql "$STAGING_DATABASE_URI" -c "\d course_sessions" 2>&1 | grep tasting_plan
 ```
 
 Expected: `tasting_plans` table exists; `course_sessions.tasting_plan_id` column exists.
@@ -908,7 +908,7 @@ Expected: `201` with `{ success: true, session: { id, joinCode, ... } }`. Note t
 
 Verify the session row has `course = null` and `tastingPlan = <id>`:
 ```bash
-PGPASSWORD=npg_Eb7p4jxYzmrF psql "postgresql://neondb_owner@ep-super-poetry-a2z7zldz-pooler.eu-central-1.aws.neon.tech/vinakademin?sslmode=require&channel_binding=require" -c "SELECT id, join_code, course_id, tasting_plan_id, status FROM course_sessions ORDER BY created_at DESC LIMIT 1;"
+psql "$STAGING_DATABASE_URI" -c "SELECT id, join_code, course_id, tasting_plan_id, status FROM course_sessions ORDER BY created_at DESC LIMIT 1;"
 ```
 
 Expected: course_id NULL, tasting_plan_id populated.
