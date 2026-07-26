@@ -8,13 +8,6 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -240,8 +233,8 @@ function rowFromEntry(
  * Plan-driven session content.
  *
  * Renders the flat ordered wine list from a TastingPlan (no modules/lessons),
- * with host pacing controls and a per-wine "Betygsätt" dialog that opens
- * WineReviewForm in either library-wine or custom-wine snapshot mode.
+ * with host pacing controls and a per-wine inline tasting-note disclosure that
+ * renders WineReviewForm in either library-wine or custom-wine snapshot mode.
  *
 
 
@@ -256,8 +249,13 @@ export function PlanSessionContent({
   sidebarExtra,
 }: PlanSessionContentProps) {
   const rows: WineRow[] = (plan.wines ?? []).map(rowFromEntry)
-  const [reviewing, setReviewing] = React.useState<WineRow | null>(null)
   const [infoWine, setInfoWine] = React.useState<WineRow | null>(null)
+  // Which pour's tasting-note disclosure is open. null = "follow the host"
+  // (the wine currently in focus is open by default); a pour number = the
+  // participant deliberately opened that one; -1 = deliberately collapsed
+  // everything (distinct from null so the collapse action doesn't just snap
+  // back to following the host).
+  const [expandedPour, setExpandedPour] = React.useState<number | null>(null)
   const [settingFocus, setSettingFocus] = React.useState(false)
   // Optimistic local focus — fires immediately when the host taps a wine so
   // their own UI doesn't wait for the SSE round-trip. Only the host ever sets
@@ -557,6 +555,7 @@ export function PlanSessionContent({
                   }
                 : row
               const isActive = activePour === row.pourOrder
+              const isExpanded = (expandedPour ?? activePour) === row.pourOrder
               const showRevealButton = isHost && isBlind && !effectiveRevealed.has(row.pourOrder)
               const swarmEntry = swarm[row.pourOrder]
               const shouldShowSwarm = isHost || submittedPourOrders.has(row.pourOrder)
@@ -636,14 +635,6 @@ export function PlanSessionContent({
                               {isActive ? 'I fokus' : 'Sätt fokus'}
                             </Button>
                           )}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setReviewing(displayRow)}
-                          >
-                            Betygsätt
-                          </Button>
                           {showRevealButton && (
                             <Button
                               type="button"
@@ -711,6 +702,48 @@ export function PlanSessionContent({
                             </div>
                           )}
 
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedPour(isExpanded ? -1 : row.pourOrder)
+                          }
+                          aria-expanded={isExpanded}
+                          className="mt-3 flex min-h-11 w-full items-center justify-between rounded-md border border-input px-3 text-sm hover:bg-accent"
+                        >
+                          <span className="font-medium">Din smaknotering</span>
+                          <span className="text-xs text-muted-foreground">
+                            {submittedPourOrders.has(row.pourOrder) ? 'Klar' : 'Ej klar'}
+                          </span>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="mt-3 rounded-md border bg-card p-3">
+                            {isBlind && (
+                              <p className="mb-3 text-xs text-muted-foreground">
+                                Din smaknotering ger inga poäng — bara blindgissningen räknas.
+                              </p>
+                            )}
+                            <WineReviewForm
+                              key={`review-${row.pourOrder}`}
+                              lessonId={0}
+                              sessionId={String(session.id)}
+                              pourOrder={row.pourOrder}
+                              {...(displayRow.libraryWineId
+                                ? { wineIdProp: displayRow.libraryWineId }
+                                : {})}
+                              {...(displayRow.customWineSnapshot
+                                ? { customWineSnapshot: displayRow.customWineSnapshot }
+                                : {})}
+                              onRestored={() => setRestoredBanner(true)}
+                              onSubmit={() => {
+                                setSubmittedPourOrders((prev) =>
+                                  new Set([...prev, row.pourOrder]),
+                                )
+                              }}
+                            />
+                          </div>
+                        )}
+
                         {isHost && isActive && (
                           <HostSubmissionTracker
                             roster={roster}
@@ -755,37 +788,6 @@ export function PlanSessionContent({
         </SheetContent>
       </Sheet>
 
-      <Dialog open={!!reviewing} onOpenChange={(o) => !o && setReviewing(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Betygsätt: {reviewing?.title}</DialogTitle>
-            {isBlind && (
-              // Only in a blind session — a non-blind tasting has no scoring at
-              // all, so mentioning points there is noise rather than clarity.
-              <DialogDescription>
-                Din smaknotering ger inga poäng — bara blindgissningen räknas.
-              </DialogDescription>
-            )}
-          </DialogHeader>
-          {reviewing && (
-            <WineReviewForm
-              key={`review-${reviewing.pourOrder}`}
-              lessonId={0}
-              sessionId={String(session.id)}
-              pourOrder={reviewing.pourOrder}
-              {...(reviewing.libraryWineId ? { wineIdProp: reviewing.libraryWineId } : {})}
-              {...(reviewing.customWineSnapshot
-                ? { customWineSnapshot: reviewing.customWineSnapshot }
-                : {})}
-              onRestored={() => setRestoredBanner(true)}
-              onSubmit={() => {
-                setSubmittedPourOrders((prev) => new Set([...prev, reviewing.pourOrder]))
-                setReviewing(null)
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
       </div>
 
       <AlertDialog open={endDialog} onOpenChange={setEndDialog}>
