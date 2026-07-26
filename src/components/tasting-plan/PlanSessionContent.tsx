@@ -766,7 +766,7 @@ export function PlanSessionContent({
                               type="button"
                               size="sm"
                               variant="ghost"
-                              className="mt-2 h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                              className="mt-2 min-h-11 h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                               onClick={() => setInfoWine(row)}
                             >
                               <Info className="h-3 w-3 mr-1" />
@@ -781,21 +781,21 @@ export function PlanSessionContent({
                               variant={isActive ? 'default' : 'outline'}
                               disabled={settingFocus}
                               onClick={() => setFocus(row.pourOrder)}
+                              className="min-h-11"
                               {...(idx === 0 ? { 'data-tour': 'session-set-focus' } : {})}
                             >
                               {isActive ? 'I fokus' : 'Sätt fokus'}
                             </Button>
                           )}
                           {showRevealButton && (
-                            <Button
+                            <button
                               type="button"
-                              size="sm"
-                              variant="outline"
+                              className="btn-brand min-h-11"
                               onClick={() => attemptReveal(row.pourOrder)}
                               {...(idx === 0 ? { 'data-tour': 'session-reveal' } : {})}
                             >
                               Avslöja vin #{row.pourOrder}
-                            </Button>
+                            </button>
                           )}
                           {isActive && plan.defaultMinutesPerWine ? (
                             <div {...(idx === 0 ? { 'data-tour': 'session-timer' } : {})}>
@@ -1086,7 +1086,7 @@ function NextWineButton({
       variant="default"
       disabled={disabled}
       onClick={onNext}
-      className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+      className="min-h-11 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
     >
       → Nästa vin
     </Button>
@@ -1108,35 +1108,34 @@ function HostSubmissionTracker({
   const withContent = new Set(entry?.withContent ?? [])
   const locked = new Set(entry?.locked ?? [])
   const guests = roster.filter((r) => !r.isHost && r.online)
-  if (guests.length === 0) {
-    return (
-      <div className="mt-3 rounded-md border bg-muted/40 p-3">
-        <p className="text-xs text-muted-foreground">Inga anslutna deltagare ännu.</p>
-      </div>
-    )
-  }
   return (
     <div className="mt-3 rounded-md border bg-muted/40 p-3" data-tour="session-tracker">
-      <p className="mb-2 text-xs font-medium text-muted-foreground">Vem har svarat</p>
-      <ul className="space-y-1">
-        {guests.map((g) => {
-          const isLockedIn = locked.has(g.id)
-          const hasDraft = !isLockedIn && withContent.has(g.id)
-          const { symbol, label, cls } = isLockedIn
-            ? { symbol: '✓', label: 'klar', cls: 'text-green-600' }
-            : hasDraft
-              ? { symbol: '✎', label: 'utkast', cls: 'text-amber-600' }
-              : { symbol: '—', label: 'inget', cls: 'text-muted-foreground' }
-          return (
-            <li key={g.id} className="flex items-center justify-between text-xs">
-              <span className="truncate">{g.nickname}</span>
-              <span className={`ml-2 flex-shrink-0 tabular-nums ${cls}`}>
-                {symbol} {label}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
+      <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
+        Vem har svarat
+      </p>
+      {guests.length === 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">Inga anslutna deltagare ännu.</p>
+      ) : (
+        <ul className="mt-2 space-y-1">
+          {guests.map((g) => {
+            const isLockedIn = locked.has(g.id)
+            const hasDraft = !isLockedIn && withContent.has(g.id)
+            const { symbol, label, cls } = isLockedIn
+              ? { symbol: '✓', label: 'klar', cls: 'text-green-600' }
+              : hasDraft
+                ? { symbol: '✎', label: 'utkast', cls: 'text-amber-600' }
+                : { symbol: '—', label: 'inget', cls: 'text-muted-foreground' }
+            return (
+              <li key={g.id} className="flex items-center justify-between text-xs">
+                <span className="truncate">{g.nickname}</span>
+                <span className={`ml-2 flex-shrink-0 tabular-nums ${cls}`}>
+                  {symbol} {label}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
