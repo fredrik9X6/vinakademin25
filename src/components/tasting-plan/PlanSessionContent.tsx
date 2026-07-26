@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SessionDialogs } from '@/components/tasting-plan/SessionDialogs'
+import { SessionFocusNudge } from '@/components/tasting-plan/SessionFocusNudge'
 import {
   Sheet,
   SheetContent,
@@ -18,7 +19,7 @@ import {
 import { WineInfoReadout } from '@/components/tasting-shared/WineInfoReadout'
 import { resolveWinePurchase } from '@/lib/wine-purchase-info'
 import { WinePurchaseMeta } from '@/components/tasting-shared/WinePurchaseMeta'
-import { Wine as WineIcon, LogOut, CheckCircle, Info, X, ListChecks } from 'lucide-react'
+import { Wine as WineIcon, LogOut, CheckCircle, Info, ListChecks } from 'lucide-react'
 import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
@@ -1118,25 +1119,11 @@ export function PlanSessionContent({
           </ul>
         )}
 
-        {pendingFollowPour !== null && (
-          <div className="sticky bottom-20 md:bottom-4 z-40 flex items-center gap-2 rounded-full border bg-background/95 px-4 py-2 text-sm shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80">
-            <button
-              type="button"
-              className="flex-1 text-left font-medium text-brand-400"
-              onClick={() => followHostNow(pendingFollowPour)}
-            >
-              → Värden är nu på vin #{pendingFollowPour}
-            </button>
-            <button
-              type="button"
-              aria-label="Stäng"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={() => setPendingFollowPour(null)}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+        <SessionFocusNudge
+          pendingFollowPour={pendingFollowPour}
+          onFollow={followHostNow}
+          onDismiss={() => setPendingFollowPour(null)}
+        />
       </div>
 
       {sidebarExtra && (
