@@ -24,6 +24,7 @@ import { WineReviewForm } from '@/components/course/WineReviewForm'
 import { WineImagePlaceholder } from '@/components/wine/WineImagePlaceholder'
 import { BlindGuessCard } from '@/components/tasting-plan/BlindGuessCard'
 import { SessionWineList, type SessionWineListRow } from '@/components/tasting-plan/SessionWineList'
+import { RevealResultModal } from '@/components/tasting-plan/RevealResultModal'
 import { scoreOne, type BlindAnswer } from '@/lib/blind-guess-scoring'
 import type { PriceBucket } from '@/lib/blind-guess-vocab'
 import { summariseCommit, type CommitPartResult } from '@/lib/session-commit'
@@ -484,6 +485,48 @@ export function PlanSessionContent({
     }
   }, [revealedPourOrders, isHost, isBlind, router])
 
+  // ── Reveal-result modal ────────────────────────────────────────────────
+  // Every participant (host included) gets a shared beat when a wine is
+  // revealed: what it was, how they did, and how the standings moved.
+  //
+  // Per-wine points come from diffing the roster's cumulative points against a
+  // snapshot taken BEFORE the reveal. The live scorer recomputes cumulative
+  // points from revealed pours on the same SSE tick as the reveal itself, so
+  // the delta is exactly this wine's contribution.
+  //
+  // EFFECT ORDER IS LOAD-BEARING: this detection effect is declared BEFORE the
+  // snapshot effect below. React runs effects in declaration order, so on the
+  // commit where a reveal lands, this one still sees the previous commit's
+  // points. Swapping them would overwrite the snapshot with post-reveal points
+  // and every delta would read 0.
+  const [revealModalPour, setRevealModalPour] = React.useState<number | null>(null)
+  const [pointsBefore, setPointsBefore] = React.useState<Map<string | number, number>>(new Map())
+  const pointsSnapshotRef = React.useRef<Map<string | number, number>>(new Map())
+  const announcedRevealsRef = React.useRef<Set<number>>(
+    new Set<number>(
+      Array.isArray((session as { revealedPourOrders?: number[] }).revealedPourOrders)
+        ? ((session as { revealedPourOrders?: number[] }).revealedPourOrders as number[])
+        : [],
+    ),
+  )
+
+  React.useEffect(() => {
+    if (!isBlind) return
+    const current = revealedPourOrders ?? []
+    // Only additions open the modal — an un-reveal must not.
+    const fresh = current.filter((p) => !announcedRevealsRef.current.has(p))
+    // Keep the set in sync in both directions so an un-reveal/re-reveal cycle
+    // announces again rather than being silently swallowed.
+    announcedRevealsRef.current = new Set<number>(current)
+    if (fresh.length === 0) return
+    setPointsBefore(new Map(pointsSnapshotRef.current))
+    setRevealModalPour(Math.max(...fresh))
+  }, [revealedPourOrders, isBlind, session])
+
+  React.useEffect(() => {
+    pointsSnapshotRef.current = new Map(roster.map((p) => [p.id, p.points]))
+  }, [roster])
+
   // Blindness-redacted view of each row — the single source of truth for
   // "what can this viewer see". Both the wine cards below and the Alla viner
   // sheet render from this array (never from raw `rows`), so a redaction
@@ -548,6 +591,15 @@ export function PlanSessionContent({
     if (target == null || target === -1) return null
     return displayRows.find((r) => r.pourOrder === target) ?? null
   }, [expandedPour, activePour, displayRows])
+
+  // Declared after `displayRows` — referencing it earlier would hit the TDZ.
+  const revealModalRow = React.useMemo(
+    () =>
+      revealModalPour == null
+        ? null
+        : displayRows.find((r) => r.pourOrder === revealModalPour) ?? null,
+    [revealModalPour, displayRows],
+  )
 
   // "Alla viner" sheet rows — built from `displayRows`, the same
   // already-redacted source the wine cards render titles from, so an
@@ -816,9 +868,12 @@ export function PlanSessionContent({
 
   return (
     <>
-      <header className="flex items-center justify-between gap-2 mb-4">
+      {/* Mobile stacks the title above the actions: side-by-side, the two
+          buttons take ~250px of a 375px screen and the tasting title was
+          truncated to a few characters. From sm up the original row returns. */}
+      <header className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-heading truncate">{plan.title}</h1>
+          <h1 className="truncate text-xl font-heading">{plan.title}</h1>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
           <Button
@@ -1194,6 +1249,32 @@ export function PlanSessionContent({
           {/* Spacer so the bar never covers the end of the form. */}
           <div className="md:hidden h-24" aria-hidden />
         </>
+      )}
+
+      {revealModalRow && (
+        <RevealResultModal
+          open
+          onClose={() => setRevealModalPour(null)}
+          pourOrder={revealModalRow.pourOrder}
+          wineTitle={revealModalRow.title}
+          wineSubtitle={revealModalRow.subtitle}
+          wineImageUrl={revealModalRow.imageUrl}
+          answer={revealModalRow.blindAnswer}
+          myGuess={(() => {
+            const g = myGuesses.get(revealModalRow.pourOrder)
+            return g
+              ? {
+                  country: g.country ?? null,
+                  grape: g.grape ?? null,
+                  priceBucket: g.priceBucket ?? null,
+                }
+              : null
+          })()}
+          roster={roster}
+          pointsBefore={pointsBefore}
+          swarm={swarm[revealModalRow.pourOrder] ?? null}
+          isHost={isHost}
+        />
       )}
 
       <Sheet open={!!infoWine} onOpenChange={(o) => !o && setInfoWine(null)}>

@@ -113,8 +113,6 @@ export function BlindGuessCard({
     a.localeCompare(b, 'sv'),
   )
   // Grape options are decoy-limited for every blind session; the "Lättare
-  // läge" badge means the host ALSO limited the country options.
-  const isEasyMode = easyModeOptions?.countries != null
   // First acceptable grape for the "rätt:" hint in the post-reveal scored row.
   const firstAnswerGrape =
     Array.isArray(answer.grapes) && answer.grapes.length > 0 ? answer.grapes[0] : null
@@ -405,11 +403,6 @@ export function BlindGuessCard({
             Blindgissning
           </p>
           <Badge variant="brand">{pointsLabel(maxPointsForTiers(show))}</Badge>
-          {isEasyMode && (
-            <span className="inline-flex items-center rounded-full bg-brand-400/10 text-brand-400 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
-              Lättare läge
-            </span>
-          )}
         </div>
         <p className="text-xs text-muted-foreground">Låses när värden avslöjar vinet</p>
       </div>
