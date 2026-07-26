@@ -962,16 +962,35 @@ export function PlanSessionContent({
                           </div>
                         )}
 
-                        <button
-                          type="button"
-                          className="btn-brand mt-3 w-full min-h-11"
-                          onClick={() => void commitWine(row.pourOrder)}
-                          disabled={committingPour === row.pourOrder}
-                        >
-                          {committingPour === row.pourOrder
-                            ? 'Sparar…'
-                            : `Klar med vin #${row.pourOrder}`}
-                        </button>
+                        {isHost ? (
+                          // Secondary styling for the host — "Avslöja vin #N" is the
+                          // host's primary action on this card (there must be exactly
+                          // one primary CTA per screen per the styleguide). Hosts still
+                          // commit their own tasting note/guess so their rating feeds
+                          // the guest-facing swarm average; it's just not the primary CTA.
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-3 w-full min-h-11"
+                            onClick={() => void commitWine(row.pourOrder)}
+                            disabled={committingPour === row.pourOrder}
+                          >
+                            {committingPour === row.pourOrder
+                              ? 'Sparar…'
+                              : `Klar med vin #${row.pourOrder}`}
+                          </Button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-brand mt-3 w-full min-h-11"
+                            onClick={() => void commitWine(row.pourOrder)}
+                            disabled={committingPour === row.pourOrder}
+                          >
+                            {committingPour === row.pourOrder
+                              ? 'Sparar…'
+                              : `Klar med vin #${row.pourOrder}`}
+                          </button>
+                        )}
 
                         {isHost && isActive && (
                           <HostSubmissionTracker
