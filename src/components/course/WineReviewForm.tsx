@@ -1309,17 +1309,22 @@ export function WineReviewForm({
               Jag hade köpt detta vin igen
             </span>
           </label>
-          <label
-            htmlFor="publishedToProfile"
-            className="flex items-center space-x-2 min-h-11 p-4 bg-muted/30 rounded-lg w-full md:w-auto cursor-pointer"
-          >
-            <Checkbox
-              id="publishedToProfile"
-              checked={publishedToProfile}
-              onCheckedChange={(checked) => setPublishedToProfile(checked as boolean)}
-            />
-            <span className="text-sm font-medium leading-none">Publicera på min profil</span>
-          </label>
+          {/* Guests have no profile to publish to — /api/reviews writes
+              user: null for them, so this checkbox would be inert. Only
+              render it for authenticated users. */}
+          {user && (
+            <label
+              htmlFor="publishedToProfile"
+              className="flex items-center space-x-2 min-h-11 p-4 bg-muted/30 rounded-lg w-full md:w-auto cursor-pointer"
+            >
+              <Checkbox
+                id="publishedToProfile"
+                checked={publishedToProfile}
+                onCheckedChange={(checked) => setPublishedToProfile(checked as boolean)}
+              />
+              <span className="text-sm font-medium leading-none">Publicera på min profil</span>
+            </label>
+          )}
           <div className="flex items-center gap-3 w-full md:w-auto">
             {isSessionDraft && <ReviewSaveStatus status={saveStatus} />}
             {/* Session mode has no submit button here — the wine card's single
