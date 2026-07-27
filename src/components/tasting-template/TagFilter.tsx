@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { buildProvningarHref, type ProvningarFilterState } from '@/lib/provningar-view'
 
 export interface TagCount {
   label: string
@@ -7,10 +8,12 @@ export interface TagCount {
 
 export interface TagFilterProps {
   tags: TagCount[]
-  activeTag: string | null
+  /** Full filter state — tag links must preserve the active view and access level. */
+  current: ProvningarFilterState
 }
 
-export function TagFilter({ tags, activeTag }: TagFilterProps) {
+export function TagFilter({ tags, current }: TagFilterProps) {
+  const activeTag = current.tag
   const visibleTags = tags.filter((t) => t.count >= 2).slice(0, 12)
   const hiddenCount = tags.filter((t) => t.count >= 2).length - visibleTags.length
   if (visibleTags.length === 0 && !activeTag) return null
@@ -18,13 +21,10 @@ export function TagFilter({ tags, activeTag }: TagFilterProps) {
     <div className="flex flex-wrap items-center gap-2 mb-6">
       {visibleTags.map((t) => {
         const isActive = activeTag === t.label
-        const href = isActive
-          ? '/provningsmallar'
-          : `/provningsmallar?tag=${encodeURIComponent(t.label)}`
         return (
           <Link
             key={t.label}
-            href={href}
+            href={buildProvningarHref(current, { tag: isActive ? null : t.label })}
             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               isActive
                 ? 'bg-brand-400 text-white'
@@ -41,7 +41,7 @@ export function TagFilter({ tags, activeTag }: TagFilterProps) {
       )}
       {activeTag && (
         <Link
-          href="/provningsmallar"
+          href={buildProvningarHref(current, { tag: null })}
           className="inline-flex items-center rounded-full bg-destructive/10 text-destructive px-3 py-1 text-xs font-medium hover:bg-destructive/20"
         >
           Rensa
