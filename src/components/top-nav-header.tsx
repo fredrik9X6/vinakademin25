@@ -23,7 +23,6 @@ import {
   UserCircleIcon,
   LogOutIcon,
   Star,
-  ClipboardList,
   History,
   Settings,
   ChevronDown,
@@ -32,7 +31,7 @@ import {
 
 const NAV_LINKS = [
   { label: 'Vinkurser', href: '/vinkurser' },
-  { label: 'Provningsmallar', href: '/provningsmallar' },
+  { label: 'Provningar', href: '/provningsmallar' },
   { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },
 ]
@@ -149,12 +148,6 @@ export function TopNavHeader() {
                     <Link href="/mina-recensioner" className="cursor-pointer">
                       <Star className="mr-2 h-4 w-4" />
                       Mina recensioner
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/mina-provningar/planer" className="cursor-pointer">
-                      <ClipboardList className="mr-2 h-4 w-4" />
-                      Mina provningar
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
