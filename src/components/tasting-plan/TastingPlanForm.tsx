@@ -589,7 +589,7 @@ export function TastingPlanForm({ initialPlan }: TastingPlanFormProps) {
         archived: !!data.archived,
       })
       toast.success(data.archived ? 'Arkiverad.' : 'Borttagen permanent.')
-      router.push('/mina-provningar/planer')
+      router.push('/provningsmallar?visa=mina')
     } finally {
       setSubmitting(false)
     }

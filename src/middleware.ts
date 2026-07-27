@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { loggerFor } from '@/lib/logger'
+import { resolveTastingRedirect } from '@/lib/tasting-route-redirects'
 
 const log = loggerFor('middleware')
 
@@ -17,6 +18,10 @@ const protectedPaths = [
   },
   {
     path: '/mina-provningar',
+    roles: ['admin', 'instructor', 'subscriber', 'user'],
+  },
+  {
+    path: '/mina-vinkurser',
     roles: ['admin', 'instructor', 'subscriber', 'user'],
   },
   {
@@ -92,6 +97,17 @@ export async function middleware(request: NextRequest) {
     const target = pathname.replace(/^\/vinprovningar/, '/vinkurser')
     url.pathname = target
     return NextResponse.redirect(url, 301)
+  }
+
+  // Tasting IA consolidation (2026-07-27). Exact-match only — see
+  // src/lib/tasting-route-redirects.ts for why a prefix match is dangerous here.
+  const tastingRedirect = resolveTastingRedirect(pathname)
+  if (tastingRedirect) {
+    url.pathname = tastingRedirect.pathname
+    for (const [key, value] of Object.entries(tastingRedirect.setParams ?? {})) {
+      url.searchParams.set(key, value)
+    }
+    return NextResponse.redirect(url, tastingRedirect.status)
   }
 
   // Skip middleware for API routes, static files, and public routes

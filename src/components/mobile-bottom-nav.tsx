@@ -10,7 +10,6 @@ import {
   User,
   List,
   Users,
-  ClipboardList,
   History,
   Star,
   Settings,
@@ -182,12 +181,6 @@ export function MobileBottomNav() {
                   onClose={() => setOpen(false)}
                 />
                 <DrawerLink
-                  href="/mina-provningar/planer"
-                  icon={ClipboardList}
-                  label="Mina provningar"
-                  onClose={() => setOpen(false)}
-                />
-                <DrawerLink
                   href="/vinklubbar"
                   icon={Users}
                   label="Mina vinklubbar"
@@ -213,7 +206,7 @@ export function MobileBottomNav() {
               <DrawerLink
                 href="/provningsmallar"
                 icon={BookOpen}
-                label="Provningsmallar"
+                label="Provningar"
                 onClose={() => setOpen(false)}
                 last
               />

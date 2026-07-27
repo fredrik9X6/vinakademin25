@@ -94,7 +94,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
   const checkoutOrigin = orderMetadata?.checkoutOrigin
   const isGuestOrder = checkoutOrigin === 'guest'
   const activationHref = activationEmail
-    ? `/aktivera-konto?email=${encodeURIComponent(activationEmail)}&next=${encodeURIComponent('/mina-provningar')}`
+    ? `/aktivera-konto?email=${encodeURIComponent(activationEmail)}&next=${encodeURIComponent('/mina-vinkurser')}`
     : '/aktivera-konto'
 
   return (
@@ -231,7 +231,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                   Börja vinkursen nu
                 </Link>
                 <Link
-                  href="/mina-provningar"
+                  href="/mina-vinkurser"
                   className="inline-flex flex-1 h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium hover:border-brand-400/50 hover:bg-brand-300/5"
                 >
                   <ArrowRight className="w-5 h-5" />
@@ -245,7 +245,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                   Aktivera konto och se mina vinkurser
                 </Link>
                 <Link
-                  href={`/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-provningar&source=guest_checkout')}`}
+                  href={`/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-vinkurser&source=guest_checkout')}`}
                   className="inline-flex flex-1 h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium hover:border-brand-400/50 hover:bg-brand-300/5"
                 >
                   Jag har redan konto
@@ -268,8 +268,8 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                     <Link
                       href={
                         user
-                          ? '/mina-provningar'
-                          : `/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-provningar')}`
+                          ? '/mina-vinkurser'
+                          : `/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-vinkurser')}`
                       }
                     >
                       <Button variant="outline" size="sm" className="border-amber-300 dark:border-amber-700">

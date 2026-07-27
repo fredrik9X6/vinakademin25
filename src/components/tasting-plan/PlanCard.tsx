@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { MoreVertical, Copy } from 'lucide-react'
+import { MoreVertical, Copy, Wine } from 'lucide-react'
 import { trackEvent } from '@/components/analytics'
 
 const STATUS_LABEL: Record<TastingPlan['status'], string> = {
@@ -139,7 +139,7 @@ export function PlanCard({ plan }: PlanCardProps) {
   return (
     <>
       <Card
-        className={`relative p-4 hover:shadow-md transition-shadow flex flex-col gap-3 ${
+        className={`relative overflow-hidden hover:shadow-md transition-shadow ${
           isArchived ? 'opacity-60' : ''
         }`}
       >
@@ -148,40 +148,51 @@ export function PlanCard({ plan }: PlanCardProps) {
           className="absolute inset-0 z-0"
           aria-label={plan.title}
         />
-        <div className="flex items-start justify-between relative z-10 pointer-events-none">
-          <div className="min-w-0 flex-1 pr-2">
-            <h3 className="font-semibold truncate">{plan.title}</h3>
-          </div>
-          <div className="flex-shrink-0 pointer-events-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={busy} aria-label="Åtgärder">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={performDuplicate} disabled={duplicating}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Skapa kopia
-                </DropdownMenuItem>
-                {isArchived && (
-                  <DropdownMenuItem onClick={() => setConfirmRestore(true)}>
-                    Återställ
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => setConfirmOpen(true)}>
-                  {isArchived ? 'Ta bort permanent' : 'Arkivera'}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        {/* Plans have no featuredImage. A gradient block — deliberately not a
+            photo — keeps the grid even beside TemplateCard while making "mine"
+            readable at a glance, without relying on the badge alone. */}
+        <div className="aspect-[4/3] relative flex items-center justify-center bg-gradient-to-br from-brand-400/25 via-brand-300/10 to-transparent pointer-events-none">
+          <Wine className="h-10 w-10 text-brand-400/50" aria-hidden="true" />
+          <span className="absolute top-2 right-2 inline-flex items-center rounded-full bg-foreground text-background px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm">
+            Min
+          </span>
         </div>
-        <div className="flex items-center justify-between relative z-10 pointer-events-none">
-          <div className="flex items-center gap-2">
-            <Badge variant={STATUS_VARIANT[plan.status]}>{STATUS_LABEL[plan.status]}</Badge>
-            <span className="text-xs text-muted-foreground">{wineCount} viner</span>
+        <div className="p-4 flex flex-col gap-3">
+          <div className="flex items-start justify-between relative z-10 pointer-events-none">
+            <div className="min-w-0 flex-1 pr-2">
+              <h3 className="font-semibold truncate">{plan.title}</h3>
+            </div>
+            <div className="flex-shrink-0 pointer-events-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" disabled={busy} aria-label="Åtgärder">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={performDuplicate} disabled={duplicating}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Skapa kopia
+                  </DropdownMenuItem>
+                  {isArchived && (
+                    <DropdownMenuItem onClick={() => setConfirmRestore(true)}>
+                      Återställ
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => setConfirmOpen(true)}>
+                    {isArchived ? 'Ta bort permanent' : 'Arkivera'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          <span className="text-xs text-muted-foreground">{formatRelative(plan.updatedAt)}</span>
+          <div className="flex items-center justify-between relative z-10 pointer-events-none">
+            <div className="flex items-center gap-2">
+              <Badge variant={STATUS_VARIANT[plan.status]}>{STATUS_LABEL[plan.status]}</Badge>
+              <span className="text-xs text-muted-foreground">{wineCount} viner</span>
+            </div>
+            <span className="text-xs text-muted-foreground">{formatRelative(plan.updatedAt)}</span>
+          </div>
         </div>
       </Card>
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
