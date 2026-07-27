@@ -57,3 +57,30 @@ test('a course lesson still appends its resolved title', () => {
 test('the homepage has no trail', () => {
   assert.deepEqual(buildBreadcrumbTrail({ pathname: '/' }), [])
 })
+
+// The fix for the "Mina provningar" crumb pointing at the wrong product:
+// its href must match where /mina-provningar/planer itself 301s to, not the
+// accumulated (now-redirected-elsewhere) /mina-provningar path.
+test('the "Mina provningar" crumb links to the merged surface, not the video-courses redirect', () => {
+  const trail = buildBreadcrumbTrail({ pathname: '/mina-provningar/historik' })
+  const crumb = trail.find((c) => c.label === 'Mina provningar')
+  assert.equal(crumb?.href, '/provningsmallar?visa=mina')
+})
+
+test('the override also applies deeper under the old prefix, e.g. a live plan session', () => {
+  const trail = buildBreadcrumbTrail({ pathname: '/mina-provningar/planer/7' })
+  const crumb = trail.find((c) => c.label === 'Mina provningar')
+  assert.equal(crumb?.href, '/provningsmallar?visa=mina')
+})
+
+test('a section without an override still gets its accumulated path', () => {
+  const trail = buildBreadcrumbTrail({ pathname: '/vinkurser/grunderna' })
+  const crumb = trail.find((c) => c.label === 'Vinkurser')
+  assert.equal(crumb?.href, '/vinkurser')
+})
+
+test('the /skapa-provning parent crumb still has href /provningsmallar', () => {
+  const trail = buildBreadcrumbTrail({ pathname: '/skapa-provning' })
+  const crumb = trail.find((c) => c.label === 'Provningar')
+  assert.equal(crumb?.href, '/provningsmallar')
+})

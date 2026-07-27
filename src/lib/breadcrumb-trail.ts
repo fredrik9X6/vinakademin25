@@ -80,6 +80,21 @@ export const PARENT_SECTIONS: Record<string, { label: string; href: string }> = 
   'skapa-provning': { label: 'Provningar', href: '/provningsmallar' },
 }
 
+/**
+ * First-level segment → href override for the crumb that segment produces.
+ *
+ * Exists because a segment's *accumulated* path can itself be a middleware
+ * redirect to a different product. `/mina-provningar` 301s to
+ * `/mina-vinkurser` (video courses), but the "Mina provningar" label still
+ * appears on live pages nested under the old prefix (historik, planer/[id]).
+ * Without an override, that crumb would link readers into the wrong
+ * product. Point it at the same destination `/mina-provningar/planer`
+ * itself 301s to, so label and destination agree.
+ */
+export const SECTION_HREF_OVERRIDES: Record<string, string> = {
+  'mina-provningar': '/provningsmallar?visa=mina',
+}
+
 export const SUB_LABELS: Record<string, Record<string, string>> = {
   provningsmallar: {
     ny: 'Skapa ny mall',
@@ -161,7 +176,8 @@ export function buildBreadcrumbTrail(input: BuildTrailInput): BreadcrumbEntry[] 
       label = formatSlug(segment)
     }
 
-    breadcrumbs.push({ label, href: currentPath, isCurrentPage: isLast && !itemKind })
+    const href = i === 0 ? (SECTION_HREF_OVERRIDES[segment] ?? currentPath) : currentPath
+    breadcrumbs.push({ label, href, isCurrentPage: isLast && !itemKind })
   }
 
   // Append the active lesson / quiz inside the course viewer.
