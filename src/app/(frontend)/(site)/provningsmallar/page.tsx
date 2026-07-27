@@ -43,12 +43,15 @@ export default async function ProvningarListing({
 
   const user = await getUser()
   const isAdmin = user?.role === 'admin'
-  // Admin-only: ?status=draft flips the template list to utkast. Non-admins
-  // always see published — the query is silently ignored for them.
-  const showDrafts = isAdmin && filters.status === 'draft'
-
-  const wantsPlans = viewIncludesPlans(filters.view)
   const wantsTemplates = viewIncludesTemplates(filters.view)
+  // Admin-only: ?status=draft flips the template list to utkast. Non-admins
+  // always see published — the query is silently ignored for them. Scoped to
+  // views that include templates, else `?visa=mina&status=draft` would flip
+  // the heading to "Utkast" over a plans-only list.
+  const showDrafts = isAdmin && filters.status === 'draft' && wantsTemplates
+  // The draft flag is template-only — suppress plans while reviewing drafts
+  // so the admin's own plans don't bleed into the "Utkast" surface.
+  const wantsPlans = viewIncludesPlans(filters.view) && !showDrafts
 
   const payload = await getPayload({ config })
 
@@ -202,7 +205,7 @@ export default async function ProvningarListing({
                 </Link>
               ) : (
                 <Link
-                  href={buildProvningarHref(filters, { status: 'draft' })}
+                  href={buildProvningarHref(filters, { status: 'draft', view: 'mallar' })}
                   className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100/40 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-3 py-1 text-xs transition-colors hover:bg-amber-100/70"
                 >
                   Visa utkast ({draftCount})
@@ -213,7 +216,11 @@ export default async function ProvningarListing({
         </div>
       )}
 
-      {filters.view === 'mina' && user && (
+      {/* Gated on wantsPlans rather than view === 'mina': showArchived can
+          stay set (and plans stay visible) after switching mina → alla, since
+          alla includes plans too. Gating this on 'mina' only would leave
+          archived plans visible with no control to turn them back off. */}
+      {wantsPlans && user && (
         <div className="mb-4">
           <Link
             href={buildProvningarHref(filters, { showArchived: !filters.showArchived })}
