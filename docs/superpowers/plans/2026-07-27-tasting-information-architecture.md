@@ -634,7 +634,12 @@ Replace the `<Card>` opening and its two child rows (currently lines ~137-180, f
         {/* Plans have no featuredImage. A gradient block — deliberately not a
             photo — keeps the grid even beside TemplateCard while making "mine"
             readable at a glance, without relying on the badge alone. */}
-        <div className="aspect-[4/3] relative flex items-center justify-center bg-gradient-to-br from-brand-400/25 via-brand-300/10 to-transparent">
+        {/* pointer-events-none is REQUIRED, not cosmetic: this header is a
+            positioned sibling that FOLLOWS the overlay <Link> in the DOM, and
+            positioned elements with z-index auto/0 paint in tree order — so
+            without it the header hit-tests above the link and swallows every
+            click on the top ~60% of the card. */}
+        <div className="aspect-[4/3] relative pointer-events-none flex items-center justify-center bg-gradient-to-br from-brand-400/25 via-brand-300/10 to-transparent">
           <Wine className="h-10 w-10 text-brand-400/50" aria-hidden="true" />
           <span className="absolute top-2 right-2 inline-flex items-center rounded-full bg-foreground text-background px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm">
             Min
