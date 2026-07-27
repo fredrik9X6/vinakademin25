@@ -11,7 +11,7 @@ interface ActivateAccountPageProps {
 export default async function ActivateAccountPage({ searchParams }: ActivateAccountPageProps) {
   const params = await searchParams
   const email = params.email ? decodeURIComponent(params.email) : ''
-  const next = params.next ? decodeURIComponent(params.next) : '/mina-provningar'
+  const next = params.next ? decodeURIComponent(params.next) : '/mina-vinkurser'
   const loginHref = `/logga-in?from=${encodeURIComponent(`/onboarding?next=${encodeURIComponent(next)}&source=guest_checkout`)}`
 
   return (

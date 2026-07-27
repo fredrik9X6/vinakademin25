@@ -21,7 +21,7 @@ export function MinaProvningarPage() {
   // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/logga-in?from=/mina-provningar')
+      router.push('/logga-in?from=/mina-vinkurser')
     }
   }, [authLoading, user, router])
 

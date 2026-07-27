@@ -51,7 +51,7 @@ const RoleBasedContent: React.FC<RoleBasedContentProps> = ({ user }) => {
             <p className="text-teal-600 mt-2">Lista dina vinkurser här.</p>
             <div className="mt-4">
               <Link
-                href="/mina-provningar"
+                href="/mina-vinkurser"
                 className="inline-block px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition"
               >
                 Mina vinkurser

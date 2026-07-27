@@ -31,6 +31,8 @@ export default function robots(): MetadataRoute.Robots {
           '/mina-sidor/',
           '/mina-provningar',
           '/mina-provningar/',
+          '/mina-vinkurser',
+          '/mina-vinkurser/',
           '/profil',
           '/profil/',
           '/installningar',

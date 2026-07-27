@@ -68,10 +68,10 @@ export function UserProfilePage() {
     }
   }
 
-  // Redirect old vinprovningar/kurser tab to the new Mina Provningar page
+  // Redirect old vinprovningar/kurser tab to the new Mina Vinkurser page
   React.useEffect(() => {
     if (tabParam === 'vinprovningar' || tabParam === 'kurser') {
-      router.replace('/mina-provningar')
+      router.replace('/mina-vinkurser')
     }
   }, [tabParam, router])
 
