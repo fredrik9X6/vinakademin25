@@ -187,7 +187,7 @@ export function resolveTastingRedirect(pathname: string): TastingRedirect | null
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `pnpm test:ia`
-Expected: PASS — 7 tests, 0 failures.
+Expected: PASS — 6 tests, 0 failures.
 
 - [ ] **Step 5: Commit**
 
@@ -580,7 +580,7 @@ export function buildProvningarHref(
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `pnpm test:ia`
-Expected: PASS — 16 tests total across both files, 0 failures.
+Expected: PASS — 15 tests total across both files, 0 failures.
 
 - [ ] **Step 5: Commit**
 
@@ -1569,7 +1569,7 @@ export function buildBreadcrumbTrail(input: BuildTrailInput): BreadcrumbEntry[] 
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `pnpm test:ia`
-Expected: PASS — 24 tests across three files, 0 failures.
+Expected: PASS — 23 tests across three files, 0 failures.
 
 - [ ] **Step 5: Make the component consume the module**
 
