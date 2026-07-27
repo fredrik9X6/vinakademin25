@@ -245,7 +245,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                   Aktivera konto och se mina vinkurser
                 </Link>
                 <Link
-                  href={`/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-provningar&source=guest_checkout')}`}
+                  href={`/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-vinkurser&source=guest_checkout')}`}
                   className="inline-flex flex-1 h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-8 text-base font-medium hover:border-brand-400/50 hover:bg-brand-300/5"
                 >
                   Jag har redan konto
@@ -269,7 +269,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                       href={
                         user
                           ? '/mina-vinkurser'
-                          : `/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-provningar')}`
+                          : `/logga-in?from=${encodeURIComponent('/onboarding?next=%2Fmina-vinkurser')}`
                       }
                     >
                       <Button variant="outline" size="sm" className="border-amber-300 dark:border-amber-700">
