@@ -151,7 +151,7 @@ export function PlanCard({ plan }: PlanCardProps) {
         {/* Plans have no featuredImage. A gradient block — deliberately not a
             photo — keeps the grid even beside TemplateCard while making "mine"
             readable at a glance, without relying on the badge alone. */}
-        <div className="aspect-[4/3] relative flex items-center justify-center bg-gradient-to-br from-brand-400/25 via-brand-300/10 to-transparent">
+        <div className="aspect-[4/3] relative flex items-center justify-center bg-gradient-to-br from-brand-400/25 via-brand-300/10 to-transparent pointer-events-none">
           <Wine className="h-10 w-10 text-brand-400/50" aria-hidden="true" />
           <span className="absolute top-2 right-2 inline-flex items-center rounded-full bg-foreground text-background px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm">
             Min
