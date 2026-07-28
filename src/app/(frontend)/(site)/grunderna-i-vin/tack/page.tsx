@@ -128,7 +128,7 @@ export default function GrunderaIVinTackPage() {
           </Link>
 
           <Link
-            href="/vinkompassen"
+            href="/vinhoroskop"
             className="group flex items-start gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
           >
             <div
@@ -140,11 +140,11 @@ export default function GrunderaIVinTackPage() {
             <div>
               <h3 className={`${HEADING} text-xl`}>Hitta din vinstil</h3>
               <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">
-                Gör Vinkompassen — 3 minuter, och du vet vilka vinstilar som passar
+                Gör Vinhoroskopet — 3 minuter, och du vet vilka vinstilar som passar
                 just dig.
               </p>
               <span className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-400">
-                Starta Vinkompassen
+                Starta Vinhoroskopet
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </span>
             </div>

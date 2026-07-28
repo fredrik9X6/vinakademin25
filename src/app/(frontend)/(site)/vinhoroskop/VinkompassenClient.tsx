@@ -99,7 +99,7 @@ export function VinkompassenClient({ questions }: Props) {
         window.localStorage.setItem(LAST_KEY, data.attemptId)
         window.localStorage.removeItem(DRAFT_KEY)
       }
-      router.push(`/vinkompassen/resultat/${data.attemptId}`)
+      router.push(`/vinhoroskop/resultat/${data.attemptId}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kunde inte slutföra testet')
       setSubmitting(false)
@@ -110,7 +110,7 @@ export function VinkompassenClient({ questions }: Props) {
     return (
       <main className="mx-auto max-w-3xl px-5 py-16">
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Vinkompassen
+          Vinhoroskop
         </span>
         <h1 className="mt-3 font-heading text-5xl leading-[1.05] tracking-[-0.015em] md:text-6xl">
           Hitta din vintyp på 90 sekunder

@@ -8,7 +8,7 @@ import { adminOnly } from '../lib/access'
 export const VinkompassArchetypes: CollectionConfig = {
   slug: 'vinkompass-archetypes',
   admin: {
-    group: 'Vinkompassen',
+    group: 'Vinhoroskop',
     useAsTitle: 'name',
     defaultColumns: ['key', 'name', 'tagline'],
     description: 'The four wine personality archetypes',

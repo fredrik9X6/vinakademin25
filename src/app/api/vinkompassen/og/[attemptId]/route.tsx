@@ -25,7 +25,7 @@ export async function GET(
   const attempt = attemptRes.docs[0]
   const archetype = attempt?.archetype as VinkompassArchetype | undefined
 
-  const title = archetype?.name || 'Vinkompassen'
+  const title = archetype?.name || 'Vinhoroskop'
   const tagline = archetype?.tagline || 'Hitta din vintyp'
 
   return new ImageResponse(
@@ -45,7 +45,7 @@ export async function GET(
         }}
       >
         <div style={{ fontSize: 28, letterSpacing: 6, color: '#FB914C', textTransform: 'uppercase' }}>
-          Vinkompassen
+          Vinhoroskop
         </div>
         <div style={{ fontSize: 96, fontWeight: 700, marginTop: 24, textAlign: 'center', lineHeight: 1.05 }}>
           {title}

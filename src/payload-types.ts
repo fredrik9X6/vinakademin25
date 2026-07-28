@@ -3237,7 +3237,7 @@ export interface Event {
   createdAt: string;
 }
 /**
- * Quiz questions for the Vinkompassen lead-magnet
+ * Quiz questions for the Vinhoroskop lead-magnet
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "vinkompass-questions".
@@ -3314,7 +3314,7 @@ export interface VinkompassArchetype {
   createdAt: string;
 }
 /**
- * Anonymous Vinkompassen quiz submissions
+ * Anonymous Vinhoroskop quiz submissions
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "vinkompass-attempts".

@@ -9,10 +9,10 @@ import { adminOnly } from '../lib/access'
 export const VinkompassAttempts: CollectionConfig = {
   slug: 'vinkompass-attempts',
   admin: {
-    group: 'Vinkompassen',
+    group: 'Vinhoroskop',
     useAsTitle: 'attemptId',
     defaultColumns: ['attemptId', 'archetype', 'email', 'createdAt'],
-    description: 'Anonymous Vinkompassen quiz submissions',
+    description: 'Anonymous Vinhoroskop quiz submissions',
   },
   access: {
     read: adminOnly,

@@ -81,10 +81,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect old /vinkompass slug to /vinkompassen (fresh feature).
+  // The wine-personality quiz is now "Vinhoroskop". Both older slugs 301 to it.
+  //
+  // ORDER IS LOAD-BEARING: "/vinkompassen" also starts with "/vinkompass", so
+  // the shorter rule must come SECOND. Reversed, it rewrites /vinkompassen to
+  // "/vinhoroskopen" — a 301 to a 404, permanently cached by every browser
+  // that followed it.
+  if (pathname === '/vinkompassen' || pathname.startsWith('/vinkompassen/')) {
+    url.pathname = pathname.replace(/^\/vinkompassen/, '/vinhoroskop')
+    return NextResponse.redirect(url, 301)
+  }
   if (pathname === '/vinkompass' || pathname.startsWith('/vinkompass/')) {
-    const target = pathname.replace(/^\/vinkompass/, '/vinkompassen')
-    url.pathname = target
+    url.pathname = pathname.replace(/^\/vinkompass/, '/vinhoroskop')
     return NextResponse.redirect(url, 301)
   }
 

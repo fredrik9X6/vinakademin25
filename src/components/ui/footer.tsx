@@ -12,9 +12,11 @@ const socialLinks = [
 
 const exploreLinks = [
   { label: 'Vinkurser', href: '/vinkurser' },
-  { label: 'Vinkompassen', href: '/vinkompassen' },
+  { label: 'Vinprovningar', href: '/provningsmallar' },
+  { label: 'Vinhoroskop', href: '/vinhoroskop' },
   { label: 'Vinlistan', href: '/vinlistan' },
   { label: 'Artiklar', href: '/artiklar' },
+  { label: 'Gratis e-bok', href: '/grunderna-i-vin' },
 ]
 
 const aboutLinks = [
