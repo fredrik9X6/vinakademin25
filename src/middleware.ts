@@ -88,12 +88,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301)
   }
 
-  // Permanent 301 from legacy /vinprovningar/* to /vinkurser/*.
+  // Permanent 301 from legacy /vinprovningar/* sub-paths to /vinkurser/*.
   // The collection was renamed to Vinkurser (video courses); the templates
-  // product owns /provningsmallar separately. Preserves query strings so
-  // session links, lesson params, and Stripe cancel URLs all survive.
+  // product owns /provningsmallar separately. The bare /vinprovningar root now
+  // routes to the tastings gallery via resolveTastingRedirect (see D2) — a
+  // `startsWith('/vinprovningar/')` here would also claim "/vinprovningar/",
+  // stranding that spelling on the course catalogue.
+  // Preserves query strings so session links, lesson params, and Stripe cancel
+  // URLs all survive.
   // Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D3)
-  if (pathname === '/vinprovningar' || pathname.startsWith('/vinprovningar/')) {
+  if (/^\/vinprovningar\/.+/.test(pathname)) {
     const target = pathname.replace(/^\/vinprovningar/, '/vinkurser')
     url.pathname = target
     return NextResponse.redirect(url, 301)
