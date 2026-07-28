@@ -5,7 +5,7 @@ const HEADING = 'font-heading tracking-[-0.015em] leading-[1.05]'
 
 /**
  * Side-by-side explainer of our two products: Vinkurs (video courses) vs
- * Provningsmall (host-it-yourself templates). Sits directly below the hero so
+ * Vinprovning (host-it-yourself tastings). Sits directly below the hero so
  * a visitor understands within ten seconds what each is and which one fits.
  *
  * Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (Workstream C)
@@ -23,7 +23,7 @@ export function OfferingsComparison() {
           </span>
           <h2 className={`${HEADING} mt-5 text-3xl md:text-4xl lg:text-5xl`}>
             <span className="text-brand-gradient">Vinkurs</span> eller{' '}
-            <span className="text-brand-gradient">Provningsmall</span>?
+            <span className="text-brand-gradient">Vinprovning</span>?
           </h2>
           <p className="mx-auto mt-4 max-w-[58ch] text-[15px] leading-relaxed text-muted-foreground">
             Båda är gjorda för att avmystifiera vin. Skillnaden är hur du föredrar att ta in
@@ -85,10 +85,10 @@ export function OfferingsComparison() {
               Färdigt upplägg
             </p>
             <h3 className={`${HEADING} mt-2 text-2xl md:text-3xl`}>
-              Var värd för en provning
+              Var värd för en vinprovning
             </h3>
             <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-              För dig som vill samla folk och guida en avslappnad provning utan att förbereda
+              För dig som vill samla folk och guida en avslappnad vinprovning utan att förbereda
               allt från noll.
             </p>
 

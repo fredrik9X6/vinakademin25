@@ -11,10 +11,10 @@ export function NeuralHeroWithBanner() {
           <span className="text-brand-gradient block">enkelt &amp; opretentiöst.</span>
         </>
       }
-      description="Färdiga vinkurser och provningsmallar att göra hemma — med vänner eller på egen hand."
+      description="Färdiga vinkurser och vinprovningar att göra hemma — med vänner eller på egen hand."
       ctaButtons={[
         { text: 'Se vinkurser', href: '/vinkurser', primary: true },
-        { text: 'Bläddra i provningsmallar', href: '/provningsmallar' },
+        { text: 'Bläddra i vinprovningar', href: '/provningsmallar' },
       ]}
       microDetails={['300+ prenumeranter', 'Engångsbetalning', 'Livstidsåtkomst']}
     />

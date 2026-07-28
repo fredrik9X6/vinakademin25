@@ -29,10 +29,10 @@ export function ProvningsmallarFeature({ templates, totalCount }: Provningsmalla
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-300/30 bg-brand-300/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-400">
             <BookOpen className="h-3 w-3" />
-            Provningsmallar
+            Vinprovningar
           </span>
           <h2 className={`${HEADING} mt-5 text-4xl md:text-5xl lg:text-6xl`}>
-            Färdiga provningsupplägg
+            Färdiga upplägg — eller bygg din egen
             <br />
             <span className="text-brand-gradient">på några minuter</span>
           </h2>
