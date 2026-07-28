@@ -11,7 +11,7 @@ import type {
 import { getSiteURL } from '@/lib/site-url'
 import { RichTextRenderer } from '@/components/ui/rich-text-renderer'
 import type { QuadrantKey } from '@/lib/vinkompassen/types'
-import { QuadrantMini } from '../../_components/QuadrantMini'
+import { ArchetypeMap } from '../../_components/ArchetypeMap'
 import { WineGrid } from '../../_components/WineGrid'
 import { EmailGate } from './EmailGate'
 import { ResultActions } from './ResultActions'
@@ -19,6 +19,27 @@ import { VinkursCard } from './VinkursCard'
 
 interface PageProps {
   params: Promise<{ attemptId: string }>
+}
+
+/** Quadrant key → display name for all four archetypes. */
+async function loadArchetypeNames(): Promise<Partial<Record<QuadrantKey, string>>> {
+  try {
+    const payload = await getPayload({ config })
+    const res = await payload.find({
+      collection: 'vinkompass-archetypes',
+      limit: 10,
+      depth: 0,
+    })
+    const out: Partial<Record<QuadrantKey, string>> = {}
+    for (const doc of res.docs as VinkompassArchetype[]) {
+      if (doc.key && doc.name) out[doc.key as QuadrantKey] = doc.name
+    }
+    return out
+  } catch {
+    // The map falls back to axis wording ("Lätt & klassisk"), so a failure here
+    // degrades the labels rather than breaking the result page.
+    return {}
+  }
 }
 
 async function loadAttempt(attemptId: string) {
@@ -71,6 +92,12 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
 
   const isGated = !attempt.email
 
+  // All four names so the map can label every quadrant, not just the winner —
+  // seeing the three you are NOT is what makes the one you are mean something.
+  // Four tiny docs; the page is already dynamic. Falls back to axis wording if
+  // the query fails, so the map never renders empty.
+  const archetypeNames = await loadArchetypeNames()
+
   return (
     <main className="mx-auto max-w-3xl px-5 py-12">
       {/* Top — always visible */}
@@ -85,25 +112,49 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
       </p>
 
       <div className="mt-8 flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-        <QuadrantMini active={archetype.key as QuadrantKey} size={180} />
+        <div className="w-full max-w-[240px] shrink-0 sm:w-[220px]">
+          <ArchetypeMap
+            active={archetype.key as QuadrantKey}
+            scoreBody={attempt.scoreBody}
+            scoreComfort={attempt.scoreComfort}
+            names={archetypeNames}
+          />
+        </div>
         <div className="flex-1">
           <RichTextRenderer content={archetype.description} />
         </div>
       </div>
 
-      <div className="mt-8">
-        <ResultActions attemptId={attempt.attemptId} archetypeKey={archetype.key} />
-      </div>
-
-      {/* Below — gate or grid */}
+      {/* The wines come BEFORE the share row. Sharing is something you do once
+          you have your result, so putting it above the gate signalled "page
+          over" and buried the only conversion point on the page. */}
       <div className="mt-12">
+        <h2 className="mb-5 font-heading text-3xl leading-[1.1] tracking-[-0.015em]">
+          Sex viner för dig
+        </h2>
+
         {isGated ? (
-          <EmailGate attemptId={attempt.attemptId} archetypeKey={archetype.key} />
+          <>
+            {/* The gate used to render nothing but a form, so "dina 6 viner"
+                referred to something the reader had never seen. Showing the
+                real bottles blurred makes the offer concrete: there is
+                visibly a list here, and it is visibly not readable yet. */}
+            <div className="relative -mb-14 max-h-[240px] overflow-hidden" aria-hidden="true">
+              <div className="pointer-events-none select-none blur-[7px] saturate-75">
+                <WineGrid
+                  wines={recommendedWines.slice(0, 6)}
+                  archetypeKey={archetype.key}
+                  columnsClassName="grid grid-cols-3 gap-3"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/75 to-background" />
+            </div>
+            <div className="relative">
+              <EmailGate attemptId={attempt.attemptId} archetypeKey={archetype.key} />
+            </div>
+          </>
         ) : (
           <>
-            <h2 className="mb-5 font-heading text-3xl leading-[1.1] tracking-[-0.015em]">
-              Sex viner för dig
-            </h2>
             <WineGrid wines={recommendedWines.slice(0, 8)} archetypeKey={archetype.key} />
 
             {recommendedVinkurs ? (
@@ -116,6 +167,10 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
             ) : null}
           </>
         )}
+      </div>
+
+      <div className="mt-12 border-t pt-8">
+        <ResultActions attemptId={attempt.attemptId} archetypeKey={archetype.key} />
       </div>
     </main>
   )

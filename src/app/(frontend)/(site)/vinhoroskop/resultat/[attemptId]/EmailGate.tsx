@@ -43,15 +43,20 @@ export function EmailGate({ attemptId, archetypeKey }: Props) {
       onSubmit={onSubmit}
       className="rounded-2xl border-2 border-brand-400 bg-card p-7 shadow-sm"
     >
-      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        Dina viner väntar
+      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-400">
+        Lås upp listan
       </span>
       <h2 className="mt-3 font-heading text-3xl leading-[1.1] tracking-[-0.015em]">
-        Vill du se dina 6 viner från Systembolaget?
+        Se dina 6 viner direkt här
       </h2>
+      {/* The old copy said "vi skickar dem direkt" while the button said "visa"
+          — and the actual mechanic is an instant on-page reveal. Readers who
+          parsed it as "we will email you later" had no reason to act, which is
+          the likeliest cause of 0/2 in user testing. State the mechanic first
+          (they appear here, now), and the email as the bonus it actually is. */}
       <p className="mt-2 text-muted-foreground">
-        Ange din e-post — vi skickar dem direkt och håller dig uppdaterad med viner som matchar din
-        typ.
+        Skriv in din e-post så låses hela listan upp på den här sidan direkt. Vi mailar den också,
+        så att du har den i mobilen när du står i butiken.
       </p>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <input
@@ -64,7 +69,7 @@ export function EmailGate({ attemptId, archetypeKey }: Props) {
           disabled={submitting}
         />
         <Button type="submit" disabled={submitting} className="bg-brand-400 text-white">
-          {submitting ? 'Skickar...' : 'Visa mina viner'}
+          {submitting ? 'Låser upp...' : 'Visa mina 6 viner'}
         </Button>
       </div>
       {error ? <p className="mt-3 text-sm text-red-500">{error}</p> : null}

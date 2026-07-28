@@ -7,6 +7,13 @@ import { VinlistanWineCard } from '@/components/vinlistan/VinlistanWineCard'
 interface Props {
   wines: Wine[]
   archetypeKey: string
+  /**
+   * Override the responsive column classes. The locked preview on the result
+   * page needs a fixed multi-column strip: at the default `grid-cols-1` a
+   * phone shows exactly one blurred bottle, which does not read as "six wines
+   * are waiting here".
+   */
+  columnsClassName?: string
 }
 
 /**
@@ -16,7 +23,7 @@ interface Props {
  * had and makes the click land on our wine detail page first instead of
  * straight to Systembolaget.
  */
-export function WineGrid({ wines, archetypeKey }: Props) {
+export function WineGrid({ wines, archetypeKey, columnsClassName }: Props) {
   const handleClick = (wine: Wine) => {
     posthog?.capture?.('vinkompass_wine_clicked', {
       archetype: archetypeKey,
@@ -25,7 +32,11 @@ export function WineGrid({ wines, archetypeKey }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      className={
+        columnsClassName ?? 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'
+      }
+    >
       {wines.map((wine) => (
         <VinlistanWineCard
           key={wine.id}
