@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { attemptId } = await params
   const attempt = await loadAttempt(attemptId)
   const archetype = (attempt?.archetype as VinkompassArchetype | undefined) || null
-  const title = archetype ? `${archetype.name} — Vinkompassen` : 'Vinkompassen'
+  const title = archetype ? `${archetype.name} — Vinhoroskop` : 'Vinhoroskop'
   const description = archetype?.tagline || 'Hitta din vintyp på 90 sekunder.'
   const ogUrl = `${getSiteURL()}/api/vinkompassen/og/${attemptId}`
   return {

@@ -45,7 +45,8 @@ export const PAGE_LABELS: Record<string, string> = {
   // Standalone single-page routes
   'recensera-vin': 'Recensera vin',
   'skapa-provning': 'Skapa egen',
-  vinkompassen: 'Vinkompassen',
+  vinhoroskop: 'Vinhoroskop',
+  vinkompassen: 'Vinhoroskop', // legacy segment — middleware 301s, but cover in-flight requests
   'grunderna-i-vin': 'Grunderna i vin',
   'om-oss': 'Om oss',
   kontakt: 'Kontakt',
@@ -107,6 +108,9 @@ export const SUB_LABELS: Record<string, Record<string, string>> = {
   artiklar: {
     kategori: 'Kategori',
     tagg: 'Tagg',
+  },
+  vinhoroskop: {
+    resultat: 'Resultat',
   },
   vinkompassen: {
     resultat: 'Resultat',

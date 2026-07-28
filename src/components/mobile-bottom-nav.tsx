@@ -17,6 +17,8 @@ import {
   LogOut,
   UserCircle,
   GraduationCap,
+  Sparkles,
+  BookOpen,
   Sun,
   Moon,
 } from 'lucide-react'
@@ -245,6 +247,22 @@ export function MobileBottomNav() {
                 href="/artiklar"
                 icon={Newspaper}
                 label="Artiklar"
+                onClose={() => setOpen(false)}
+              />
+              <DrawerLink
+                href="/vinhoroskop"
+                icon={Sparkles}
+                label="Vinhoroskop"
+                onClose={() => setOpen(false)}
+              />
+              {/* /grunderna-i-vin is the site's single biggest acquisition
+                  surface — 394 people and 584 external referrals in 90 days,
+                  more than the tastings gallery and the legacy tastings URL
+                  combined — and it was reachable from no navigation at all. */}
+              <DrawerLink
+                href="/grunderna-i-vin"
+                icon={BookOpen}
+                label="Gratis e-bok"
                 onClose={() => setOpen(false)}
                 last
               />

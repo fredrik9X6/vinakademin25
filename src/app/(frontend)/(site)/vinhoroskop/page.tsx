@@ -5,10 +5,10 @@ import { VinkompassenClient } from './VinkompassenClient'
 import { getSiteURL } from '@/lib/site-url'
 
 export const metadata: Metadata = {
-  title: 'Vinkompassen — Hitta din vintyp',
+  title: 'Vinhoroskop — Hitta din vintyp',
   description:
     'Svara på 8 korta frågor och få sex viner från Systembolaget skräddarsydda för dig.',
-  alternates: { canonical: `${getSiteURL()}/vinkompassen` },
+  alternates: { canonical: `${getSiteURL()}/vinhoroskop` },
 }
 
 export default async function VinkompassenLandingPage() {

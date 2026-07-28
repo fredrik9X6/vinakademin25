@@ -18,7 +18,7 @@ export function QuadrantMini({ active, size = 200, className = '' }: Props) {
     <div
       className={`grid grid-cols-2 grid-rows-2 gap-1 ${className}`}
       style={{ width: size, height: size }}
-      aria-label={`Vinkompassens fyrfält — du är ${cells.find((c) => c.key === active)?.label}`}
+      aria-label={`Vinhoroskopets fyrfält — du är ${cells.find((c) => c.key === active)?.label}`}
     >
       {cells.map((c) => {
         const isActive = c.key === active

@@ -2,17 +2,17 @@ import type { CollectionConfig } from 'payload'
 import { adminOnly, adminOrInstructorOnly } from '../lib/access'
 
 /**
- * Quiz questions for the Vinkompassen lead-magnet.
+ * Quiz questions for the Vinhoroskop lead-magnet.
  * Each question has exactly 4 answer options; each answer carries
  * scoreBody and scoreComfort in [-2..+2].
  */
 export const VinkompassQuestions: CollectionConfig = {
   slug: 'vinkompass-questions',
   admin: {
-    group: 'Vinkompassen',
+    group: 'Vinhoroskop',
     useAsTitle: 'question',
     defaultColumns: ['order', 'question', 'active'],
-    description: 'Quiz questions for the Vinkompassen lead-magnet',
+    description: 'Quiz questions for the Vinhoroskop lead-magnet',
     defaultSort: 'order',
   },
   access: {

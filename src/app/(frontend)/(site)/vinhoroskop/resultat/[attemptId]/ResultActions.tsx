@@ -33,11 +33,11 @@ export function ResultActions({ attemptId, archetypeKey }: Props) {
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('vinkompassen.draft')
     }
-    router.push('/vinkompassen')
+    router.push('/vinhoroskop')
   }
 
   const url = typeof window !== 'undefined' ? window.location.href : ''
-  const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent('Jag tog Vinkompassen!')}&url=${encodeURIComponent(url)}`
+  const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent('Jag tog Vinhoroskopet!')}&url=${encodeURIComponent(url)}`
   const fbHref = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
 
   return (
