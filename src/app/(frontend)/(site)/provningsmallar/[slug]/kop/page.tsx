@@ -13,7 +13,7 @@ interface RouteParams {
 }
 
 export const metadata: Metadata = {
-  title: 'Köp provningsmall — Vinakademin',
+  title: 'Köp vinprovning — Vinakademin',
   robots: { index: false, follow: false },
 }
 

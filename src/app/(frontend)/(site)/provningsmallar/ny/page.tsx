@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Ny provningsmall — Vinakademin',
+  robots: { index: false, follow: false },
 }
 
 export default async function NewTemplatePage() {

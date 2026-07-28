@@ -32,7 +32,7 @@ export function ProvningsmallarFeature({ templates, totalCount }: Provningsmalla
             Vinprovningar
           </span>
           <h2 className={`${HEADING} mt-5 text-4xl md:text-5xl lg:text-6xl`}>
-            Färdiga upplägg — eller bygg din egen
+            Färdiga upplägg — eller bygg ditt eget
             <br />
             <span className="text-brand-gradient">på några minuter</span>
           </h2>

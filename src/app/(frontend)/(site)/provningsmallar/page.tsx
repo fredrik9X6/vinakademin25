@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getPayload, type Where } from 'payload'
 import config from '@/payload.config'
+import { getSiteURL } from '@/lib/site-url'
 import { TemplateCard } from '@/components/tasting-template/TemplateCard'
 import { TagFilter, type TagCount } from '@/components/tasting-template/TagFilter'
 import { PlanCard } from '@/components/tasting-plan/PlanCard'
@@ -20,9 +21,10 @@ import {
 import type { TastingPlan, TastingTemplate } from '@/payload-types'
 
 export const metadata: Metadata = {
-  title: 'Vinprovningar — Vinakademin',
+  title: 'Vinprovningar',
   description:
     'Färdiga vinprovningar från Vinakademin — eller bygg din egen. Planera, bjud in vänner och håll provningen live.',
+  alternates: { canonical: `${getSiteURL()}/provningsmallar` },
 }
 
 export const dynamic = 'force-dynamic'

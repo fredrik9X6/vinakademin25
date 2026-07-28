@@ -109,7 +109,7 @@ export function OfferingsComparison() {
               <p className="text-[15px] font-medium">
                 <span className="text-brand-gradient text-xl font-bold">99 kr</span>{' '}
                 <span className="text-sm text-muted-foreground">
-                  per mall · en gratis när du loggar in
+                  per vinprovning · en gratis när du loggar in
                 </span>
               </p>
               {/* Secondary outline button — same height + radius as .btn-brand for

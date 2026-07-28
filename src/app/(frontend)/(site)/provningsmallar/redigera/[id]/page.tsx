@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Redigera provningsmall — Vinakademin',
+  robots: { index: false, follow: false },
 }
 
 export default async function EditTemplatePage({ params }: RouteParams) {
