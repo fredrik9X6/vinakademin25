@@ -5,18 +5,18 @@ import { buildBreadcrumbTrail } from './breadcrumb-trail'
 const labels = (pathname: string, extra = {}) =>
   buildBreadcrumbTrail({ pathname, ...extra }).map((c) => c.label)
 
-test('the gallery is labelled Provningar', () => {
-  assert.deepEqual(labels('/provningsmallar'), ['Hem', 'Provningar'])
+test('the gallery is labelled Vinprovningar', () => {
+  assert.deepEqual(labels('/provningsmallar'), ['Hem', 'Vinprovningar'])
 })
 
 // The reported defect: creating your own tasting used to breadcrumb under a
 // different product entirely.
-test('creating a tasting sits under Provningar', () => {
-  assert.deepEqual(labels('/skapa-provning'), ['Hem', 'Provningar', 'Skapa egen'])
+test('creating a tasting sits under Vinprovningar', () => {
+  assert.deepEqual(labels('/skapa-provning'), ['Hem', 'Vinprovningar', 'Skapa egen'])
 })
 
 test('editing an existing draft drops the numeric id but keeps the parent', () => {
-  assert.deepEqual(labels('/skapa-provning/42'), ['Hem', 'Provningar', 'Skapa egen'])
+  assert.deepEqual(labels('/skapa-provning/42'), ['Hem', 'Vinprovningar', 'Skapa egen'])
 })
 
 test('nothing under /mina-provningar says Vinkurser', () => {
@@ -26,7 +26,7 @@ test('nothing under /mina-provningar says Vinkurser', () => {
       `${p} still breadcrumbs to Vinkurser`,
     )
   }
-  assert.deepEqual(labels('/mina-provningar/historik'), ['Hem', 'Mina provningar', 'Historik'])
+  assert.deepEqual(labels('/mina-provningar/historik'), ['Hem', 'Mina vinprovningar', 'Historik'])
 })
 
 test('the moved courses page keeps its own name', () => {
@@ -61,15 +61,15 @@ test('the homepage has no trail', () => {
 // The fix for the "Mina provningar" crumb pointing at the wrong product:
 // its href must match where /mina-provningar/planer itself 301s to, not the
 // accumulated (now-redirected-elsewhere) /mina-provningar path.
-test('the "Mina provningar" crumb links to the merged surface, not the video-courses redirect', () => {
+test('the "Mina vinprovningar" crumb links to the merged surface, not the video-courses redirect', () => {
   const trail = buildBreadcrumbTrail({ pathname: '/mina-provningar/historik' })
-  const crumb = trail.find((c) => c.label === 'Mina provningar')
+  const crumb = trail.find((c) => c.label === 'Mina vinprovningar')
   assert.equal(crumb?.href, '/provningsmallar?visa=mina')
 })
 
 test('the override also applies deeper under the old prefix, e.g. a live plan session', () => {
   const trail = buildBreadcrumbTrail({ pathname: '/mina-provningar/planer/7' })
-  const crumb = trail.find((c) => c.label === 'Mina provningar')
+  const crumb = trail.find((c) => c.label === 'Mina vinprovningar')
   assert.equal(crumb?.href, '/provningsmallar?visa=mina')
 })
 
@@ -81,6 +81,6 @@ test('a section without an override still gets its accumulated path', () => {
 
 test('the /skapa-provning parent crumb still has href /provningsmallar', () => {
   const trail = buildBreadcrumbTrail({ pathname: '/skapa-provning' })
-  const crumb = trail.find((c) => c.label === 'Provningar')
+  const crumb = trail.find((c) => c.label === 'Vinprovningar')
   assert.equal(crumb?.href, '/provningsmallar')
 })

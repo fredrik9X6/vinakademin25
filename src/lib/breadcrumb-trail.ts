@@ -30,13 +30,13 @@ export const PAGE_LABELS: Record<string, string> = {
   vinkurser: 'Vinkurser',
   vinprovningar: 'Vinkurser', // legacy URL — middleware 301s but cover the segment for in-flight requests
   kurser: 'Vinkurser',
-  provningsmallar: 'Provningar',
+  provningsmallar: 'Vinprovningar',
   artiklar: 'Artiklar',
   vinlistan: 'Vinlistan',
   regioner: 'Regioner',
   lander: 'Länder',
   // Sections without a detail-title API
-  'mina-provningar': 'Mina provningar',
+  'mina-provningar': 'Mina vinprovningar',
   'mina-vinkurser': 'Mina vinkurser',
   'mina-recensioner': 'Mina recensioner',
   'mina-sidor': 'Mina sidor',
@@ -77,7 +77,7 @@ export const PAGE_LABELS: Record<string, string> = {
  * say so rather than dangling off Hem.
  */
 export const PARENT_SECTIONS: Record<string, { label: string; href: string }> = {
-  'skapa-provning': { label: 'Provningar', href: '/provningsmallar' },
+  'skapa-provning': { label: 'Vinprovningar', href: '/provningsmallar' },
 }
 
 /**
