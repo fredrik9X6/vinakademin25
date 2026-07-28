@@ -28,8 +28,8 @@ export function TemplateCard({ template, href }: TemplateCardProps) {
     priceSek != null ? `${new Intl.NumberFormat('sv-SE').format(priceSek)} kr` : 'Köp'
 
   return (
-    <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group">
-      <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group h-full">
+      <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
         <div className="aspect-[4/3] bg-muted relative">
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

@@ -67,7 +67,8 @@ export function buildProvningarHref(
   // Deterministic order so hrefs are stable and assertable.
   const params = new URLSearchParams()
   if (next.view !== 'alla') params.set('visa', next.view)
-  if (next.tag) params.set('tag', next.tag)
+  const trimmedTag = next.tag?.trim() || null
+  if (trimmedTag) params.set('tag', trimmedTag)
   if (next.access) params.set('access', next.access)
   if (next.status) params.set('status', next.status)
   if (next.showArchived) params.set('showArchived', '1')

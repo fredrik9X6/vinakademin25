@@ -272,20 +272,30 @@ export default async function ProvningarListing({
             : 'Inga vinprovningar än — kom tillbaka snart.'}
         </div>
       ) : (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {/* Plans first: the user's own drafts are the higher-intent, smaller
-              set, and burying them under 60 templates defeats the change. */}
-          {plans.map((plan) => (
-            <PlanCard key={`plan-${plan.id}`} plan={plan} />
-          ))}
-          {templates.map((t) => (
-            <TemplateCard
-              key={`tpl-${t.id}`}
-              template={t}
-              href={showDrafts ? `/provningsmallar/redigera/${t.id}` : undefined}
-            />
-          ))}
-        </div>
+        <>
+          {wantsTemplates &&
+            (filters.tag || filters.access) &&
+            templates.length === 0 &&
+            plans.length > 0 && (
+              <p className="mb-4 rounded-md border border-dashed px-4 py-3 text-sm text-muted-foreground">
+                Inga mallar matchar filtret — visar bara dina egna vinprovningar.
+              </p>
+            )}
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {/* Plans first: the user's own drafts are the higher-intent, smaller
+                set, and burying them under 60 templates defeats the change. */}
+            {plans.map((plan) => (
+              <PlanCard key={`plan-${plan.id}`} plan={plan} />
+            ))}
+            {templates.map((t) => (
+              <TemplateCard
+                key={`tpl-${t.id}`}
+                template={t}
+                href={showDrafts ? `/provningsmallar/redigera/${t.id}` : undefined}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
