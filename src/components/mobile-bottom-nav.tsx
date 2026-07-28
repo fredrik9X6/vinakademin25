@@ -206,7 +206,7 @@ export function MobileBottomNav() {
               <DrawerLink
                 href="/provningsmallar"
                 icon={BookOpen}
-                label="Provningar"
+                label="Vinprovningar"
                 onClose={() => setOpen(false)}
                 last
               />

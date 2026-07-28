@@ -63,7 +63,7 @@ export function TemplateDetailView({ template, isAdmin = false }: TemplateDetail
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Tillbaka till alla mallar
+          Tillbaka till alla vinprovningar
         </Link>
 
         {heroUrl ? (

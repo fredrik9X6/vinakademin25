@@ -8,6 +8,7 @@ import { LockedTemplateDetailView } from '@/components/tasting-template/LockedTe
 import { getUser } from '@/lib/get-user'
 import { getLockedTemplatePreview } from '@/lib/template-locked-preview'
 import { canUseTemplate } from '@/lib/access-control'
+import { getSiteURL } from '@/lib/site-url'
 import type { TastingTemplate } from '@/payload-types'
 
 interface RouteParams {
@@ -33,13 +34,14 @@ async function loadTemplate(slug: string): Promise<TastingTemplate | null> {
 export async function generateMetadata({ params }: RouteParams): Promise<Metadata> {
   const { slug } = await params
   const template = await loadTemplate(slug)
-  if (!template) return { title: 'Provningsmall — Vinakademin' }
+  if (!template) return { title: 'Vinprovning' }
   return {
-    title: template.seoTitle || `${template.title} — Provningsmallar | Vinakademin`,
+    title: template.seoTitle || `${template.title} — Vinprovningar`,
     description:
       template.seoDescription ||
       template.description?.slice(0, 160) ||
-      'En provningsmall från Vinakademin.',
+      'En vinprovning från Vinakademin.',
+    alternates: { canonical: `${getSiteURL()}/provningsmallar/${slug}` },
   }
 }
 

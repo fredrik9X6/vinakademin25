@@ -41,3 +41,22 @@ test('unrelated paths are untouched', () => {
   assert.equal(resolveTastingRedirect('/vinkurser'), null)
   assert.equal(resolveTastingRedirect('/mina-provningarx'), null)
 })
+
+// The bare /vinprovningar root is an ACQUISITION path — 165 people/90d arrive
+// from Instagram, Google and TikTok searching for wine tastings, and until
+// 2026-07-27 every one of them was 301'd to the video-course catalogue.
+test('the bare /vinprovningar root goes to the tastings gallery', () => {
+  assert.deepEqual(resolveTastingRedirect('/vinprovningar'), {
+    pathname: '/provningsmallar',
+    status: 301,
+  })
+  assert.equal(resolveTastingRedirect('/vinprovningar/')?.pathname, '/provningsmallar')
+})
+
+// Sub-paths are genuine old COURSE detail URLs from before the collection was
+// renamed. They keep going to /vinkurser/<slug>, which middleware handles with
+// a prefix rule — so this module must NOT claim them.
+test('/vinprovningar sub-paths are left to the legacy course rule', () => {
+  assert.equal(resolveTastingRedirect('/vinprovningar/grunderna-i-vin'), null)
+  assert.equal(resolveTastingRedirect('/vinprovningar/nagon-kurs/recension'), null)
+})

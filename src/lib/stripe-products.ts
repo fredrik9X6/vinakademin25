@@ -452,7 +452,7 @@ export async function syncTemplateWithStripe(
 
   const description: string =
     (template.description && String(template.description).trim()) ||
-    `Provningsmall: ${title}`
+    `Vinprovning: ${title}`
 
   const productData: any = {
     name: title,

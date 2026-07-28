@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getPayload, type Where } from 'payload'
 import config from '@/payload.config'
+import { getSiteURL } from '@/lib/site-url'
 import { TemplateCard } from '@/components/tasting-template/TemplateCard'
 import { TagFilter, type TagCount } from '@/components/tasting-template/TagFilter'
 import { PlanCard } from '@/components/tasting-plan/PlanCard'
@@ -20,9 +21,10 @@ import {
 import type { TastingPlan, TastingTemplate } from '@/payload-types'
 
 export const metadata: Metadata = {
-  title: 'Provningar — Vinakademin',
+  title: 'Vinprovningar',
   description:
-    'Färdiga provningsupplägg från Vinakademin — eller bygg din egen. Planera, bjud in vänner och håll provningen live.',
+    'Färdiga vinprovningar från Vinakademin — eller bygg din egen. Planera, bjud in vänner och håll provningen live.',
+  alternates: { canonical: `${getSiteURL()}/provningsmallar` },
 }
 
 export const dynamic = 'force-dynamic'
@@ -152,7 +154,7 @@ export default async function ProvningarListing({
     <div className="mx-auto max-w-6xl px-4 py-8">
       <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-heading">{showDrafts ? 'Utkast' : 'Provningar'}</h1>
+          <h1 className="text-2xl font-heading">{showDrafts ? 'Utkast' : 'Vinprovningar'}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {showDrafts
               ? 'Mallar du har sparat som utkast. Bara du som admin ser dessa.'
@@ -238,9 +240,9 @@ export default async function ProvningarListing({
       {filters.view === 'mina' && !user ? (
         <div className="rounded-lg border border-dashed p-10 text-center">
           <Wine className="h-12 w-12 mx-auto text-brand-400/60" />
-          <h2 className="mt-4 font-heading text-xl">Logga in för att se dina provningar</h2>
+          <h2 className="mt-4 font-heading text-xl">Logga in för att se dina vinprovningar</h2>
           <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-            Dina egna provningar sparas på ditt konto.
+            Dina egna vinprovningar sparas på ditt konto.
           </p>
           <div className="mt-5">
             <Button asChild>
@@ -253,7 +255,7 @@ export default async function ProvningarListing({
       ) : isEmpty && filters.view === 'mina' ? (
         <div className="rounded-lg border border-dashed p-10 text-center">
           <Wine className="h-12 w-12 mx-auto text-brand-400/60" />
-          <h2 className="mt-4 font-heading text-xl">Inga provningar än</h2>
+          <h2 className="mt-4 font-heading text-xl">Inga vinprovningar än</h2>
           <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
             En provning är 3–6 viner du planerar att smaka tillsammans med vänner — från
             start till klart i en samlad plan.
@@ -268,24 +270,34 @@ export default async function ProvningarListing({
       ) : isEmpty ? (
         <div className="rounded-md border border-dashed p-10 text-center text-sm text-muted-foreground">
           {filters.tag || filters.access
-            ? 'Inga provningar matchar filtret.'
-            : 'Inga provningar än — kom tillbaka snart.'}
+            ? 'Inga vinprovningar matchar filtret.'
+            : 'Inga vinprovningar än — kom tillbaka snart.'}
         </div>
       ) : (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {/* Plans first: the user's own drafts are the higher-intent, smaller
-              set, and burying them under 60 templates defeats the change. */}
-          {plans.map((plan) => (
-            <PlanCard key={`plan-${plan.id}`} plan={plan} />
-          ))}
-          {templates.map((t) => (
-            <TemplateCard
-              key={`tpl-${t.id}`}
-              template={t}
-              href={showDrafts ? `/provningsmallar/redigera/${t.id}` : undefined}
-            />
-          ))}
-        </div>
+        <>
+          {wantsTemplates &&
+            (filters.tag || filters.access) &&
+            templates.length === 0 &&
+            plans.length > 0 && (
+              <p className="mb-4 rounded-md border border-dashed px-4 py-3 text-sm text-muted-foreground">
+                Inga mallar matchar filtret — visar bara dina egna vinprovningar.
+              </p>
+            )}
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {/* Plans first: the user's own drafts are the higher-intent, smaller
+                set, and burying them under 60 templates defeats the change. */}
+            {plans.map((plan) => (
+              <PlanCard key={`plan-${plan.id}`} plan={plan} />
+            ))}
+            {templates.map((t) => (
+              <TemplateCard
+                key={`tpl-${t.id}`}
+                template={t}
+                href={showDrafts ? `/provningsmallar/redigera/${t.id}` : undefined}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

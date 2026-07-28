@@ -36,6 +36,11 @@ const RULES: Record<string, TastingRedirect> = {
     setParams: { visa: 'mina' },
     status: 301,
   },
+  // The bare root is an acquisition path (Instagram / Google / TikTok, 165
+  // people per 90d) whose visitors want tastings. Its SUB-paths are old course
+  // detail URLs and are handled by the separate prefix rule in middleware —
+  // deliberately not here, because this module is exact-match by design.
+  '/vinprovningar': { pathname: '/provningsmallar', status: 301 },
 }
 
 export function resolveTastingRedirect(pathname: string): TastingRedirect | null {

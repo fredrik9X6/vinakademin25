@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
             currency: 'sek',
             product_data: {
               name: title,
-              description: `Provningsmall: ${title}`,
+              description: `Vinprovning: ${title}`,
               images: imageUrl ? [imageUrl] : [],
               metadata: {
                 templateId: String(templateId),

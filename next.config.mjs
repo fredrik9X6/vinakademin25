@@ -83,12 +83,12 @@ const nextConfig = {
     return [
       {
         source: '/kurser',
-        destination: '/vinprovningar',
+        destination: '/vinkurser',
         permanent: true,
       },
       {
         source: '/kurser/:slug*',
-        destination: '/vinprovningar/:slug*',
+        destination: '/vinkurser/:slug*',
         permanent: true,
       },
       // Legacy English URL from older emails; canonical is /aterstall-losenord

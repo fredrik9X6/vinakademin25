@@ -97,3 +97,16 @@ test('view membership predicates', () => {
   assert.equal(viewIncludesTemplates('mina'), false)
   assert.equal(viewIncludesTemplates('mallar'), true)
 })
+
+test('a whitespace-only tag round-trips as absent', () => {
+  assert.equal(buildProvningarHref({ ...BASE, tag: '   ' }, {}), '/provningsmallar')
+})
+
+// The scoping rule must run AFTER the patch is merged, so a patch that both
+// switches view and sets a now-invalid field still drops that field.
+test('switching view drops a field set in the same patch', () => {
+  assert.equal(
+    buildProvningarHref(BASE, { view: 'mallar', showArchived: true }),
+    '/provningsmallar?visa=mallar',
+  )
+})
