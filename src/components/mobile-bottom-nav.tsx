@@ -16,7 +16,7 @@ import {
   LogIn,
   LogOut,
   UserCircle,
-  BookOpen,
+  GraduationCap,
   Sun,
   Moon,
 } from 'lucide-react'
@@ -33,11 +33,22 @@ interface PrimaryTab {
   matchExact?: boolean
 }
 
+/**
+ * The two products get the two product tabs. Vinlistan and Artiklar moved to
+ * the drawer's Utforska list — both are secondary, and Vinprovningar was
+ * previously two taps deep on mobile (drawer → Utforska) while being a primary
+ * nav item on desktop. Most of the traffic that arrives looking for it is
+ * mobile (Instagram/TikTok), so that asymmetry cost the most on the surface
+ * where it mattered most.
+ *
+ * Icons: Vinkurser takes GraduationCap and Vinprovningar takes Wine, rather
+ * than Wine + something wine-adjacent. A glass reads as "a tasting" and a cap
+ * reads as "a course"; two similar wine glyphs side by side would not.
+ */
 const PRIMARY_TABS: PrimaryTab[] = [
   { label: 'Hem', href: '/', icon: Home, matchExact: true },
-  { label: 'Vinkurser', href: '/vinkurser', icon: Wine },
-  { label: 'Vinlistan', href: '/vinlistan', icon: List },
-  { label: 'Artiklar', href: '/artiklar', icon: Newspaper },
+  { label: 'Vinkurser', href: '/vinkurser', icon: GraduationCap },
+  { label: 'Vinprovningar', href: '/provningsmallar', icon: Wine },
 ]
 
 export function MobileBottomNav() {
@@ -116,9 +127,13 @@ export function MobileBottomNav() {
       </nav>
 
       <Sheet open={open} onOpenChange={setOpen}>
+        {/* pb: env(safe-area-inset-bottom) alone resolves to 0 on any device
+            without a home indicator (and in desktop emulation), which left
+            "Logga ut" flush against the sheet's bottom edge. Reserve real
+            padding and let the inset add to it where it applies. */}
         <SheetContent
           side="bottom"
-          className="rounded-t-2xl border-t pb-[env(safe-area-inset-bottom)] max-h-[88vh] overflow-y-auto"
+          className="rounded-t-2xl border-t pb-[calc(env(safe-area-inset-bottom)+1.5rem)] max-h-[88vh] overflow-y-auto"
         >
           <SheetTitle className="sr-only">Min sida</SheetTitle>
 
@@ -197,16 +212,39 @@ export function MobileBottomNav() {
             </div>
           )}
 
-          {/* Utforska — public nav items not in the bottom-nav tabs */}
+          {/* Utforska — the full section index. Vinkurser and Vinprovningar
+              are repeated from the tab bar on purpose: this list is what a
+              user opens when the tabs did not have what they wanted, so a
+              complete index beats a minimal one. Vinlistan and Artiklar live
+              ONLY here now, so dropping either would strand a whole section
+              on mobile. */}
           <div className="mt-5 space-y-1.5">
             <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               Utforska
             </p>
             <ul className="rounded-lg border border-border bg-card overflow-hidden">
               <DrawerLink
+                href="/vinkurser"
+                icon={GraduationCap}
+                label="Vinkurser"
+                onClose={() => setOpen(false)}
+              />
+              <DrawerLink
                 href="/provningsmallar"
-                icon={BookOpen}
+                icon={Wine}
                 label="Vinprovningar"
+                onClose={() => setOpen(false)}
+              />
+              <DrawerLink
+                href="/vinlistan"
+                icon={List}
+                label="Vinlistan"
+                onClose={() => setOpen(false)}
+              />
+              <DrawerLink
+                href="/artiklar"
+                icon={Newspaper}
+                label="Artiklar"
                 onClose={() => setOpen(false)}
                 last
               />
