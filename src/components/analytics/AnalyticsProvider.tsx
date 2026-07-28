@@ -7,6 +7,8 @@ import { PostHogProvider as PHProvider } from 'posthog-js/react'
 
 // Track if PostHog has been initialized
 let posthogInitialized = false
+/** Synchronous latch — see initPostHog. */
+let posthogInitStarted = false
 
 // PostHog configuration — these are public keys, safe to commit.
 //
@@ -22,14 +24,40 @@ const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || 'phc_NEwNtznBZqYk5R55
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://g.vinakademin.se'
 const POSTHOG_UI_HOST = process.env.NEXT_PUBLIC_POSTHOG_UI_HOST || 'https://eu.posthog.com'
 
-// Initialize PostHog
-if (typeof window !== 'undefined') {
+/**
+ * Initialise PostHog. MUST be called from an effect, never at module scope.
+ *
+ * posthog-js loads its remote bundle by inserting a <script> before the first
+ * `body > script` it finds. In this app those are the JSON-LD tags the root
+ * layout renders as the first children of <body>. Running init at module
+ * scope meant that insertion happened while the client bundle evaluated —
+ * before React hydrated — so <body>'s child list changed underneath the
+ * hydration pass and React reported, on every page:
+ *
+ *   "A tree hydrated but some attributes of the server rendered HTML didn't
+ *    match the client properties. This won't be patched up."
+ *
+ * React then discarded the server-rendered JSON-LD (it showed up in the diff
+ * as type="application/ld+json" replaced by the posthog recorder script), so
+ * the Organization and WebSite structured data was being destroyed client-side.
+ *
+ * Calling this from an effect means hydration has committed before posthog
+ * touches the DOM.
+ */
+function initPostHog() {
+  // `posthogInitialized` only flips in the async `loaded` callback, so it
+  // cannot guard against a second synchronous call. React runs child effects
+  // before parent effects, which means PageViewTracker's effect fires before
+  // AnalyticsProvider's — both call this, and without a synchronous latch the
+  // SDK would be initialised twice.
+  if (typeof window === 'undefined' || posthogInitStarted || !POSTHOG_KEY) return
+  posthogInitStarted = true
+
   if (process.env.NODE_ENV === 'development') {
     console.log('[Analytics] PostHog Host:', POSTHOG_HOST, '· UI Host:', POSTHOG_UI_HOST)
   }
 
-  if (POSTHOG_KEY) {
-    posthog.init(POSTHOG_KEY, {
+  posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
       ui_host: POSTHOG_UI_HOST,
       // Lock in the SDK behavior snapshot so future posthog-js versions
@@ -61,9 +89,6 @@ if (typeof window !== 'undefined') {
         posthogInitialized = true
       },
     })
-  } else if (process.env.NODE_ENV === 'development') {
-    console.warn('[Analytics] PostHog key not found - events will not be tracked')
-  }
 }
 
 // Google Analytics configuration
@@ -87,6 +112,14 @@ function PageViewTracker() {
 
   useEffect(() => {
     if (pathname) {
+      // Init here too, not just in the provider: React runs child effects
+      // before parent ones, so on first load this effect fires BEFORE
+      // AnalyticsProvider's. Without this the very first pageview of a
+      // session — the one that carries the entry URL and referrer — would be
+      // captured against an uninitialised SDK and dropped. initPostHog is
+      // latched, so the later parent call is a no-op.
+      initPostHog()
+
       // Construct full URL
       let url = pathname
       const params = searchParams?.toString()
@@ -142,6 +175,16 @@ interface AnalyticsProviderProps {
 }
 
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
+  // Deferred to an effect on purpose — see initPostHog's comment. Initialising
+  // at module scope mutated <body> before hydration and destroyed the
+  // server-rendered JSON-LD on every page.
+  useEffect(() => {
+    initPostHog()
+    if (!POSTHOG_KEY && process.env.NODE_ENV === 'development') {
+      console.warn('[Analytics] PostHog key not found - events will not be tracked')
+    }
+  }, [])
+
   return (
     <PHProvider client={posthog}>
       <GoogleAnalytics />
