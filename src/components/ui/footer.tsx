@@ -90,7 +90,12 @@ function FooterNewsletter() {
               handleSubmit()
             }
           }}
-          className="h-14 min-w-0 flex-1 rounded-md border border-border bg-background px-4 text-base outline-none transition focus:border-brand-400/60 focus:ring-1 focus:ring-brand-400/40 disabled:opacity-50 sm:h-10 sm:px-3 sm:text-sm"
+          /* `flex-1` is scoped to `sm:` on purpose. Below `sm` the wrapper is
+           * flex-col, so an unscoped `flex-1` would set flex-basis:0 on the
+           * *vertical* axis — flex-basis replaces `height` for a flex item's
+           * main size, so `h-14` (even with !important) is ignored and the
+           * input collapses to one line. That was the squashed mobile input. */
+          className="h-14 min-w-0 rounded-md border border-border bg-background px-4 text-base outline-none transition focus:border-brand-400/60 focus:ring-1 focus:ring-brand-400/40 disabled:opacity-50 sm:h-10 sm:flex-1 sm:px-3 sm:text-sm"
           disabled={status === 'loading'}
           aria-label="E-postadress"
         />
