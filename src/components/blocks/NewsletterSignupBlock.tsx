@@ -259,7 +259,10 @@ export function NewsletterSignupBlock({
                 placeholder={placeholderText}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 bg-background text-foreground border border-border dark:border-gray-600 placeholder:text-muted-foreground"
+                /* `sm:flex-1`, not `flex-1` — below `sm` this row is flex-col,
+                 * where flex-basis:0 overrides the Input's `h-10` and squashes
+                 * it to a single line. Same trap as the footer newsletter. */
+                className="sm:flex-1 bg-background text-foreground border border-border dark:border-gray-600 placeholder:text-muted-foreground"
                 disabled={isSubmitting || isSubscribed}
               />
 
