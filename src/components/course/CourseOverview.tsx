@@ -183,9 +183,15 @@ export default function CourseOverview({
 
   const formatPrice = (price: number) => {
     if (price === 0) return 'Gratis'
+    // Whole-krona prices render as "499 kr", matching how the same product is
+    // priced on the homepage and the Provningsverktyget landing page. Öre are
+    // preserved if a price ever has them.
+    const hasOre = !Number.isInteger(price)
     return new Intl.NumberFormat('sv-SE', {
       style: 'currency',
       currency: 'SEK',
+      minimumFractionDigits: hasOre ? 2 : 0,
+      maximumFractionDigits: hasOre ? 2 : 0,
     }).format(price)
   }
 
