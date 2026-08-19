@@ -19,6 +19,7 @@ import {
   FileText,
   Wine,
   HelpCircle,
+  Check,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import CourseTableOfContents from './CourseTableOfContents'
@@ -366,28 +367,60 @@ export default function CourseOverview({
                   <h1 className="text-3xl lg:text-5xl leading-tight">{course.title}</h1>
 
                   {/* Description */}
-                  {course.shortDescription && (
+                  {(course.description || course.shortDescription) && (
                     <p className="text-base lg:text-lg leading-relaxed">
-                      {course.shortDescription}
+                      {course.description || course.shortDescription}
                     </p>
                   )}
 
-                  {/* Price */}
-                  <div className="text-brand-gradient text-3xl font-bold">
-                    {formatPrice(course.price || 0)}
+                  {/* Value stack — each line answers an objection a would-be
+                       host actually has. Everything listed already ships with
+                       the course; nothing here is aspirational. */}
+                  <ul className="space-y-2 text-[15px]">
+                    {[
+                      'Filmerna guidar kvällen — du behöver inte kunna något om vin',
+                      'Färdig inköpslista till Systembolaget',
+                      'En betalar, hela sällskapet är med i samma session',
+                      'Alla fyller i egna smakblad och jämför på slutet',
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <Check className="mt-1 h-4 w-4 flex-shrink-0 text-brand-400" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Price + anchor. The anchor is a real market comparison,
+                       not an invented "värde" figure — the free tier is on the
+                       same site, so fabricated component prices would be
+                       visibly false. Confirmed 2026-08-19. */}
+                  <div>
+                    <div className="text-brand-gradient text-3xl font-bold">
+                      {formatPrice(course.price || 0)}
+                      <span className="ml-2 align-middle text-base font-normal text-muted-foreground">
+                        för hela sällskapet
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      En guidad vinprovning ute kostar 500–1000 kr per person.
+                    </p>
                   </div>
 
-                  {/* CTA — single purchase button. Uses .btn-brand for the same
-                       slide-gradient animation as the hero / OfferingsComparison.
-                       Opens the existing CheckoutDialog mounted further down. */}
                   <div className="space-y-3">
                     <button
                       type="button"
                       onClick={() => setIsCheckoutOpen(true)}
                       className="btn-brand btn-brand-lg w-full"
                     >
-                      Köp vinkurs
+                      Boka vår vinkväll
                     </button>
+                    <p className="text-center text-sm text-muted-foreground">
+                      30 dagars pengarna-tillbaka-garanti. Blev kvällen inget att prata om
+                      — mejla oss, så får du tillbaka pengarna. Inga villkor.
+                    </p>
+                    <p className="text-center text-xs text-muted-foreground">
+                      Din första vinkväll kan vara redan på fredag.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -424,9 +457,9 @@ export default function CourseOverview({
                 {course.title}
               </h1>
 
-              {course.shortDescription && (
+              {(course.description || course.shortDescription) && (
                 <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-                  {course.shortDescription}
+                  {course.description || course.shortDescription}
                 </p>
               )}
 
