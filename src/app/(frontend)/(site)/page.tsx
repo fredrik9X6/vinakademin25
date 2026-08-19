@@ -301,7 +301,7 @@ export default async function HomePage() {
                   href="/vinkurser"
                   className="btn-brand btn-brand-lg w-full sm:flex-1"
                 >
-                  Upptäck vinkurser
+                  Läs om Vinkvällen
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link
@@ -537,8 +537,7 @@ export default async function HomePage() {
 
             {/* Description */}
             <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-              Utforska våra vinkurser och börja din vinresa idag. Det är enkelt, roligt och helt
-              på dina villkor.
+              Häll upp en vinkväll hemma — eller bygg en egen provning helt gratis.
             </p>
 
             {/* CTA Buttons */}
@@ -547,7 +546,7 @@ export default async function HomePage() {
                 href="/vinkurser"
                 className="btn-brand btn-brand-lg w-full sm:w-auto"
               >
-                Utforska vinkurser
+                Läs om Vinkvällen
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
@@ -564,7 +563,7 @@ export default async function HomePage() {
                 {
                   icon: CheckCircle2,
                   title: 'Prova gratis',
-                  description: 'Testa varje vinkurs innan du köper',
+                  description: 'Hela provningsverktyget kostar inget',
                 },
                 {
                   icon: Wine,

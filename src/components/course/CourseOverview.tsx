@@ -224,7 +224,7 @@ export default function CourseOverview({
       if (authUser) {
         // Logged in but hasn't purchased — show checkout modal
         setIsCheckoutOpen(true)
-        toast.info('Du behöver köpa vinkursen för att se detta innehåll')
+        toast.info('Du behöver köpa vinkvällen för att se detta innehåll')
       } else {
         // Not logged in — redirect to login
         const currentUrl = `/vinkurser/${course.slug || course.id}?lesson=${lessonId}`
@@ -292,7 +292,7 @@ export default function CourseOverview({
         if (authUser) {
           // Logged in but hasn't purchased — show checkout modal
           setIsCheckoutOpen(true)
-          toast.info('Du behöver köpa vinkursen för att se detta innehåll')
+          toast.info('Du behöver köpa vinkvällen för att se detta innehåll')
         } else {
           // Not logged in — redirect to login
           const currentUrl = `/vinkurser/${course.slug || course.id}?quiz=${item.id}`
@@ -418,7 +418,7 @@ export default function CourseOverview({
                       onClick={() => setIsCheckoutOpen(true)}
                       className="btn-brand btn-brand-lg w-full"
                     >
-                      Boka vår vinkväll
+                      Köp vinkvällen
                     </button>
                     <p className="text-center text-sm text-muted-foreground">
                       30 dagars pengarna-tillbaka-garanti. Blev kvällen inget att prata om
@@ -585,7 +585,7 @@ export default function CourseOverview({
                 {/* Continue/Start Button - Always show for users with access or in session */}
                 <Button onClick={continueCourse} className="w-full" size="lg">
                   <Play className="w-5 h-5 mr-2" />
-                  {isSessionParticipant ? 'Starta vinkursen' : 'Fortsätt där du slutade'}
+                  {isSessionParticipant ? 'Starta vinkvällen' : 'Fortsätt där du slutade'}
                 </Button>
 
                 {/* Completion Page Button - Show when course is completed */}

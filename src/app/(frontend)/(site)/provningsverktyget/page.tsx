@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import type { TastingTemplate } from '@/payload-types'
 
-const HEADING = 'font-heading tracking-[-0.015em] leading-[1.05]'
+const HEADING = 'font-heading tracking-[-0.015em] !leading-[1.15]'
 
 export const metadata: Metadata = {
   title: 'Provningsverktyget — håll en vinprovning hemma, gratis',

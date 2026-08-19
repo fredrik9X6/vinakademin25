@@ -76,18 +76,18 @@ export function PaymentStatus({ status, course, error, onClose, onRetry }: Payme
         <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-4 w-full">
           <h4 className="font-medium mb-2 text-green-800 dark:text-green-200">Vad händer nu?</h4>
           <ul className="space-y-1 text-sm text-green-700 dark:text-green-300">
-            <li>✓ Du har nu tillgång till vinkursen</li>
+            <li>✓ Du har nu tillgång till vinkvällen</li>
             <li>✓ Ett kvitto har skickats till din e-post</li>
-            <li>✓ Du kan börja studera direkt</li>
+            <li>✓ Du kan sätta igång direkt</li>
           </ul>
         </div>
 
         <div className="flex gap-3 w-full">
           <Button onClick={handleGoToCourse} className="flex-1">
-            Börja studera
+            Kom igång
           </Button>
           <Button onClick={handleGoToCourses} variant="outline" className="flex-1">
-            Alla vinkurser
+            Alla vinkvällar
           </Button>
         </div>
       </div>

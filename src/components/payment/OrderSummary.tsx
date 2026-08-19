@@ -60,7 +60,7 @@ export function OrderSummary({ course }: OrderSummaryProps) {
 
             <Badge variant="outline" className="text-xs">
               <BookOpen className="w-3 h-3 mr-1" />
-              Vinkurs
+              Vinkväll
             </Badge>
           </div>
 
@@ -84,12 +84,12 @@ export function OrderSummary({ course }: OrderSummaryProps) {
       <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 rounded-lg p-4 border border-green-200/50 dark:border-green-800/30">
         <h4 className="font-semibold mb-3 text-sm sm:text-base text-green-900 dark:text-green-100 flex items-center gap-2">
           <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-          Vad ingår i vinkursen:
+          Vad ingår i vinkvällen:
         </h4>
         <ul className="space-y-2 text-xs sm:text-sm text-green-800 dark:text-green-200">
           <li className="flex items-start gap-2">
             <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
-            <span>Livstillgång till vinkursmaterialet</span>
+            <span>Livstillgång till allt material</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
@@ -97,7 +97,7 @@ export function OrderSummary({ course }: OrderSummaryProps) {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
-            <span>Dela vinkursen med vänner via gruppfunktionen</span>
+            <span>Bjud in hela sällskapet till samma session</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
