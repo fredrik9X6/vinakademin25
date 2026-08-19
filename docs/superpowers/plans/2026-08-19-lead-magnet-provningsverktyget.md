@@ -980,16 +980,37 @@ export default async function ProvningsverktygetPage() {
         </div>
       </section>
 
-      <NewsletterSignupBlock />
+      {/* Last-resort capture for visitors who won't create an account. Props are
+          passed explicitly because this component's defaults are English —
+          rendering it bare would put English copy on a Swedish page. Mirrors the
+          homepage's usage at (site)/page.tsx:471-479. */}
+      <section className="pb-16">
+        <div className="mx-auto max-w-xl px-4 sm:px-6 lg:px-8">
+          <NewsletterSignupBlock
+            title="Inte redo att skapa konto?"
+            description="Få nya provningar och vintips i mejlen. Ett mejl i veckan, ungefär."
+            buttonText="Prenumerera"
+            placeholderText="Din e-postadress"
+            style="minimal"
+            backgroundColor="transparent"
+            disclaimer="Gratis för alltid. Avsluta prenumerationen när du vill."
+          />
+        </div>
+      </section>
     </div>
   )
 }
 ```
 
-- [ ] **Step 2: Check the NewsletterSignupBlock import is right**
+- [ ] **Step 2: Verify the NewsletterSignupBlock contract**
 
-Run: `grep -n "export" src/components/blocks/NewsletterSignupBlock.tsx | head -5`
-If it is a default export or takes required props, adjust the import and usage accordingly. If it takes no props, leave as written. If the component does not exist at that path, remove the import and the `<NewsletterSignupBlock />` usage — the page already has its own signup section.
+Already checked by the controller — the component lives at
+`src/components/blocks/NewsletterSignupBlock.tsx`, is a **named** export, and takes
+`{ title?, description?, buttonText?, placeholderText?, style?, backgroundColor?, showIcon?, disclaimer? }`,
+all optional. Its defaults are English, which is why Step 1 passes Swedish values for every
+prop it uses. `style` accepts `'minimal' | 'featured' | 'inline' | 'swedish'` and
+`backgroundColor` accepts `'default' | 'orange' | 'blue' | 'green' | 'transparent'` — do not
+pass values outside those unions.
 
 - [ ] **Step 3: Verify it renders**
 
