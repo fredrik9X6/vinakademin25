@@ -81,15 +81,10 @@ export default async function ProvningsmallDetailPage({ params }: RouteParams) {
       wines: [],
       hostScript: null,
     } as TastingTemplate
-    const priceSek =
-      typeof (template as { priceSek?: number }).priceSek === 'number'
-        ? (template as { priceSek: number }).priceSek
-        : 99
     return (
       <LockedTemplateDetailView
         template={redactedTemplate}
         preview={preview}
-        priceSek={priceSek}
         isAuthenticated={!!user}
       />
     )
