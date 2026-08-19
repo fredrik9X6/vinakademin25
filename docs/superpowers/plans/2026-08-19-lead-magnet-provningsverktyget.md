@@ -1440,11 +1440,38 @@ grep -rn "isFreeTrial\|priceSek" src --include="*.tsx" | grep -v node_modules
 
 Any remaining *UI* reference to these is dead code from Task 4 — remove it. Collection and API references stay.
 
-- [ ] **Step 2: Audit the membership page**
+- [ ] **Step 2: Fix two stale strings the Task 2 review surfaced**
+
+These were flagged as Minor during Task 2's review and deliberately routed here.
+
+In `src/collections/TastingTemplates.ts` around lines 196-197, the `accessLevel` select's
+option labels still describe purchase semantics and now contradict the field's own
+description two lines below. Replace them with:
+
+```ts
+        { label: 'Fri – syns för alla, även utloggade', value: 'free' },
+        { label: 'Kräver konto – besökaren måste skapa ett gratiskonto', value: 'paid' },
+```
+
+Keep the `value` strings exactly as they are — `free` and `paid` are persisted in the
+database and referenced by `resolveTemplateAccess()`. Only the labels change.
+
+At line ~233, `stripeProductId`'s description still claims the field is auto-generated via
+`syncTemplateWithStripe`, whose trigger was removed in Task 2. Replace with:
+
+```ts
+        description:
+          'PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning.',
+```
+
+Apply the same treatment to `stripePriceId`'s description immediately below it if it makes
+the same stale claim.
+
+- [ ] **Step 3: Audit the membership page**
 
 Open `src/app/(frontend)/(site)/bli-medlem/page.tsx` and read it end to end. Rewrite any claim that templates cost money or that membership is required for tastings.
 
-- [ ] **Step 3: Full manual walkthrough — logged out**
+- [ ] **Step 4: Full manual walkthrough — logged out**
 
 Run `pnpm dev`, then in a **private window**:
 1. `/provningsverktyget` renders, CTA goes to `/registrera?from=/provningsverktyget`.
@@ -1454,14 +1481,14 @@ Run `pnpm dev`, then in a **private window**:
 5. `/provningsmallar/<slug>/kop` → redirects to the template page.
 6. `/vinkurser/ldgmgv` shows the Vinkvällen offer, anchor, and guarantee.
 
-- [ ] **Step 4: Full manual walkthrough — signing up**
+- [ ] **Step 5: Full manual walkthrough — signing up**
 
 7. Complete registration. Confirm the newsletter checkbox is **pre-checked**.
 8. After signup, "Använd mallen" creates a plan and redirects to `/mina-provningar/planer/<id>`.
 9. `/skapa-provning` loads the builder.
 10. Start a live session from a plan and join it from a second browser.
 
-- [ ] **Step 5: Confirm the subscriber landed**
+- [ ] **Step 6: Confirm the subscriber landed**
 
 Run:
 
@@ -1480,12 +1507,12 @@ Expected: the test signup appears with `status = 'subscribed'`.
 
 **Note:** `.env` points at **production**. Use a disposable email for the test signup, or point `DATABASE_URI` at the staging branch (`ep-purple-night`) first.
 
-- [ ] **Step 6: Final verification**
+- [ ] **Step 7: Final verification**
 
 Run: `pnpm test:access && pnpm test:ia && pnpm lint && pnpm build`
 Expected: all green.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A
