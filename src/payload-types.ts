@@ -1634,7 +1634,7 @@ export interface TastingTemplate {
    */
   stripeProductId?: string | null;
   /**
-   * PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning.
+   * PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning. Stripe-priser är immutable — gamla priser arkiveras om priceSek ändras.
    */
   stripePriceId?: string | null;
   publishedStatus: 'draft' | 'published';
