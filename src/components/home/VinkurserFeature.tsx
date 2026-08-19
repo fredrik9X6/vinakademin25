@@ -59,25 +59,26 @@ export function VinkurserFeature({ courses, totalCount }: VinkurserFeatureProps)
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-300/30 bg-brand-300/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-400">
             <BookOpen className="h-3 w-3" />
-            Vinkurser
+            Vinkvällen
           </span>
           <h2 className={`${HEADING} mt-5 text-4xl md:text-5xl lg:text-6xl`}>
-            Videokurser för
+            En vinprovning hemma
             <br />
-            <span className="text-brand-gradient">vinens nyfikna</span>
+            <span className="text-brand-gradient">vi guidar hela kvällen</span>
           </h2>
           <p className="mx-auto mt-4 max-w-[60ch] text-[15px] leading-relaxed text-muted-foreground">
-            Korta videolektioner, quiz som faktiskt sätter sig, vinval du kan handla direkt på
-            Systembolaget — och möjlighet att bjuda in vänner till en gemensam session.
+            Bjud hem några vänner och håll en vinprovning ni pratar om länge efteråt. Filmerna
+            guidar hela kvällen — du behöver inte kunna något om vin. En betalar, hela
+            sällskapet är med.
           </p>
         </div>
 
         {/* Three benefit chips */}
         <div className="mx-auto mb-12 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
           {[
-            { icon: PlayCircle, label: 'Videolektioner & quiz' },
-            { icon: Sparkles, label: 'Vinval till Systembolaget' },
-            { icon: Users, label: 'Bjud in vänner till session' },
+            { icon: PlayCircle, label: 'Filmerna guidar hela kvällen' },
+            { icon: Sparkles, label: 'Inköpslista till Systembolaget' },
+            { icon: Users, label: 'En betalar, hela sällskapet med' },
           ].map((b) => (
             <div
               key={b.label}
@@ -143,16 +144,16 @@ export function VinkurserFeature({ courses, totalCount }: VinkurserFeatureProps)
         )}
 
         {/* Footer CTA — only renders when there's more than one course. With
-            one course the SingleCourseHero already has its own "Se kursen"
-            primary CTA, so a second "Se alla kurser" link would be noise. */}
+            one course the SingleCourseHero already has its own "Läs om
+            Vinkvällen" primary CTA, so a second link here would be noise. */}
         {!singleCourse && (
           <div className="mt-10 flex flex-col items-center gap-3 text-center">
             <Link href="/vinkurser" className="btn-brand btn-brand-lg group">
-              Se alla kurser
+              Läs om Vinkvällen
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <p className="text-xs text-muted-foreground">
-              {totalCount} {totalCount === 1 ? 'kurs' : 'kurser'} att utforska
+              {totalCount} {totalCount === 1 ? 'kväll' : 'kvällar'} att boka
             </p>
           </div>
         )}
@@ -174,10 +175,10 @@ function SingleCourseHero({ course }: SingleCourseHeroProps) {
   const imageUrl = getCourseImageUrl(course.featuredImage)
   const levelLabel = LEVEL_LABEL[course.level || ''] ?? ''
   const includes = [
-    'Korta videolektioner du kan ta i din egen takt',
-    'Quiz efter varje moment så det faktiskt sätter sig',
-    'Vinval du kan handla direkt på Systembolaget',
-    'Bjud in vänner till en gemensam gruppsession',
+    'Filmerna guidar kvällen — du behöver inte kunna något om vin',
+    'Färdig inköpslista till Systembolaget',
+    'En betalar, hela sällskapet är med i samma session',
+    'Alla fyller i egna smakblad och jämför på slutet',
   ]
 
   return (
@@ -200,7 +201,7 @@ function SingleCourseHero({ course }: SingleCourseHeroProps) {
         {/* Play badge in the corner — same visual language as the OfferingsComparison cards */}
         <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-background/85 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground backdrop-blur-sm">
           <PlayCircle className="h-3 w-3 text-brand-400" />
-          Videokurs
+          Vinkväll
         </div>
       </div>
 
@@ -231,10 +232,10 @@ function SingleCourseHero({ course }: SingleCourseHeroProps) {
             <span className="text-brand-gradient text-xl font-bold">
               {formatPrice(course.price)}
             </span>{' '}
-            <span className="text-sm text-muted-foreground">· engångsbetalning</span>
+            <span className="text-sm text-muted-foreground">· för hela sällskapet</span>
           </p>
           <Link href={`/vinkurser/${course.slug}`} className="btn-brand mt-4 w-full group">
-            Se kursen
+            Läs om Vinkvällen
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>

@@ -16,14 +16,14 @@ import { loggerFor } from '@/lib/logger'
 const log = loggerFor('(frontend)-(site)-vinkurser-page')
 
 export const metadata: Metadata = {
-  title: 'Vinkurser online — guidade vinkurser på svenska',
+  title: 'Vinkvällen — en vinprovning hemma med vänner',
   description:
-    'Bläddra bland Vinakademins vinkurser och onlinekurser. Lär dig om vindistrikt, druvor och provningsteknik i din egen takt — från nybörjare till entusiast.',
+    'Vinkvällen — bjud hem vänner och håll en vinprovning de pratar om. Filmerna guidar hela kvällen, en betalar för hela sällskapet. 30 dagars pengarna-tillbaka-garanti.',
   alternates: { canonical: `${getSiteURL()}/vinkurser` },
   openGraph: {
-    title: 'Vinkurser online — guidade vinkurser | Vinakademin',
+    title: 'Vinkvällen — en vinprovning hemma med vänner',
     description:
-      'Bläddra bland Vinakademins vinkurser och onlinekurser. Lär dig om vindistrikt, druvor och provningsteknik i din egen takt.',
+      'Vinkvällen — bjud hem vänner och håll en vinprovning de pratar om. Filmerna guidar hela kvällen, en betalar för hela sällskapet. 30 dagars pengarna-tillbaka-garanti.',
     url: `${getSiteURL()}/vinkurser`,
     type: 'website',
   },

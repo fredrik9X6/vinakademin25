@@ -29,7 +29,7 @@ export function ProvningsmallarFeature({ templates, totalCount }: Provningsmalla
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-300/30 bg-brand-300/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-400">
             <BookOpen className="h-3 w-3" />
-            Vinprovningar
+            Provningsverktyget · gratis
           </span>
           <h2 className={`${HEADING} mt-5 text-4xl md:text-5xl lg:text-6xl`}>
             Färdiga upplägg — eller bygg ditt eget
@@ -71,10 +71,10 @@ export function ProvningsmallarFeature({ templates, totalCount }: Provningsmalla
         {/* Brand CTA + count */}
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
           <Link
-            href="/provningsmallar"
+            href="/provningsverktyget"
             className="group inline-flex h-12 items-center justify-center gap-2 rounded-md bg-brand-gradient px-7 text-[15px] font-medium text-white shadow-[0_10px_20px_-5px_rgba(251,145,76,0.25)] transition-all hover:bg-brand-gradient-reverse hover:shadow-[0_15px_28px_-8px_rgba(251,145,76,0.35)] active:scale-[0.99]"
           >
-            Utforska biblioteket
+            Kom igång gratis
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
           <p className="text-xs text-muted-foreground">
