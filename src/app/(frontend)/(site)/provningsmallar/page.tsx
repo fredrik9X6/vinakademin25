@@ -155,7 +155,7 @@ export default async function ProvningarListing({
           message instead. */}
       {user && <ProvningarViewTabs current={filters} />}
 
-      {wantsTemplates && (
+      {wantsTemplates && isAdmin && (
         <div className="mb-4 flex flex-wrap gap-2">
           {isAdmin && (
             <>

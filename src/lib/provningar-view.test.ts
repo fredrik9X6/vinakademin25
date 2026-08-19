@@ -45,6 +45,21 @@ test('switching view keeps the path clean', () => {
   assert.equal(buildProvningarHref(BASE, { view: 'mina' }), '/provningsmallar?visa=mina')
 })
 
+// The regression this module exists for: patching one secondary filter must
+// not silently throw the user back to Alla or drop their other active filter.
+test('changing status preserves the active view and tag', () => {
+  const current: ProvningarFilterState = {
+    view: 'mallar',
+    tag: 'Bourgogne',
+    status: null,
+    showArchived: false,
+  }
+  assert.equal(
+    buildProvningarHref(current, { status: 'draft' }),
+    '/provningsmallar?visa=mallar&tag=Bourgogne&status=draft',
+  )
+})
+
 test('template-only filters are dropped when switching to Mina', () => {
   const current: ProvningarFilterState = {
     ...BASE,
