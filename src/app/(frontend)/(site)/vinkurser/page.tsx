@@ -120,11 +120,9 @@ export default async function KurserPage() {
       <div className="container mx-auto py-8 px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl mb-4">Vinkurser</h1>
+          <h1 className="text-3xl md:text-4xl mb-4">Vinkvällen</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            En flaska vin, några glas och ett par vänner – mer behövs inte för en minnesvärd kväll.
-            Våra guidade vinkurser leder dig genom smaker och berättelser, direkt hem till ditt
-            bord.
+            En vinprovning hemma som vi guidar. Du bjuder in vännerna — filmerna sköter pratet.
           </p>
         </div>
 
@@ -142,7 +140,7 @@ export default async function KurserPage() {
         {regularCourses.length > 0 ? (
           <div>
             {featuredCourses.length > 0 && (
-              <h2 className="text-2xl font-medium mb-6">Alla vinkurser</h2>
+              <h2 className="text-2xl font-medium mb-6">Alla vinkvällar</h2>
             )}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {regularCourses.map((course) => {

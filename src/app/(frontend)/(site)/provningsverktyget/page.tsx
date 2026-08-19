@@ -88,7 +88,7 @@ const FAQ = [
   },
   {
     q: 'Vad kostar vinerna?',
-    a: 'Det bestämmer du. Varje provning visar totalpriset innan du börjar, och vi väljer nästan alltid viner som går att hitta i vanliga Systembolagsbutiker.',
+    a: 'Det bestämmer du. Varje provning visar vad varje vin kostar innan du börjar, och vi väljer nästan alltid viner som går att hitta i vanliga Systembolagsbutiker.',
   },
 ] as const
 
@@ -224,14 +224,14 @@ export default async function ProvningsverktygetPage() {
               Skapa konto och <span className="text-brand-gradient">kör igång</span>
             </h2>
             <p className="mx-auto mt-4 max-w-[52ch] text-[15px] leading-relaxed text-muted-foreground">
-              Gratis, för alltid. Du får hela verktyget direkt — och ett mejl i veckan med
+              Gratis — inget kort, inget abonnemang. Du får hela verktyget direkt — och ett mejl i veckan med
               vintips och nya provningar.
             </p>
             <ul className="mx-auto mt-6 grid max-w-md gap-2 text-left text-[14px]">
               {[
                 'Alla färdiga provningar',
                 'Bygg egna provningar',
-                'Livesessioner med obegränsat antal gäster',
+                'Livesessioner för hela sällskapet',
                 'Smakblad och resultat som sparas',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
@@ -303,7 +303,7 @@ export default async function ProvningsverktygetPage() {
             placeholderText="Din e-postadress"
             style="minimal"
             backgroundColor="transparent"
-            disclaimer="Gratis för alltid. Avsluta prenumerationen när du vill."
+            disclaimer="Avsluta prenumerationen när du vill."
           />
         </div>
       </section>

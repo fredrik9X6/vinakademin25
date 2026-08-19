@@ -19,7 +19,7 @@ export interface SkapaEgenButtonProps {
 export function SkapaEgenButton({ isAuthenticated, className }: SkapaEgenButtonProps) {
   const href = isAuthenticated
     ? '/skapa-provning'
-    : `/logga-in?from=${encodeURIComponent('/skapa-provning')}`
+    : `/registrera?from=${encodeURIComponent('/skapa-provning')}`
 
   return (
     <Button asChild className={className}>

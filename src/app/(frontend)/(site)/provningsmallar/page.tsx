@@ -157,24 +157,20 @@ export default async function ProvningarListing({
 
       {wantsTemplates && isAdmin && (
         <div className="mb-4 flex flex-wrap gap-2">
-          {isAdmin && (
-            <>
-              {showDrafts ? (
-                <Link
-                  href={buildProvningarHref(filters, { status: null })}
-                  className="inline-flex items-center rounded-full border border-border bg-card hover:bg-muted/40 px-3 py-1 text-xs transition-colors"
-                >
-                  Visa publicerade
-                </Link>
-              ) : (
-                <Link
-                  href={buildProvningarHref(filters, { status: 'draft', view: 'mallar' })}
-                  className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100/40 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-3 py-1 text-xs transition-colors hover:bg-amber-100/70"
-                >
-                  Visa utkast ({draftCount})
-                </Link>
-              )}
-            </>
+          {showDrafts ? (
+            <Link
+              href={buildProvningarHref(filters, { status: null })}
+              className="inline-flex items-center rounded-full border border-border bg-card hover:bg-muted/40 px-3 py-1 text-xs transition-colors"
+            >
+              Visa publicerade
+            </Link>
+          ) : (
+            <Link
+              href={buildProvningarHref(filters, { status: 'draft', view: 'mallar' })}
+              className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100/40 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 px-3 py-1 text-xs transition-colors hover:bg-amber-100/70"
+            >
+              Visa utkast ({draftCount})
+            </Link>
           )}
         </div>
       )}

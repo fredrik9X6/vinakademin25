@@ -7,16 +7,16 @@ export function NeuralHeroWithBanner() {
     <NeuralNetworkHero
       title={
         <>
-          <span className="block">Lär dig om vin,</span>
-          <span className="text-brand-gradient block">enkelt &amp; opretentiöst.</span>
+          <span className="block">Bjud hem vänner.</span>
+          <span className="text-brand-gradient block">Vi fixar vinprovningen.</span>
         </>
       }
-      description="Färdiga vinkurser och vinprovningar att göra hemma — med vänner eller på egen hand."
+      description="Färdiga provningar, inköpslista till Systembolaget och ett värdmanus du kan läsa innantill — gratis. Eller låt Vinkvällen guida hela kvällen åt er."
       ctaButtons={[
-        { text: 'Se vinkurser', href: '/vinkurser', primary: true },
-        { text: 'Bläddra i vinprovningar', href: '/provningsmallar' },
+        { text: 'Kom igång gratis', href: '/provningsverktyget', primary: true },
+        { text: 'Läs om Vinkvällen', href: '/vinkurser' },
       ]}
-      microDetails={['300+ prenumeranter', 'Engångsbetalning', 'Livstidsåtkomst']}
+      microDetails={['300+ prenumeranter', 'Gratis att komma igång', 'Inget abonnemang']}
     />
   )
 }

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default async function SkapaProvningPage() {
   const user = await getUser()
   if (!user) {
-    redirect('/logga-in?from=/skapa-provning')
+    redirect('/registrera?from=/skapa-provning')
   }
   return <TastingPlanForm />
 }

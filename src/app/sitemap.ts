@@ -19,6 +19,7 @@ const STATIC_ROUTES: Array<{ path: string; changeFrequency: SitemapEntry['change
   { path: '/', changeFrequency: 'daily', priority: 1.0 },
   { path: '/vinkurser', changeFrequency: 'daily', priority: 0.9 },
   { path: '/provningsmallar', changeFrequency: 'daily', priority: 0.9 },
+  { path: '/provningsverktyget', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/vinlistan', changeFrequency: 'daily', priority: 0.9 },
   { path: '/artiklar', changeFrequency: 'daily', priority: 0.8 },
   { path: '/vinhoroskop', changeFrequency: 'weekly', priority: 0.7 },
