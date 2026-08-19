@@ -301,7 +301,7 @@ export default async function HomePage() {
                   href="/vinkurser"
                   className="btn-brand btn-brand-lg w-full sm:flex-1"
                 >
-                  Upptäck vinkurser
+                  Läs om Vinkvällen
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link

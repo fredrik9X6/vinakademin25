@@ -77,7 +77,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-300/10 to-brand-400/10 border border-brand-300/20 mb-6">
             <Sparkles className="h-4 w-4 text-brand-400" />
-            <span className="text-sm font-medium text-brand-400">Rekommenderad vinkurs</span>
+            <span className="text-sm font-medium text-brand-400">Rekommenderad vinkväll</span>
           </div>
         </div>
 

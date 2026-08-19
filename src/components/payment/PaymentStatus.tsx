@@ -78,7 +78,7 @@ export function PaymentStatus({ status, course, error, onClose, onRetry }: Payme
           <ul className="space-y-1 text-sm text-green-700 dark:text-green-300">
             <li>✓ Du har nu tillgång till vinkvällen</li>
             <li>✓ Ett kvitto har skickats till din e-post</li>
-            <li>✓ Du kan börja studera direkt</li>
+            <li>✓ Du kan sätta igång direkt</li>
           </ul>
         </div>
 
