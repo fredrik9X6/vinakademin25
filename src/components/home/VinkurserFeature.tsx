@@ -29,11 +29,12 @@ function formatPrice(price: number | null | undefined): string {
 }
 
 /**
- * Homepage feature for the Vinkurser (video courses) library — mirrors
- * ProvningsmallarFeature visually so the two product showcases parallel each
- * other under the comparison strip.
+ * Homepage feature for Vinkvällen — the paid, video-guided tasting evening
+ * (backed by the `vinkurser` collection). Mirrors ProvningsmallarFeature
+ * visually so the two product showcases parallel each other under the
+ * free-vs-paid comparison strip.
  *
- * Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (Workstream C)
+ * Spec: docs/superpowers/specs/2026-08-19-lead-magnet-provningsverktyget-design.md
  */
 const LEVEL_LABEL: Record<string, string> = {
   beginner: 'Nybörjare',
@@ -78,7 +79,7 @@ export function VinkurserFeature({ courses, totalCount }: VinkurserFeatureProps)
           {[
             { icon: PlayCircle, label: 'Filmerna guidar hela kvällen' },
             { icon: Sparkles, label: 'Inköpslista till Systembolaget' },
-            { icon: Users, label: 'En betalar, hela sällskapet med' },
+            { icon: Users, label: 'En betalar, hela sällskapet är med' },
           ].map((b) => (
             <div
               key={b.label}
@@ -153,7 +154,7 @@ export function VinkurserFeature({ courses, totalCount }: VinkurserFeatureProps)
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <p className="text-xs text-muted-foreground">
-              {totalCount} {totalCount === 1 ? 'kväll' : 'kvällar'} att boka
+              {totalCount} {totalCount === 1 ? 'kväll' : 'kvällar'} att välja mellan
             </p>
           </div>
         )}
@@ -232,7 +233,9 @@ function SingleCourseHero({ course }: SingleCourseHeroProps) {
             <span className="text-brand-gradient text-xl font-bold">
               {formatPrice(course.price)}
             </span>{' '}
-            <span className="text-sm text-muted-foreground">· för hela sällskapet</span>
+            <span className="text-sm text-muted-foreground">
+              · engångsbetalning för hela sällskapet
+            </span>
           </p>
           <Link href={`/vinkurser/${course.slug}`} className="btn-brand mt-4 w-full group">
             Läs om Vinkvällen

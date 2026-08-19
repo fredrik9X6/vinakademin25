@@ -90,7 +90,8 @@ export default async function HomePage() {
       {/* Hero — dual CTA: see courses + browse templates */}
       <NeuralHeroWithBanner />
 
-      {/* Vinkurs vs Provningsmall — side-by-side explainer (spec C) */}
+      {/* Provningsverktyget (free) vs Vinkvällen (paid) — side-by-side explainer.
+          Spec: docs/superpowers/specs/2026-08-19-lead-magnet-provningsverktyget-design.md */}
       <OfferingsComparison />
 
       {/* Featured Vinkurser showcase */}
