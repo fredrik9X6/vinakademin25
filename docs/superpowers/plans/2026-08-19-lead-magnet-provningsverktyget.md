@@ -1467,6 +1467,17 @@ At line ~233, `stripeProductId`'s description still claims the field is auto-gen
 Apply the same treatment to `stripePriceId`'s description immediately below it if it makes
 the same stale claim.
 
+Finally, in `src/components/tasting-template/LockedTemplateDetailView.tsx` around line 161,
+the header pill beside the title reads `Kräver konto`. Every sibling CTA in that component
+leads with *gratis* ("Skapa gratiskonto", "Helt gratis", "Gratis konto"), so the bare phrase
+can read as a soft paywall to someone skimming. Change the pill text to:
+
+```tsx
+              Kräver gratiskonto
+```
+
+Leave the enclosing `<span>` classes and the `<Lock />` icon exactly as they are.
+
 - [ ] **Step 3: Audit the membership page**
 
 Open `src/app/(frontend)/(site)/bli-medlem/page.tsx` and read it end to end. Rewrite any claim that templates cost money or that membership is required for tastings.
