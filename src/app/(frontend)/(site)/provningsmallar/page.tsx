@@ -11,7 +11,6 @@ import { SkapaEgenButton } from '@/components/tasting/SkapaEgenButton'
 import { Button } from '@/components/ui/button'
 import { Plus, Wine } from 'lucide-react'
 import { getUser } from '@/lib/get-user'
-import { cn } from '@/lib/utils'
 import {
   buildProvningarHref,
   parseProvningarFilters,
@@ -35,7 +34,6 @@ export default async function ProvningarListing({
   searchParams: Promise<{
     visa?: string
     tag?: string
-    access?: string
     status?: string
     showArchived?: string
   }>
@@ -83,7 +81,6 @@ export default async function ProvningarListing({
       { publishedStatus: { equals: showDrafts ? 'draft' : 'published' } },
     ]
     if (filters.tag) whereAnd.push({ tags: { contains: filters.tag } })
-    if (filters.access) whereAnd.push({ accessLevel: { equals: filters.access } })
 
     if (isAdmin) {
       const draftsRes = await payload.find({
@@ -127,27 +124,6 @@ export default async function ProvningarListing({
       .sort((a, b) => b.count - a.count)
   }
 
-  const accessPills: Array<{ key: string; label: string; href: string; active: boolean }> = [
-    {
-      key: 'all',
-      label: 'Alla',
-      href: buildProvningarHref(filters, { access: null }),
-      active: filters.access == null,
-    },
-    {
-      key: 'free',
-      label: 'Fri',
-      href: buildProvningarHref(filters, { access: 'free' }),
-      active: filters.access === 'free',
-    },
-    {
-      key: 'paid',
-      label: 'Betald',
-      href: buildProvningarHref(filters, { access: 'paid' }),
-      active: filters.access === 'paid',
-    },
-  ]
-
   const isEmpty = plans.length === 0 && templates.length === 0
 
   return (
@@ -181,23 +157,8 @@ export default async function ProvningarListing({
 
       {wantsTemplates && (
         <div className="mb-4 flex flex-wrap gap-2">
-          {accessPills.map((p) => (
-            <Link
-              key={p.key}
-              href={p.href}
-              className={cn(
-                'inline-flex items-center rounded-full border px-3 py-1 text-xs transition-colors',
-                p.active
-                  ? 'border-brand-400 bg-brand-400 text-white'
-                  : 'border-border bg-card hover:bg-muted/40',
-              )}
-            >
-              {p.label}
-            </Link>
-          ))}
           {isAdmin && (
             <>
-              <span aria-hidden className="mx-1 h-5 w-px self-center bg-border" />
               {showDrafts ? (
                 <Link
                   href={buildProvningarHref(filters, { status: null })}
@@ -269,14 +230,14 @@ export default async function ProvningarListing({
         </div>
       ) : isEmpty ? (
         <div className="rounded-md border border-dashed p-10 text-center text-sm text-muted-foreground">
-          {filters.tag || filters.access
+          {filters.tag
             ? 'Inga vinprovningar matchar filtret.'
             : 'Inga vinprovningar än — kom tillbaka snart.'}
         </div>
       ) : (
         <>
           {wantsTemplates &&
-            (filters.tag || filters.access) &&
+            filters.tag &&
             templates.length === 0 &&
             plans.length > 0 && (
               <p className="mb-4 rounded-md border border-dashed px-4 py-3 text-sm text-muted-foreground">
