@@ -84,7 +84,7 @@ export function PaymentStatus({ status, course, error, onClose, onRetry }: Payme
 
         <div className="flex gap-3 w-full">
           <Button onClick={handleGoToCourse} className="flex-1">
-            Börja studera
+            Kom igång
           </Button>
           <Button onClick={handleGoToCourses} variant="outline" className="flex-1">
             Alla vinkvällar
