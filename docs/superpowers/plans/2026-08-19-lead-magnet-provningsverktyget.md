@@ -1536,31 +1536,25 @@ Run `pnpm dev`, then in a **private window**:
 5. `/provningsmallar/<slug>/kop` → redirects to the template page.
 6. `/vinkurser/ldgmgv` shows the Vinkvällen offer, anchor, and guarantee.
 
-- [ ] **Step 6: Full manual walkthrough — signing up**
+- [ ] **Step 6: Signup walkthrough — DEFERRED to the site owner, do not perform**
 
-7. Complete registration. Confirm the newsletter checkbox is **pre-checked**.
+The remaining walkthrough steps (completing registration, confirming the pre-checked
+newsletter box end-to-end, cloning a template as a new user, starting a live session) all
+**write to the production database** — `.env` points at prod — and push a contact to Beehiiv,
+a third-party service. Do not perform them.
+
+Record in your report that steps 7–10 of the original walkthrough are unverified and why, so
+the gap is visible rather than silently skipped:
+
+7. Complete registration; confirm the newsletter checkbox is pre-checked.
 8. After signup, "Använd mallen" creates a plan and redirects to `/mina-provningar/planer/<id>`.
 9. `/skapa-provning` loads the builder.
 10. Start a live session from a plan and join it from a second browser.
 
-- [ ] **Step 7: Confirm the subscriber landed**
+- [ ] **Step 7: Subscriber verification — DEFERRED, do not run**
 
-Run:
-
-```bash
-node -e "
-require('dotenv').config();
-const {Client}=require('pg');
-(async()=>{const c=new Client({connectionString:process.env.DATABASE_URI,ssl:{rejectUnauthorized:false}});
-await c.connect();
-const r=await c.query(\"select email,status,source,subscribed_at from subscribers order by created_at desc limit 5\");
-console.table(r.rows); await c.end();process.exit(0)})().catch(e=>{console.error(e.message);process.exit(0)})
-"
-```
-
-Expected: the test signup appears with `status = 'subscribed'`.
-
-**Note:** `.env` points at **production**. Use a disposable email for the test signup, or point `DATABASE_URI` at the staging branch (`ep-purple-night`) first.
+The original plan had a `psql` query against `subscribers` to confirm a test signup landed.
+Since no test signup is being created, skip it. Note it as deferred in your report.
 
 - [ ] **Step 8: Final verification**
 
