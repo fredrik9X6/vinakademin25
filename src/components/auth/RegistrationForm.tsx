@@ -32,7 +32,7 @@ const RegistrationSchema = z
     email: z.string().email({ message: 'Ogiltig e-postadress.' }),
     password: z.string().min(8, { message: 'Lösenordet måste vara minst 8 tecken.' }),
     confirmPassword: z.string().min(1, { message: 'Bekräfta lösenord krävs.' }),
-    acceptsMarketing: z.boolean().default(false),
+    acceptsMarketing: z.boolean().default(true),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Lösenorden matchar inte.',
@@ -65,7 +65,7 @@ export function RegistrationForm({ className, returnTo, ...props }: Registration
       email: prefilledEmail,
       password: '',
       confirmPassword: '',
-      acceptsMarketing: false,
+      acceptsMarketing: true,
     },
   })
 
@@ -244,8 +244,8 @@ export function RegistrationForm({ className, returnTo, ...props }: Registration
                         htmlFor="acceptsMarketing"
                         className="text-sm leading-snug text-muted-foreground cursor-pointer select-none"
                       >
-                        Skicka mig vintips och nyhetsbrev från Vinakademin. Du kan avsluta när du
-                        vill.
+                        Ja tack — skicka mig vintips, nya provningar och erbjudanden. Ungefär ett
+                        mejl i veckan. Avsluta när du vill med ett klick.
                       </label>
                     </FormItem>
                   )}
