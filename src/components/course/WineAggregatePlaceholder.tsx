@@ -34,7 +34,7 @@ export function WineAggregatePlaceholder({ count, totalSek }: WineAggregatePlace
             dofter, smaker och tekniker. Total inköpskostnad ca {formattedTotal}.
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Vilka viner det är ser du när du köper kursen.
+            Vilka viner det är ser du när du köper vinkvällen.
           </p>
         </div>
       </CardContent>

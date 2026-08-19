@@ -48,7 +48,7 @@ export function PurchaseButton({
         `}
       >
         {showIcon && <ShoppingCart className="w-4 h-4 mr-2" />}
-        Köp vinkurs
+        Köp vinkvällen
       </Button>
 
       <CheckoutDialog
@@ -76,7 +76,7 @@ export function CoursePurchasePanel({ course, className = '' }: CoursePurchasePa
         size="lg"
         className={`w-full text-lg font-semibold py-6 ${className}`}
       >
-        Köp vinkurs - {formatPrice(course.price || 0)}
+        Köp vinkvällen – {formatPrice(course.price || 0)}
       </Button>
 
       <CheckoutDialog

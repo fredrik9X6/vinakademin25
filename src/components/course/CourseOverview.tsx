@@ -418,7 +418,7 @@ export default function CourseOverview({
                       onClick={() => setIsCheckoutOpen(true)}
                       className="btn-brand btn-brand-lg w-full"
                     >
-                      Boka vår vinkväll
+                      Köp vinkvällen
                     </button>
                     <p className="text-center text-sm text-muted-foreground">
                       30 dagars pengarna-tillbaka-garanti. Blev kvällen inget att prata om

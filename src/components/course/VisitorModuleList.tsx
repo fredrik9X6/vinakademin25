@@ -17,7 +17,7 @@ export function VisitorModuleList({ modules }: VisitorModuleListProps) {
   return (
     <div className="my-8">
       <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        Kursinnehåll
+        Så går kvällen till
       </h3>
       <div className="space-y-2">
         {modules.map((module, index) => (
@@ -40,7 +40,7 @@ export function VisitorModuleList({ modules }: VisitorModuleListProps) {
         ))}
       </div>
       <p className="mt-4 text-xs text-muted-foreground">
-        Innehållet låses upp när du köper kursen.
+        Innehållet låses upp när du köper vinkvällen.
       </p>
     </div>
   )

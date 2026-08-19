@@ -20,7 +20,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
     (instructor &&
       `${instructor.firstName || ''} ${instructor.lastName || ''}`.replace(/\s+/g, ' ').trim()) ||
     instructor?.name ||
-    'Okänd instruktör'
+    'Okänd guide'
   // Validate and extract featured image URL
   const getFeaturedImageUrl = () => {
     if (typeof course.featuredImage !== 'object' || !course.featuredImage) {
@@ -178,7 +178,7 @@ export function FeaturedCourseCard({ course, reviewData }: FeaturedCourseCardPro
                     </Avatar>
                     <div className="text-sm text-left">
                       <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                        Instruktör
+                        Guide
                       </div>
                       <div className="font-medium text-foreground">{instructorName}</div>
                     </div>

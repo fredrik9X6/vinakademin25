@@ -262,7 +262,7 @@ export function CoursePurchasePanel({ userId, onCourseAccess }: CoursePurchasePa
                             {course.shortDescription}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            Instruktör: {course.instructor.firstName} {course.instructor.lastName}
+                            Guide: {course.instructor.firstName} {course.instructor.lastName}
                           </p>
                         </div>
 
