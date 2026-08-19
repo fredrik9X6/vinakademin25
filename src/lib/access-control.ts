@@ -1,6 +1,7 @@
 import type { Access, PayloadRequest } from 'payload'
 import type { User } from '../payload-types'
 import { loggerFor } from '@/lib/logger'
+import { resolveTemplateAccess } from './template-access'
 
 const log = loggerFor('lib-access-control')
 
@@ -484,15 +485,18 @@ export const hasTemplateEntitlement = async (
 
 /**
  * Composite predicate. Returns true if the user should see the full template
- * (wines, host script, "Använd mallen"):
- *   - role === 'admin'                         (staff bypass — no purchase needed)
- *   - accessLevel === 'free'                   (always free)
- *   - isFreeTrial && user logged in            (try-it-free unlock)
- *   - active TemplateEntitlements row          (one-time purchase)
+ * (wines, host script, "Använd mallen").
  *
- * NOTE: the subscription short-circuit is paused (2026-07-02). To re-enable,
- * reinsert `if (await hasActiveSubscription(req, String(user.id))) return true`
- * before the entitlement check.
+ * Since 2026-08-19 every template is free — the branch logic lives in the pure
+ * `resolveTemplateAccess()` so it can be unit-tested. This stays async and
+ * keeps its signature so all four call sites are unchanged, and so the
+ * entitlement lookup can be reinstated without touching them.
+ *
+ * DORMANT: `hasTemplateEntitlement` and `hasActiveSubscription` are no longer
+ * consulted. To sell templates again, reinsert the entitlement check below the
+ * resolveTemplateAccess() call and flip templates back to accessLevel 'paid'.
+ *
+ * Spec: docs/superpowers/specs/2026-08-19-lead-magnet-provningsverktyget-design.md
  */
 export const canUseTemplate = async (
   req: PayloadRequest,
@@ -503,10 +507,9 @@ export const canUseTemplate = async (
     isFreeTrial?: boolean | null
   },
 ): Promise<boolean> => {
-  if (user?.role === 'admin') return true
-  if (template.accessLevel === 'free') return true
-  if (template.isFreeTrial && user) return true
-  if (!user) return false
-  if (await hasTemplateEntitlement(req, String(user.id), String(template.id))) return true
-  return false
+  return resolveTemplateAccess({
+    role: user?.role,
+    accessLevel: template.accessLevel,
+    isAuthenticated: Boolean(user),
+  })
 }

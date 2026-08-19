@@ -7,8 +7,8 @@
  * would reliably leave one of them dropping it, silently throwing the user
  * back to Alla mid-browse.
  *
- * Secondary filters are scoped to the view that can act on them: tag/access/
- * status are template concepts, showArchived is a plan concept. Switching view
+ * Secondary filters are scoped to the view that can act on them: tag/status
+ * are template concepts, showArchived is a plan concept. Switching view
  * drops whatever no longer applies, so a URL never claims a filter the visible
  * list ignores.
  *
@@ -20,8 +20,6 @@ export interface ProvningarFilterState {
   view: ProvningarView
   /** Template tag filter. */
   tag: string | null
-  /** Template access-level filter. */
-  access: 'free' | 'paid' | null
   /** Admin-only: show template drafts instead of published. */
   status: 'draft' | null
   /** Plan-only: include archived plans. */
@@ -43,9 +41,8 @@ export function parseProvningarFilters(
   const view: ProvningarView =
     rawView === 'mina' || rawView === 'mallar' ? rawView : 'alla'
   const tag = (sp.tag || '').trim() || null
-  const access = sp.access === 'free' || sp.access === 'paid' ? sp.access : null
   const status = sp.status === 'draft' ? 'draft' : null
-  return { view, tag, access, status, showArchived: sp.showArchived === '1' }
+  return { view, tag, status, showArchived: sp.showArchived === '1' }
 }
 
 export function buildProvningarHref(
@@ -57,7 +54,6 @@ export function buildProvningarHref(
   // Drop filters the resulting view cannot act on.
   if (!viewIncludesTemplates(next.view)) {
     next.tag = null
-    next.access = null
     next.status = null
   }
   if (!viewIncludesPlans(next.view)) {
@@ -69,7 +65,6 @@ export function buildProvningarHref(
   if (next.view !== 'alla') params.set('visa', next.view)
   const trimmedTag = next.tag?.trim() || null
   if (trimmedTag) params.set('tag', trimmedTag)
-  if (next.access) params.set('access', next.access)
   if (next.status) params.set('status', next.status)
   if (next.showArchived) params.set('showArchived', '1')
 

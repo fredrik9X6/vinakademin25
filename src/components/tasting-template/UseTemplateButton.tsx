@@ -23,7 +23,9 @@ export function UseTemplateButton({ templateId, templateSlug }: UseTemplateButto
         headers: { 'Content-Type': 'application/json' },
       })
       if (res.status === 401) {
-        router.push(`/logga-in?from=/provningsmallar/${templateSlug}`)
+        // Signup, not login — an anonymous visitor clicking "Använd mallen" is
+        // the conversion event this whole page exists for.
+        router.push(`/registrera?from=/provningsmallar/${templateSlug}`)
         return
       }
       const data = await res.json().catch(() => ({}))

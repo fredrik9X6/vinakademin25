@@ -8,7 +8,7 @@ export interface TagCount {
 
 export interface TagFilterProps {
   tags: TagCount[]
-  /** Full filter state — tag links must preserve the active view and access level. */
+  /** Full filter state — tag links must preserve the active view. */
   current: ProvningarFilterState
 }
 

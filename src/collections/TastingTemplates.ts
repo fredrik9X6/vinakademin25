@@ -1,5 +1,4 @@
 import type { CollectionConfig } from 'payload'
-import { syncTemplateWithStripe } from '../lib/stripe-products'
 import { fillBlindAnswersFromSystembolaget } from '../lib/systembolaget-blind-answers'
 
 const slugifyTitle = (input: string): string =>
@@ -192,15 +191,15 @@ export const TastingTemplates: CollectionConfig = {
       name: 'accessLevel',
       type: 'select',
       required: true,
-      defaultValue: 'paid',
+      defaultValue: 'free',
       options: [
-        { label: 'Fri – alla kan se utan köp', value: 'free' },
-        { label: 'Betald – kräver köp eller prenumeration', value: 'paid' },
+        { label: 'Fri – syns för alla, även utloggade', value: 'free' },
+        { label: 'Kräver konto – besökaren måste skapa ett gratiskonto', value: 'paid' },
       ],
       admin: {
         position: 'sidebar',
         description:
-          'Free templates render wine details to everyone. Paid templates redact wines for non-purchasers; subscribers and per-template buyers unlock the full view.',
+          'Fri = helt öppen, syns även för utloggade besökare (standard). Kräver konto = besökaren måste skapa ett gratiskonto för att se vinerna. Sedan 2026-08-19 är allt gratis — detta styr bara om innehållet är publikt eller kräver inloggning.',
       },
     },
     {
@@ -211,7 +210,8 @@ export const TastingTemplates: CollectionConfig = {
       min: 0,
       admin: {
         position: 'sidebar',
-        description: 'Pris per mall i SEK (engångsbetalning). 0 = gratis.',
+        description:
+          'PAUSAD 2026-08-19 — mallar säljs inte längre. Fältet finns kvar för att kunna återuppta försäljning utan migration.',
       },
     },
     {
@@ -221,7 +221,7 @@ export const TastingTemplates: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description:
-          'Markera EN mall som gratis för alla inloggade användare — låter dem prova "Provningsmallar" innan första köp.',
+          'PAUSAD 2026-08-19 — alla mallar är gratis, så "prova gratis" har ingen effekt längre.',
       },
     },
     {
@@ -230,7 +230,8 @@ export const TastingTemplates: CollectionConfig = {
       admin: {
         position: 'sidebar',
         readOnly: true,
-        description: 'Auto-generated via syncTemplateWithStripe when the template is published with a price.',
+        description:
+          'PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning.',
       },
     },
     {
@@ -239,7 +240,8 @@ export const TastingTemplates: CollectionConfig = {
       admin: {
         position: 'sidebar',
         readOnly: true,
-        description: 'Auto-generated. Stripe Prices are immutable — old prices get archived when priceSek changes.',
+        description:
+          'PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning. Stripe-priser är immutable — gamla priser arkiveras om priceSek ändras.',
       },
     },
     {
@@ -289,48 +291,11 @@ export const TastingTemplates: CollectionConfig = {
       },
     ],
     afterChange: [
-      async ({ doc, req, operation, previousDoc }) => {
+      async ({ doc }) => {
         if (!doc) return doc
-
-        // Sync paid published templates with Stripe. Mirrors Vinkurser's pattern:
-        // setImmediate so the DB transaction completes before we hit Stripe (avoids
-        // idle-in-transaction timeouts on Neon).
-        if (
-          doc.accessLevel === 'paid' &&
-          doc.publishedStatus === 'published' &&
-          typeof doc.priceSek === 'number' &&
-          doc.priceSek > 0
-        ) {
-          const shouldSync =
-            operation === 'create' ||
-            !doc.stripeProductId ||
-            !doc.stripePriceId ||
-            (operation === 'update' &&
-              previousDoc &&
-              (doc.priceSek !== previousDoc.priceSek ||
-                doc.title !== previousDoc.title ||
-                doc.accessLevel !== previousDoc.accessLevel))
-
-          if (shouldSync) {
-            const docId = String(doc.id)
-            const docData = { ...doc }
-            setImmediate(async () => {
-              try {
-                const { productId, priceId } = await syncTemplateWithStripe(docId, docData)
-                req.payload.logger.info(
-                  { templateId: docId, productId, priceId },
-                  'Template synced with Stripe',
-                )
-              } catch (err) {
-                req.payload.logger.error(
-                  { err, templateId: docId },
-                  'Failed to sync template with Stripe',
-                )
-              }
-            })
-          }
-        }
-
+        // Stripe sync removed 2026-08-19 — templates are free (lead magnet).
+        // syncTemplateWithStripe() is intentionally still exported from
+        // ../lib/stripe-products for a future re-enable.
         return doc
       },
     ],

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { TastingTemplate, Media } from '@/payload-types'
 import { Card } from '@/components/ui/card'
-import { Wine as WineIcon, Lock } from 'lucide-react'
+import { Wine as WineIcon } from 'lucide-react'
 
 export interface TemplateCardProps {
   template: TastingTemplate
@@ -19,16 +19,9 @@ export function TemplateCard({ template, href }: TemplateCardProps) {
     image && typeof image === 'object'
       ? image.sizes?.thumbnail?.url ?? image.url ?? null
       : null
-  const isPaid = (template as { accessLevel?: string }).accessLevel === 'paid'
-  // The designated try-it-free template unlocks for any logged-in user, so a
-  // price badge would undersell it — it's the funnel into the paid library.
-  const isFreeTrial = Boolean((template as { isFreeTrial?: boolean | null }).isFreeTrial)
-  const priceSek = (template as { priceSek?: number | null }).priceSek ?? null
-  const paidBadgeLabel =
-    priceSek != null ? `${new Intl.NumberFormat('sv-SE').format(priceSek)} kr` : 'Köp'
 
   return (
-    <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group h-full">
+    <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group h-full min-w-0">
       <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
         <div className="aspect-[4/3] bg-muted relative">
           {imageUrl ? (
@@ -39,23 +32,8 @@ export function TemplateCard({ template, href }: TemplateCardProps) {
               <WineIcon className="h-10 w-10 text-muted-foreground/40" />
             </div>
           )}
-          <span
-            className={
-              isPaid && !isFreeTrial
-                ? 'absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-brand-400 text-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm'
-                : 'absolute top-2 right-2 inline-flex items-center rounded-full bg-emerald-500 text-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm'
-            }
-          >
-            {isPaid && !isFreeTrial ? (
-              <>
-                <Lock className="h-2.5 w-2.5" />
-                {paidBadgeLabel}
-              </>
-            ) : isPaid ? (
-              'Prova gratis'
-            ) : (
-              'Fri'
-            )}
+          <span className="absolute top-2 right-2 inline-flex items-center rounded-full bg-emerald-500 text-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider shadow-sm">
+            Gratis
           </span>
         </div>
         <div className="p-4 space-y-1">

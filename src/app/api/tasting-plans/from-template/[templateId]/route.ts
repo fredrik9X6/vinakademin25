@@ -71,10 +71,10 @@ export async function POST(
     if (!allowed) {
       log.warn(
         { userId: user.id, templateId: tplId },
-        'from-template rejected — user lacks entitlement',
+        'from-template rejected — template gated and user lacks access',
       )
       return NextResponse.json(
-        { error: 'Du måste köpa denna mall innan du kan använda den.' },
+        { error: 'Du behöver ett konto för att använda denna mall.' },
         { status: 403 },
       )
     }

@@ -1618,23 +1618,23 @@ export interface TastingTemplate {
    */
   tags?: string[] | null;
   /**
-   * Free templates render wine details to everyone. Paid templates redact wines for non-purchasers; subscribers and per-template buyers unlock the full view.
+   * Fri = helt öppen, syns även för utloggade besökare (standard). Kräver konto = besökaren måste skapa ett gratiskonto för att se vinerna. Sedan 2026-08-19 är allt gratis — detta styr bara om innehållet är publikt eller kräver inloggning.
    */
   accessLevel: 'free' | 'paid';
   /**
-   * Pris per mall i SEK (engångsbetalning). 0 = gratis.
+   * PAUSAD 2026-08-19 — mallar säljs inte längre. Fältet finns kvar för att kunna återuppta försäljning utan migration.
    */
   priceSek: number;
   /**
-   * Markera EN mall som gratis för alla inloggade användare — låter dem prova "Provningsmallar" innan första köp.
+   * PAUSAD 2026-08-19 — alla mallar är gratis, så "prova gratis" har ingen effekt längre.
    */
   isFreeTrial?: boolean | null;
   /**
-   * Auto-generated via syncTemplateWithStripe when the template is published with a price.
+   * PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning.
    */
   stripeProductId?: string | null;
   /**
-   * Auto-generated. Stripe Prices are immutable — old prices get archived when priceSek changes.
+   * PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning. Stripe-priser är immutable — gamla priser arkiveras om priceSek ändras.
    */
   stripePriceId?: string | null;
   publishedStatus: 'draft' | 'published';

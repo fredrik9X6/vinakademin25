@@ -145,6 +145,9 @@ async function handlePaymentSucceeded(paymentIntent: any, payload: any, stripe: 
   // Template purchase branch (spec D.4) — productKind === 'template' was
   // pushed to PI metadata via payment_intent_data in /api/payments/template-checkout.
   if (paymentIntent?.metadata?.productKind === 'template') {
+    // Dormant since 2026-08-19 — templates are free. Still honoured so a real
+    // in-flight payment is never silently dropped.
+    log.warn({ paymentIntentId: paymentIntent.id }, 'template purchase webhook fired after templates went free')
     await handleTemplatePurchase(paymentIntent, payload)
     return
   }
@@ -1022,6 +1025,9 @@ async function handleChargeRefunded(charge: any, payload: any, stripe: any) {
     const md = pi?.metadata || {}
 
     if (md.productKind === 'template') {
+      // Dormant since 2026-08-19 — templates are free. Still honoured so a real
+      // in-flight payment is never silently dropped.
+      log.warn({ paymentIntentId }, 'template refund webhook fired after templates went free')
       const userIdInt = parseInt(String(md.userId || ''), 10)
       const templateIdInt = parseInt(String(md.templateId || ''), 10)
       if (isNaN(userIdInt) || isNaN(templateIdInt)) {

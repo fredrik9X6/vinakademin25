@@ -16,11 +16,12 @@ import {
   LogIn,
   LogOut,
   UserCircle,
-  GraduationCap,
+  PlayCircle,
   Sparkles,
   BookOpen,
   Sun,
   Moon,
+  Hammer,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/context/AuthContext'
@@ -43,14 +44,17 @@ interface PrimaryTab {
  * mobile (Instagram/TikTok), so that asymmetry cost the most on the surface
  * where it mattered most.
  *
- * Icons: Vinkurser takes GraduationCap and Vinprovningar takes Wine, rather
- * than Wine + something wine-adjacent. A glass reads as "a tasting" and a cap
- * reads as "a course"; two similar wine glyphs side by side would not.
+ * Icons: Vinkvällen takes PlayCircle and Provningar takes Wine, rather than
+ * Wine + something wine-adjacent. A play glyph reads as "we run this for
+ * you" — the films host the evening, so you don't have to — while a wine
+ * glass reads as "a tasting you host" yourself; two similar wine glyphs side
+ * by side would not carry that distinction. PlayCircle is already this
+ * product's glyph on the homepage (OfferingsComparison).
  */
 const PRIMARY_TABS: PrimaryTab[] = [
   { label: 'Hem', href: '/', icon: Home, matchExact: true },
-  { label: 'Vinkurser', href: '/vinkurser', icon: GraduationCap },
-  { label: 'Vinprovningar', href: '/provningsmallar', icon: Wine },
+  { label: 'Vinkvällen', href: '/vinkurser', icon: PlayCircle },
+  { label: 'Provningar', href: '/provningsmallar', icon: Wine },
 ]
 
 export function MobileBottomNav() {
@@ -214,7 +218,7 @@ export function MobileBottomNav() {
             </div>
           )}
 
-          {/* Utforska — the full section index. Vinkurser and Vinprovningar
+          {/* Utforska — the full section index. Vinkvällen and Provningar
               are repeated from the tab bar on purpose: this list is what a
               user opens when the tabs did not have what they wanted, so a
               complete index beats a minimal one. Vinlistan and Artiklar live
@@ -227,8 +231,14 @@ export function MobileBottomNav() {
             <ul className="rounded-lg border border-border bg-card overflow-hidden">
               <DrawerLink
                 href="/vinkurser"
-                icon={GraduationCap}
-                label="Vinkurser"
+                icon={PlayCircle}
+                label="Vinkvällen"
+                onClose={() => setOpen(false)}
+              />
+              <DrawerLink
+                href="/provningsverktyget"
+                icon={Hammer}
+                label="Provningsverktyget"
                 onClose={() => setOpen(false)}
               />
               <DrawerLink

@@ -16,14 +16,14 @@ import { loggerFor } from '@/lib/logger'
 const log = loggerFor('(frontend)-(site)-vinkurser-page')
 
 export const metadata: Metadata = {
-  title: 'Vinkurser online — guidade vinkurser på svenska',
+  title: 'Vinkvällen — en vinprovning hemma med vänner',
   description:
-    'Bläddra bland Vinakademins vinkurser och onlinekurser. Lär dig om vindistrikt, druvor och provningsteknik i din egen takt — från nybörjare till entusiast.',
+    'Vinkvällen — bjud hem vänner och håll en vinprovning de pratar om. Filmerna guidar hela kvällen, en betalar för hela sällskapet. 30 dagars pengarna-tillbaka-garanti.',
   alternates: { canonical: `${getSiteURL()}/vinkurser` },
   openGraph: {
-    title: 'Vinkurser online — guidade vinkurser | Vinakademin',
+    title: 'Vinkvällen — en vinprovning hemma med vänner',
     description:
-      'Bläddra bland Vinakademins vinkurser och onlinekurser. Lär dig om vindistrikt, druvor och provningsteknik i din egen takt.',
+      'Vinkvällen — bjud hem vänner och håll en vinprovning de pratar om. Filmerna guidar hela kvällen, en betalar för hela sällskapet. 30 dagars pengarna-tillbaka-garanti.',
     url: `${getSiteURL()}/vinkurser`,
     type: 'website',
   },
@@ -120,11 +120,9 @@ export default async function KurserPage() {
       <div className="container mx-auto py-8 px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl mb-4">Vinkurser</h1>
+          <h1 className="text-3xl md:text-4xl mb-4">Vinkvällen</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            En flaska vin, några glas och ett par vänner – mer behövs inte för en minnesvärd kväll.
-            Våra guidade vinkurser leder dig genom smaker och berättelser, direkt hem till ditt
-            bord.
+            En vinprovning hemma som vi guidar. Du bjuder in vännerna — filmerna sköter pratet.
           </p>
         </div>
 
@@ -142,7 +140,7 @@ export default async function KurserPage() {
         {regularCourses.length > 0 ? (
           <div>
             {featuredCourses.length > 0 && (
-              <h2 className="text-2xl font-medium mb-6">Alla vinkurser</h2>
+              <h2 className="text-2xl font-medium mb-6">Alla vinkvällar</h2>
             )}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {regularCourses.map((course) => {
