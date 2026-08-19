@@ -11,7 +11,8 @@ const socialLinks = [
 ]
 
 const exploreLinks = [
-  { label: 'Vinkurser', href: '/vinkurser' },
+  { label: 'Vinkvällen', href: '/vinkurser' },
+  { label: 'Provningsverktyget', href: '/provningsverktyget' },
   { label: 'Vinprovningar', href: '/provningsmallar' },
   { label: 'Vinhoroskop', href: '/vinhoroskop' },
   { label: 'Vinlistan', href: '/vinlistan' },

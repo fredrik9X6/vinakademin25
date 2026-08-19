@@ -21,6 +21,7 @@ import {
   BookOpen,
   Sun,
   Moon,
+  Wrench,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/context/AuthContext'
@@ -43,14 +44,14 @@ interface PrimaryTab {
  * mobile (Instagram/TikTok), so that asymmetry cost the most on the surface
  * where it mattered most.
  *
- * Icons: Vinkurser takes GraduationCap and Vinprovningar takes Wine, rather
+ * Icons: Vinkvällen takes GraduationCap and Provningar takes Wine, rather
  * than Wine + something wine-adjacent. A glass reads as "a tasting" and a cap
  * reads as "a course"; two similar wine glyphs side by side would not.
  */
 const PRIMARY_TABS: PrimaryTab[] = [
   { label: 'Hem', href: '/', icon: Home, matchExact: true },
-  { label: 'Vinkurser', href: '/vinkurser', icon: GraduationCap },
-  { label: 'Vinprovningar', href: '/provningsmallar', icon: Wine },
+  { label: 'Vinkvällen', href: '/vinkurser', icon: GraduationCap },
+  { label: 'Provningar', href: '/provningsmallar', icon: Wine },
 ]
 
 export function MobileBottomNav() {
@@ -228,7 +229,13 @@ export function MobileBottomNav() {
               <DrawerLink
                 href="/vinkurser"
                 icon={GraduationCap}
-                label="Vinkurser"
+                label="Vinkvällen"
+                onClose={() => setOpen(false)}
+              />
+              <DrawerLink
+                href="/provningsverktyget"
+                icon={Wrench}
+                label="Provningsverktyget"
                 onClose={() => setOpen(false)}
               />
               <DrawerLink
