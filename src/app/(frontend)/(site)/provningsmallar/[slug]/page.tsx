@@ -68,7 +68,6 @@ export default async function ProvningsmallDetailPage({ params }: RouteParams) {
   const hasAccess = await canUseTemplate(req, user, {
     id: template.id,
     accessLevel: (template as { accessLevel?: string }).accessLevel as 'free' | 'paid' | undefined,
-    isFreeTrial: (template as { isFreeTrial?: boolean }).isFreeTrial,
   })
 
   if (!hasAccess) {

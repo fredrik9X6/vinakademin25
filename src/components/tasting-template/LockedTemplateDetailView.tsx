@@ -67,7 +67,7 @@ export function LockedTemplateDetailView({
             <h1 className="text-3xl font-heading">{template.title}</h1>
             <span className="inline-flex items-center gap-1 rounded-full bg-brand-400/15 text-brand-400 px-2.5 py-0.5 text-xs font-medium">
               <Lock className="h-3 w-3" />
-              Kräver konto
+              Kräver gratiskonto
             </span>
           </div>
           {template.description && (

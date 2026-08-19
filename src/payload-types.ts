@@ -1630,11 +1630,11 @@ export interface TastingTemplate {
    */
   isFreeTrial?: boolean | null;
   /**
-   * Auto-generated via syncTemplateWithStripe when the template is published with a price.
+   * PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning.
    */
   stripeProductId?: string | null;
   /**
-   * Auto-generated. Stripe Prices are immutable — old prices get archived when priceSek changes.
+   * PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning.
    */
   stripePriceId?: string | null;
   publishedStatus: 'draft' | 'published';

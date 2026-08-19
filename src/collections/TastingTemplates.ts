@@ -193,8 +193,8 @@ export const TastingTemplates: CollectionConfig = {
       required: true,
       defaultValue: 'free',
       options: [
-        { label: 'Fri – alla kan se utan köp', value: 'free' },
-        { label: 'Betald – kräver köp eller prenumeration', value: 'paid' },
+        { label: 'Fri – syns för alla, även utloggade', value: 'free' },
+        { label: 'Kräver konto – besökaren måste skapa ett gratiskonto', value: 'paid' },
       ],
       admin: {
         position: 'sidebar',
@@ -230,7 +230,8 @@ export const TastingTemplates: CollectionConfig = {
       admin: {
         position: 'sidebar',
         readOnly: true,
-        description: 'Auto-generated via syncTemplateWithStripe when the template is published with a price.',
+        description:
+          'PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning.',
       },
     },
     {
@@ -239,7 +240,8 @@ export const TastingTemplates: CollectionConfig = {
       admin: {
         position: 'sidebar',
         readOnly: true,
-        description: 'Auto-generated. Stripe Prices are immutable — old prices get archived when priceSek changes.',
+        description:
+          'PAUSAD 2026-08-19 — fylls inte längre i automatiskt. Kvar för att kunna återuppta försäljning.',
       },
     },
     {

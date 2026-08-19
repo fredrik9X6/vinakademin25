@@ -21,7 +21,7 @@ export function TemplateCard({ template, href }: TemplateCardProps) {
       : null
 
   return (
-    <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group h-full">
+    <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group h-full min-w-0">
       <Card className="overflow-hidden hover:shadow-md transition-shadow h-full">
         <div className="aspect-[4/3] bg-muted relative">
           {imageUrl ? (
