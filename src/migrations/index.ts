@@ -40,6 +40,7 @@ import * as migration_20260724_171748_reviews_rating_optional from './20260724_1
 import * as migration_20260724_175604_template_blind_answers from './20260724_175604_template_blind_answers';
 import * as migration_20260724_181500_backfill_blind_answers_from_systembolaget from './20260724_181500_backfill_blind_answers_from_systembolaget';
 import * as migration_20260725_194806_reviews_buy_again from './20260725_194806_reviews_buy_again';
+import * as migration_20260819_121447_templates_all_free from './20260819_121447_templates_all_free';
 
 export const migrations = [
   {
@@ -250,6 +251,11 @@ export const migrations = [
   {
     up: migration_20260725_194806_reviews_buy_again.up,
     down: migration_20260725_194806_reviews_buy_again.down,
-    name: '20260725_194806_reviews_buy_again'
+    name: '20260725_194806_reviews_buy_again',
+  },
+  {
+    up: migration_20260819_121447_templates_all_free.up,
+    down: migration_20260819_121447_templates_all_free.down,
+    name: '20260819_121447_templates_all_free'
   },
 ];
