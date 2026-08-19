@@ -18,7 +18,7 @@ Package manager: **pnpm** (required — see `packageManager` in package.json). N
 - `pnpm cleanup-media` — `scripts/cleanup-missing-media.ts`
 - `pnpm send-review-emails` — `scripts/send-review-emails.ts`
 
-No test suite is configured.
+Tests: pure modules under `src/lib/*.test.ts` run on `node --test` via `tsx`. Run them with `pnpm test:ia`, `pnpm test:session`, `pnpm test:vinkompassen`, `pnpm test:access`. There is no component or E2E suite — UI changes are verified manually.
 
 ## Architecture
 

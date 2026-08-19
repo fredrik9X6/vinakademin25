@@ -31,6 +31,7 @@
     "test:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --test src/lib/vinkompassen/*.test.ts",
     "test:session": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --test src/lib/session-*.test.ts src/lib/blind-*.test.ts src/lib/chip-*.test.ts src/lib/use-*.test.ts",
     "test:ia": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --test src/lib/tasting-route-redirects.test.ts src/lib/provningar-view.test.ts src/lib/breadcrumb-trail.test.ts",
+    "test:access": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --test src/lib/template-access.test.ts",
     "seed:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/seed-vinkompassen.ts",
     "update:vinkompassen": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/update-vinkompass-questions.ts",
     "import:legacy-wine-reviews": "cross-env NODE_OPTIONS=--no-deprecation npx tsx --env-file=.env scripts/import-legacy-wine-reviews.ts",
