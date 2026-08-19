@@ -9,14 +9,17 @@ import { loggerFor } from '@/lib/logger'
 const log = loggerFor('api-payments-template-checkout')
 
 /**
- * Create a Stripe Checkout Session for a tasting template purchase.
- * The Stripe webhook (payment_intent.succeeded handler) reads
- * metadata.productKind === 'template' and creates a TemplateEntitlements row.
+ * Retired endpoint: template checkout.
  *
- * Auth-gated: anonymous users get bounced through /logga-in?next=/kop in the
- * UI. This endpoint enforces login independently as defense in depth.
+ * Templates transitioned to a free lead magnet on 2026-08-19. This endpoint
+ * unconditionally returns 410 Gone. Kept rather than deleted so it can be
+ * revived if needed.
  *
- * Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D.4)
+ * Imports (NextRequest, getStripeServer, getOrCreateStripeCustomer, getPayload,
+ * config, getUser, getSiteURL) are intentionally retained for potential revival
+ * without requiring a separate import-restoration commit.
+ *
+ * Spec: docs/superpowers/specs/2026-08-19-lead-magnet-provningsverktyget-design.md (Section 1.3)
  */
 export async function POST(): Promise<NextResponse> {
   // Templates are free since 2026-08-19 (lead magnet). Kept as 410 rather than

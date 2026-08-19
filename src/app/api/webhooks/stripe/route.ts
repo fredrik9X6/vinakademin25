@@ -1027,7 +1027,7 @@ async function handleChargeRefunded(charge: any, payload: any, stripe: any) {
     if (md.productKind === 'template') {
       // Dormant since 2026-08-19 — templates are free. Still honoured so a real
       // in-flight payment is never silently dropped.
-      log.warn({ paymentIntentId }, 'template purchase webhook fired after templates went free')
+      log.warn({ paymentIntentId }, 'template refund webhook fired after templates went free')
       const userIdInt = parseInt(String(md.userId || ''), 10)
       const templateIdInt = parseInt(String(md.templateId || ''), 10)
       if (isNaN(userIdInt) || isNaN(templateIdInt)) {
