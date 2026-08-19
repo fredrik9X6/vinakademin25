@@ -1499,11 +1499,34 @@ can read as a soft paywall to someone skimming. Change the pill text to:
 
 Leave the enclosing `<span>` classes and the `<Lock />` icon exactly as they are.
 
-- [ ] **Step 3: Audit the membership page**
+- [ ] **Step 3: Fix the mobile-clipped "Gratis" badge**
+
+Diagnosed during Task 7's review and reproduced in a live browser. At 375px the template
+cards overflow their container and the green "Gratis" badge is clipped entirely out of view —
+on this branch's new landing page and on the existing homepage alike.
+
+Mechanism: `truncate` on the card title (`TemplateCard.tsx:40`) sets `white-space: nowrap`,
+giving the title an intrinsic min-content width. The CSS Grid item is `TemplateCard`'s root
+`<Link>`, which has no `min-width: 0`, so Grid's automatic minimum sizing expands the track to
+fit the un-wrapped title and pushes the card past the viewport — where `<main
+overflow-x-hidden>` in `src/app/(frontend)/(site)/layout.tsx:19` clips it silently instead of
+showing a scrollbar. Note `Card` already carries `min-w-0` (`src/components/ui/card.tsx:9`),
+so it is **not** the element to change.
+
+In `src/components/tasting-template/TemplateCard.tsx` line 24, add `min-w-0` to the root
+`<Link>`:
+
+```tsx
+    <Link href={href ?? `/provningsmallar/${template.slug}`} className="block group h-full min-w-0">
+```
+
+Verify at 375px that the badge is visible on both `/provningsverktyget` and `/` before moving on.
+
+- [ ] **Step 4: Audit the membership page**
 
 Open `src/app/(frontend)/(site)/bli-medlem/page.tsx` and read it end to end. Rewrite any claim that templates cost money or that membership is required for tastings.
 
-- [ ] **Step 4: Full manual walkthrough — logged out**
+- [ ] **Step 5: Full manual walkthrough — logged out**
 
 Run `pnpm dev`, then in a **private window**:
 1. `/provningsverktyget` renders, CTA goes to `/registrera?from=/provningsverktyget`.
@@ -1513,14 +1536,14 @@ Run `pnpm dev`, then in a **private window**:
 5. `/provningsmallar/<slug>/kop` → redirects to the template page.
 6. `/vinkurser/ldgmgv` shows the Vinkvällen offer, anchor, and guarantee.
 
-- [ ] **Step 5: Full manual walkthrough — signing up**
+- [ ] **Step 6: Full manual walkthrough — signing up**
 
 7. Complete registration. Confirm the newsletter checkbox is **pre-checked**.
 8. After signup, "Använd mallen" creates a plan and redirects to `/mina-provningar/planer/<id>`.
 9. `/skapa-provning` loads the builder.
 10. Start a live session from a plan and join it from a second browser.
 
-- [ ] **Step 6: Confirm the subscriber landed**
+- [ ] **Step 7: Confirm the subscriber landed**
 
 Run:
 
@@ -1539,12 +1562,12 @@ Expected: the test signup appears with `status = 'subscribed'`.
 
 **Note:** `.env` points at **production**. Use a disposable email for the test signup, or point `DATABASE_URI` at the staging branch (`ep-purple-night`) first.
 
-- [ ] **Step 7: Final verification**
+- [ ] **Step 8: Final verification**
 
 Run: `pnpm test:access && pnpm test:ia && pnpm lint && pnpm build`
 Expected: all green.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add -A
