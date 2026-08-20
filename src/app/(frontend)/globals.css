@@ -200,6 +200,26 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    /* background-clip:text paints the gradient ONLY inside the element's
+       background box. Coolvetica's content area is ~1.21em (ascent 70 +
+       descent 17 per 72px em), while our headings deliberately run tighter
+       line-heights — so descenders (g, j, p, y) fall outside the box, receive
+       no gradient, and render flat-cut. Verified in-browser on the homepage
+       hero: the "g" and "p" of "vinprovningen" terminated exactly on the box
+       edge. Extending the box downward gives the gradient somewhere to paint.
+       em-based, so it holds at every breakpoint and font size — including the
+       tighter leading-[1.05] headings, whose ink overflow is ~0.076em.
+       Harmless on inline usages: padding does not grow a line box.
+
+       Deliberately NOT cancelled with a negative margin-bottom. This rule
+       lives in @layer utilities alongside Tailwind's own mb-*, and being later
+       in source order it would WIN — measured on /om-oss, where a
+       `text-brand-gradient mb-2` stat resolved to -5.76px instead of +8px.
+       Moving the rule to @layer components would fix that but would let any
+       text-* colour utility beat `color: transparent` and kill the gradient.
+       So we accept 0.12em of extra height: it is purely additive, cannot cause
+       an overlap, and is imperceptible at every size we use. */
+    padding-bottom: 0.12em;
   }
   /* Soft brand-orange glow shadow — for primary CTAs only. */
   .shadow-brand-glow {
