@@ -73,7 +73,7 @@ function DashboardContent() {
             <CardDescription>Se vilka vinkurser du är anmäld till</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/mina-vinkurser">
+            <Link href="/mina-vinkvallar">
               <Button className="w-full">Visa mina vinkurser</Button>
             </Link>
           </CardContent>

@@ -106,7 +106,7 @@ export function OfferingsComparison() {
               <p className="mt-1 text-xs text-muted-foreground">
                 En guidad vinprovning ute kostar 500–1000 kr per person.
               </p>
-              <Link href="/vinkurser" className="btn-brand mt-4 w-full">
+              <Link href="/vinkvallen" className="btn-brand mt-4 w-full">
                 Läs om Vinkvällen
                 <ArrowRight className="h-4 w-4" />
               </Link>

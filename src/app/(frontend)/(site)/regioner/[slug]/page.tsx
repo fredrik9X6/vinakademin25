@@ -229,7 +229,7 @@ export default async function RegionDetailPage({ params }: PageProps) {
             {vinkurser.map((v: any) => (
               <Link
                 key={v.id}
-                href={`/vinkurser/${v.slug}`}
+                href={`/vinkvallen/${v.slug}`}
                 className="block p-4 rounded-lg border border-border/50 hover:border-brand-400/40 hover:bg-brand-300/10 transition-all"
               >
                 <h3 className="font-medium">{v.title}</h3>

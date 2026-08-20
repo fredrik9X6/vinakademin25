@@ -44,7 +44,7 @@ export function CourseReferenceBlock({
   openInNewTab,
 }: CourseReferenceBlockProps) {
   const linkProps = {
-    href: `/vinkurser/${course.slug}`,
+    href: `/vinkvallen/${course.slug}`,
     ...(openInNewTab && { target: '_blank', rel: 'noopener noreferrer' }),
   }
 

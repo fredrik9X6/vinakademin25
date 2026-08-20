@@ -21,7 +21,7 @@ export function MinaProvningarPage() {
   // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/logga-in?from=/mina-vinkurser')
+      router.push('/logga-in?from=/mina-vinkvallar')
     }
   }, [authLoading, user, router])
 
@@ -76,9 +76,9 @@ export function MinaProvningarPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-heading">Mina Vinkurser</h1>
+        <h1 className="text-3xl md:text-4xl font-heading">Mina vinkvällar</h1>
         <p className="mt-2 text-muted-foreground">
-          Här hittar du dina köpta vinkurser och kan följa dina framsteg.
+          Här hittar du dina köpta vinkvällar och kan följa dina framsteg.
         </p>
       </div>
 
@@ -101,12 +101,12 @@ export function MinaProvningarPage() {
           <div className="rounded-full bg-muted p-6 mb-6">
             <Wine className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-medium mb-2">Inga vinkurser ännu</h2>
+          <h2 className="text-xl font-medium mb-2">Inga vinkvällar ännu</h2>
           <p className="text-muted-foreground mb-6 max-w-md">
-            Du har inte köpt några vinkurser ännu. Utforska våra vinkurser och börja din vinresa!
+            Du har inte köpt några vinkvällar ännu. Utforska våra vinkvällar och börja din vinresa!
           </p>
-          <Link href="/vinkurser" className="btn-brand">
-            Utforska vinkurser
+          <Link href="/vinkvallen" className="btn-brand">
+            Läs om Vinkvällen
           </Link>
         </div>
       ) : (
@@ -135,7 +135,7 @@ export function MinaProvningarPage() {
           <TabsContent value="paborjade">
             {startedCourses.length === 0 ? (
               <p className="text-center py-12 text-muted-foreground">
-                Inga påbörjade vinkurser ännu.
+                Inga påbörjade vinkvällar ännu.
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -149,7 +149,7 @@ export function MinaProvningarPage() {
           <TabsContent value="slutforda">
             {completedCourses.length === 0 ? (
               <p className="text-center py-12 text-muted-foreground">
-                Inga slutförda vinkurser ännu.
+                Inga slutförda vinkvällar ännu.
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

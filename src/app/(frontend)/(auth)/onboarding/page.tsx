@@ -14,7 +14,7 @@ interface OnboardingPageProps {
 
 export default async function OnboardingPage({ searchParams }: OnboardingPageProps) {
   const params = await searchParams
-  const nextPath = params.next ? decodeURIComponent(params.next) : '/mina-vinkurser'
+  const nextPath = params.next ? decodeURIComponent(params.next) : '/mina-vinkvallar'
   const source = params.source === 'guest_checkout' ? 'guest_checkout' : 'registration'
 
   const user = await getUser()

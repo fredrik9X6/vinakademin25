@@ -23,7 +23,7 @@ import {
   submitQuizAttempt,
   getQuizStartInfo,
   getLastQuizAttempt,
-} from '@/app/(frontend)/(site)/vinkurser/quiz-actions'
+} from '@/app/(frontend)/(site)/vinkvallen/quiz-actions'
 
 interface QuizAttemptRunnerProps {
   quiz: any

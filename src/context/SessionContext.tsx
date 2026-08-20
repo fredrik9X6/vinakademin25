@@ -118,7 +118,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (activeSession.tastingPlanId) {
       return pathname.includes(`/mina-provningar/planer/${activeSession.tastingPlanId}`)
     }
-    return pathname.includes(`/vinkurser/${activeSession.courseSlug}`)
+    return pathname.includes(`/vinkvallen/${activeSession.courseSlug}`)
   }, [activeSession, pathname, searchParams])
 
   // Load session from localStorage on mount
@@ -294,7 +294,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (activeSession.tastingPlanId) {
       return `/mina-provningar/planer/${activeSession.tastingPlanId}?session=${activeSession.sessionId}`
     }
-    return `/vinkurser/${activeSession.courseSlug}?session=${activeSession.sessionId}`
+    return `/vinkvallen/${activeSession.courseSlug}?session=${activeSession.sessionId}`
   }, [activeSession])
 
   const value: SessionContextValue = {

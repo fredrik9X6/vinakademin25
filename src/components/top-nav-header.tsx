@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 
 const NAV_LINKS = [
-  { label: 'Vinkvällen', href: '/vinkurser' },
+  { label: 'Vinkvällen', href: '/vinkvallen' },
   { label: 'Provningsverktyget', href: '/provningsverktyget' },
   { label: 'Vinprovningar', href: '/provningsmallar' },
   { label: 'Vinlistan', href: '/vinlistan' },

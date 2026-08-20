@@ -26,7 +26,7 @@ export const Vinkurser: CollectionConfig = {
     description: 'Wine education video courses offered on the platform',
     livePreview: {
       url: ({ data }) => {
-        return `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}/vinkurser/${data.slug}`
+        return `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}/vinkvallen/${data.slug}`
       },
     },
   },

@@ -71,7 +71,7 @@ export function UserProfilePage() {
   // Redirect old vinprovningar/kurser tab to the new Mina Vinkurser page
   React.useEffect(() => {
     if (tabParam === 'vinprovningar' || tabParam === 'kurser') {
-      router.replace('/mina-vinkurser')
+      router.replace('/mina-vinkvallar')
     }
   }, [tabParam, router])
 

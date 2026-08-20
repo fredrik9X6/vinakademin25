@@ -17,7 +17,7 @@ const toAbsolute = (base: string, path: string) => `${base}${path.startsWith('/'
 
 const STATIC_ROUTES: Array<{ path: string; changeFrequency: SitemapEntry['changeFrequency']; priority: number }> = [
   { path: '/', changeFrequency: 'daily', priority: 1.0 },
-  { path: '/vinkurser', changeFrequency: 'daily', priority: 0.9 },
+  { path: '/vinkvallen', changeFrequency: 'daily', priority: 0.9 },
   { path: '/provningsmallar', changeFrequency: 'daily', priority: 0.9 },
   { path: '/provningsverktyget', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/vinlistan', changeFrequency: 'daily', priority: 0.9 },
@@ -108,7 +108,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
   const dynamicEntries: SitemapEntry[] = [
-    ...courses.map(toDocEntry('/vinkurser', 0.9, 'weekly')),
+    ...courses.map(toDocEntry('/vinkvallen', 0.9, 'weekly')),
     ...templates.map(toDocEntry('/provningsmallar', 0.7, 'weekly')),
     ...posts.map(toDocEntry('/artiklar', 0.7, 'weekly')),
     ...wines.map(toDocEntry('/vinlistan', 0.6, 'monthly')),

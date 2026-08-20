@@ -14,7 +14,7 @@ export function NeuralHeroWithBanner() {
       description="Färdiga provningar, inköpslista till Systembolaget och ett värdmanus du kan läsa innantill — gratis. Eller låt Vinkvällen guida hela kvällen åt er."
       ctaButtons={[
         { text: 'Kom igång gratis', href: '/provningsverktyget', primary: true },
-        { text: 'Läs om Vinkvällen', href: '/vinkurser' },
+        { text: 'Läs om Vinkvällen', href: '/vinkvallen' },
       ]}
       microDetails={['300+ prenumeranter', 'Gratis att komma igång', 'Inget abonnemang']}
     />

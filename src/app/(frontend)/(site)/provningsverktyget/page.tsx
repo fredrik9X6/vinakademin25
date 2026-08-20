@@ -280,7 +280,7 @@ export default async function ProvningsverktygetPage() {
               sina smakblad — du häller upp. 499 kr för hela sällskapet.
             </p>
             <Link
-              href="/vinkurser"
+              href="/vinkvallen"
               className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-brand-400 hover:underline"
             >
               Läs om Vinkvällen

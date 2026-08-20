@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
  *
  * Public-safe endpoint used by the client-side breadcrumbs to resolve a
  * content item's (lesson or quiz) display title for course viewer URLs like
- * `/vinkurser/{slug}?lesson={id}` and `?quiz={id}`. Returns title only.
+ * `/vinkvallen/{slug}?lesson={id}` and `?quiz={id}`. Returns title only.
  */
 export async function GET(request: NextRequest) {
   try {

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // If no specific path or tag, revalidate common paths
-    const commonPaths = ['/artiklar', '/vinkurser', '/provningsverktyget', '/']
+    const commonPaths = ['/artiklar', '/vinkvallen', '/provningsverktyget', '/']
     for (const commonPath of commonPaths) {
       await revalidatePath(commonPath)
     }

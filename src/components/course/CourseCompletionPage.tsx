@@ -193,11 +193,11 @@ export default function CourseCompletionPage({ course, progressData }: CourseCom
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button variant="secondary" size="lg" asChild>
-            <Link href={`/vinkurser/${course.slug || course.id}`}>Tillbaka till översikt</Link>
+            <Link href={`/vinkvallen/${course.slug || course.id}`}>Tillbaka till översikt</Link>
           </Button>
 
           <Button size="lg" asChild>
-            <Link href="/vinkurser">
+            <Link href="/vinkvallen">
               Utforska fler vinkurser
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
