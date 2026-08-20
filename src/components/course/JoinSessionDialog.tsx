@@ -147,7 +147,7 @@ export default function JoinSessionDialog({
           sessionName: data.session.sessionName || `Session ${joinCode}`,
           expiresAt: data.session.expiresAt,
         })
-        router.push(`/vinkurser/${courseSlug}?session=${data.session.id}`)
+        router.push(`/vinkvallen/${courseSlug}?session=${data.session.id}`)
       }
     } catch (err) {
       console.error('Join error:', err)

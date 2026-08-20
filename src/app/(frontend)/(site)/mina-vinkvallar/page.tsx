@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import { MinaProvningarPage } from '@/components/mina-provningar/MinaProvningarPage'
 
 export const metadata: Metadata = {
-  title: 'Mina vinkurser — Vinakademin',
-  description: 'Dina köpta vinkurser och dina framsteg.',
+  title: 'Mina vinkvällar — Vinakademin',
+  description: 'Dina köpta vinkvällar och dina framsteg.',
 }
 
-export default function MinaVinkurserRoute() {
+export default function MinaVinkvallarRoute() {
   return <MinaProvningarPage />
 }

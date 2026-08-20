@@ -102,7 +102,7 @@ export function VinkurserFeature({ courses, totalCount }: VinkurserFeatureProps)
               return (
                 <Link
                   key={course.id}
-                  href={`/vinkurser/${course.slug}`}
+                  href={`/vinkvallen/${course.slug}`}
                   className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-brand-400/40 hover:shadow-md"
                 >
                   <div className="relative aspect-[16/9] w-full bg-muted">
@@ -149,7 +149,7 @@ export function VinkurserFeature({ courses, totalCount }: VinkurserFeatureProps)
             Vinkvällen" primary CTA, so a second link here would be noise. */}
         {!singleCourse && (
           <div className="mt-10 flex flex-col items-center gap-3 text-center">
-            <Link href="/vinkurser" className="btn-brand btn-brand-lg group">
+            <Link href="/vinkvallen" className="btn-brand btn-brand-lg group">
               Läs om Vinkvällen
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
@@ -237,7 +237,7 @@ function SingleCourseHero({ course }: SingleCourseHeroProps) {
               · engångsbetalning för hela sällskapet
             </span>
           </p>
-          <Link href={`/vinkurser/${course.slug}`} className="btn-brand mt-4 w-full group">
+          <Link href={`/vinkvallen/${course.slug}`} className="btn-brand mt-4 w-full group">
             Läs om Vinkvällen
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>

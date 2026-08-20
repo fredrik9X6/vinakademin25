@@ -798,7 +798,7 @@ async function handleCheckoutSessionCompleted(session: any, payload: any, stripe
         const siteURL = getSiteURL()
         const claimAccessUrl =
           resolvedCheckout.checkoutMode === 'guest'
-            ? `${siteURL}/aktivera-konto?email=${encodeURIComponent(resolvedCheckout.email)}&next=${encodeURIComponent('/mina-vinkurser')}`
+            ? `${siteURL}/aktivera-konto?email=${encodeURIComponent(resolvedCheckout.email)}&next=${encodeURIComponent('/mina-vinkvallar')}`
             : undefined
 
         const emailHTML = generateReceiptEmailHTML({

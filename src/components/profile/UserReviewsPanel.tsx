@@ -253,7 +253,7 @@ export function UserReviewsPanel() {
             Inga recensioner hittades.
             <div className="mt-4">
               <Button asChild variant="secondary">
-                <Link href="/vinkurser">Gå till vinkurser</Link>
+                <Link href="/vinkvallen">Gå till vinkurser</Link>
               </Button>
             </div>
           </CardContent>

@@ -13,18 +13,18 @@ import { getTotalCourseItems, countFreeItems } from '@/lib/course-utils'
 import { FeaturedCourseCard } from '@/components/course/FeaturedCourseCard'
 import { loggerFor } from '@/lib/logger'
 
-const log = loggerFor('(frontend)-(site)-vinkurser-page')
+const log = loggerFor('(frontend)-(site)-vinkvallen-page')
 
 export const metadata: Metadata = {
   title: 'Vinkvällen — en vinprovning hemma med vänner',
   description:
     'Vinkvällen — bjud hem vänner och håll en vinprovning de pratar om. Filmerna guidar hela kvällen, en betalar för hela sällskapet. 30 dagars pengarna-tillbaka-garanti.',
-  alternates: { canonical: `${getSiteURL()}/vinkurser` },
+  alternates: { canonical: `${getSiteURL()}/vinkvallen` },
   openGraph: {
     title: 'Vinkvällen — en vinprovning hemma med vänner',
     description:
       'Vinkvällen — bjud hem vänner och håll en vinprovning de pratar om. Filmerna guidar hela kvällen, en betalar för hela sällskapet. 30 dagars pengarna-tillbaka-garanti.',
-    url: `${getSiteURL()}/vinkurser`,
+    url: `${getSiteURL()}/vinkvallen`,
     type: 'website',
   },
 }
@@ -239,7 +239,7 @@ export default async function KurserPage() {
                         )}
 
                         {/* CTA Button */}
-                        <Link href={`/vinkurser/${course.slug}`} className="block">
+                        <Link href={`/vinkvallen/${course.slug}`} className="block">
                           <Button className="w-full group">
                             Läs mer
                             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

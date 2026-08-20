@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
  * GET /api/vinkurser/title?slug=...&preview=true
  *
  * Public-safe endpoint used by the client-side breadcrumbs to resolve the real
- * course title for /vinkurser/[slug].
+ * course title for /vinkvallen/[slug].
  */
 export async function GET(request: NextRequest) {
   try {

@@ -21,7 +21,7 @@ export function MinaProvningarPage() {
   // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/logga-in?from=/mina-vinkurser')
+      router.push('/logga-in?from=/mina-vinkvallar')
     }
   }, [authLoading, user, router])
 
@@ -105,7 +105,7 @@ export function MinaProvningarPage() {
           <p className="text-muted-foreground mb-6 max-w-md">
             Du har inte köpt några vinkurser ännu. Utforska våra vinkurser och börja din vinresa!
           </p>
-          <Link href="/vinkurser" className="btn-brand">
+          <Link href="/vinkvallen" className="btn-brand">
             Utforska vinkurser
           </Link>
         </div>

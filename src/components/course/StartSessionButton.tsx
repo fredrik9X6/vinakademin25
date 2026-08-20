@@ -164,7 +164,7 @@ export default function StartSessionButton(props: StartSessionButtonProps) {
     } else {
       // Redirect to course with session parameter, use slug if available
       const coursePath = courseSlug || props.courseId
-      router.push(`/vinkurser/${coursePath}?session=${session.id}&host=true`)
+      router.push(`/vinkvallen/${coursePath}?session=${session.id}&host=true`)
     }
   }
 

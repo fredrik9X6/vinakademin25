@@ -158,7 +158,7 @@ export default function SessionView({
     const meta = itemMetaById.get(hostCurrentLessonId)
     const param = meta?.type === 'quiz' ? 'quiz' : 'lesson'
     router.push(
-      `/vinkurser/${course?.slug || course?.id}?${param}=${hostCurrentLessonId}&session=${sessionId}`,
+      `/vinkvallen/${course?.slug || course?.id}?${param}=${hostCurrentLessonId}&session=${sessionId}`,
     )
   }, [
     isPlanSession,
@@ -204,12 +204,12 @@ export default function SessionView({
 
   const handleLeave = async () => {
     await leaveSession()
-    router.push('/vinkurser')
+    router.push('/vinkvallen')
   }
 
   const handleItemClick = (_moduleId: number, item: { type: 'lesson' | 'quiz'; id: number }) => {
     const param = item.type === 'lesson' ? `lesson=${item.id}` : `quiz=${item.id}`
-    router.push(`/vinkurser/${course.slug || course.id}?${param}&session=${sessionId}`)
+    router.push(`/vinkvallen/${course.slug || course.id}?${param}&session=${sessionId}`)
   }
 
   const lobbyHelperText = isHost

@@ -211,7 +211,7 @@ export default function CourseOverview({
     // unauthenticated guests joined via a join code) get full course access —
     // don't bounce them to login.
     if (isLessonFree && !authUser && !isSessionParticipant) {
-      const currentUrl = `/vinkurser/${course.slug || course.id}?lesson=${lessonId}`
+      const currentUrl = `/vinkvallen/${course.slug || course.id}?lesson=${lessonId}`
       router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
       toast.info('Du behöver logga in för att prova gratis-moment')
       return
@@ -227,7 +227,7 @@ export default function CourseOverview({
         toast.info('Du behöver köpa vinkvällen för att se detta innehåll')
       } else {
         // Not logged in — redirect to login
-        const currentUrl = `/vinkurser/${course.slug || course.id}?lesson=${lessonId}`
+        const currentUrl = `/vinkvallen/${course.slug || course.id}?lesson=${lessonId}`
         router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
         toast.info('Du behöver logga in för att se detta innehåll')
       }
@@ -235,7 +235,7 @@ export default function CourseOverview({
     }
 
     // Navigate to the lesson
-    router.push(buildUrl(`/vinkurser/${course.slug || course.id}?lesson=${lessonId}`))
+    router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?lesson=${lessonId}`))
   }
 
   const continueCourse = () => {
@@ -247,7 +247,7 @@ export default function CourseOverview({
         const containing = course.modules.find((m) => m.lessons.some((l) => l.id === next.id))
         if (containing) return handleLessonClick(containing.id, next.id)
       } else if (next.type === 'quiz') {
-        router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${next.id}`))
+        router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?quiz=${next.id}`))
         return
       }
     }
@@ -262,7 +262,7 @@ export default function CourseOverview({
           handleLessonClick(containing.id, firstItem.id)
         }
       } else if (firstItem.type === 'quiz') {
-        router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${firstItem.id}`))
+        router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?quiz=${firstItem.id}`))
       }
     }
   }
@@ -279,7 +279,7 @@ export default function CourseOverview({
       // Free quizzes normally require an account, but session participants
       // (incl. unauthenticated guests) get full course access — don't bounce.
       if (isQuizFree && !authUser && !isSessionParticipant) {
-        const currentUrl = `/vinkurser/${course.slug || course.id}?quiz=${item.id}`
+        const currentUrl = `/vinkvallen/${course.slug || course.id}?quiz=${item.id}`
         router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
         toast.info('Du behöver logga in för att prova gratis-quiz')
         return
@@ -295,14 +295,14 @@ export default function CourseOverview({
           toast.info('Du behöver köpa vinkvällen för att se detta innehåll')
         } else {
           // Not logged in — redirect to login
-          const currentUrl = `/vinkurser/${course.slug || course.id}?quiz=${item.id}`
+          const currentUrl = `/vinkvallen/${course.slug || course.id}?quiz=${item.id}`
           router.push(`/logga-in?from=${encodeURIComponent(currentUrl)}`)
           toast.info('Du behöver logga in för att se detta innehåll')
         }
         return
       }
 
-      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${item.id}`))
+      router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?quiz=${item.id}`))
     }
   }
 
@@ -595,7 +595,7 @@ export default function CourseOverview({
                     <Button
                       onClick={() =>
                         router.push(
-                          buildUrl(`/vinkurser/${course.slug || course.id}?completed=true`),
+                          buildUrl(`/vinkvallen/${course.slug || course.id}?completed=true`),
                         )
                       }
                       variant="secondary"

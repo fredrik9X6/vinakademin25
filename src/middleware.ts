@@ -21,7 +21,7 @@ const protectedPaths = [
     roles: ['admin', 'instructor', 'subscriber', 'user'],
   },
   {
-    path: '/mina-vinkurser',
+    path: '/mina-vinkvallar',
     roles: ['admin', 'instructor', 'subscriber', 'user'],
   },
   {
@@ -96,18 +96,38 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301)
   }
 
-  // Permanent 301 from legacy /vinprovningar/* sub-paths to /vinkurser/*.
-  // The collection was renamed to Vinkurser (video courses); the templates
+  // Permanent 301 from legacy /vinprovningar/* sub-paths to /vinkvallen/*.
+  // The collection was renamed to Vinkurser (video courses), and the product
+  // itself was later repositioned/renamed again to "Vinkvällen"; the templates
   // product owns /provningsmallar separately. The bare /vinprovningar root now
   // routes to the tastings gallery via resolveTastingRedirect (see D2) — a
   // `startsWith('/vinprovningar/')` here would also claim "/vinprovningar/",
   // stranding that spelling on the course catalogue.
   // Preserves query strings so session links, lesson params, and Stripe cancel
-  // URLs all survive.
+  // URLs all survive. Retargeted straight to /vinkvallen (not /vinkurser) so
+  // this never chains through the /vinkurser → /vinkvallen redirect below.
   // Spec: docs/superpowers/specs/2026-06-13-vinkurs-provning-product-split-design.md (D3)
   if (/^\/vinprovningar\/.+/.test(pathname)) {
-    const target = pathname.replace(/^\/vinprovningar/, '/vinkurser')
+    const target = pathname.replace(/^\/vinprovningar/, '/vinkvallen')
     url.pathname = target
+    return NextResponse.redirect(url, 301)
+  }
+
+  // Vinkvällen route rename (2026-08). The 499 kr product moved from
+  // "Vinkurser" (a course you study) to "Vinkvällen" (an evening with friends
+  // the videos guide) — nav/metadata/CTAs already said Vinkvällen, this
+  // brings the URL and breadcrumbs in line. Plain prefix-match 301s are safe
+  // here (unlike tasting-route-redirects.ts): every sub-path under the old
+  // roots — course detail, /recension, the personal collection page — moves
+  // identically to the new root, with no sub-path that means something else.
+  // Preserves query strings (lesson/quiz params, Stripe cancel URLs, join
+  // links all survive the hop).
+  if (pathname === '/vinkurser' || pathname.startsWith('/vinkurser/')) {
+    url.pathname = pathname.replace(/^\/vinkurser/, '/vinkvallen')
+    return NextResponse.redirect(url, 301)
+  }
+  if (pathname === '/mina-vinkurser' || pathname.startsWith('/mina-vinkurser/')) {
+    url.pathname = pathname.replace(/^\/mina-vinkurser/, '/mina-vinkvallar')
     return NextResponse.redirect(url, 301)
   }
 
@@ -137,8 +157,8 @@ export async function middleware(request: NextRequest) {
     pathname === '/aterstall-losenord' ||
     pathname === '/verifiera-epost' ||
     pathname === '/verifiera-epost-meddelande' || // Added the verification message page
-    pathname === '/vinkurser' || // Allow public access to courses listing page
-    (pathname.startsWith('/vinkurser/') && !url.searchParams.has('lesson')) // Allow public access to course landing pages, but not lessons
+    pathname === '/vinkvallen' || // Allow public access to courses listing page
+    (pathname.startsWith('/vinkvallen/') && !url.searchParams.has('lesson')) // Allow public access to course landing pages, but not lessons
   ) {
     return NextResponse.next()
   }

@@ -29,7 +29,7 @@ export interface TastingRedirect {
 /** Exact source path → redirect. Never consulted with a prefix. */
 const RULES: Record<string, TastingRedirect> = {
   // The root of this namespace renders purchased VIDEO COURSES, not tastings.
-  '/mina-provningar': { pathname: '/mina-vinkurser', status: 301 },
+  '/mina-provningar': { pathname: '/mina-vinkvallar', status: 301 },
   // The plans index is now a filtered view of the merged gallery.
   '/mina-provningar/planer': {
     pathname: '/provningsmallar',

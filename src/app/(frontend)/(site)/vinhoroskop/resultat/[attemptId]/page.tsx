@@ -159,7 +159,7 @@ export default async function VinkompassenResultPage({ params }: PageProps) {
 
             {recommendedVinkurs ? (
               <VinkursCard
-                href={`/vinkurser/${recommendedVinkurs.slug}`}
+                href={`/vinkvallen/${recommendedVinkurs.slug}`}
                 title={recommendedVinkurs.title}
                 archetypeKey={archetype.key}
                 vinkursSlug={recommendedVinkurs.slug}

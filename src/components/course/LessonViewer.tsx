@@ -146,7 +146,7 @@ export default function LessonViewer({
       if (hasNavigatedToReviewRef.current) return
       if (!manual && isSessionParticipant) return
       hasNavigatedToReviewRef.current = true
-      router.push(`/vinkurser/${course.slug || course.id}/recension`)
+      router.push(`/vinkvallen/${course.slug || course.id}/recension`)
     },
     [isSessionParticipant, router, course.slug, course.id],
   )
@@ -199,9 +199,9 @@ export default function LessonViewer({
 
   const navigateToItem = (item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
-      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?lesson=${item.id}`))
+      router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?lesson=${item.id}`))
     } else {
-      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${item.id}`))
+      router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?quiz=${item.id}`))
     }
   }
 
@@ -230,14 +230,14 @@ export default function LessonViewer({
   }
 
   const navigateToLesson = (lessonId: number) => {
-    router.push(buildUrl(`/vinkurser/${course.slug || course.id}?lesson=${lessonId}`))
+    router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?lesson=${lessonId}`))
   }
 
   const handleItemClick = (moduleId: number, item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
       navigateToLesson(item.id)
     } else {
-      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${item.id}`))
+      router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?quiz=${item.id}`))
     }
   }
 
@@ -311,8 +311,8 @@ export default function LessonViewer({
                     onClick={() =>
                       router.push(
                         effectiveSessionId
-                          ? `/vinkurser/${course.slug || course.id}?session=${effectiveSessionId}`
-                          : `/vinkurser/${course.slug || course.id}`,
+                          ? `/vinkvallen/${course.slug || course.id}?session=${effectiveSessionId}`
+                          : `/vinkvallen/${course.slug || course.id}`,
                       )
                     }
                   >

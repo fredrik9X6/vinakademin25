@@ -4,7 +4,7 @@ import { resolveTastingRedirect } from './tasting-route-redirects'
 
 test('/mina-provningar redirects to the renamed courses route', () => {
   assert.deepEqual(resolveTastingRedirect('/mina-provningar'), {
-    pathname: '/mina-vinkurser',
+    pathname: '/mina-vinkvallar',
     status: 301,
   })
 })
@@ -18,7 +18,7 @@ test('/mina-provningar/planer redirects to the merged gallery, filtered to Mina'
 })
 
 test('a trailing slash matches the same rule', () => {
-  assert.equal(resolveTastingRedirect('/mina-provningar/')?.pathname, '/mina-vinkurser')
+  assert.equal(resolveTastingRedirect('/mina-provningar/')?.pathname, '/mina-vinkvallar')
   assert.equal(resolveTastingRedirect('/mina-provningar/planer/')?.pathname, '/provningsmallar')
 })
 
@@ -32,13 +32,13 @@ test('never matches a live session, its shopping list, or a recap', () => {
 })
 
 test('never matches the redirect targets — no loops', () => {
-  assert.equal(resolveTastingRedirect('/mina-vinkurser'), null)
+  assert.equal(resolveTastingRedirect('/mina-vinkvallar'), null)
   assert.equal(resolveTastingRedirect('/provningsmallar'), null)
 })
 
 test('unrelated paths are untouched', () => {
   assert.equal(resolveTastingRedirect('/'), null)
-  assert.equal(resolveTastingRedirect('/vinkurser'), null)
+  assert.equal(resolveTastingRedirect('/vinkvallen'), null)
   assert.equal(resolveTastingRedirect('/mina-provningarx'), null)
 })
 
@@ -54,7 +54,7 @@ test('the bare /vinprovningar root goes to the tastings gallery', () => {
 })
 
 // Sub-paths are genuine old COURSE detail URLs from before the collection was
-// renamed. They keep going to /vinkurser/<slug>, which middleware handles with
+// renamed. They keep going to /vinkvallen/<slug>, which middleware handles with
 // a prefix rule — so this module must NOT claim them.
 test('/vinprovningar sub-paths are left to the legacy course rule', () => {
   assert.equal(resolveTastingRedirect('/vinprovningar/grunderna-i-vin'), null)

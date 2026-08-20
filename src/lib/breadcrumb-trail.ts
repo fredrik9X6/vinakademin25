@@ -22,14 +22,15 @@ export interface BuildTrailInput {
 
 /**
  * Display label for every first-level path segment. Covers both single-page
- * routes (e.g. `/skapa-provning`) and section roots (e.g. `/vinkurser`).
+ * routes (e.g. `/skapa-provning`) and section roots (e.g. `/vinkvallen`).
  * Anything not here falls through to `formatSlug()`.
  */
 export const PAGE_LABELS: Record<string, string> = {
   // Section roots
-  vinkurser: 'Vinkurser',
-  vinprovningar: 'Vinkurser', // legacy URL — middleware 301s but cover the segment for in-flight requests
-  kurser: 'Vinkurser',
+  vinkvallen: 'Vinkvällen',
+  vinkurser: 'Vinkvällen', // legacy segment — middleware 301s to /vinkvallen, but cover in-flight requests
+  vinprovningar: 'Vinkvällen', // legacy URL — middleware 301s but cover the segment for in-flight requests
+  kurser: 'Vinkvällen',
   provningsmallar: 'Vinprovningar',
   artiklar: 'Artiklar',
   vinlistan: 'Vinlistan',
@@ -37,7 +38,8 @@ export const PAGE_LABELS: Record<string, string> = {
   lander: 'Länder',
   // Sections without a detail-title API
   'mina-provningar': 'Mina vinprovningar',
-  'mina-vinkurser': 'Mina vinkurser',
+  'mina-vinkvallar': 'Mina vinkvällar',
+  'mina-vinkurser': 'Mina vinkvällar', // legacy segment — middleware 301s to /mina-vinkvallar, but cover in-flight requests
   'mina-recensioner': 'Mina recensioner',
   'mina-sidor': 'Mina sidor',
   profil: 'Profil',
@@ -86,7 +88,7 @@ export const PARENT_SECTIONS: Record<string, { label: string; href: string }> = 
  *
  * Exists because a segment's *accumulated* path can itself be a middleware
  * redirect to a different product. `/mina-provningar` 301s to
- * `/mina-vinkurser` (video courses), but the "Mina provningar" label still
+ * `/mina-vinkvallar` (video courses), but the "Mina provningar" label still
  * appears on live pages nested under the old prefix (historik, planer/[id]).
  * Without an override, that crumb would link readers into the wrong
  * product. Point it at the same destination `/mina-provningar/planer`
@@ -123,7 +125,8 @@ export const SUB_LABELS: Record<string, Record<string, string>> = {
 
 /** Which sections resolve a slug → title via API for the detail breadcrumb. */
 export const TITLE_APIS: Record<string, string> = {
-  vinkurser: '/api/vinkurser/title',
+  vinkvallen: '/api/vinkurser/title',
+  vinkurser: '/api/vinkurser/title', // legacy
   vinprovningar: '/api/vinkurser/title', // legacy
   kurser: '/api/vinkurser/title',
   artiklar: '/api/blog-posts/title',
@@ -190,6 +193,7 @@ export function buildBreadcrumbTrail(input: BuildTrailInput): BreadcrumbEntry[] 
     itemId &&
     (pathSegments[0] === 'kurser' ||
       pathSegments[0] === 'vinkurser' ||
+      pathSegments[0] === 'vinkvallen' ||
       pathSegments[0] === 'vinprovningar') &&
     pathSegments[1]
   ) {

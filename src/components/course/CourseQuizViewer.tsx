@@ -107,16 +107,16 @@ export default function CourseQuizViewer({
       if (hasNavigatedToReviewRef.current) return
       if (!manual && isSessionParticipant) return
       hasNavigatedToReviewRef.current = true
-      router.push(`/vinkurser/${course.slug || course.id}/recension`)
+      router.push(`/vinkvallen/${course.slug || course.id}/recension`)
     },
     [isSessionParticipant, router, course.slug, course.id],
   )
 
   const navigateToItem = (item: { type: 'lesson' | 'quiz'; id: number }) => {
     if (item.type === 'lesson') {
-      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?lesson=${item.id}`))
+      router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?lesson=${item.id}`))
     } else {
-      router.push(buildUrl(`/vinkurser/${course.slug || course.id}?quiz=${item.id}`))
+      router.push(buildUrl(`/vinkvallen/${course.slug || course.id}?quiz=${item.id}`))
     }
   }
 
@@ -240,7 +240,7 @@ export default function CourseQuizViewer({
                   </p>
                   <Button
                     variant="secondary"
-                    onClick={() => router.push(`/vinkurser/${course.slug || course.id}`)}
+                    onClick={() => router.push(`/vinkvallen/${course.slug || course.id}`)}
                   >
                     Köp vinkurs
                   </Button>

@@ -19,18 +19,22 @@ test('editing an existing draft drops the numeric id but keeps the parent', () =
   assert.deepEqual(labels('/skapa-provning/42'), ['Hem', 'Vinprovningar', 'Skapa egen'])
 })
 
-test('nothing under /mina-provningar says Vinkurser', () => {
+test('nothing under /mina-provningar says Vinkvällen', () => {
   for (const p of ['/mina-provningar/historik', '/mina-provningar/planer/7']) {
     assert.ok(
-      !labels(p).some((l) => l.includes('Vinkurser')),
-      `${p} still breadcrumbs to Vinkurser`,
+      !labels(p).some((l) => l.includes('Vinkvällen')),
+      `${p} still breadcrumbs to Vinkvällen`,
     )
   }
   assert.deepEqual(labels('/mina-provningar/historik'), ['Hem', 'Mina vinprovningar', 'Historik'])
 })
 
 test('the moved courses page keeps its own name', () => {
-  assert.deepEqual(labels('/mina-vinkurser'), ['Hem', 'Mina vinkurser'])
+  assert.deepEqual(labels('/mina-vinkvallar'), ['Hem', 'Mina vinkvällar'])
+})
+
+test('the legacy /mina-vinkurser segment still resolves to the new label', () => {
+  assert.deepEqual(labels('/mina-vinkurser'), ['Hem', 'Mina vinkvällar'])
 })
 
 test('the last crumb is the current page', () => {
@@ -44,13 +48,25 @@ test('the last crumb is the current page', () => {
 
 test('a course lesson still appends its resolved title', () => {
   assert.deepEqual(
+    labels('/vinkvallen/grunderna', {
+      resolvedTitle: 'Grunderna i vin',
+      itemKind: 'lesson',
+      itemId: '9',
+      resolvedItemTitle: 'Syra och sötma',
+    }),
+    ['Hem', 'Vinkvällen', 'Grunderna i vin', 'Syra och sötma'],
+  )
+})
+
+test('the legacy /vinkurser segment resolves to the new Vinkvällen label', () => {
+  assert.deepEqual(
     labels('/vinkurser/grunderna', {
       resolvedTitle: 'Grunderna i vin',
       itemKind: 'lesson',
       itemId: '9',
       resolvedItemTitle: 'Syra och sötma',
     }),
-    ['Hem', 'Vinkurser', 'Grunderna i vin', 'Syra och sötma'],
+    ['Hem', 'Vinkvällen', 'Grunderna i vin', 'Syra och sötma'],
   )
 })
 
@@ -74,9 +90,9 @@ test('the override also applies deeper under the old prefix, e.g. a live plan se
 })
 
 test('a section without an override still gets its accumulated path', () => {
-  const trail = buildBreadcrumbTrail({ pathname: '/vinkurser/grunderna' })
-  const crumb = trail.find((c) => c.label === 'Vinkurser')
-  assert.equal(crumb?.href, '/vinkurser')
+  const trail = buildBreadcrumbTrail({ pathname: '/vinkvallen/grunderna' })
+  const crumb = trail.find((c) => c.label === 'Vinkvällen')
+  assert.equal(crumb?.href, '/vinkvallen')
 })
 
 test('the /skapa-provning parent crumb still has href /provningsmallar', () => {

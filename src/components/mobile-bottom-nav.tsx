@@ -53,7 +53,7 @@ interface PrimaryTab {
  */
 const PRIMARY_TABS: PrimaryTab[] = [
   { label: 'Hem', href: '/', icon: Home, matchExact: true },
-  { label: 'Vinkvällen', href: '/vinkurser', icon: PlayCircle },
+  { label: 'Vinkvällen', href: '/vinkvallen', icon: PlayCircle },
   { label: 'Provningar', href: '/provningsmallar', icon: Wine },
 ]
 
@@ -230,7 +230,7 @@ export function MobileBottomNav() {
             </p>
             <ul className="rounded-lg border border-border bg-card overflow-hidden">
               <DrawerLink
-                href="/vinkurser"
+                href="/vinkvallen"
                 icon={PlayCircle}
                 label="Vinkvällen"
                 onClose={() => setOpen(false)}

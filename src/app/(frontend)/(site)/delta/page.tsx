@@ -177,7 +177,7 @@ function EndedState({
     <StateCard icon={icon} heading={heading} courseTitle={courseTitle}>
       <p className="text-sm text-muted-foreground">{body}</p>
       <Button asChild className="btn-brand">
-        <Link href="/vinkurser">Bläddra vinkurser →</Link>
+        <Link href="/vinkvallen">Bläddra vinkurser →</Link>
       </Button>
     </StateCard>
   )
@@ -196,7 +196,7 @@ function FullState({ lookup }: { lookup: LookupSessionResult }) {
         {count} av {max} deltagare har redan anslutit.
       </p>
       <Button asChild className="btn-brand">
-        <Link href="/vinkurser">Bläddra vinkurser →</Link>
+        <Link href="/vinkvallen">Bläddra vinkurser →</Link>
       </Button>
     </StateCard>
   )
