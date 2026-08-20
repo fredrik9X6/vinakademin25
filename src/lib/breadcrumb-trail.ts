@@ -96,6 +96,9 @@ export const PARENT_SECTIONS: Record<string, { label: string; href: string }> = 
  */
 export const SECTION_HREF_OVERRIDES: Record<string, string> = {
   'mina-provningar': '/provningsmallar?visa=mina',
+  // Legacy segment — same reasoning as above: /vinkurser itself redirects to
+  // /vinkvallen, so point the section crumb straight there and skip the hop.
+  vinkurser: '/vinkvallen',
 }
 
 export const SUB_LABELS: Record<string, Record<string, string>> = {

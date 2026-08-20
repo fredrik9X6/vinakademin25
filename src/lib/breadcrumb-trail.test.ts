@@ -27,6 +27,7 @@ test('nothing under /mina-provningar says Vinkvällen', () => {
     )
   }
   assert.deepEqual(labels('/mina-provningar/historik'), ['Hem', 'Mina vinprovningar', 'Historik'])
+  assert.deepEqual(labels('/mina-provningar/planer/7'), ['Hem', 'Mina vinprovningar', 'Planer'])
 })
 
 test('the moved courses page keeps its own name', () => {
