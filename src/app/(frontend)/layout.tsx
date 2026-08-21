@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     default: 'Vinakademin',
     template: '%s | Vinakademin',
   },
-  description: 'Vinakademin - Din guide till vinets värld. Upptäck vinkurser och vinprovningar, lär dig om vin och utveckla din vinkunskap.',
+  description: 'Vinakademin — din guide till vinets värld. Håll en vinprovning hemma med vänner: gratis provningsverktyg, eller låt Vinkvällen guida hela kvällen.',
   icons: {
     icon: [
       { url: '/brand/favicon.svg', type: 'image/svg+xml' },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     locale: 'sv_SE',
     siteName: 'Vinakademin',
     title: 'Vinakademin',
-    description: 'Vinakademin - Din guide till vinets värld. Upptäck vinkurser och vinprovningar, lär dig om vin och utveckla din vinkunskap.',
+    description: 'Vinakademin — din guide till vinets värld. Håll en vinprovning hemma med vänner: gratis provningsverktyg, eller låt Vinkvällen guida hela kvällen.',
     images: [
       {
         url: '/brand/logomark-gradient.png',
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Vinakademin',
-    description: 'Vinakademin - Vinkurser och vinprovningar för dig som älskar vin',
+    description: 'Vinprovning hemma med vänner — gratis verktyg och guidade vinkvällar',
     images: ['/brand/logomark-gradient.png'],
   },
 }

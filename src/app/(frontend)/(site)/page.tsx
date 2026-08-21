@@ -24,12 +24,12 @@ import { VinkurserFeature } from '@/components/home/VinkurserFeature'
 import type { TastingTemplate } from '@/payload-types'
 
 export const metadata: Metadata = {
-  title: 'Vinkurser och vinprovningar online på svenska',
+  title: 'Vinprovning hemma — gratis provningsverktyg och guidade vinkvällar',
   description:
     'Håll en vinprovning hemma med vänner. Provningsverktyget är gratis — färdiga provningar, inköpslista och värdmanus. Eller låt Vinkvällen guida hela kvällen åt dig.',
   alternates: { canonical: `${getSiteURL()}/` },
   openGraph: {
-    title: 'Vinkurser och vinprovningar online | Vinakademin',
+    title: 'Vinprovning hemma — gratis provningsverktyg | Vinakademin',
     description:
       'Håll en vinprovning hemma med vänner. Provningsverktyget är gratis — färdiga provningar, inköpslista och värdmanus. Eller låt Vinkvällen guida hela kvällen åt dig.',
     url: `${getSiteURL()}/`,
